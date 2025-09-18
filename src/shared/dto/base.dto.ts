@@ -69,5 +69,5 @@ export class BaseCreateDto {
     })
     @IsOptional()
     @IsString()
-    additionalDetails?: Record<string, string>;
+    additionalDetails?: string;
 }

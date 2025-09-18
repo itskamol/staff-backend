@@ -11,36 +11,37 @@ export class OrganizationService {
     async getOrganizations(
         filters: Prisma.OrganizationWhereInput = {},
         pagination: PaginationDto,
+        q?: string,
         scope?: DataScope
     ) {
-        return this.organizationRepository.findMany(
-            filters,
-            { createdAt: 'desc' },
-            undefined,
-            pagination,
-            scope
-        );
+        if (q) {
+            filters.OR = [
+                { fullName: { contains: q, mode: 'insensitive' } },
+                { shortName: { contains: q, mode: 'insensitive' } },
+            ];
+        }
+
+        const [data, total] = await Promise.all([
+            this.organizationRepository.findMany(
+                filters,
+                { createdAt: 'desc' },
+                { _count: { select: { departments: true } } },
+                pagination,
+                scope
+            ),
+            this.organizationRepository.count(filters, scope),
+        ]);
+
+        return {
+            data,
+            total,
+            page: pagination.page,
+            limit: pagination.limit,
+        };
     }
 
     async getOrganizationById(id: number, scope?: DataScope) {
-        return this.organizationRepository.findById(id, undefined, scope);
-    }
-
-    async searchOrganizations(
-        searchTerm: string,
-        pagination: PaginationDto
-    ): Promise<Organization[]> {
-        return this.organizationRepository.findMany(
-            {
-                OR: [
-                    { fullName: { contains: searchTerm, mode: 'insensitive' } },
-                    { shortName: { contains: searchTerm, mode: 'insensitive' } },
-                ],
-            },
-            { fullName: 'asc' },
-            undefined,
-            pagination
-        );
+        return this.organizationRepository.findById(id, { departments: true }, scope);
     }
 
     async createOrganization(data: CreateOrganizationDto): Promise<Organization> {

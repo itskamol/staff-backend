@@ -2,6 +2,7 @@ import { Body, Controller, Get, NotFoundException, Post, Query } from '@nestjs/c
 import {
     ApiBearerAuth,
     ApiBody,
+    ApiExtraModels,
     ApiOperation,
     ApiQuery,
     ApiResponse,
@@ -24,6 +25,7 @@ import { DataScope } from '@/shared/interfaces';
 @ApiTags('Organization')
 @ApiBearerAuth()
 @Controller('organization')
+@ApiExtraModels(ApiSuccessResponse, OrganizationResponseDto)
 export class OrganizationController {
     constructor(private readonly organizationService: OrganizationService) {}
 
@@ -55,26 +57,16 @@ export class OrganizationController {
     @Get()
     @NoScoping()
     @ApiOperation({ summary: 'Get all organizations with pagination' })
+    @ApiQuery({
+        name: 'q',
+        description: 'Search term (at least 2 characters)',
+        minLength: 2,
+        required: false,
+    })
     @ApiOkResponsePaginated(OrganizationResponseDto)
     @ApiResponse({ status: 403, description: 'Forbidden.', type: ApiErrorResponse })
-    async getAllOrganizations(@Query() paginationDto: PaginationDto) {
-        return this.organizationService.getOrganizations({}, paginationDto);
-    }
-
-    @Get('search')
-    @NoScoping()
-    @ApiOperation({ summary: 'Search for organizations' })
-    @ApiQuery({ name: 'q', description: 'Search term (at least 2 characters)' })
-    @ApiOkResponsePaginated(OrganizationResponseDto)
-    @ApiResponse({ status: 403, description: 'Forbidden.', type: ApiErrorResponse })
-    async searchOrganizations(
-        @Query('q') searchTerm: string,
-        @Query() paginationDto: PaginationDto
-    ) {
-        if (!searchTerm || searchTerm.trim().length < 2) {
-            return [];
-        }
-        return this.organizationService.searchOrganizations(searchTerm.trim(), paginationDto);
+    async getAllOrganizations(@Query('q') q: string, @Query() paginationDto: PaginationDto) {
+        return this.organizationService.getOrganizations({}, paginationDto, q);
     }
 
     @Get('self')
