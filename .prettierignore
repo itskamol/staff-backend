@@ -1,0 +1,93 @@
+# Add files here to ignore them from prettier formatting
+
+# Build outputs
+/dist
+/build
+/out
+/tmp
+/temp
+
+# Dependencies
+node_modules/
+/.pnp
+.pnp.js
+
+# Testing
+/coverage
+/.nyc_output
+
+# Cache directories
+/.nx/cache
+/.nx/workspace-data
+.eslintcache
+.parcel-cache
+.cache/
+
+# Logs
+*.log
+logs/
+
+# Environment files
+.env
+.env.local
+.env.development
+.env.staging
+.env.production
+.env.test
+
+# Database
+*.db
+*.sqlite
+*.sqlite3
+/prisma/dev.db*
+
+# Generated files
+/prisma/client/
+/generated/
+*.generated.*
+
+# Documentation build
+/docs/build/
+/storybook-static/
+
+# Package manager files
+package-lock.json
+yarn.lock
+pnpm-lock.yaml
+
+# Editor directories and files
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# OS generated files
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db
+
+# Docker
+Dockerfile*
+docker-compose*.yml
+.dockerignore
+
+# Config files that shouldn't be formatted
+*.config.js
+*.config.mjs
+*.config.ts
+webpack.config.js
+jest.config.js
+jest.config.ts
+nx.json
+
+# Markdown files (optional - remove if you want to format markdown)
+*.md
+
+# Lock files and manifests
+*.lock
+CHANGELOG.md
+LICENSE

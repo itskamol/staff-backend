@@ -1,0 +1,69 @@
+generator client {
+  provider      = "prisma-client-js"
+  binaryTargets = ["native", "linux-musl-openssl-3.0.x"]
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id             Int      @unique @default(autoincrement())
+  name           String
+  username       String   @unique
+  password       String
+  departmentId   Int?
+  organizationId Int?
+  role           Role
+  isActive       Boolean  @default(true) @map("is_active")
+  createdAt      DateTime @default(now()) @db.Timestamptz(3)
+  updatedAt      DateTime @updatedAt @db.Timestamptz(3)
+
+  organization Organization? @relation(fields: [organizationId], references: [id])
+  department   Department?   @relation(fields: [departmentId], references: [id])
+}
+
+model Organization {
+  id                Int      @id @default(autoincrement())
+  fullName          String   @map("full_name")
+  shortName         String   @unique @map("short_name")
+  address           String?
+  phone             String?
+  email             String?
+  additionalDetails Json?    @map("additionl_details")
+  isActive          Boolean  @default(true) @map("is_active")
+  createdAt         DateTime @default(now()) @db.Timestamptz(3)
+  updatedAt         DateTime @updatedAt @db.Timestamptz(3)
+
+  users       User[]
+  departments Department[]
+}
+
+model Department {
+  id                Int      @id @default(autoincrement())
+  fullName          String   @map("full_name")
+  shortName         String   @unique @map("short_name")
+  address           String?
+  phone             String?
+  email             String?
+  parentId          Int?
+  organizationId    Int?
+  additionalDetails Json?    @map("additionl_details")
+  isActive          Boolean  @default(true) @map("is_active")
+  createdAt         DateTime @default(now()) @db.Timestamptz(3)
+  updatedAt         DateTime @updatedAt @db.Timestamptz(3)
+
+  parent       Department?   @relation("departmentHierarchy", fields: [parentId], references: [id])
+  organization Organization? @relation(fields: [organizationId], references: [id])
+  children     Department[]  @relation("departmentHierarchy")
+  users        User[]
+}
+
+// enums
+enum Role {
+  ADMIN
+  HR
+  GUARD
+  DEPARTEMEND_LEARD
+}

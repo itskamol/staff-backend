@@ -1,0 +1,227 @@
+{
+  "Face Picture Management": {
+    "introduction": "Face picture management includes searching, applying, adding, editing, deleting, and collecting face pictures[cite: 418]. Before applying, adding, or editing face picture information, ensure the related person information has been applied and that a face picture library exists[cite: 424].",
+    "api_calling_flow": {
+      "check_support": {
+        "summary": "Before calling the API for face picture management, make sure that the device supports the function by checking for the 'isSupportFDLib' node in the capabilities response[cite: 422].",
+        "api": {
+          "method": "GET",
+          "endpoint": "/ISAPI/AccessControl/capabilities",
+          "capabilities": null
+        },
+        "request": {
+          "format": "None",
+          "body": "No body required."
+        },
+        "response": {
+          "format": "JSON",
+          "body": "{\n    \"AccessControlCap\": {\n        \"isSupportFDLib\": true\n        /*ro, opt, bool, whether it supports face picture library management*/\n    }\n}"
+        },
+        "status_codes": [
+          {
+            "code": 200,
+            "meaning": "OK"
+          }
+        ]
+      },
+      "search": {
+        "summary": "The face picture search function is for searching the number of face pictures and face picture information added to the device[cite: 431]. To get the total count, use GET /ISAPI/Intelligent/FDLib/Count?format=json[cite: 432].",
+        "api": {
+          "method": "POST",
+          "endpoint": "/ISAPI/Intelligent/FDLib/FDSearch?format=json",
+          "capabilities": {
+            "method": "GET",
+            "endpoint": "/ISAPI/Intelligent/FDLib/capabilities?format=json",
+            "request": {
+              "format": "None",
+              "body": "No body required."
+            },
+            "response": {
+              "format": "JSON",
+              "body": "{\n    \"FDLibCap\": {\n        \"FDRecordDataMaxNum\": 12345,\n        /*ro, req, int, maximum face records supported by face picture library*/\n        \"supportFDFunction\": \"post,delete,put,get,setUp\"\n        /*ro, req, string, the supported operations on face picture library*/\n    }\n}"
+            }
+          }
+        },
+        "request": {
+          "format": "JSON",
+          "body": "{\n    \"FacePictureSearchCond\": {\n        \"searchID\": \"1234567890\",\n        \"searchResultPosition\": 0,\n        \"maxResults\": 100,\n        \"faceLibType\": \"blackFD\",\n        \"FDID\": \"1\",\n        \"employeeNo\": \"1001\"\n    }\n}"
+        },
+        "response": {
+          "format": "JSON",
+          "body": "{\n    \"FacePictureSearch\": {\n        \"searchID\": \"1234567890\",\n        \"responseStatusStrg\": \"OK\",\n        \"numOfMatches\": 1,\n        \"totalMatches\": 1,\n        \"MatchList\": [\n            {\n                \"employeeNo\": \"1001\",\n                \"name\": \"test\",\n                \"bornTime\": \"1990-01-01\",\n                \"faceURL\": \"http://...\"\n            }\n        ]\n    }\n}"
+        },
+        "status_codes": [
+          {
+            "code": 200,
+            "meaning": "OK"
+          }
+        ]
+      },
+      "apply": {
+        "summary": "Face picture information can be applied to the device via the face picture applying function. If the face picture has been added, it will be edited; if not, it will be added[cite: 438].",
+        "api": {
+          "method": "PUT",
+          "endpoint": "/ISAPI/Intelligent/FDLib/FDSetUp?format=json",
+          "capabilities": {
+            "method": "GET",
+            "endpoint": "/ISAPI/Intelligent/FDLib/capabilities?format=json",
+            "request": {
+              "format": "None",
+              "body": "No body required."
+            },
+            "response": {
+              "format": "JSON",
+              "body": "{\n    \"FDLibCap\": {\n        \"supportFDFunction\": \"post,delete,put,get,setUp\"\n        /*ro, req, string, the supported operations on face picture library, should contain 'setUp'*/\n    }\n}"
+            }
+          }
+        },
+        "request": {
+          "format": "multipart/form-data",
+          "body": "A multipart/form-data request containing two parts: one for JSON metadata and one for the binary image data.\n\nPart 1: JSON Data\n--<frontier>\nContent-Disposition: form-data; name=\"FaceDataRecord\"\nContent-Type: application/json\n\n{\n    \"faceURL\": \"http\",\n    /*opt, string, picture storage URL, which is inputted when uploading the face picture by URL*/\n    \"faceLibType\": \"blackFD\",\n    /*req, enum, face picture library type, subType:string, desc:\"blackFD\" (list library), \"staticFD\" (static library), the maximum length is 32 bytes*/\n    \"FDID\": \"test\",\n    /*req, string, face picture library ID,the maximum length is 63 bytes*/\n    \"FPID\": \"test\"\n    /*opt, string, face record ID*/\n}\n\nPart 2: Binary Image Data\n--<frontier>\nContent-Disposition: form-data; name=\"face picture\"; filename=\"face_picture.jpg\"\nContent-Type: image/jpeg\n\n[binary image data]\n--<frontier>--"
+        },
+        "response": {
+          "format": "JSON",
+          "body": "{\n    \"statusCode\": 1,\n    /*ro, opt, int, status code, desc:1 (succeeded). It is required when an error occurred*/\n    \"statusString\": \"ok\",\n    /*ro, opt, string, status description, range:[1,64], desc:\"ok\" (succeeded). It is required when an error occurred*/\n    \"subStatusCode\": \"ok\",\n    /*ro, opt, string, sub status code, range:[1,64], desc:\"ok\" (succeeded). It is required when an error occurred*/\n    \"errorCode\": 1,\n    /*ro, req, int, error code, desc:it is required when the value of statusCode is not 1, it corresponds to subStatusCode*/\n    \"errorMsg\": \"ok\"\n    /*ro, req, string, error information, desc:this node is required when the value of statusCode is not 1*/\n}"
+        },
+        "status_codes": [
+          {
+            "code": 200,
+            "meaning": "OK"
+          }
+        ]
+      },
+      "add": {
+        "summary": "Face picture information can be added to the device. If the face picture has already been added, the device will report an error[cite: 444].",
+        "api": {
+          "method": "POST",
+          "endpoint": "/ISAPI/Intelligent/FDLib/FaceDataRecord?format=json",
+          "capabilities": {
+            "method": "GET",
+            "endpoint": "/ISAPI/Intelligent/FDLib/capabilities?format=json",
+            "request": {
+              "format": "None",
+              "body": "No body required."
+            },
+            "response": {
+              "format": "JSON",
+              "body": "{\n    \"FDLibCap\": {\n        \"supportFDFunction\": \"post,delete,put,get,setUp\"\n        /*ro, req, string, the supported operations on face picture library, should contain 'post'*/\n    }\n}"
+            }
+          }
+        },
+        "request": {
+          "format": "multipart/form-data",
+          "body": "A multipart/form-data request containing two parts: one for JSON metadata and one for the binary image data, similar to the 'apply' endpoint.\n\nPart 1: JSON Data\n--<frontier>\nContent-Disposition: form-data; name=\"FaceDataRecord\"\nContent-Type: application/json\n\n{\n    \"faceLibType\": \"blackFD\",\n    /*req, enum, face picture library type*/\n    \"FDID\": \"test\",\n    /*req, string, face picture library ID*/\n    \"name\": \"张三\",\n    /*req, string, name of person*/\n    \"gender\": \"male\",\n    /*opt, enum, gender*/\n    \"bornTime\": \"2004-05-03\"\n    /*req, time, date of birth*/\n}\n\nPart 2: Binary Image Data\n--<frontier>\nContent-Disposition: form-data; name=\"face picture\"; filename=\"face_picture.jpg\"\nContent-Type: image/jpeg\n\n[binary image data]\n--<frontier>--"
+        },
+        "response": {
+          "format": "JSON",
+          "body": "{\n    \"requestURL\": \"test\",\n    \"statusCode\": 1,\n    \"statusString\": \"test\",\n    \"subStatusCode\": \"test\",\n    \"errorCode\": 1,\n    \"errorMsg\": \"ok\",\n    \"FPID\": \"test\",\n    /*ro, opt, string, face record ID returned when the face record is added*/\n    \"rowKey\": \"test\"\n    /*ro, opt, string*/\n}"
+        },
+        "status_codes": [
+          {
+            "code": 200,
+            "meaning": "OK"
+          }
+        ]
+      },
+      "edit": {
+        "summary": "Face picture information on the device can be edited. If the face picture has not been added, the device will report an error[cite: 451].",
+        "api": {
+          "method": "PUT",
+          "endpoint": "/ISAPI/Intelligent/FDLib/FDModify?format=json",
+          "capabilities": {
+            "method": "GET",
+            "endpoint": "/ISAPI/Intelligent/FDLib/capabilities?format=json",
+            "request": {
+              "format": "None",
+              "body": "No body required."
+            },
+            "response": {
+              "format": "JSON",
+              "body": "{\n    \"FDLibCap\": {\n        \"supportFDFunction\": \"post,delete,put,get,setUp\"\n        /*ro, req, string, the supported operations on face picture library, should contain 'put'*/\n    }\n}"
+            }
+          }
+        },
+        "request": {
+          "format": "multipart/form-data",
+          "body": "A multipart/form-data request containing JSON metadata and optionally a new binary image data part.\n\nPart 1: JSON Data\n--<frontier>\nContent-Disposition: form-data; name=\"FaceDataRecord\"\nContent-Type: application/json\n\n{\n    \"faceLibType\": \"blackFD\",\n    \"FDID\": \"test\",\n    \"FPID\": \"test\",\n    /*opt, string, face record ID*/\n    \"name\": \"new_name\"\n    /*opt, string, new name*/\n}\n\nPart 2: Binary Image Data (Optional)\n--<frontier>\nContent-Disposition: form-data; name=\"face picture\"; filename=\"new_face_picture.jpg\"\nContent-Type: image/jpeg\n\n[new binary image data]\n--<frontier>--"
+        },
+        "response": {
+          "format": "JSON",
+          "body": "{\n    \"statusCode\": 1,\n    /*ro, opt, int, status code*/\n    \"statusString\": \"ok\",\n    /*ro, opt, string, status description*/\n    \"subStatusCode\": \"ok\",\n    /*ro, opt, string, sub status code*/\n    \"errorCode\": 1,\n    /*ro, opt, int, error code*/\n    \"errorMsg\": \"ok\"\n    /*ro, opt, string, error details*/\n}"
+        },
+        "status_codes": [
+          {
+            "code": 200,
+            "meaning": "OK"
+          }
+        ]
+      },
+      "delete": {
+        "summary": "The face picture information on the device can be deleted. The device will not report an error if the face picture to be deleted is not added[cite: 458]. To delete all face picture libraries, use DELETE /ISAPI/Intelligent/FDLib?format=json[cite: 460].",
+        "api": {
+          "method": "PUT",
+          "endpoint": "/ISAPI/Intelligent/FDLib/FDSearch/Delete?format=json&FDID=<FDID>&faceLibType=<FDType>",
+          "capabilities": {
+            "method": "GET",
+            "endpoint": "/ISAPI/Intelligent/FDLib/capabilities?format=json",
+            "request": {
+              "format": "None",
+              "body": "No body required."
+            },
+            "response": {
+              "format": "JSON",
+              "body": "{\n    \"FDLibCap\": {\n        \"supportFDFunction\": \"post,delete,put,get,setUp\"\n        /*ro, req, string, the supported operations, should contain 'delete'*/\n    }\n}"
+            }
+          }
+        },
+        "request": {
+          "format": "None",
+          "body": "Request body is not specified in the documentation for this endpoint."
+        },
+        "response": {
+          "format": "JSON",
+          "body": "Standard status response is expected, similar to other PUT/POST operations."
+        },
+        "status_codes": [
+          {
+            "code": 200,
+            "meaning": "OK"
+          }
+        ]
+      },
+      "collect": {
+        "summary": "Face picture data and quality grades can be collected via the face picture collecting function. This is an asynchronous operation that requires polling for the result[cite: 465].",
+        "api": {
+          "method": "POST",
+          "endpoint": "/ISAPI/AccessControl/CaptureFaceData",
+          "capabilities": {
+            "method": "GET",
+            "endpoint": "/ISAPI/AccessControl/capabilities",
+            "request": {
+              "format": "None",
+              "body": "No body required."
+            },
+            "response": {
+              "format": "XML",
+              "body": "<CaptureFaceData>\n    <CaptureFaceDataCond>\n        <captureInfrared opt=\"true,false\">\n            true\n        </captureInfrared>\n        <dataType opt=\"url,binary\">\n            url\n        </dataType>\n    </CaptureFaceDataCond>\n</CaptureFaceData>"
+            }
+          }
+        },
+        "request": {
+          "format": "XML",
+          "body": "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n<CaptureFaceDataCond xmlns=\"http://www.isapi.org/ver20/XMLSchema\" version=\"2.0\">\n    <captureInfrared>\n        true\n    </captureInfrared>\n    <dataType>\n        url\n    </dataType>\n    <readerID>\n        1\n    </readerID>\n</CaptureFaceDataCond>"
+        },
+        "response": {
+          "format": "XML",
+          "body": "Initial response indicates the start of the capture process. Polling is required.\n\nPolling Endpoint: GET /ISAPI/AccessControl/CaptureFaceData/Progress\n\nFinal Polling Response (on success):\n<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n<CaptureFaceData xmlns=\"http://www.isapi.org/ver20/XMLSchema\" version=\"2.0\">\n    <faceDataUrl min=\"0\" max=\"10\">\n        test\n    </faceDataUrl>\n    <captureProgress min=\"0\" max=\"100\">\n        100\n    </captureProgress>\n    <isCurRequestOver opt=\"true,false\">\n        true\n    </isCurRequestOver>\n    <infraredFaceDataUrl min=\"0\" max=\"10\">\n        test\n    </infraredFaceDataUrl>\n</CaptureFaceData>"
+        },
+        "status_codes": [
+          {
+            "code": 200,
+            "meaning": "OK"
+          }
+        ]
+      }
+    }
+  }
+}

@@ -1,0 +1,483 @@
+[
+  {
+    "section_name": "21.26.1 Get the configuration capability of the attendance schedule template",
+    "summary": "Retrieves the capabilities for configuring attendance schedule templates.",
+    "api": {
+      "method": "GET",
+      "endpoint": "/ISAPI/AccessControl/Attendance/planTemplate/capabilities?format=json"
+    },
+    "request": {
+      "format": "JSON",
+      "body": "None"
+    },
+    "response": {
+      "format": "JSON",
+      "body": {
+        "AttendancePlanTemplateCap": {
+          "templateNo": {
+            "@min": 1,
+            "@max": 16
+          },
+          "property": {
+            "@opt": [
+              "check",
+              "break",
+              "overtime"
+            ]
+          },
+          "enable": {
+            "@opt": [
+              true,
+              false
+            ]
+          },
+          "templateName": {
+            "@min": 1,
+            "@max": 32
+          },
+          "weekPlanNo": {
+            "@min": 1,
+            "@max": 16
+          },
+          "holidayGroupNo": {
+            "@min": 1,
+            "@max": 16
+          }
+        }
+      }
+    },
+    "status_codes": []
+  },
+  {
+    "section_name": "21.26.2 Get the list of attendance schedule templates",
+    "summary": "Retrieves a list of all configured attendance schedule templates.",
+    "api": {
+      "method": "GET",
+      "endpoint": "/ISAPI/AccessControl/Attendance/planTemplate?format=json",
+      "capabilities": {
+        "method": "GET",
+        "endpoint": "/ISAPI/AccessControl/Attendance/planTemplate/capabilities?format=json"
+      }
+    },
+    "request": {
+      "format": "JSON",
+      "body": "None"
+    },
+    "response": {
+      "format": "JSON",
+      "body": {
+        "AttendancePlanTemplateList": [
+          {
+            "templateNo": 1,
+            "enable": true,
+            "property": "check",
+            "templateName": "test",
+            "weekPlanNo": 1
+          }
+        ]
+      }
+    },
+    "status_codes": []
+  },
+  {
+    "section_name": "21.26.3 Get the configuration capability of attendance check by pressing the key",
+    "summary": "Retrieves the capabilities for configuring attendance status checks that are triggered by a key press.",
+    "api": {
+      "method": "GET",
+      "endpoint": "/ISAPI/AccessControl/keyCfg/attendance/capabilities?format=json"
+    },
+    "request": {
+      "format": "JSON",
+      "body": "None"
+    },
+    "response": {
+      "format": "JSON",
+      "body": {
+        "AttendanceCap": {
+          "id": {
+            "@min": 0,
+            "@max": 0
+          },
+          "enable": {
+            "@opt": [
+              true,
+              false
+            ]
+          },
+          "label": {
+            "@min": 0,
+            "@max": 0
+          },
+          "attendanceStatus": {
+            "@opt": [
+              "checkIn",
+              "checkOut",
+              "breakOut",
+              "breakIn",
+              "overtimeIn",
+              "overtimeOut"
+            ]
+          }
+        }
+      }
+    },
+    "status_codes": []
+  },
+  {
+    "section_name": "21.26.4 Get the capability of attendance mode parameters",
+    "summary": "Retrieves the capabilities for configuring the device's attendance mode.",
+    "api": {
+      "method": "GET",
+      "endpoint": "/ISAPI/AccessControl/Configuration/attendanceMode/capabilities?format=json"
+    },
+    "request": {
+      "format": "JSON",
+      "body": "None"
+    },
+    "response": {
+      "format": "JSON",
+      "body": {
+        "AttendanceMode": {
+          "mode": {
+            "@opt": [
+              "disable",
+              "manual",
+              "auto",
+              "manualAndAuto"
+            ]
+          },
+          "attendanceStatusTime": {
+            "@min": 0,
+            "@max": 0
+          },
+          "reqAttendanceStatus": {
+            "@opt": [
+              true,
+              false
+            ]
+          }
+        }
+      }
+    },
+    "status_codes": []
+  },
+  {
+    "section_name": "21.26.5 Set the attendance mode parameters",
+    "summary": "Sets the attendance mode parameters for the device.",
+    "api": {
+      "method": "PUT",
+      "endpoint": "/ISAPI/AccessControl/Configuration/attendanceMode?format=json",
+      "capabilities": {
+        "method": "GET",
+        "endpoint": "/ISAPI/AccessControl/Configuration/attendanceMode/capabilities?format=json"
+      }
+    },
+    "request": {
+      "format": "JSON",
+      "body": {
+        "AttendanceMode": {
+          "mode": "disable",
+          "attendanceStatusTime": 0,
+          "reqAttendanceStatus": true
+        }
+      }
+    },
+    "response": {
+      "format": "JSON",
+      "body": {
+        "statusCode": 1,
+        "statusString": "ok",
+        "subStatusCode": "ok",
+        "errorCode": 1,
+        "errorMsg": "ok"
+      }
+    },
+    "status_codes": []
+  },
+  {
+    "section_name": "21.26.6 Get the attendance mode parameters",
+    "summary": "Retrieves the current attendance mode parameters.",
+    "api": {
+      "method": "GET",
+      "endpoint": "/ISAPI/AccessControl/Configuration/attendanceMode?format=json",
+      "capabilities": {
+        "method": "GET",
+        "endpoint": "/ISAPI/AccessControl/Configuration/attendanceMode/capabilities?format=json"
+      }
+    },
+    "request": {
+      "format": "JSON",
+      "body": "None"
+    },
+    "response": {
+      "format": "JSON",
+      "body": {
+        "AttendanceMode": {
+          "mode": "disable",
+          "attendanceStatusTime": 0,
+          "reqAttendanceStatus": true
+        }
+      }
+    },
+    "status_codes": []
+  },
+  {
+    "section_name": "21.26.7 Get the capability of configuring weekly attendance schedules",
+    "summary": "Retrieves the capabilities for configuring weekly attendance schedules.",
+    "api": {
+      "method": "GET",
+      "endpoint": "/ISAPI/AccessControl/Attendance/weekPlan/capabilities?format=json"
+    },
+    "request": {
+      "format": "JSON",
+      "body": "None"
+    },
+    "response": {
+      "format": "JSON",
+      "body": {
+        "AttendanceWeekPlanCap": {
+          "planNo": {
+            "@min": 1,
+            "@max": 16
+          },
+          "enable": {
+            "@opt": [
+              true,
+              false
+            ]
+          },
+          "WeekPlanCfg": {
+            "maxSize": 5,
+            "id": {
+              "@min": 1,
+              "@max": 8
+            },
+            "week": {
+              "@opt": [
+                "Monday",
+                "Tuesday",
+                "Wednesday",
+                "Thursday",
+                "Friday",
+                "Saturday",
+                "Sunday"
+              ]
+            },
+            "enable": {
+              "@opt": [
+                true,
+                false
+              ]
+            },
+            "TimeSegment": {
+              "beginTime": "10:10:00",
+              "endTime": "12:10:00",
+              "validUnit": "second"
+            }
+          }
+        }
+      }
+    },
+    "status_codes": []
+  },
+  {
+    "section_name": "21.26.8 Set the parameters of the week attendance schedule",
+    "summary": "Sets the parameters for a specific weekly attendance schedule.",
+    "api": {
+      "method": "PUT",
+      "endpoint": "/ISAPI/AccessControl/Attendance/weekPlan/<PlanNo>?format=json",
+      "capabilities": {
+        "method": "GET",
+        "endpoint": "/ISAPI/AccessControl/Attendance/weekPlan/capabilities?format=json"
+      }
+    },
+    "request": {
+      "format": "JSON",
+      "body": {
+        "AttendanceWeekPlan": {
+          "enable": true,
+          "WeekPlanCfg": [
+            {
+              "id": 1,
+              "week": "Monday",
+              "enable": true,
+              "TimeSegment": {
+                "beginTime": "10:10:00",
+                "endTime": "12:10:00"
+              }
+            }
+          ]
+        }
+      }
+    },
+    "response": {
+      "format": "JSON",
+      "body": {
+        "statusCode": 1,
+        "statusString": "ok",
+        "subStatusCode": "ok",
+        "errorCode": 1,
+        "errorMsg": "ok"
+      }
+    },
+    "status_codes": []
+  },
+  {
+    "section_name": "21.26.9 Get the parameters of the week attendance schedule",
+    "summary": "Retrieves the parameters for a specific weekly attendance schedule.",
+    "api": {
+      "method": "GET",
+      "endpoint": "/ISAPI/AccessControl/Attendance/weekPlan/<PlanNo>?format=json",
+      "capabilities": {
+        "method": "GET",
+        "endpoint": "/ISAPI/AccessControl/Attendance/weekPlan/capabilities?format=json"
+      }
+    },
+    "request": {
+      "format": "JSON",
+      "body": "None"
+    },
+    "response": {
+      "format": "JSON",
+      "body": {
+        "AttendanceWeekPlan": {
+          "enable": true,
+          "WeekPlanCfg": [
+            {
+              "id": 1,
+              "week": "Monday",
+              "enable": true,
+              "TimeSegment": {
+                "beginTime": "10:10:00",
+                "endTime": "12:10:00"
+              }
+            }
+          ]
+        }
+      }
+    },
+    "status_codes": []
+  },
+  {
+    "section_name": "21.26.10 Set the parameters of the attendance schedule template",
+    "summary": "Sets the parameters for a specific attendance schedule template.",
+    "api": {
+      "method": "PUT",
+      "endpoint": "/ISAPI/AccessControl/Attendance/planTemplate/<TemplateNo>?format=json",
+      "capabilities": {
+        "method": "GET",
+        "endpoint": "/ISAPI/AccessControl/Attendance/planTemplate/capabilities?format=json"
+      }
+    },
+    "request": {
+      "format": "JSON",
+      "body": {
+        "AttendancePlanTemplate": {
+          "enable": true,
+          "property": "check",
+          "templateName": "test",
+          "weekPlanNo": 1
+        }
+      }
+    },
+    "response": {
+      "format": "JSON",
+      "body": {
+        "statusCode": 1,
+        "statusString": "ok",
+        "subStatusCode": "ok",
+        "errorCode": 1,
+        "errorMsg": "ok"
+      }
+    },
+    "status_codes": []
+  },
+  {
+    "section_name": "21.26.11 Get the parameters of the attendance schedule template",
+    "summary": "Retrieves the parameters for a specific attendance schedule template.",
+    "api": {
+      "method": "GET",
+      "endpoint": "/ISAPI/AccessControl/Attendance/planTemplate/<TemplateNo>?format=json",
+      "capabilities": {
+        "method": "GET",
+        "endpoint": "/ISAPI/AccessControl/Attendance/planTemplate/capabilities?format=json"
+      }
+    },
+    "request": {
+      "format": "JSON",
+      "body": "None"
+    },
+    "response": {
+      "format": "JSON",
+      "body": {
+        "AttendancePlanTemplate": {
+          "enable": true,
+          "property": "check",
+          "templateName": "test",
+          "weekPlanNo": 1
+        }
+      }
+    },
+    "status_codes": []
+  },
+  {
+    "section_name": "21.26.12 Get the parameter configuration of attendance check by pressing the key",
+    "summary": "Retrieves the configuration for attendance status checks triggered by a specific key press.",
+    "api": {
+      "method": "GET",
+      "endpoint": "/ISAPI/AccessControl/keyCfg/<keyID>/attendance?format=json",
+      "capabilities": {
+        "method": "GET",
+        "endpoint": "/ISAPI/AccessControl/keyCfg/attendance/capabilities?format=json"
+      }
+    },
+    "request": {
+      "format": "JSON",
+      "body": "None"
+    },
+    "response": {
+      "format": "JSON",
+      "body": {
+        "Attendance": {
+          "enable": true,
+          "attendanceStatus": "checkIn",
+          "label": "test"
+        }
+      }
+    },
+    "status_codes": []
+  },
+  {
+    "section_name": "21.26.13 Set the parameters of attendance check by pressing the key",
+    "summary": "Sets the parameters for attendance status checks triggered by a specific key press.",
+    "api": {
+      "method": "PUT",
+      "endpoint": "/ISAPI/AccessControl/keyCfg/<keyID>/attendance?format=json",
+      "capabilities": {
+        "method": "GET",
+        "endpoint": "/ISAPI/AccessControl/keyCfg/attendance/capabilities?format=json"
+      }
+    },
+    "request": {
+      "format": "JSON",
+      "body": {
+        "Attendance": {
+          "enable": true,
+          "attendanceStatus": "checkIn",
+          "label": "test"
+        }
+      }
+    },
+    "response": {
+      "format": "JSON",
+      "body": {
+        "statusCode": 1,
+        "statusString": "ok",
+        "subStatusCode": "ok",
+        "errorCode": 1,
+        "errorMsg": "ok"
+      }
+    },
+    "status_codes": []
+  }
+]

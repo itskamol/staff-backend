@@ -1,0 +1,100 @@
+{
+    "Listening Service": {
+      "introduction": "When an event occurs, the device creates a connection with the client and uploads alarm information. Meanwhile, the listening host receives data from the device. The IP address and the port No. of the listening host should be configured for the device. The HTTP listening service supports subscribing to specific events when adding or editing the listening host. [cite: 208]",
+      "api_endpoints": [
+        {
+          "name": "Get Listening Host Capabilities",
+          "summary": "Checks the device's capabilities for configuring listening host parameters, such as the number of supported hosts and available protocol types.",
+          "api": {
+            "method": "GET",
+            "endpoint": "/ISAPI/Event/notification/httpHosts/capabilities",
+            "capabilities": null
+          },
+          "request": {
+            "format": "None",
+            "body": "No body required."
+          },
+          "response": {
+            "format": "XML",
+            "body": "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n<HttpHostNotificationCap xmlns=\"http://www.isapi.org/ver20/XMLSchema\" version=\"2.0\">\n    \n    <hostNumber>\n        0\n    </hostNumber>\n    <urlLen max=\"10\">\n        test\n    </urlLen>\n    <protocolType opt=\"HTTP,HTTPS,EHome\">\n        HTTP\n    </protocolType>\n    <parameterFormatType opt=\"XML,querystring,JSON\">\n        XML\n    </parameterFormatType>\n    <addressingFormatType opt=\"host,hostname\">\n        hostname\n    </addressingFormatType>\n    <httpAuthenticationMethod opt=\"none,MD5digest,base64\">\n        none\n    </httpAuthenticationMethod>\n</HttpHostNotificationCap>"
+          },
+          "status_codes": [
+            {
+              "code": 200,
+              "meaning": "OK"
+            }
+          ]
+        },
+        {
+          "name": "Set Parameters for a Listening Host",
+          "summary": "Configures the parameters for a single, specific listening host identified by its ID.",
+          "api": {
+            "method": "PUT",
+            "endpoint": "/ISAPI/Event/notification/httpHosts/<hostID>?security=<security>&iv=<iv>",
+            "capabilities": null
+          },
+          "request": {
+            "format": "XML",
+            "body": "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n<HttpHostNotification xmlns=\"http://www.isapi.org/ver20/XMLSchema\" version=\"2.0\">\n    \n    <id>\n        test\n    </id>\n    <url>\n        test\n    </url>\n    <protocolType>\n        HTTP\n    </protocolType>\n    <parameterFormatType>\n        JSON\n    </parameterFormatType>\n    <addressingFormatType>\n        hostname\n    </addressingFormatType>\n    <host>\n        test\n    </host>\n    <portNo>\n        1\n    </portNo>\n    <httpAuthenticationMethod>\n        MD5digest\n    </httpAuthenticationMethod>\n</HttpHostNotification>"
+          },
+          "response": {
+            "format": "XML",
+            "body": "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n<ResponseStatus xmlns=\"http://www.isapi.org/ver20/XMLSchema\" version=\"2.0\">\n    <requestURL>null</requestURL>\n    <statusCode>0</statusCode>\n    <statusString>OK</statusString>\n    <subStatusCode>OK</subStatusCode>\n</ResponseStatus>"
+          },
+          "status_codes": []
+        },
+        {
+          "name": "Get Parameters for a Listening Host",
+          "summary": "Retrieves the configuration for a single, specific listening host.",
+          "api": {
+            "method": "GET",
+            "endpoint": "/ISAPI/Event/notification/httpHosts/<hostID>?security=<security>&iv=<iv>",
+            "capabilities": null
+          },
+          "request": {
+            "format": "None",
+            "body": "No body required."
+          },
+          "response": {
+            "format": "XML",
+            "body": "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n<HttpHostNotification xmlns=\"http://www.isapi.org/ver20/XMLSchema\" version=\"2.0\">\n    <id>\n        test\n    </id>\n    <url>\n        test\n    </url>\n    <protocolType>\n        HTTP\n    </protocolType>\n    \n</HttpHostNotification>"
+          },
+          "status_codes": [
+            {
+              "code": 200,
+              "meaning": "OK"
+            }
+          ]
+        },
+        {
+          "name": "Test Listening Service",
+          "summary": "Sends a test command to the device to check if the configured listening host is available and reachable.",
+          "api": {
+            "method": "POST",
+            "endpoint": "/ISAPI/Event/notification/httpHosts/<hostID>/test",
+            "capabilities": null
+          },
+          "request": {
+            "format": "None",
+            "body": "No body required."
+          },
+          "response": {
+            "format": "XML",
+            "body": "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n<ResponseStatus xmlns=\"http://www.isapi.org/ver20/XMLSchema\" version=\"2.0\">\n    <requestURL>null</requestURL>\n    <statusCode>0</statusCode>\n    <statusString>OK</statusString>\n    <subStatusCode>OK</subStatusCode>\n</ResponseStatus>"
+          },
+          "status_codes": []
+        }
+      ],
+      "event_message_grammar": {
+        "summary": "Describes the format of the HTTP POST message that the device sends to the listening host when an event occurs. The listening host should respond with HTTP/1.1 200 OK.",
+        "without_binary_data": {
+          "format": "application/xml or application/json",
+          "device_request_example": "POST Request URI HTTP/1.1\nHost: data gateway ip:port\nAccept-Language: zh-cn\nDate: YourDate\nContent-Type: application/xml;\nContent-Length: text length\nConnection: keep-alive\n\n<EventNotificationAlert/>"
+        },
+        "with_binary_data": {
+          "format": "multipart/form-data",
+          "device_request_example": "POST Request URI HTTP/1.1\nHost: device ip:port\nAccept-Language: zh-cn\nDate: YourDate\nContent-Type: multipart/form-data; boundary=<frontier>\nContent-Length: text length\nConnection: keep-alive\n\n--<frontier>\nContent-Disposition: form-data; name=\"Event Type\"\nContent-Type: text/xml\n\n<EventNotificationAlert/>\n--<frontier>\nContent-Disposition: form-data; name=\"Picture Name\"\nContent-Length: image length\nContent-Type: image/jpeg\n\n[picture data]\n--<frontier>--"
+        }
+      }
+    }
+  }

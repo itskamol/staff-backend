@@ -1,0 +1,222 @@
+[
+  {
+    "section_name": "21.17.1 Create a face picture library",
+    "summary": "This endpoint creates a new face picture library.",
+    "api": {
+      "method": "POST",
+      "endpoint": "/ISAPI/Intelligent/FDLib?format=json",
+      "capabilities": {
+        "method": "GET",
+        "endpoint": "/ISAPI/Intelligent/FDLib/capabilities?format=json"
+      }
+    },
+    "request": {
+      "format": "JSON",
+      "body": {
+        "faceLibType": "blackFD,staticFD",
+        "name": "test",
+        "customInfo": "test",
+        "libArmingType": "armingLib",
+        "libAttribute": "blackList",
+        "FDID": "test"
+      }
+    },
+    "response": {
+      "format": "JSON",
+      "body": {
+        "requestURL": "test",
+        "statusCode": 1,
+        "statusString": "ok",
+        "subStatusCode": "ok",
+        "errorCode": 1,
+        "errorMsg": "ok",
+        "FDID": "test"
+      }
+    },
+    "status_codes": []
+  },
+  {
+    "section_name": "21.17.2 Get the total number of face records in all face picture libraries",
+    "summary": "This endpoint retrieves the total count of face records across all face picture libraries.",
+    "api": {
+      "method": "GET",
+      "endpoint": "/ISAPI/Intelligent/FDLib/Count?format=json",
+      "capabilities": {
+        "method": "GET",
+        "endpoint": "/ISAPI/Intelligent/FDLib/capabilities?format=json"
+      }
+    },
+    "request": {
+      "format": "JSON",
+      "body": "None"
+    },
+    "response": {
+      "format": "JSON",
+      "body": {
+        "requestURL": "http://10.7.52.31:8080/kms/services/rest/dataInfoService/downloadFile",
+        "statusCode": 1,
+        "statusString": "ok",
+        "subStatusCode": "ok",
+        "errorCode": 1,
+        "errorMsg": "ok",
+        "FDRecordDataInfo": [
+          {
+            "FDID": "test",
+            "faceLibType": "blackFD",
+            "name": "test",
+            "recordDataNumber": 123,
+            "libArmingType": "armingLib",
+            "libAttribute": "general",
+            "personnelFileEnabled": true
+          }
+        ],
+        "totalRecordDataNumber": 500000,
+        "FDCapacity": {
+          "total": 0.000,
+          "use": 0.000,
+          "remain": 0.000,
+          "maxRecordDataNumber": 0,
+          "useRecordDataNumber": 0,
+          "remainRecordDataNumber": 0
+        }
+      }
+    },
+    "status_codes": []
+  },
+  {
+    "section_name": "21.17.3 Get face picture library capability",
+    "summary": "This endpoint retrieves the capabilities related to face picture library management.",
+    "api": {
+      "method": "GET",
+      "endpoint": "/ISAPI/Intelligent/FDLib/capabilities?format=json"
+    },
+    "request": {
+      "format": "JSON",
+      "body": "None"
+    },
+    "response": {
+      "format": "JSON",
+      "body": {
+        "requestURL": "test",
+        "statusCode": 1,
+        "statusString": "test",
+        "subStatusCode": "test",
+        "errorCode": 1,
+        "errorMsg": "ok",
+        "FDNameMaxLen": 64,
+        "customInfoMaxLen": 192,
+        "FDMaxNum": 3,
+        "FDRecordDataMaxNum": 12345,
+        "supportFDFunction": "post,delete,put,get,setUp",
+        "isSuportFDSearch": true,
+        "isSupportFDSearchDataPackage": true,
+        "isSuportFSsearchByPic": true,
+        "isSuportFSsearchByPicGenerate": true,
+        "isSuportFDSearchDuplicate": true,
+        "isSuportFDSearchDuplicateGenerate": true,
+        "isSuportFCSearch": true,
+        "isSupportFCSearchDataPackage": true,
+        "isSupportFDExecuteControl": true,
+        "generateMaxNum": 1234,
+        "faceLibType": "blackFD,staticFD",
+        "modelMaxNum": 1000,
+        "isSupportModelData": true,
+        "isSuportFDLibArmingType": true,
+        "isSuportFDLibSearch": true,
+        "FDArmingRecordDataMaxNum": 12345,
+        "isSupportControlPersonRecordByHumanId": true,
+        "isSupportControlPersonRecordByRowKey": true,
+        "isSupportFaceLibRebuildCfg": true,
+        "isSupportFDMove": true,
+        "faceURLLen": 1024,
+        "isSupportArmingLibCfg": true,
+        "isSupportModelTransformation": true,
+        "featurePointTypeList": [
+          "face",
+          "leftEye",
+          "rightEye",
+          "leftMouthCorner",
+          "rightMouthCorner",
+          "nose"
+        ],
+        "isSupportPresort": true,
+        "libAttribute": {
+          "@opt": [
+            "general",
+            "blackList",
+            "VIP",
+            "passerby"
+          ]
+        },
+        "faceType": {
+          "@opt": [
+            "normalFace",
+            "patrolFace",
+            "hijackFace",
+            "superFace"
+          ]
+        },
+        "saveFacePic": {
+          "@opt": [
+            true,
+            false
+          ]
+        },
+        "leaderPermission": {
+          "@size": 4,
+          "@min": 1,
+          "@max": 4
+        }
+      }
+    },
+    "status_codes": []
+  },
+  {
+    "section_name": "21.17.4 Get the information, including library ID, library type, name, and custom information, of all face picture libraries",
+    "summary": "This endpoint retrieves information for all face picture libraries, including ID, type, name, and custom details.",
+    "api": {
+      "method": "GET",
+      "endpoint": "/ISAPI/Intelligent/FDLib?security=<security>&iv=<iv>&identityKey=<identityKey>",
+      "capabilities": {
+        "method": "GET",
+        "endpoint": "/ISAPI/Intelligent/FDLib/capabilities"
+      }
+    },
+    "request": {
+      "format": "XML",
+      "body": "None"
+    },
+    "response": {
+      "format": "XML",
+      "body": "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n<FDLibBaseCfgList xmlns=\"http://www.isapi.org/ver20/XMLSchema\" version=\"2.0\">\n\n<FDLibBaseCfg>\n\n<id>\n1\n</id>\n<FDID>\ntest\n</FDID>\n<name>\nfaceLib1\n</name>\n<thresholdValue>\n50\n</thresholdValue>\n<customInfo>\ntest\n</customInfo>\n<customFaceLibID>\ntest\n</customFaceLibID>\n<faceLibType>\nordinary\n</faceLibType>\n<autoUpdata>\ntrue\n</autoUpdata>\n<qualityThreshold>\n50\n</qualityThreshold>\n<importFDThreshold>\n40\n</importFDThreshold>\n<Age>\n\n<judgementCycleType>\nday\n</judgementCycleType>\n<statisticalCycleType>\nmonth\n</statisticalCycleType>\n<statisticalCycle>\n1\n</statisticalCycle>\n<minFMCount>\n1\n</minFMCount>\n<FMCountEnabled>\ntrue\n</FMCountEnabled>\n<FMCount>\n1\n</FMCount>\n<backgoundPicThreshold>\n90\n</backgoundPicThreshold>\n<judgementCycle>\n30\n</judgementCycle>\n</Age>\n<FaceCounting>\n\n<enabled>\ntrue\n</enabled>\n<uploadType>\nnoUpload\n</uploadType>\n</FaceCounting>\n<faceMonitor>\ntrue\n</faceMonitor>\n<monitorFaceNum>\n1\n</monitorFaceNum>\n<customNoConfig>\ntrue\n</customNoConfig>\n<uploadID>\ntest\n</uploadID>\n</FDLibBaseCfg>\n</FDLibBaseCfgList>"
+    },
+    "status_codes": []
+  },
+  {
+    "section_name": "21.17.5 Delete all face picture libraries",
+    "summary": "This endpoint deletes all face picture libraries from the device.",
+    "api": {
+      "method": "DELETE",
+      "endpoint": "/ISAPI/Intelligent/FDLib?format=json",
+      "capabilities": {
+        "method": "GET",
+        "endpoint": "/ISAPI/Intelligent/FDLib/capabilities?format=json"
+      }
+    },
+    "request": {
+      "format": "JSON",
+      "body": "None"
+    },
+    "response": {
+      "format": "JSON",
+      "body": {
+        "statusCode": 1,
+        "statusString": "ok",
+        "subStatusCode": "ok",
+        "errorCode": 1,
+        "errorMsg": "ok"
+      }
+    },
+    "status_codes": []
+  }
+]

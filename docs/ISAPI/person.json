@@ -1,0 +1,134 @@
+{
+  "Person Search": {
+    "summary": "The person search function is for searching the number of persons and person information added to the device. Note: To get the total number of persons, use GET /ISAPI/AccessControl/UserInfo/Count?format=json. [cite: 269, 271]",
+    "api": {
+      "method": "POST",
+      "endpoint": "/ISAPI/AccessControl/UserInfo/Search?format=json",
+      "capabilities": {
+        "method": "GET",
+        "endpoint": "/ISAPI/AccessControl/UserInfo/capabilities?format=json",
+        "request": {
+          "format": "None",
+          "body": "No body required."
+        },
+        "response": {
+          "format": "JSON",
+          "body": "{\n    \"UserInfoCap\": {\n        \"maxResults\": {\n            \"@min\": 1,\n            /*ro, req, int*/\n            \"@max\": 1\n            /*ro, req, int*/\n        },\n        \"userType\": {\n            /*ro, opt, object, person type*/\n            \"@opt\": [\"normal\", \"visitor\", \"blackList\", \"patient\", \"maintenance\"]\n            /*ro, opt, array, subType:string*/\n        },\n        \"hasFace\": {\n            /*ro, opt, object*/\n            \"@opt\": [true, false]\n            /*ro, req, array, subType:bool*/\n        }\n        /*... other capabilities fields ...*/\n    }\n}"
+        }
+      }
+    },
+    "request": {
+      "format": "JSON",
+      "body": "{\n    \"UserInfoSearchCond\": {\n        /*req, object, search condition*/\n        \"searchID\": \"123\",\n        /*req, string, search ID, desc:it is used to confirm the upper-level platform or system. If the platform or the system is the same one during two searching, the search history will be saved in the memory to speed up next searching*/\n        \"searchResultPosition\": 0,\n        /*req, int, the start position of the search result in the result list, desc:in a single search, if you cannot get all the records in the result list, you can mark the end position and get the following records after the marked position in the next search*/\n        \"maxResults\": 30,\n        /*req, int, the maximum number of search results, desc:if maxResults exceeds the range returned by the device capability, the device will return the maximum number of search results according to the device capability and will not report an error*/\n        \"EmployeeNoList\": [\n            /*opt, array, person ID list, subType:object*/\n            {\n                \"employeeNo\": \"1\"\n                /*opt, string, employee No. (person ID)*/\n            }\n        ]\n    }\n}"
+    },
+    "response": {
+      "format": "JSON",
+      "body": "{\n    \"UserInfoSearch\": {\n        /*ro, opt, object*/\n        \"searchID\": \"test\",\n        /*ro, req, string, unique ID of search records*/\n        \"responseStatusStrg\": \"OK\",\n        /*ro, req, enum, searching status description, subType:string, desc:\"OK\" (searching completed), \"MORE\" (searching for more data), \"NO MATCH\" (no matched data)*/\n        \"numOfMatches\": 1,\n        /*ro, req, int, number of results returned this time*/\n        \"totalMatches\": 1,\n        /*ro, req, int, total number of matched results*/\n        \"UserInfo\": [\n            {\n                \"employeeNo\": \"test\",\n                /*ro, req, string, employee No. (person ID)*/\n                \"name\": \"test\",\n                /*ro, req, string, name*/\n                \"userType\": \"normal\",\n                /*ro, req, enum, person type, subType:string, desc:person type*/\n                /* ... other user info fields ... */\n            }\n        ]\n    }\n}"
+    },
+    "status_codes": [
+      {
+        "code": 200,
+        "meaning": "OK"
+      }
+    ]
+  },
+  "Person Adding": {
+    "summary": "Person can be added to the device via the person adding function. [cite_start]If the person has been added to the device, the device will report an error; if the person has not been added to the device, the person will be added to the device. [cite: 285]",
+    "api": {
+      "method": "POST",
+      "endpoint": "/ISAPI/AccessControl/UserInfo/Record?format=json&security=<security>&iv=<iv>",
+      "capabilities": {
+        "method": "GET",
+        "endpoint": "/ISAPI/AccessControl/UserInfo/capabilities?format=json",
+        "request": {
+          "format": "None",
+          "body": "No body required."
+        },
+        "response": {
+          "format": "JSON",
+          "body": "{\n    \"UserInfoCap\": {\n        /* ... capabilities fields ... */\n        \"RightPlan\": {\n            /*ro, opt, object*/\n            \"doorNo\": {\n                \"@min\": 1, \"@max\": 1\n            },\n            \"planTemplateNo\": {\n                 \"@min\": 1, \"@max\": 1\n            }\n        }\n    }\n}"
+        }
+      }
+    },
+    "request": {
+      "format": "JSON",
+      "body": "{\n    \"UserInfo\": {\n        /*req, object, person information*/\n        \"employeeNo\": \"test\",\n        /*req, string, employee No. (person ID)*/\n        \"name\": \"test\",\n        /*req, string, name*/\n        \"userType\": \"normal\",\n        /*req, enum, person type, subType:string*/\n        \"Valid\": {\n            /*opt, object, validity period*/\n            \"enable\": true,\n            /*req, bool, whether to enable validity period*/\n            \"beginTime\": \"1970-01-01T00:00:00\",\n            /*opt, datetime, start time of the validity period*/\n            \"endTime\": \"2037-12-31T23:59:59\",\n            /*opt, datetime, end time of the validity period*/\n            \"timeType\": \"local\"\n            /*opt, string, time type*/\n        },\n        \"doorRight\": \"1\",\n        /*opt, string, No. of door with access permission*/\n        \"RightPlan\": [\n            {\n                \"doorNo\": 1,\n                /*req, int, door No.*/\n                \"planTemplateNo\": \"1\"\n                /*req, string, schedule template No.*/\n            }\n        ],\n        \"userVerifyMode\": \"cardOrFaceOrFp\",\n         /*opt, enum, person authentication mode, subType:string*/\n        \"checkUser\": true\n        /*opt, bool, whether to verify the duplicated person information*/\n    }\n}"
+    },
+    "response": {
+      "format": "JSON",
+      "body": "{\n    \"statusCode\": 1,\n    /*ro, opt, int, status code, desc:1 (succeeded). It is required when an error occurred*/\n    \"statusString\": \"ok\",\n    /*ro, opt, string, status description, range:[1,64], desc:\"ok\" (succeeded). It is required when an error occurred*/\n    \"subStatusCode\": \"ok\",\n    /*ro, opt, string, sub status code, range:[1,64], desc:\"ok\" (succeeded). It is required when an error occurred*/\n    \"errorCode\": 1,\n    /*ro, opt, int, error code, desc:when the value of statusCode is not 1, it corresponds to subStatusCode*/\n    \"errorMsg\": \"ok\"\n    /*ro, opt, string, error information, desc:this field is required when the value of statusCode is not 1*/\n}"
+    },
+    "status_codes": [
+      {
+        "code": 200,
+        "meaning": "OK"
+      }
+    ]
+  },
+  "Person Information Editing": {
+    "summary": "Person information added to the device can be edited via the person information editing function. [cite_start]If the person has been added to the device, the person information will be edited; if the person has not been added to the device, the device will report an error. [cite: 293, 294]",
+    "api": {
+      "method": "PUT",
+      "endpoint": "/ISAPI/AccessControl/UserInfo/Modify?format=json&security=<security>&iv=<iv>",
+      "capabilities": {
+        "method": "GET",
+        "endpoint": "/ISAPI/AccessControl/UserInfo/capabilities?format=json",
+        "request": {
+          "format": "None",
+          "body": "No body required."
+        },
+        "response": {
+          "format": "JSON",
+          "body": "{\n    \"UserInfoCap\": {\n        /* ... capabilities fields identical to Person Search ... */\n    }\n}"
+        }
+      }
+    },
+    "request": {
+      "format": "JSON",
+      "body": "{\n    \"UserInfo\": {\n        /*req, object, person information*/\n        \"employeeNo\": \"test\",\n        /*req, string, employee No. (person ID)*/\n        \"name\": \"test\",\n        /*opt, string, name*/\n        \"userType\": \"normal\",\n        /*opt, enum, person type, subType:string*/\n        \"closeDelayEnabled\": true,\n        /*opt, bool, whether to enable door close delay*/\n        \"Valid\": {\n            /*opt, object, validity period*/\n            \"enable\": true,\n            /*req, bool, whether to enable validity period*/\n            \"beginTime\": \"1970-01-01T00:00:00\",\n            \"endTime\": \"2037-12-31T23:59:59\",\n            \"timeType\": \"local\"\n        },\n        \"doorRight\": \"1\",\n        /*opt, string, door permission*/\n        \"RightPlan\": [\n            {\n                \"doorNo\": 1,\n                \"planTemplateNo\": \"1\"\n            }\n        ]\n    }\n}"
+    },
+    "response": {
+      "format": "JSON",
+      "body": "{\n    \"statusCode\": 1,\n    /*ro, opt, int, status code*/\n    \"statusString\": \"ok\",\n    /*ro, opt, string, status description*/\n    \"subStatusCode\": \"ok\",\n    /*ro, opt, string, sub status code*/\n    \"errorCode\": 1,\n    /*ro, opt, int, error code*/\n    \"errorMsg\": \"ok\"\n    /*ro, opt, string, error information*/\n}"
+    },
+    "status_codes": [
+      {
+        "code": 200,
+        "meaning": "OK"
+      }
+    ]
+  },
+  "Person Deleting": {
+    "summary": "The person added to the device can be deleted via the person deleting function. The device will not report an error if the person to be deleted is not added to the device. [cite_start]This is an asynchronous operation; after calling, use GET /ISAPI/AccessControl/UserInfoDetail/DeleteProcess to check the progress. [cite: 301, 302]",
+    "api": {
+      "method": "PUT",
+      "endpoint": "/ISAPI/AccessControl/UserInfoDetail/Delete?format=json",
+      "capabilities": {
+        "method": "GET",
+        "endpoint": "/ISAPI/AccessControl/capabilities",
+        "request": {
+          "format": "None",
+          "body": "No body required."
+        },
+        "response": {
+          "format": "JSON",
+          "body": "{\n    \"AccessControlCap\": {\n        \"isSupportUserInfoDetailDelete\": true\n        /*ro, opt, bool, whether it supports deleting person information in detail*/\n    }\n}"
+        }
+      }
+    },
+    "request": {
+      "format": "JSON",
+      "body": "{\n    \"UserInfoDetail\": {\n        /*opt, object, user Information*/\n        \"mode\": \"all\",\n        /*req, enum, deleting mode, subType:string, desc:deleting mode*/\n        \"EmployeeNoList\": [\n            /*opt, array, person ID list, subType:object*/\n            {\n                \"employeeNo\": \"test\"\n                /*opt, string, employee No. (person ID)*/\n            }\n        ]\n    }\n}"
+    },
+    "response": {
+      "format": "JSON",
+      "body": "{\n    \"statusCode\": 1,\n    /*ro, opt, int, status code, desc:1 (succeeded). It is required when an error occurred*/\n    \"statusString\": \"ok\",\n    /*ro, opt, string, status description, range:[1,64], desc:\"ok\" (succeeded). It is required when an error occurred*/\n    \"subStatusCode\": \"ok\",\n    /*ro, opt, string, sub status code, range:[1,64], desc:\"ok\" (succeeded). It is required when an error occurred*/\n    \"errorCode\": 1,\n    /*ro, opt, int, error code, desc:when the value of statusCode is not 1, it corresponds to subStatusCode*/\n    \"errorMsg\": \"ok\"\n    /*ro, opt, string, error information, desc:this field is required when the value of statusCode is not 1*/\n}"
+    },
+    "status_codes": [
+      {
+        "code": 200,
+        "meaning": "OK"
+      }
+    ]
+  }
+}

@@ -1,0 +1,542 @@
+[
+  {
+    "section_name": "21.34.1 Get the holiday group configuration capability of the control schedule of the card reader authentication mode",
+    "summary": "Retrieves the capabilities for configuring holiday groups for the card reader authentication mode schedule.",
+    "api": {
+      "method": "GET",
+      "endpoint": "/ISAPI/AccessControl/VerifyHolidayGroupCfg/capabilities?format=json"
+    },
+    "request": {
+      "format": "JSON",
+      "body": "None"
+    },
+    "response": {
+      "format": "JSON",
+      "body": {
+        "VerifyHolidayGroupCfg": {
+          "groupNo": {
+            "@min": 1,
+            "@max": 16
+          },
+          "enable": "true,false",
+          "groupName": {
+            "@min": 1,
+            "@max": 32
+          },
+          "holidayPlanNo": {
+            "@min": 1,
+            "@max": 16
+          }
+        }
+      }
+    },
+    "status_codes": []
+  },
+  {
+    "section_name": "21.34.2 Get the schedule template configuration capability of the card reader authentication mode",
+    "summary": "Retrieves the capabilities for configuring schedule templates for the card reader authentication mode.",
+    "api": {
+      "method": "GET",
+      "endpoint": "/ISAPI/AccessControl/VerifyPlanTemplate/capabilities?format=json"
+    },
+    "request": {
+      "format": "JSON",
+      "body": "None"
+    },
+    "response": {
+      "format": "JSON",
+      "body": {
+        "VerifyPlanTemplate": {
+          "templateNo": {
+            "@min": 1,
+            "@max": 16
+          },
+          "enable": "true,false",
+          "templateName": {
+            "@min": 1,
+            "@max": 32
+          },
+          "weekPlanNo": {
+            "@min": 1,
+            "@max": 16
+          },
+          "holidayGroupNo": {
+            "@min": 1,
+            "@max": 16
+          }
+        }
+      }
+    },
+    "status_codes": []
+  },
+  {
+    "section_name": "21.34.3 Get the control schedule configuration parameters of the card reader authentication mode",
+    "summary": "Retrieves the control schedule configuration for a specific card reader's authentication mode.",
+    "api": {
+      "method": "GET",
+      "endpoint": "/ISAPI/AccessControl/CardReaderPlan/<cardReaderID>?format=json",
+      "capabilities": {
+        "method": "GET",
+        "endpoint": "/ISAPI/AccessControl/CardReaderPlan/capabilities?format=json"
+      }
+    },
+    "request": {
+      "format": "JSON",
+      "body": "None"
+    },
+    "response": {
+      "format": "JSON",
+      "body": {
+        "CardReaderPlan": {
+          "templateNo": 1
+        }
+      }
+    },
+    "status_codes": []
+  },
+  {
+    "section_name": "21.34.4 Set control schedule parameters of card reader authentication mode",
+    "summary": "Sets the control schedule parameters for a specific card reader's authentication mode.",
+    "api": {
+      "method": "PUT",
+      "endpoint": "/ISAPI/AccessControl/CardReaderPlan/<cardReaderID>?format=json",
+      "capabilities": {
+        "method": "GET",
+        "endpoint": "/ISAPI/AccessControl/CardReaderPlan/capabilities?format=json"
+      }
+    },
+    "request": {
+      "format": "JSON",
+      "body": {
+        "CardReaderPlan": {
+          "templateNo": 1
+        }
+      }
+    },
+    "response": {
+      "format": "JSON",
+      "body": {
+        "statusCode": 1,
+        "statusString": "ok",
+        "subStatusCode": "ok",
+        "errorCode": 1,
+        "errorMsg": "ok"
+      }
+    },
+    "status_codes": []
+  },
+  {
+    "section_name": "21.34.5 Get the control schedule configuration capability of the card reader authentication mode",
+    "summary": "Retrieves the capabilities for configuring the control schedule of the card reader authentication mode.",
+    "api": {
+      "method": "GET",
+      "endpoint": "/ISAPI/AccessControl/CardReaderPlan/capabilities?format=json"
+    },
+    "request": {
+      "format": "JSON",
+      "body": "None"
+    },
+    "response": {
+      "format": "JSON",
+      "body": {
+        "CardReaderPlan": {
+          "cardReaderNo": {
+            "@min": 1,
+            "@max": 4,
+            "@opt": [
+              1,
+              4
+            ]
+          },
+          "templateNo": {
+            "@min": 1,
+            "@max": 16,
+            "@opt": [
+              65535,
+              65534,
+              65533
+            ]
+          },
+          "verifyMode": {
+            "@opt": "cardAndPw,card,cardOrPw,fp,fpAndPw,fpOrCard,fpAndCard,fpAndCardAndPw,faceOrFpOrCardOrPw,faceAndFp,faceAndPw,faceAndCard,face,employeeNoAndPw,fpOrPw,employeeNoAndFp,employeeNoAndFpAndPw,faceAndFpAndCard,faceAndPwAndFp,employeeNoAndFace,faceOrfaceAndCard,fpOrface,cardOrfaceOrPw,cardOrFace,cardOrFaceOrFp,cardOrFpOrPw,faceOrPw,employeeNoAndFaceAndPw,cardOrFaceOrFaceAndCard,iris,faceOrFpOrCardOrPwOrIris,faceOrCardOrPwOrIris,sleep,invalid"
+          }
+        }
+      }
+    },
+    "status_codes": []
+  },
+  {
+    "section_name": "21.34.6 Get holiday schedule parameters of the card reader authentication mode",
+    "summary": "Retrieves the holiday schedule parameters for a specific card reader's authentication mode.",
+    "api": {
+      "method": "GET",
+      "endpoint": "/ISAPI/AccessControl/VerifyHolidayPlanCfg/<holidayPlanID>?format=json",
+      "capabilities": {
+        "method": "GET",
+        "endpoint": "/ISAPI/AccessControl/VerifyHolidayPlanCfg/capabilities?format=json"
+      }
+    },
+    "request": {
+      "format": "JSON",
+      "body": "None"
+    },
+    "response": {
+      "format": "JSON",
+      "body": {
+        "VerifyHolidayPlanCfg": {
+          "enable": true,
+          "beginDate": "1970-01-01",
+          "endDate": "1970-01-02",
+          "HolidayPlanCfg": [
+            {
+              "id": 1,
+              "enable": true,
+              "verifyMode": "cardAndPw",
+              "TimeSegment": {
+                "beginTime": "00:00:00",
+                "endTime": "10:00:00"
+              }
+            }
+          ]
+        }
+      }
+    },
+    "status_codes": []
+  },
+  {
+    "section_name": "21.34.7 Set holiday schedule parameters of card reader authentication mode",
+    "summary": "Sets the holiday schedule parameters for a card reader's authentication mode.",
+    "api": {
+      "method": "PUT",
+      "endpoint": "/ISAPI/AccessControl/VerifyHolidayPlanCfg/<holidayPlanID>?format=json",
+      "capabilities": {
+        "method": "GET",
+        "endpoint": "/ISAPI/AccessControl/VerifyHolidayPlanCfg/capabilities?format=json"
+      }
+    },
+    "request": {
+      "format": "JSON",
+      "body": {
+        "VerifyHolidayPlanCfg": {
+          "enable": true,
+          "beginDate": "1970-01-01",
+          "endDate": "1970-01-02",
+          "HolidayPlanCfg": [
+            {
+              "id": 1,
+              "enable": true,
+              "verifyMode": "cardAndPw",
+              "TimeSegment": {
+                "beginTime": "00:00:00",
+                "endTime": "10:00:00"
+              }
+            }
+          ]
+        }
+      }
+    },
+    "response": {
+      "format": "JSON",
+      "body": {
+        "statusCode": 1,
+        "statusString": "ok",
+        "subStatusCode": "ok",
+        "errorCode": 1,
+        "errorMsg": "ok"
+      }
+    },
+    "status_codes": []
+  },
+  {
+    "section_name": "21.34.8 Get the week schedule configuration parameters of the card reader authentication mode",
+    "summary": "Retrieves the week schedule configuration parameters for a specific card reader's authentication mode.",
+    "api": {
+      "method": "GET",
+      "endpoint": "/ISAPI/AccessControl/VerifyWeekPlanCfg/<weekPlanID>?format=json",
+      "capabilities": {
+        "method": "GET",
+        "endpoint": "/ISAPI/AccessControl/VerifyWeekPlanCfg/capabilities?format=json"
+      }
+    },
+    "request": {
+      "format": "JSON",
+      "body": "None"
+    },
+    "response": {
+      "format": "JSON",
+      "body": {
+        "VerifyWeekPlanCfg": {
+          "enable": true,
+          "WeekPlanCfg": [
+            {
+              "week": "Monday",
+              "id": 1,
+              "enable": true,
+              "verifyMode": "cardAndPw",
+              "TimeSegment": {
+                "beginTime": "00:00:00",
+                "endTime": "10:00:00"
+              }
+            }
+          ]
+        }
+      }
+    },
+    "status_codes": []
+  },
+  {
+    "section_name": "21.34.9 Set the week schedule parameters of the card reader authentication mode",
+    "summary": "Sets the week schedule parameters for a card reader's authentication mode.",
+    "api": {
+      "method": "PUT",
+      "endpoint": "/ISAPI/AccessControl/VerifyWeekPlanCfg/<weekPlanID>?format=json",
+      "capabilities": {
+        "method": "GET",
+        "endpoint": "/ISAPI/AccessControl/VerifyWeekPlanCfg/capabilities?format=json"
+      }
+    },
+    "request": {
+      "format": "JSON",
+      "body": {
+        "VerifyWeekPlanCfg": {
+          "enable": true,
+          "WeekPlanCfg": [
+            {
+              "week": "Monday",
+              "id": 1,
+              "enable": true,
+              "verifyMode": "cardAndPw",
+              "TimeSegment": {
+                "beginTime": "00:00:00",
+                "endTime": "10:00:00"
+              }
+            }
+          ]
+        }
+      }
+    },
+    "response": {
+      "format": "JSON",
+      "body": {
+        "statusCode": 1,
+        "statusString": "ok",
+        "subStatusCode": "ok",
+        "errorCode": 1,
+        "errorMsg": "ok"
+      }
+    },
+    "status_codes": []
+  },
+  {
+    "section_name": "21.34.10 Get the holiday schedule configuration capability of the card reader authentication mode",
+    "summary": "Retrieves the capabilities for configuring the holiday schedule of the card reader authentication mode.",
+    "api": {
+      "method": "GET",
+      "endpoint": "/ISAPI/AccessControl/VerifyHolidayPlanCfg/capabilities?format=json"
+    },
+    "request": {
+      "format": "JSON",
+      "body": "None"
+    },
+    "response": {
+      "format": "JSON",
+      "body": {
+        "VerifyHolidayPlanCfg": {
+          "planNo": {
+            "@min": 1,
+            "@max": 16
+          },
+          "enable": "true,false",
+          "beginDate": "1970-01-01",
+          "endDate": "1970-01-01",
+          "HolidayPlanCfg": {
+            "maxSize": 8,
+            "id": {
+              "@min": 1,
+              "@max": 8
+            },
+            "enable": "true,false",
+            "verifyMode": {
+              "@opt": "cardAndPw,card,cardOrPw,fp,fpAndPw,fpOrCard,fpAndCard,fpAndCardAndPw,faceOrFpOrCardOrPw,faceAndFp,faceAndPw,faceAndCard,face,employeeNoAndPw,fpOrPw,employeeNoAndFp,employeeNoAndFpAndPw,faceAndFpAndCard,faceAndPwAndFp,employeeNoAndFace,faceOrfaceAndCard,fpOrface,cardOrfaceOrPw,cardOrFace,cardOrFaceOrFp,cardOrFpOrPw,faceOrPw,employeeNoAndFaceAndPw,cardOrFaceOrFaceAndCard,faceOrFpOrPw,iris,faceOrFpOrCardOrPwOrIris,faceOrCardOrPwOrIris,sleep,invalid"
+            },
+            "TimeSegment": {
+              "beginTime": "00:00:00",
+              "endTime": "00:00:00",
+              "validUnit": "minute"
+            }
+          }
+        }
+      }
+    },
+    "status_codes": []
+  },
+  {
+    "section_name": "21.34.11 Get the week schedule configuration capability of the card reader authentication mode",
+    "summary": "Retrieves the capabilities for configuring the weekly schedule of the card reader authentication mode.",
+    "api": {
+      "method": "GET",
+      "endpoint": "/ISAPI/AccessControl/VerifyWeekPlanCfg/capabilities?format=json"
+    },
+    "request": {
+      "format": "JSON",
+      "body": "None"
+    },
+    "response": {
+      "format": "JSON",
+      "body": {
+        "VerifyWeekPlanCfg": {
+          "planNo": {
+            "@min": 1,
+            "@max": 16,
+            "@opt": [
+              65535
+            ]
+          },
+          "enable": "true,false",
+          "WeekPlanCfg": {
+            "maxSize": 56,
+            "week": {
+              "@opt": "Monday,Tuesday,Wednesday,Thursday,Friday,Saturday,Sunday"
+            },
+            "id": {
+              "@min": 1,
+              "@max": 8
+            },
+            "enable": "true,false",
+            "verifyMode": {
+              "@opt": "cardAndPw,card,cardOrPw,fp,fpAndPw,fpOrCard,fpAndCard,fpAndCardAndPw,faceOrFpOrCardOrPw,faceAndFp,faceAndPw,faceAndCard,face,employeeNoAndPw,fpOrPw,employeeNoAndFp,employeeNoAndFpAndPw,faceAndFpAndCard,faceAndPwAndFp,employeeNoAndFace,faceOrfaceAndCard,fpOrface,cardOrfaceOrPw,cardOrFace,cardOrFaceOrFp,cardOrFpOrPw,faceOrPw,employeeNoAndFaceAndPw,cardOrFaceOrFaceAndCard,faceOrFpOrPw,iris,faceOrFpOrCardOrPwOrIris,faceOrCardOrPwOrIris,sleep,invalid"
+            },
+            "TimeSegment": {
+              "beginTime": "00:00:00",
+              "endTime": "10:00:00",
+              "validUnit": "minute"
+            }
+          }
+        }
+      }
+    },
+    "status_codes": []
+  },
+  {
+    "section_name": "21.34.12 Set holiday group parameters of control schedule of card reader authentication mode",
+    "summary": "Sets the holiday group parameters for the control schedule of a card reader's authentication mode.",
+    "api": {
+      "method": "PUT",
+      "endpoint": "/ISAPI/AccessControl/VerifyHolidayGroupCfg/<holidayGroupID>?format=json",
+      "capabilities": {
+        "method": "GET",
+        "endpoint": "/ISAPI/AccessControl/VerifyHolidayGroupCfg/capabilities?format=json"
+      }
+    },
+    "request": {
+      "format": "JSON",
+      "body": {
+        "VerifyHolidayGroupCfg": {
+          "enable": true,
+          "groupName": "test",
+          "holidayPlanNo": "1,3,5"
+        }
+      }
+    },
+    "response": {
+      "format": "JSON",
+      "body": {
+        "statusCode": 1,
+        "statusString": "ok",
+        "subStatusCode": "ok",
+        "errorCode": 1,
+        "errorMsg": "ok"
+      }
+    },
+    "status_codes": []
+  },
+  {
+    "section_name": "21.34.13 Set the schedule template parameters of the card reader authentication mode",
+    "summary": "Sets the schedule template parameters for the card reader authentication mode.",
+    "api": {
+      "method": "PUT",
+      "endpoint": "/ISAPI/AccessControl/VerifyPlanTemplate/<planTemplateID>?format=json",
+      "capabilities": {
+        "method": "GET",
+        "endpoint": "/ISAPI/AccessControl/VerifyPlanTemplate/capabilities?format=json"
+      }
+    },
+    "request": {
+      "format": "JSON",
+      "body": {
+        "VerifyPlanTemplate": {
+          "enable": true,
+          "templateName": "test",
+          "weekPlanNo": 1,
+          "holidayGroupNo": "1,3,5"
+        }
+      }
+    },
+    "response": {
+      "format": "JSON",
+      "body": {
+        "statusCode": 1,
+        "statusString": "ok",
+        "subStatusCode": "ok",
+        "errorCode": 1,
+        "errorMsg": "ok"
+      }
+    },
+    "status_codes": []
+  },
+  {
+    "section_name": "21.34.14 Get the schedule template parameters of card reader authentication mode",
+    "summary": "Retrieves the schedule template parameters for a specific card reader's authentication mode.",
+    "api": {
+      "method": "GET",
+      "endpoint": "/ISAPI/AccessControl/VerifyPlanTemplate/<planTemplateID>?format=json",
+      "capabilities": {
+        "method": "GET",
+        "endpoint": "/ISAPI/AccessControl/VerifyPlanTemplate/capabilities?format=json"
+      }
+    },
+    "request": {
+      "format": "JSON",
+      "body": "None"
+    },
+    "response": {
+      "format": "JSON",
+      "body": {
+        "VerifyPlanTemplate": {
+          "enable": true,
+          "templateName": "test",
+          "weekPlanNo": 1,
+          "holidayGroupNo": "1,3,5"
+        }
+      }
+    },
+    "status_codes": []
+  },
+  {
+    "section_name": "21.34.15 Get the holiday group configuration parameters of the control schedule of the card reader authentication mode",
+    "summary": "Retrieves the holiday group configuration parameters for the control schedule of a specific card reader's authentication mode.",
+    "api": {
+      "method": "GET",
+      "endpoint": "/ISAPI/AccessControl/VerifyHolidayGroupCfg/<holidayGroupID>?format=json",
+      "capabilities": {
+        "method": "GET",
+        "endpoint": "/ISAPI/AccessControl/VerifyHolidayGroupCfg/capabilities?format=json"
+      }
+    },
+    "request": {
+      "format": "JSON",
+      "body": "None"
+    },
+    "response": {
+      "format": "JSON",
+      "body": {
+        "VerifyHolidayGroupCfg": {
+          "enable": true,
+          "groupName": "test",
+          "holidayPlanNo": "1,3,5"
+        }
+      }
+    },
+    "status_codes": []
+  }
+]

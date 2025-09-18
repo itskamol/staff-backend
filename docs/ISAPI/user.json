@@ -1,0 +1,130 @@
+{
+  "User Management": {
+    "login_by_digest": {
+      "summary": "Checks user credentials via digest authentication and returns the login status, including password strength and account lock status.",
+      "api": {
+        "method": "GET",
+        "endpoint": "/ISAPI/Security/userCheck",
+        "capabilities": null
+      },
+      "request": {
+        "format": "None",
+        "body": "No body required. Authentication is handled via Digest Auth headers."
+      },
+      "response": {
+        "format": "XML",
+        "body": "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n<userCheck xmlns=\"http://www.isapi.org/ver20/XMLSchema\" version=\"2.0\">\n    \n    <statusValue>\n        200\n    </statusValue>\n    <statusString>\n        OK\n    </statusString>\n    <isDefaultPassword>\n        true\n    </isDefaultPassword>\n    <isRiskPassword>\n        true\n    </isRiskPassword>\n    <isActivated>\n        true\n    </isActivated>\n    <residualValidity>\n        0\n    </residualValidity>\n    <lockStatus>\n        unlock\n    </lockStatus>\n    <unlockTime>\n        1\n    </unlockTime>\n    <retryLoginTime>\n        1\n    </retryLoginTime>\n</userCheck>"
+      },
+      "status_codes": [
+        {
+          "code": 200,
+          "meaning": "OK (Indicates successful HTTP transaction; check statusValue in body for auth result)"
+        },
+        {
+          "code": 401,
+          "meaning": "Unauthorized"
+        }
+      ]
+    },
+    "set_single_user": {
+      "summary": "Sets or modifies information for a single user account. Requires administrator password confirmation within the request body for security.",
+      "api": {
+        "method": "PUT",
+        "endpoint": "/ISAPI/Security/users/<indexID>?security=<security>&iv=<iv>",
+        "capabilities": null
+      },
+      "request": {
+        "format": "XML",
+        "body": "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n<User xmlns=\"http://www.isapi.org/ver20/XMLSchema\" version=\"2.0\">\n    \n    <id>\n        1\n    </id>\n    <enabled>\n        true\n    </enabled>\n    <userName>\n        test\n    </userName>\n    <password>\n        test\n    </password>\n    <userLevel>\n        Administrator\n    </userLevel>\n    <loginPassword>\n        King726014\n    </loginPassword>\n</User>"
+      },
+      "response": {
+        "format": "XML",
+        "body": "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n<ResponseStatus xmlns=\"http://www.isapi.org/ver20/XMLSchema\" version=\"2.0\">\n    \n    <requestURL>\n        null\n    </requestURL>\n    <statusCode>\n        0\n    </statusCode>\n    <statusString>\n        OK\n    </statusString>\n    <subStatusCode>\n        OK\n    </subStatusCode>\n    <lockStatus>\n        lock\n    </lockStatus>\n    <retryTimes>\n        1\n    </retryTimes>\n</ResponseStatus>"
+      },
+      "status_codes": []
+    },
+    "get_single_user": {
+      "summary": "Retrieves the configuration details for a specific user, excluding sensitive information like passwords.",
+      "api": {
+        "method": "GET",
+        "endpoint": "/ISAPI/Security/users/<indexID>?security=<security>&iv=<iv>",
+        "capabilities": null
+      },
+      "request": {
+        "format": "None",
+        "body": "No body required."
+      },
+      "response": {
+        "format": "XML",
+        "body": "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n<User xmlns=\"http://www.isapi.org/ver20/XMLSchema\" version=\"2.0\">\n    \n    <id>\n        1\n    </id>\n    <enabled>\n        true\n    </enabled>\n    <userName>\n        test\n    </userName>\n    <userLevel>\n        Administrator\n    </userLevel>\n    <userActivationStatus>\n        true\n    </userActivationStatus>\n    \n</User>"
+      },
+      "status_codes": [
+        {
+          "code": 200,
+          "meaning": "OK"
+        }
+      ]
+    },
+    "get_single_user_capabilities": {
+      "summary": "Retrieves the configuration capabilities for a user, such as field constraints (min/max length) and allowed values for enumerated fields.",
+      "api": {
+        "method": "GET",
+        "endpoint": "/ISAPI/Security/users/<indexID>/capabilities",
+        "capabilities": null
+      },
+      "request": {
+        "format": "None",
+        "body": "No body required."
+      },
+      "response": {
+        "format": "XML",
+        "body": "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n<User xmlns=\"http://www.isapi.org/ver20/XMLSchema\" version=\"2.0\">\n    \n    <id min=\"1\" max=\"64\">\n        1\n    </id>\n    <enabled opt=\"true, false\">\n        true\n    </enabled>\n    <userName min=\"1\" max=\"32\">\n        test\n    </userName>\n    <password min=\"1\" max=\"16\">\n        null\n    </password>\n    <userLevel opt=\"Administrator, Operator, Viewer, installer, manufacturer, single, installerAdmin, installEmployee, Employee, DepartmentManager\">\n        Administrator\n    </userLevel>\n    \n</User>"
+      },
+      "status_codes": [
+        {
+          "code": 200,
+          "meaning": "OK"
+        }
+      ]
+    },
+    "get_all_users": {
+      "summary": "Retrieves a list of all user accounts configured on the device.",
+      "api": {
+        "method": "GET",
+        "endpoint": "/ISAPI/Security/users?security=<security>&iv=<iv>",
+        "capabilities": null
+      },
+      "request": {
+        "format": "None",
+        "body": "No body required."
+      },
+      "response": {
+        "format": "XML",
+        "body": "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n<UserList xmlns=\"http://www.isapi.org/ver20/XMLSchema\" version=\"2.0\">\n    \n    <User>\n        \n        <id>\n            1\n        </id>\n        <enabled>\n            true\n        </enabled>\n        <userName>\n            test\n        </userName>\n        <userLevel>\n            Administrator\n        </userLevel>\n        \n    </User>\n    \n</UserList>"
+      },
+      "status_codes": [
+        {
+          "code": 200,
+          "meaning": "OK"
+        }
+      ]
+    },
+    "set_all_users": {
+      "summary": "Sets or modifies information for multiple users in a single batch request. Requires administrator password confirmation.",
+      "api": {
+        "method": "PUT",
+        "endpoint": "/ISAPI/Security/users?security=<security>&iv=<iv>",
+        "capabilities": null
+      },
+      "request": {
+        "format": "XML",
+        "body": "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n<UserList xmlns=\"http://www.isapi.org/ver20/XMLSchema\" version=\"2.0\">\n    \n    <User>\n        \n        <id>\n            1\n        </id>\n        <enabled>\n            true\n        </enabled>\n        <userName>\n            test\n        </userName>\n        <password>\n            test\n        </password>\n        <userLevel>\n            Administrator\n        </userLevel>\n        <loginPassword>\n            King726014\n        </loginPassword>\n    </User>\n    \n</UserList>"
+      },
+      "response": {
+        "format": "XML",
+        "body": "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n<ResponseStatus xmlns=\"http://www.isapi.org/ver20/XMLSchema\" version=\"2.0\">\n    <requestURL>null</requestURL>\n    <statusCode>0</statusCode>\n    <statusString>OK</statusString>\n    <subStatusCode>OK</subStatusCode>\n    <lockStatus>lock</lockStatus>\n    <retryTimes>1</retryTimes>\n</ResponseStatus>"
+      },
+      "status_codes": []
+    }
+  }
+}

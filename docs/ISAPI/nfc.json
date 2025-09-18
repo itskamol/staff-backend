@@ -1,0 +1,1008 @@
+[
+    {
+      "section_name": "21.30.1 Get the configuration capability of enabling NFC (Near-Field Communication) function",
+      "summary": "Retrieves the capabilities related to the NFC (Near-Field Communication) function.",
+      "api": {
+        "method": "GET",
+        "endpoint": "/ISAPI/AccessControl/Configuration/NFCCfg/capabilities?format=json"
+      },
+      "request": {
+        "format": "JSON",
+        "body": "None"
+      },
+      "response": {
+        "format": "JSON",
+        "body": {
+          "NFCCfgCap": {
+            "enable": "true,false"
+          }
+        }
+      },
+      "status_codes": []
+    },
+    {
+      "section_name": "21.30.2 Get the capability of configuring card No. authentication rule",
+      "summary": "Retrieves the capabilities for configuring card number authentication and verification rules.",
+      "api": {
+        "method": "GET",
+        "endpoint": "/ISAPI/AccessControl/CardVerificationRule/capabilities?format=json"
+      },
+      "request": {
+        "format": "JSON",
+        "body": "None"
+      },
+      "response": {
+        "format": "JSON",
+        "body": {
+          "CardVerificationRuleCap": {
+            "cardNoLenMode": {
+              "@opt": [
+                "full",
+                "4Bytes",
+                "3Bytes",
+                "wiegand27",
+                "wiegand35",
+                "Corporate1000_35",
+                "Corporate1000_48",
+                "H10302_37",
+                "H10304_37",
+                "wiegand_26CSN",
+                "H103130_32CSN",
+                "wiegand_56CSN",
+                "wiegand_58"
+              ]
+            },
+            "CardVerificationRuleRes": {
+              "checkStatus": {
+                "@opt": [
+                  "continue",
+                  "ok",
+                  "duplicate"
+                ]
+              },
+              "progress": {
+                "@min": 0,
+                "@max": 0
+              }
+            },
+            "reverseCardNoEnabled": {
+              "@opt": [
+                true,
+                false
+              ]
+            }
+          }
+        }
+      },
+      "status_codes": []
+    },
+    {
+      "section_name": "21.30.3 Set Wiegand parameters",
+      "summary": "Configures the Wiegand protocol parameters for a specific Wiegand interface.",
+      "api": {
+        "method": "PUT",
+        "endpoint": "/ISAPI/AccessControl/WiegandCfg/wiegandNo/<wiegandID>",
+        "capabilities": {
+          "method": "GET",
+          "endpoint": "/ISAPI/AccessControl/WiegandCfg/capabilities"
+        }
+      },
+      "request": {
+        "format": "XML",
+        "body": "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n<WiegandCfg xmlns=\"http://www.isapi.org/ver20/XMLSchema\" version=\"2.0\">\n\n<communicateDirection>\nreceive\n</communicateDirection>\n<wiegandMode>\nwiegand26\n</wiegandMode>\n<inputWiegandMode>\nwiegand26\n</inputWiegandMode>\n<signalInterval>\n1\n</signalInterval>\n<enable>\ntrue\n</enable>\n<pulseDuration>\n1\n</pulseDuration>\n<facilityCodeEnabled>\ntrue\n</facilityCodeEnabled>\n<facilityCode>\n1\n</facilityCode>\n<dataType>\nemployeeNo\n</dataType>\n</WiegandCfg>"
+      },
+      "response": {
+        "format": "XML",
+        "body": "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n<ResponseStatus xmlns=\"http://www.isapi.org/ver20/XMLSchema\" version=\"2.0\">\n\n<requestURL>\nnull\n</requestURL>\n<statusCode>\n0\n</statusCode>\n<statusString>\nOK\n</statusString>\n<subStatusCode>\nOK\n</subStatusCode>\n</ResponseStatus>"
+      },
+      "status_codes": []
+    },
+    {
+      "section_name": "21.30.4 Get Wiegand parameters",
+      "summary": "Retrieves the Wiegand protocol parameters for a specific Wiegand interface.",
+      "api": {
+        "method": "GET",
+        "endpoint": "/ISAPI/AccessControl/WiegandCfg/wiegandNo/<wiegandID>",
+        "capabilities": {
+          "method": "GET",
+          "endpoint": "/ISAPI/AccessControl/WiegandCfg/capabilities"
+        }
+      },
+      "request": {
+        "format": "XML",
+        "body": "None"
+      },
+      "response": {
+        "format": "XML",
+        "body": "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n<WiegandCfg xmlns=\"http://www.isapi.org/ver20/XMLSchema\" version=\"2.0\">\n\n<communicateDirection>\nreceive\n</communicateDirection>\n<wiegandMode>\nwiegand26\n</wiegandMode>\n<inputWiegandMode>\nwiegand26\n</inputWiegandMode>\n<signalInterval>\n1\n</signalInterval>\n<enable>\ntrue\n</enable>\n<pulseDuration>\n1\n</pulseDuration>\n<facilityCodeEnabled>\ntrue\n</facilityCodeEnabled>\n<facilityCode>\n1\n</facilityCode>\n<dataType>\nemployeeNo\n</dataType>\n</WiegandCfg>"
+      },
+      "status_codes": []
+    },
+    {
+      "section_name": "21.30.5 Get the card reader configuration parameters",
+      "summary": "Retrieves the configuration parameters for a specific card reader.",
+      "api": {
+        "method": "GET",
+        "endpoint": "/ISAPI/AccessControl/CardReaderCfg/<cardReaderID>?format=json",
+        "capabilities": {
+          "method": "GET",
+          "endpoint": "/ISAPI/AccessControl/CardReaderCfg/capabilities?format=json"
+        }
+      },
+      "request": {
+        "format": "JSON",
+        "body": "None"
+      },
+      "response": {
+        "format": "JSON",
+        "body": {
+          "CardReaderCfg": {
+            "enable": true,
+            "okLedPolarity": "cathode",
+            "errorLedPolarity": "cathode",
+            "buzzerPolarity": "cathode",
+            "swipeInterval": 1,
+            "pressTimeout": 1,
+            "enableFailAlarm": true,
+            "maxReadCardFailNum": 1,
+            "enableTamperCheck": true,
+            "offlineCheckTime": 1,
+            "fingerPrintCheckLevel": 1,
+            "useLocalController": true,
+            "localControllerID": 1,
+            "localControllerReaderID": 1,
+            "cardReaderChannel": 1,
+            "fingerPrintImageQuality": 1,
+            "fingerPrintContrastTimeOut": 1,
+            "fingerPrintRecogizeInterval": 1,
+            "fingerPrintMatchFastMode": 1,
+            "fingerPrintModuleSensitive": 1,
+            "fingerPrintModuleLightCondition": "outdoor",
+            "faceMatchThresholdN": 1,
+            "faceQuality": 1,
+            "faceRecogizeTimeOut": 1,
+            "faceRecogizeInterval": 1,
+            "cardReaderFunction": [
+              "fingerPrint",
+              "face",
+              "card"
+            ],
+            "cardReaderDescription": "Wiegand\u000485Offline",
+            "faceImageSensitometry": 1,
+            "livingBodyDetect": true,
+            "faceMatchThreshold1": 1,
+            "buzzerTime": 1,
+            "faceMatch1SecurityLevel": 1,
+            "faceMatchNSecurityLevel": 1,
+            "envirMode": "other",
+            "liveDetLevelSet": "low",
+            "liveDetAntiAttackCntLimit": 1,
+            "enableLiveDetAntiAttack": true,
+            "supportDelFPByID": true,
+            "fingerPrintCapacity": 1,
+            "fingerPrintNum": 1,
+            "defaultVerifyMode": "cardAndPw",
+            "faceRecogizeEnable": 1,
+            "FPAlgorithmVersion": "test",
+            "cardReaderVersion": "test",
+            "enableReverseCardNo": true,
+            "independSwipeIntervals": 0,
+            "maskFaceMatchThresholdN": 1,
+            "maskFaceMatchThreshold1": 1,
+            "faceMotionDetLevel": "low",
+            "showMode": "normal",
+            "enableScreenOff": true,
+            "screenOffTimeout": 1
+          }
+        }
+      },
+      "status_codes": []
+    },
+    {
+      "section_name": "21.30.6 Set the card reader parameters",
+      "summary": "Sets the configuration parameters for a specific card reader.",
+      "api": {
+        "method": "PUT",
+        "endpoint": "/ISAPI/AccessControl/CardReaderCfg/<cardReaderID>?format=json",
+        "capabilities": {
+          "method": "GET",
+          "endpoint": "/ISAPI/AccessControl/CardReaderCfg/capabilities?format=json"
+        }
+      },
+      "request": {
+        "format": "JSON",
+        "body": {
+          "CardReaderCfg": {
+            "enable": true,
+            "okLedPolarity": "cathode",
+            "errorLedPolarity": "cathode",
+            "buzzerPolarity": "cathode",
+            "swipeInterval": 1,
+            "pressTimeout": 1,
+            "enableFailAlarm": true,
+            "maxReadCardFailNum": 1,
+            "enableTamperCheck": true,
+            "offlineCheckTime": 1,
+            "fingerPrintCheckLevel": 1,
+            "useLocalController": true,
+            "localControllerID": 1,
+            "localControllerReaderID": 1,
+            "cardReaderChannel": 1,
+            "fingerPrintImageQuality": 1,
+            "fingerPrintContrastTimeOut": 1,
+            "fingerPrintRecogizeInterval": 1,
+            "fingerPrintMatchFastMode": 1,
+            "fingerPrintModuleSensitive": 1,
+            "fingerPrintModuleLightCondition": "outdoor",
+            "faceMatchThresholdN": 1,
+            "faceQuality": 1,
+            "faceRecogizeTimeOut": 1,
+            "faceRecogizeInterval": 1,
+            "cardReaderFunction": [
+              "fingerPrint",
+              "face",
+              "fingerVein",
+              "iris",
+              "card"
+            ],
+            "cardReaderDescription": "Wiegand\u000485Offline",
+            "faceImageSensitometry": 1,
+            "livingBodyDetect": true,
+            "faceMatchThreshold1": 1,
+            "buzzerTime": 1,
+            "faceMatch1SecurityLevel": 1,
+            "faceMatchNSecurityLevel": 1,
+            "envirMode": "indoor",
+            "liveDetLevelSet": "low",
+            "liveDetAntiAttackCntLimit": 1,
+            "enableLiveDetAntiAttack": true,
+            "supportDelFPByID": true,
+            "fingerPrintCapacity": 1,
+            "fingerPrintNum": 1,
+            "defaultVerifyMode": "cardAndPw",
+            "faceRecogizeEnable": 1,
+            "FPAlgorithmVersion": "test",
+            "cardReaderVersion": "test",
+            "enableReverseCardNo": true,
+            "independSwipeIntervals": 0,
+            "maskFaceMatchThresholdN": 1,
+            "maskFaceMatchThreshold1": 1,
+            "faceMotionDetLevel": "low",
+            "showMode": "normal",
+            "enableScreenOff": true,
+            "screenOffTimeout": 1
+          }
+        }
+      },
+      "response": {
+        "format": "JSON",
+        "body": {
+          "statusCode": 1,
+          "statusString": "ok",
+          "subStatusCode": "ok",
+          "errorCode": 1,
+          "errorMsg": "ok"
+        }
+      },
+      "status_codes": []
+    },
+    {
+      "section_name": "21.30.7 Get the configuration capability of the card reader",
+      "summary": "Retrieves the configuration capabilities for card readers.",
+      "api": {
+        "method": "GET",
+        "endpoint": "/ISAPI/AccessControl/CardReaderCfg/capabilities?format=json"
+      },
+      "request": {
+        "format": "JSON",
+        "body": "None"
+      },
+      "response": {
+        "format": "JSON",
+        "body": {
+          "CardReaderCfg": {
+            "cardReaderNo": {
+              "@min": 1,
+              "@max": 512,
+              "@opt": [
+                1,
+                4
+              ]
+            },
+            "enable": "true,false",
+            "okLedPolarity": {
+              "@opt": "cathode,anode"
+            },
+            "errorLedPolarity": {
+              "@opt": "cathode,anode"
+            },
+            "buzzerPolarity": {
+              "@opt": "cathode,anode"
+            },
+            "swipeInterval": {
+              "@min": 1,
+              "@max": 255
+            },
+            "pressTimeout": {
+              "@min": 1,
+              "@max": 255
+            },
+            "enableFailAlarm": "true,false",
+            "maxReadCardFailNum": {
+              "@min": 1,
+              "@max": 255
+            },
+            "enableTamperCheck": "true,false",
+            "offlineCheckTime": {
+              "@min": 1,
+              "@max": 255
+            },
+            "fingerPrintCheckLevel": {
+              "@opt": "1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18"
+            },
+            "useLocalController": "true,false",
+            "localControllerID": {
+              "@min": 0,
+              "@max": 64
+            },
+            "localControllerReaderID": {
+              "@min": 0,
+              "@max": 4
+            },
+            "cardReaderChannel": {
+              "@opt": "0,1,2"
+            },
+            "fingerPrintImageQuality": {
+              "@opt": "1,2,3,4,5,6,7,8"
+            },
+            "fingerPrintContrastTimeOut": {
+              "@min": 0,
+              "@max": 20
+            },
+            "fingerPrintRecogizeInterval": {
+              "@min": 0,
+              "@max": 10
+            },
+            "fingerPrintMatchFastMode": {
+              "@min": 0,
+              "@max": 5
+            },
+            "fingerPrintModuleSensitive": {
+              "@min": 1,
+              "@max": 8
+            },
+            "fingerPrintModuleLightCondition": {
+              "@opt": "outdoor,indoor"
+            },
+            "faceMatchThresholdN": {
+              "@min": 0,
+              "@max": 100
+            },
+            "faceQuality": {
+              "@min": 0,
+              "@max": 100
+            },
+            "faceRecogizeTimeOut": {
+              "@min": 0,
+              "@max": 20
+            },
+            "faceRecogizeInterval": {
+              "@min": 0,
+              "@max": 10
+            },
+            "cardReaderFunction": {
+              "@opt": "fingerPrint,face,fingerVein,iris,card"
+            },
+            "cardReaderDescription": {
+              "@min": 1,
+              "@max": 16
+            },
+            "isSupportOfflineSendPermission": true,
+            "faceImageSensitometry": {
+              "@min": 0,
+              "@max": 65535
+            },
+            "livingBodyDetect": "true,false",
+            "faceMatchThreshold1": {
+              "@min": 0,
+              "@max": 100
+            },
+            "buzzerTime": {
+              "@min": 0,
+              "@max": 5999
+            },
+            "faceMatch1SecurityLevel": {
+              "@opt": "1,2,3"
+            },
+            "faceMatchNSecurityLevel": {
+              "@opt": "1,2,3"
+            },
+            "envirMode": {
+              "@opt": "indoor,other"
+            },
+            "liveDetLevelSet": {
+              "@opt": "low,middle,high"
+            },
+            "liveDetAntiAttackCntLimit": {
+              "@min": 1,
+              "@max": 255
+            },
+            "enableLiveDetAntiAttack": "true,false",
+            "supportDelFPByID": "true,false",
+            "fingerPrintCapacity": {
+              "@min": 1,
+              "@max": 100
+            },
+            "fingerPrintNum": {
+              "@min": 1,
+              "@max": 100
+            },
+            "defaultVerifyMode": {
+              "@opt": "cardAndPw,card,cardOrPw,fp,fpAndPw,fpOrCard,fpAndCard,fpAndCardAndPw,faceOrFpOrCardOrPw,faceAndFp,faceAndPw,faceAndCard,face,employeeNoAndPw,fpOrPw,employeeNoAndFp,employeeNoAndFpAndPw,faceAndFpAndCard,faceAndPwAndFp,employeeNoAndFace,faceOrfaceAndCard,fpOrface,cardOrfaceOrPw,cardOrFace,cardOrFaceOrFp,iris,faceOrFpOrCardOrPwOrIris,faceOrCardOrPwOrIris"
+            },
+            "FPAlgorithmVersion": {
+              "@min": 1,
+              "@max": 1
+            },
+            "cardReaderVersion": {
+              "@min": 1,
+              "@max": 1
+            },
+            "faceRecogizeEnable": {
+              "@opt": "1,2,3"
+            },
+            "enableReverseCardNo": "true,false",
+            "independSwipeIntervals": {
+              "@min": 1,
+              "@max": 1
+            },
+            "maskFaceMatchThresholdN": {
+              "@min": 0,
+              "@max": 100
+            },
+            "maskFaceMatchThreshold1": {
+              "@min": 0,
+              "@max": 100
+            },
+            "faceMotionDetLevel": {
+              "@opt": [
+                "low",
+                "meduim",
+                "height"
+              ]
+            },
+            "showMode": {
+              "@opt": [
+                "concise",
+                "normal",
+                "advertising",
+                "meeting",
+                "selfDefine",
+                "boxStatus"
+              ]
+            },
+            "enableScreenOff": {
+              "@opt": [
+                true,
+                false
+              ]
+            },
+            "screenOffTimeout": {
+              "@min": 0,
+              "@max": 10
+            }
+          }
+        }
+      },
+      "status_codes": []
+    },
+    {
+      "section_name": "21.30.8 Set the parameters of intelligent identity recognition terminal",
+      "summary": "Configures the parameters for the intelligent identity recognition terminal.",
+      "api": {
+        "method": "PUT",
+        "endpoint": "/ISAPI/AccessControl/IdentityTerminal",
+        "capabilities": {
+          "method": "GET",
+          "endpoint": "/ISAPI/AccessControl/IdentityTerminal/capabilities"
+        }
+      },
+      "request": {
+        "format": "XML",
+        "body": "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n<IdentityTerminal xmlns=\"http://www.isapi.org/ver20/XMLSchema\" version=\"2.0\">\n\n<terminalMode>\nauthMode\n</terminalMode>\n<idCardReader>\niDR210\n</idCardReader>\n<camera>\nC270\n</camera>\n<fingerPrintModule>\nALIWARD\n</fingerPrintModule>\n<videoStorageTime>\n1\n</videoStorageTime>\n<faceContrastThreshold>\n1\n</faceContrastThreshold>\n<twoDimensionCode>\nenable\n</twoDimensionCode>\n<blackListCheck>\nenable\n</blackListCheck>\n<idCardCheckCenter>\nlocal\n</idCardCheckCenter>\n<faceAlgorithm>\nDeepLearn\n</faceAlgorithm>\n<comNo>\n1\n</comNo>\n<memoryLearning>\nenable\n</memoryLearning>\n<saveCertifiedImage>\nenable\n</saveCertifiedImage>\n<MCUVersion>\ntest\n</MCUVersion>\n<usbOutput>\nenable\n</usbOutput>\n<serialOutput>\nenable\n</serialOutput>\n<readInfoOfCard>\nserialNo\n</readInfoOfCard>\n<workMode>\npassMode\n</workMode>\n<ecoMode>\n\n<eco>\nenable\n</eco>\n<faceMatchThreshold1>\n1\n</faceMatchThreshold1>\n<faceMatchThresholdN>\n1\n</faceMatchThresholdN>\n<changeThreshold>\n0\n</changeThreshold>\n<maskFaceMatchThresholdN>\n1\n</maskFaceMatchThresholdN>\n<maskFaceMatchThreshold1>\n1\n</maskFaceMatchThreshold1>\n</ecoMode>\n<readCardRule>\nwiegand26\n</readCardRule>\n<enableScreenOff>\ntrue\n</enableScreenOff>\n<screenOffTimeout>\n1\n</screenOffTimeout>\n<enableScreensaver>\ntrue\n</enableScreensaver>\n<faceModuleVersion>\ntest\n</faceModuleVersion>\n<showMode>\nconcise\n</showMode>\n<needDeviceCheck>\ntrue\n</needDeviceCheck>\n</IdentityTerminal>"
+      },
+      "response": {
+        "format": "XML",
+        "body": "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n<ResponseStatus xmlns=\"http://www.isapi.org/ver20/XMLSchema\" version=\"2.0\">\n\n<requestURL>\ntest\n</requestURL>\n<statusCode>\n1\n</statusCode>\n<statusString>\nOK\n</statusString>\n<subStatusCode>\ntest\n</subStatusCode>\n</ResponseStatus>"
+      },
+      "status_codes": []
+    },
+    {
+      "section_name": "21.30.9 Get the parameters of intelligent identity recognition terminal",
+      "summary": "Retrieves the current parameters of the intelligent identity recognition terminal.",
+      "api": {
+        "method": "GET",
+        "endpoint": "/ISAPI/AccessControl/IdentityTerminal",
+        "capabilities": {
+          "method": "GET",
+          "endpoint": "/ISAPI/AccessControl/IdentityTerminal/capabilities"
+        }
+      },
+      "request": {
+        "format": "XML",
+        "body": "None"
+      },
+      "response": {
+        "format": "XML",
+        "body": "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n<IdentityTerminal xmlns=\"http://www.isapi.org/ver20/XMLSchema\" version=\"2.0\">\n\n<terminalMode>\nauthMode\n</terminalMode>\n<idCardReader>\niDR210\n</idCardReader>\n<camera>\nC270\n</camera>\n<fingerPrintModule>\nALIWARD\n</fingerPrintModule>\n<videoStorageTime>\n1\n</videoStorageTime>\n<faceContrastThreshold>\n1\n</faceContrastThreshold>\n<twoDimensionCode>\nenable\n</twoDimensionCode>\n<blackListCheck>\nenable\n</blackListCheck>\n<idCardCheckCenter>\nlocal\n</idCardCheckCenter>\n<faceAlgorithm>\n1\n</comNo>\n<memoryLearning>\nenable\n</memoryLearning>\n<saveCertifiedImage>\nenable\n</saveCertifiedImage>\n<MCUVersion>\ntest\n</MCUVersion>\n<usbOutput>\nenable\n</usbOutput>\n<serialOutput>\nenable\n</serialOutput>\n<readInfoOfCard>\nserialNo\n</readInfoOfCard>\n<workMode>\npassMode\n</workMode>\n<ecoMode>\n\n<eco>\nenable\n</eco>\n<faceMatchThreshold1>\n1\n</faceMatchThreshold1>\n<faceMatchThresholdN>\n1\n</faceMatchThresholdN>\n<changeThreshold>\n0\n</changeThreshold>\n<maskFaceMatchThresholdN>\n0\n</maskFaceMatchThresholdN>\n<maskFaceMatchThreshold1>\n0\n</maskFaceMatchThreshold1>\n</ecoMode>\n<readCardRule>\nwiegand26\n</readCardRule>\n<enableScreenOff>\ntrue\n</enableScreenOff>\n<screenOffTimeout>\n1\n</screenOffTimeout>\n<enableScreensaver>\ntrue\n</enableScreensaver>\n<faceModuleVersion>\ntest\n</faceModuleVersion>\n<showMode>\nconcise\n</showMode>\n<needDeviceCheck>\ntrue\n</needDeviceCheck>\n</IdentityTerminal>"
+      },
+      "status_codes": []
+    },
+    {
+      "section_name": "21.30.10 Get configuration capability of intelligent identity recognition terminal",
+      "summary": "Retrieves the configuration capabilities of the intelligent identity recognition terminal.",
+      "api": {
+        "method": "GET",
+        "endpoint": "/ISAPI/AccessControl/IdentityTerminal/capabilities"
+      },
+      "request": {
+        "format": "XML",
+        "body": "None"
+      },
+      "response": {
+        "format": "XML",
+        "body": "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n<IdentityTerminal xmlns=\"http://www.isapi.org/ver20/XMLSchema\" version=\"2.0\">\n\n<terminalMode opt=\"authMode,registerMode\">\nauthMode\n</terminalMode>\n<idCardReader opt=\"iDR210,DS-K1F110-I,DS-K1F1110-B,DS-K1F1110-AB,none \">\niDR210\n</idCardReader>\n<camera opt=\"C270,DS-2CS5432B-S\">\nC270\n</camera>\n<fingerPrintModule opt=\"ALIWARD,HikModule\">\nALIWARD\n</fingerPrintModule>\n<videoStorageTime min=\"0\" max=\"10\">\n1\n</videoStorageTime>\n<faceContrastThreshold min=\"0\" max=\"100\">\n1\n</faceContrastThreshold>\n<twoDimensionCode opt=\"enable,disable\">\nenable\n</twoDimensionCode>\n<blackListCheck opt=\"enable,disable\">\nenable\n</blackListCheck>\n<idCardCheckCenter opt=\"local,server\">\nlocal\n</idCardCheckCenter>\n<faceAlgorithm opt=\"DeepLearn,Tradition\">\nDeepLearn\n</faceAlgorithm>\n<comNo min=\"1\" max=\"9\">\n1\n</comNo>\n<memoryLearning opt=\"enable,disable\">\nenable\n</memoryLearning>\n<saveCertifiedImage opt=\"enable,disable\">\nenable\n</saveCertifiedImage>\n<MCUVersion min=\"1\" max=\"10\">\ntest\n</MCUVersion>\n<usbOutput opt=\"enable,disable\">\nenable\n</usbOutput>\n<serialOutput opt=\"enable,disable\">\nenable\n</serialOutput>\n<readInfoOfCard opt=\"serialNo,file\">\nserialNo\n</readInfoOfCard>\n<workMode opt=\"passMode,accessControlMode\">\npassMode\n</workMode>\n<ecoMode>\n\n<eco opt=\"enable,disable\">\nenable\n</eco>\n<faceMatchThreshold1 min=\"0\" max=\"100\">\n1\n</faceMatchThreshold1>\n<faceMatchThresholdN min=\"0\" max=\"100\">\n1\n</faceMatchThresholdN>\n<changeThreshold min=\"1\" max=\"10\">\n0\n</changeThreshold>\n<maskFaceMatchThresholdN min=\"0\" max=\"100\">\n1\n</maskFaceMatchThresholdN>\n<maskFaceMatchThreshold1 min=\"0\" max=\"100\">\n1\n</maskFaceMatchThreshold1>\n</ecoMode>\n<readCardRule opt=\"wiegand26,wiegand34\">\nwiegand26\n</readCardRule>\n<enableScreenOff opt=\"true,false\">\ntrue\n</enableScreenOff>\n<screenOffTimeout min=\"0\" max=\"10\">\n1\n</screenOffTimeout>\n<enableScreensaver opt=\"true,false\">\ntrue\n</enableScreensaver>\n<faceModuleVersion min=\"0\" max=\"10\">\ntest\n</faceModuleVersion>\n<showMode opt=\"concise,normal,advertising,meeting,selfDefine,boxStatus\">\nconcise\n</showMode>\n<needDeviceCheck opt=\"true,false\">\ntrue\n</needDeviceCheck>\n</IdentityTerminal>"
+      },
+      "status_codes": []
+    },
+    {
+      "section_name": "21.30.11 Set the condition parameters of face picture comparison",
+      "summary": "Sets the condition parameters for face picture comparison, such as thresholds for angle, size, and quality.",
+      "api": {
+        "method": "PUT",
+        "endpoint": "/ISAPI/AccessControl/FaceCompareCond",
+        "capabilities": {
+          "method": "GET",
+          "endpoint": "/ISAPI/AccessControl/FaceCompareCond/capabilities"
+        }
+      },
+      "request": {
+        "format": "XML",
+        "body": "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n<FaceCompareCond xmlns=\"http://www.isapi.org/ver20/XMLSchema\" version=\"2.0\">\n\n<faceWidthLowerLimit>\n50\n</faceWidthLowerLimit>\n<pitch>\n0\n</pitch>\n<yaw>\n0\n</yaw>\n<width>\n50\n</width>\n<height>\n50\n</height>\n<leftBorder>\n50\n</leftBorder>\n<rightBorder>\n50\n</rightBorder>\n<upBorder>\n50\n</upBorder>\n<bottomBorder>\n50\n</bottomBorder>\n<interorbitalDistance>\n50\n</interorbitalDistance>\n<faceScore>\n50\n</faceScore>\n<maxDistance>\n0.5\n</maxDistance>\n<similarity>\n50\n</similarity>\n<antiFake>\n50\n</antiFake>\n<identifyType>\nhighest\n</identifyType>\n<chooseType>\nall\n</chooseType>\n<enabled>\nsingleFace\n</enabled>\n<faceScoreEnabled>\ntrue\n</faceScoreEnabled>\n</FaceCompareCond>"
+      },
+      "response": {
+        "format": "XML",
+        "body": "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n<ResponseStatus xmlns=\"http://www.isapi.org/ver20/XMLSchema\" version=\"2.0\">\n\n<requestURL>\nnull\n</requestURL>\n<statusCode>\n0\n</statusCode>\n<statusString>\nOK\n</statusString>\n<subStatusCode>\nOK\n</subStatusCode>\n</ResponseStatus>"
+      },
+      "status_codes": []
+    },
+    {
+      "section_name": "21.30.12 Get the facial recognition parameters.",
+      "summary": "Retrieves the current facial recognition parameters.",
+      "api": {
+        "method": "GET",
+        "endpoint": "/ISAPI/AccessControl/FaceCompareCond",
+        "capabilities": {
+          "method": "GET",
+          "endpoint": "/ISAPI/AccessControl/FaceCompareCond/capabilities"
+        }
+      },
+      "request": {
+        "format": "XML",
+        "body": "None"
+      },
+      "response": {
+        "format": "XML",
+        "body": "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n<FaceCompareCond xmlns=\"http://www.isapi.org/ver20/XMLSchema\" version=\"2.0\">\n\n<faceWidthLowerLimit>\n50\n</faceWidthLowerLimit>\n<pitch>\n0\n</pitch>\n<yaw>\n0\n</yaw>\n<width>\n50\n</width>\n<height>\n50\n</height>\n<leftBorder>\n50\n</leftBorder>\n<rightBorder>\n50\n</rightBorder>\n<upBorder>\n50\n</upBorder>\n<bottomBorder>\n50\n</bottomBorder>\n<interorbitalDistance>\n50\n</interorbitalDistance>\n<faceScore>\n50\n</faceScore>\n<maxDistance>\n0.5\n</maxDistance>\n<similarity>\n50\n</similarity>\n<antiFake>\n50\n</antiFake>\n<identifyType>\nhighest\n</identifyType>\n<chooseType>\nall\n</chooseType>\n<enabled>\nsingleFace\n</enabled>\n<faceScoreEnabled>\ntrue\n</faceScoreEnabled>\n</FaceCompareCond>"
+      },
+      "status_codes": []
+    },
+    {
+      "section_name": "21.30.13 Get the capability of configuring facial recognition parameters.",
+      "summary": "Retrieves the capabilities for configuring facial recognition parameters.",
+      "api": {
+        "method": "GET",
+        "endpoint": "/ISAPI/AccessControl/FaceCompareCond/capabilities"
+      },
+      "request": {
+        "format": "XML",
+        "body": "None"
+      },
+      "response": {
+        "format": "XML",
+        "body": "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n<FaceCompareCond xmlns=\"http://www.isapi.org/ver20/XMLSchema\" version=\"2.0\">\n\n<faceWidthLowerLimit min=\"1\" max=\"10\">\n1\n</faceWidthLowerLimit>\n<pitch min=\"1\" max=\"10\">\n1\n</pitch>\n<yaw min=\"1\" max=\"10\">\n1\n</yaw>\n<width min=\"1\" max=\"10\">\n1\n</width>\n<height min=\"1\" max=\"10\">\n1\n</height>\n<leftBorder min=\"1\" max=\"10\">\n1\n</leftBorder>\n<rightBorder min=\"1\" max=\"10\">\n1\n</rightBorder>\n<upBorder min=\"1\" max=\"10\">\n1\n</upBorder>\n<bottomBorder min=\"1\" max=\"10\">\n1\n</bottomBorder>\n<interorbitalDistance min=\"1\" max=\"10\">\n1\n</interorbitalDistance>\n<faceScore min=\"1\" max=\"10\">\n1\n</faceScore>\n<maxDistance opt=\"0.5,1,1.5,2,auto\">\ntest\n</maxDistance>\n<similarity min=\"0.0\" max=\"1.0\">\n0.000\n</similarity>\n<antiFake min=\"1\" max=\"10\">\n1\n</antiFake>\n<identifyType opt=\"highest,single,multipl\">\nhighest\n</identifyType>\n<chooseType opt=\"middle,biggest,all\">\nmiddle\n</chooseType>\n<enabled opt=\"singleFace,close,multiFace\">\nsingleFace\n</enabled>\n<faceScoreEnabled opt=\"true,false\">\ntrue\n</faceScoreEnabled>\n</FaceCompareCond>"
+      },
+      "status_codes": []
+    },
+    {
+      "section_name": "21.30.14 Get the capability of Wiegand parameters",
+      "summary": "Retrieves the capabilities for configuring Wiegand parameters.",
+      "api": {
+        "method": "GET",
+        "endpoint": "/ISAPI/AccessControl/WiegandCfg/capabilities"
+      },
+      "request": {
+        "format": "XML",
+        "body": "None"
+      },
+      "response": {
+        "format": "XML",
+        "body": "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n<WiegandCfg xmlns=\"http://www.isapi.org/ver20/XMLSchema\" version=\"2.0\">\n\n<wiegandNo min=\"1\" max=\"4\" opt=\"1,4\">\n1\n</wiegandNo>\n<communicateDirection opt=\"receive,send\">\nreceive\n</communicateDirection>\n<wiegandMode opt=\"wiegand26,wiegand34,wiegand27,wiegand35,Corporate1000_35,Corporate1000_48,H10302_37,H10304_37,wiegand_26CSN,H103130_32CSN,wiegand_56CSN,wiegand_58\">\nwiegand26\n</wiegandMode>\n<inputWiegandMode>\nwiegand26\n</inputWiegandMode>\n<signalInterval min=\"1\" max=\"20\">\n1\n</signalInterval>\n<enable opt=\"true,false\">\ntrue\n</enable>\n<pulseDuration min=\"1\" max=\"10\">\n1\n</pulseDuration>\n<facilityCodeEnabled opt=\"true,false\">\ntrue\n</facilityCodeEnabled>\n<facilityCode min=\"0\" max=\"65535\">\n1\n</facilityCode>\n<dataType opt=\"employeeNo,cardNo\">\nemployeeNo\n</dataType>\n</WiegandCfg>"
+      },
+      "status_codes": []
+    },
+    {
+      "section_name": "21.30.15 Get the capability of configuring parameters of the facial recognition mode.",
+      "summary": "Retrieves the capabilities for configuring the facial recognition mode (e.g., normal mode, deep mode).",
+      "api": {
+        "method": "GET",
+        "endpoint": "/ISAPI/AccessControl/FaceRecognizeMode/capabilities?format=json"
+      },
+      "request": {
+        "format": "JSON",
+        "body": "None"
+      },
+      "response": {
+        "format": "JSON",
+        "body": {
+          "FaceRecognizeMode": {
+            "mode": {
+              "@opt": "normalMode"
+            }
+          }
+        }
+      },
+      "status_codes": []
+    },
+    {
+      "section_name": "21.30.16 Set the parameters of enabling NFC (Near-Field Communication) function",
+      "summary": "Enables or disables the NFC (Near-Field Communication) function on the device.",
+      "api": {
+        "method": "PUT",
+        "endpoint": "/ISAPI/AccessControl/Configuration/NFCCfg?format=json",
+        "capabilities": {
+          "method": "GET",
+          "endpoint": "/ISAPI/AccessControl/Configuration/NFCCfg/capabilities?format=json"
+        }
+      },
+      "request": {
+        "format": "JSON",
+        "body": {
+          "NFCCfg": {
+            "enable": true
+          }
+        }
+      },
+      "response": {
+        "format": "JSON",
+        "body": {
+          "requestURL": "test",
+          "statusCode": 1,
+          "statusString": "test",
+          "subStatusCode": "test",
+          "errorCode": 1,
+          "errorMsg": "ok"
+        }
+      },
+      "status_codes": []
+    },
+    {
+      "section_name": "21.30.17 Get the parameters of enabling NFC (Near-Field Communication) function",
+      "summary": "Retrieves the current status (enabled/disabled) of the NFC (Near-Field Communication) function.",
+      "api": {
+        "method": "GET",
+        "endpoint": "/ISAPI/AccessControl/Configuration/NFCCfg?format=json",
+        "capabilities": {
+          "method": "GET",
+          "endpoint": "/ISAPI/AccessControl/Configuration/NFCCfg/capabilities?format=json"
+        }
+      },
+      "request": {
+        "format": "JSON",
+        "body": "None"
+      },
+      "response": {
+        "format": "JSON",
+        "body": {
+          "NFCCfg": {
+            "enable": true
+          }
+        }
+      },
+      "status_codes": []
+    },
+    {
+      "section_name": "21.30.18 Set the facial recognition mode parameters",
+      "summary": "Sets the facial recognition mode parameters.",
+      "api": {
+        "method": "PUT",
+        "endpoint": "/ISAPI/AccessControl/FaceRecognizeMode?format=json",
+        "capabilities": {
+          "method": "GET",
+          "endpoint": "/ISAPI/AccessControl/FaceRecognizeMode/capabilities?format=json"
+        }
+      },
+      "request": {
+        "format": "JSON",
+        "body": {
+          "FaceRecognizeMode": {
+            "mode": "normalMode"
+          }
+        }
+      },
+      "response": {
+        "format": "JSON",
+        "body": {
+          "requestURL": "/ISAPI/Intelligent/FDLib/asyncImportDatas?format=json",
+          "statusCode": 1,
+          "statusString": "ok",
+          "subStatusCode": "ok",
+          "errorCode": 1,
+          "errorMsg": "ok"
+        }
+      },
+      "status_codes": []
+    },
+    {
+      "section_name": "21.30.19 Get the parameters of the facial recognition mode.",
+      "summary": "Retrieves the current facial recognition mode.",
+      "api": {
+        "method": "GET",
+        "endpoint": "/ISAPI/AccessControl/FaceRecognizeMode?format=json",
+        "capabilities": {
+          "method": "GET",
+          "endpoint": "/ISAPI/AccessControl/FaceRecognizeMode/capabilities?format=json"
+        }
+      },
+      "request": {
+        "format": "JSON",
+        "body": "None"
+      },
+      "response": {
+        "format": "JSON",
+        "body": {
+          "FaceRecognizeMode": {
+            "mode": "normalMode"
+          }
+        }
+      },
+      "status_codes": []
+    },
+    {
+      "section_name": "21.30.20 Get the configuration capability of the M1 card encryption verification",
+      "summary": "Retrieves the capabilities for configuring M1 card encryption verification.",
+      "api": {
+        "method": "GET",
+        "endpoint": "/ISAPI/AccessControl/M1CardEncryptCfg/capabilities"
+      },
+      "request": {
+        "format": "XML",
+        "body": "None"
+      },
+      "response": {
+        "format": "XML",
+        "body": "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n<M1CardEncryptCfg xmlns=\"http://www.isapi.org/ver20/XMLSchema\" version=\"2.0\">\n\n<enable opt=\"true,false\">\ntrue\n</enable>\n<sectionID min=\"0\" max=\"100\">\n1\n</sectionID>\n</M1CardEncryptCfg>"
+      },
+      "status_codes": []
+    },
+    {
+      "section_name": "21.30.21 Get the configuration parameters of M1 card encryption verification",
+      "summary": "Retrieves the current configuration parameters for M1 card encryption verification.",
+      "api": {
+        "method": "GET",
+        "endpoint": "/ISAPI/AccessControl/M1CardEncryptCfg",
+        "capabilities": {
+          "method": "GET",
+          "endpoint": "/ISAPI/AccessControl/M1CardEncryptCfg/capabilities"
+        }
+      },
+      "request": {
+        "format": "XML",
+        "body": "None"
+      },
+      "response": {
+        "format": "XML",
+        "body": "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n<M1CardEncryptCfg xmlns=\"http://www.isapi.org/ver20/XMLSchema\" version=\"2.0\">\n\n<enable>\ntrue\n</enable>\n<sectionID>\n1\n</sectionID>\n</M1CardEncryptCfg>"
+      },
+      "status_codes": []
+    },
+    {
+      "section_name": "21.30.22 Set the parameters of M1 card encryption verification",
+      "summary": "Sets the parameters for M1 card encryption verification.",
+      "api": {
+        "method": "PUT",
+        "endpoint": "/ISAPI/AccessControl/M1CardEncryptCfg",
+        "capabilities": {
+          "method": "GET",
+          "endpoint": "/ISAPI/AccessControl/M1CardEncryptCfg/capabilities"
+        }
+      },
+      "request": {
+        "format": "XML",
+        "body": "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n<M1CardEncryptCfg xmlns=\"http://www.isapi.org/ver20/XMLSchema\" version=\"2.0\">\n\n<enable>\ntrue\n</enable>\n<sectionID>\n1\n</sectionID>\n</M1CardEncryptCfg>"
+      },
+      "response": {
+        "format": "XML",
+        "body": "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n<ResponseStatus xmlns=\"http://www.isapi.org/ver20/XMLSchema\" version=\"2.0\">\n\n<requestURL>\ntest\n</requestURL>\n<statusCode>\n1\n</statusCode>\n<statusString>\nOK\n</statusString>\n<subStatusCode>\ntest\n</subStatusCode>\n</ResponseStatus>"
+      },
+      "status_codes": []
+    },
+    {
+      "section_name": "21.30.23 Get the parameters of enabling RF (Radio Frequency) card recognition",
+      "summary": "Retrieves the parameters indicating which types of RF (Radio Frequency) cards are enabled for recognition.",
+      "api": {
+        "method": "GET",
+        "endpoint": "/ISAPI/AccessControl/Configuration/RFCardCfg?format=json",
+        "capabilities": {
+          "method": "GET",
+          "endpoint": "/ISAPI/AccessControl/Configuration/RFCardCfg/capabilities?format=json"
+        }
+      },
+      "request": {
+        "format": "JSON",
+        "body": "None"
+      },
+      "response": {
+        "format": "JSON",
+        "body": {
+          "RFCardCfg": [
+            {
+              "cardType": "EMCard",
+              "enabled": true
+            }
+          ]
+        }
+      },
+      "status_codes": []
+    },
+    {
+      "section_name": "21.30.24 Set the parameters of enabling RF (Radio Frequency) card recognition",
+      "summary": "Sets which types of RF (Radio Frequency) cards are enabled for recognition.",
+      "api": {
+        "method": "PUT",
+        "endpoint": "/ISAPI/AccessControl/Configuration/RFCardCfg?format=json",
+        "capabilities": {
+          "method": "GET",
+          "endpoint": "/ISAPI/AccessControl/Configuration/RFCardCfg/capabilities?format=json"
+        }
+      },
+      "request": {
+        "format": "JSON",
+        "body": {
+          "RFCardCfg": [
+            {
+              "cardType": "EMCard",
+              "enabled": true
+            }
+          ]
+        }
+      },
+      "response": {
+        "format": "JSON",
+        "body": {
+          "requestURL": "test",
+          "statusCode": 1,
+          "statusString": "test",
+          "subStatusCode": "test",
+          "errorCode": 1,
+          "errorMsg": "ok"
+        }
+      },
+      "status_codes": []
+    },
+    {
+      "section_name": "21.30.25 Get the configuration capability of enabling RF (Radio Frequency) card recognition",
+      "summary": "Retrieves the capabilities for enabling different types of RF (Radio Frequency) cards.",
+      "api": {
+        "method": "GET",
+        "endpoint": "/ISAPI/AccessControl/Configuration/RFCardCfg/capabilities?format=json"
+      },
+      "request": {
+        "format": "JSON",
+        "body": "None"
+      },
+      "response": {
+        "format": "JSON",
+        "body": {
+          "RFCardCfgCap": {
+            "cardType": {
+              "@opt": [
+                "EMCard",
+                "M1Card",
+                "CPUCard",
+                "IDCard",
+                "FelicaCard"
+              ]
+            },
+            "enabled": {
+              "@opt": [
+                true,
+                false
+              ]
+            }
+          }
+        }
+      },
+      "status_codes": []
+    },
+    {
+      "section_name": "21.30.26 Set the parameters of card No. authentication mode",
+      "summary": "Sets the parameters for the card number authentication mode, such as length and byte order.",
+      "api": {
+        "method": "PUT",
+        "endpoint": "/ISAPI/AccessControl/CardVerificationRule?format=json",
+        "capabilities": {
+          "method": "GET",
+          "endpoint": "/ISAPI/AccessControl/CardVerificationRule/capabilities?format=json"
+        }
+      },
+      "request": {
+        "format": "JSON",
+        "body": {
+          "CardVerificationRule": {
+            "cardNoLenMode": "full",
+            "reverseCardNoEnabled": true
+          }
+        }
+      },
+      "response": {
+        "format": "JSON",
+        "body": {
+          "statusCode": 1,
+          "statusString": "ok",
+          "subStatusCode": "ok",
+          "errorCode": 1,
+          "errorMsg": "ok"
+        }
+      },
+      "status_codes": []
+    },
+    {
+      "section_name": "21.30.27 Get the parameters of card No. authentication mode",
+      "summary": "Retrieves the current parameters for the card number authentication mode.",
+      "api": {
+        "method": "GET",
+        "endpoint": "/ISAPI/AccessControl/CardVerificationRule?format=json",
+        "capabilities": {
+          "method": "GET",
+          "endpoint": "/ISAPI/AccessControl/CardVerificationRule/capabilities?format=json"
+        }
+      },
+      "request": {
+        "format": "JSON",
+        "body": "None"
+      },
+      "response": {
+        "format": "JSON",
+        "body": {
+          "CardVerificationRule": {
+            "cardNoLenMode": "full",
+            "reverseCardNoEnabled": true
+          }
+        }
+      },
+      "status_codes": []
+    },
+    {
+      "section_name": "21.30.28 Get the switching progress and configuration result of card No. authentication mode",
+      "summary": "Retrieves the progress and result of a task to switch the card number authentication mode.",
+      "api": {
+        "method": "GET",
+        "endpoint": "/ISAPI/AccessControl/CardVerificationRule/progress?format=json"
+      },
+      "request": {
+        "format": "JSON",
+        "body": "None"
+      },
+      "response": {
+        "format": "JSON",
+        "body": {
+          "CardVerificationRuleRes": {
+            "checkStatus": "continue",
+            "progress": 100
+          }
+        }
+      },
+      "status_codes": []
+    }
+  ]

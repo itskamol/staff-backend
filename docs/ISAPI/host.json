@@ -1,0 +1,137 @@
+[
+  {
+    "section_name": "21.10.1 Set the parameters of a listening host",
+    "summary": "This endpoint sets the configuration parameters for a single, specific listening host identified by its ID. This includes URL, protocol, authentication, and event subscription details.",
+    "api": {
+      "method": "PUT",
+      "endpoint": "/ISAPI/Event/notification/httpHosts/<hostID>?security=<security>&iv=<iv>",
+      "capabilities": {
+        "method": "GET",
+        "endpoint": "/ISAPI/Event/notification/httpHosts/capabilities"
+      }
+    },
+    "request": {
+      "format": "XML",
+      "body": "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n<HttpHostNotification xmlns=\"http://www.isapi.org/ver20/XMLSchema\" version=\"2.0\">\n\n<id>\ntest\n</id>\n<url>\ntest\n</url>\n<protocolType>\nHTTP\n</protocolType>\n<parameterFormatType>\nJSON\n</parameterFormatType>\n<addressingFormatType>\nhostname\n</addressingFormatType>\n<hostName>\ntest\n</hostName>\n<host>\ntest\n</host>\n<ipv6Address>\ntest\n</ipv6Address>\n<portNo>\n1\n</portNo>\n<userName>\ntest\n</userName>\n<password>\ntest\n</password>\n<httpAuthenticationMethod>\nMD5digest\n</httpAuthenticationMethod>\n<ANPR>\n\n<detectionUpLoadPicturesType>\nall\n</detectionUpLoadPicturesType>\n</ANPR>\n<Extensions>\n\n<intervalBetweenEvents>\n1\n</intervalBetweenEvents>\n</Extensions>\n<uploadImagesDataType>\nURL\n</uploadImagesDataType>\n<httpBroken>\ntrue\n</httpBroken>\n<SubscribeEvent>\n\n<heartbeat>\n30\n</heartbeat>\n<eventMode>\nall\n</eventMode>\n<EventList>\n\n<Event>\n\n<type>\nmixedTargetDetection\n</type>\n<minorAlarm>\n0x400,0x401,0x402,0x403\n</minorAlarm>\n<minorException>\n0x400,0x401,0x402,0x403\n</minorException>\n<minorOperation>\n0x400,0x401,0x402,0x403\n</minorOperation>\n<minorEvent>\n0x01,0x02,0x03,0x04\n</minorEvent>\n<pictureURLType>\nbinary\n</pictureURLType>\n<channels>\n1,2,3,4\n</channels>\n</Event>\n</EventList>\n<channels>\n1,2,3,4\n</channels>\n<pictureURLType>\nbinary\n</pictureURLType>\n<ChangedUploadSub>\n\n<interval>\n5\n</interval>\n<StatusSub>\n\n<all>\ntrue\n</all>\n<channel>\ntrue\n</channel>\n<hd>\ntrue\n</hd>\n<capability>\ntrue\n</capability>\n</StatusSub>\n</ChangedUploadSub>\n</SubscribeEvent>\n<PackingSpaceRecognition>\n\n<upLoadPicturesType>\nall\n</upLoadPicturesType>\n<PicturesTypes>\n\n<picturesType>\nbackgroundImage\n</picturesType>\n</PicturesTypes>\n</PackingSpaceRecognition>\n</HttpHostNotification>"
+    },
+    "response": {
+      "format": "XML",
+      "body": "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n<ResponseStatus xmlns=\"http://www.isapi.org/ver20/XMLSchema\" version=\"2.0\">\n\n<requestURL>\nnull\n</requestURL>\n<statusCode>\n0\n</statusCode>\n<statusString>\nOK\n</statusString>\n<subStatusCode>\nOK\n</subStatusCode>\n</ResponseStatus>"
+    },
+    "status_codes": []
+  },
+  {
+    "section_name": "21.10.2 Get parameters of all listening hosts",
+    "summary": "Retrieves the configuration parameters for all listening hosts on the device.",
+    "api": {
+      "method": "GET",
+      "endpoint": "/ISAPI/Event/notification/httpHosts?security=<security>&iv=<iv>",
+      "capabilities": {
+        "method": "GET",
+        "endpoint": "/ISAPI/Event/notification/httpHosts/capabilities"
+      }
+    },
+    "request": {
+      "format": "XML",
+      "body": "None"
+    },
+    "response": {
+      "format": "XML",
+      "body": "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n<HttpHostNotificationList xmlns=\"http://www.isapi.org/ver20/XMLSchema\" version=\"2.0\">\n\n<HttpHostNotification>\n\n<id>\ntest\n</id>\n<url>\ntest\n</url>\n<protocolType>\nHTTP\n</protocolType>\n<parameterFormatType>\nJSON\n</parameterFormatType>\n<addressingFormatType>\nhostname\n</addressingFormatType>\n<hostName>\ntest\n</hostName>\n<host>\ntest\n</host>\n<ipv6Address>\ntest\n</ipv6Address>\n<portNo>\n1\n</portNo>\n<userName>\ntest\n</userName>\n<password>\ntest\n</password>\n<httpAuthenticationMethod>\nMD5digest\n</httpAuthenticationMethod>\n<ANPR>\n\n<detectionUpLoadPicturesType>\nall\n</detectionUpLoadPicturesType>\n</ANPR>\n<Extensions>\n\n<intervalBetweenEvents>\n1\n</intervalBetweenEvents>\n</Extensions>\n<uploadImagesDataType>\nURL\n</uploadImagesDataType>\n<httpBroken>\ntrue\n</httpBroken>\n<SubscribeEvent>\n\n<heartbeat>\n30\n</heartbeat>\n<eventMode>\nall\n</eventMode>\n<EventList>\n\n<Event>\n\n<type>\nmixedTargetDetection\n</type>\n<minorAlarm>\n0x400,0x401,0x402,0x403\n</minorAlarm>\n<minorException>\n0x400,0x401,0x402,0x403\n</minorException>\n<minorOperation>\n0x400,0x401,0x402,0x403\n</minorOperation>\n<minorEvent>\n0x01,0x02,0x03,0x04\n</minorEvent>\n<pictureURLType>\nbinary\n</pictureURLType>\n<channels>\n1,2,3,4\n</channels>\n</Event>\n</EventList>\n<channels>\n1,2,3,4\n</channels>\n<pictureURLType>\nbinary\n</pictureURLType>\n<ChangedUploadSub>\n\n<interval>\n5\n</interval>\n<StatusSub>\n\n<all>\ntrue\n</all>\n<channel>\ntrue\n</channel>\n<hd>\ntrue\n</hd>\n<capability>\ntrue\n</capability>\n</StatusSub>\n</ChangedUploadSub>\n</SubscribeEvent>\n<PackingSpaceRecognition>\n\n<upLoadPicturesType>\nall\n</upLoadPicturesType>\n<PicturesTypes>\n\n<picturesType>\nbackgroundImage\n</picturesType>\n</PicturesTypes>\n</PackingSpaceRecognition>\n</HttpHostNotification>\n</HttpHostNotificationList>"
+    },
+    "status_codes": []
+  },
+  {
+    "section_name": "21.10.3 Set IP address of receiving server(s)",
+    "summary": "Sets the parameters for all listening hosts in a single request, effectively defining the IP addresses and other configurations for servers that receive event notifications.",
+    "api": {
+      "method": "PUT",
+      "endpoint": "/ISAPI/Event/notification/httpHosts?security=<security>&iv=<iv>",
+      "capabilities": {
+        "method": "GET",
+        "endpoint": "/ISAPI/Event/notification/httpHosts/capabilities"
+      }
+    },
+    "request": {
+      "format": "XML",
+      "body": "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n<HttpHostNotificationList xmlns=\"http://www.isapi.org/ver20/XMLSchema\" version=\"2.0\">\n\n<HttpHostNotification>\n\n<id>\ntest\n</id>\n<url>\ntest\n</url>\n<protocolType>\nHTTP\n</protocolType>\n<parameterFormatType>\nJSON\n</parameterFormatType>\n<addressingFormatType>\nhostname\n</addressingFormatType>\n<hostName>\ntest\n</hostName>\n<host>\ntest\n</host>\n<ipv6Address>\ntest\n</ipv6Address>\n<portNo>\n1\n</portNo>\n<userName>\ntest\n</userName>\n<password>\ntest\n</password>\n<httpAuthenticationMethod>\nMD5digest\n</httpAuthenticationMethod>\n<ANPR>\n\n<detectionUpLoadPicturesType>\nall\n</detectionUpLoadPicturesType>\n</ANPR>\n<Extensions>\n\n<intervalBetweenEvents>\n1\n</intervalBetweenEvents>\n</Extensions>\n<uploadImagesDataType>\nURL\n</uploadImagesDataType>\n<httpBroken>\ntrue\n</httpBroken>\n<SubscribeEvent>\n\n<heartbeat>\n30\n</heartbeat>\n<eventMode>\nall\n</eventMode>\n<EventList>\n\n<Event>\n\n<type>\nmixedTargetDetection\n</type>\n<minorAlarm>\n0x400,0x401,0x402,0x403\n</minorAlarm>\n<minorException>\n0x400,0x401,0x402,0x403\n</minorException>\n<minorOperation>\n0x400,0x401,0x402,0x403\n</minorOperation>\n<minorEvent>\n0x01,0x02,0x03,0x04\n</minorEvent>\n<pictureURLType>\nbinary\n</pictureURLType>\n<channels>\n1,2,3,4\n</channels>\n</Event>\n</EventList>\n<channels>\n1,2,3,4\n</channels>\n<pictureURLType>\nbinary\n</pictureURLType>\n<ChangedUploadSub>\n\n<interval>\n5\n</interval>\n<StatusSub>\n\n<all>\ntrue\n</all>\n<channel>\ntrue\n</channel>\n<hd>\ntrue\n</hd>\n<capability>\ntrue\n</capability>\n</StatusSub>\n</ChangedUploadSub>\n</SubscribeEvent>\n<PackingSpaceRecognition>\n\n<upLoadPicturesType>\nall\n</upLoadPicturesType>\n<PicturesTypes>\n\n<picturesType>\nbackgroundImage\n</picturesType>\n</PicturesTypes>\n</PackingSpaceRecognition>\n</HttpHostNotification>\n</HttpHostNotificationList>"
+    },
+    "response": {
+      "format": "XML",
+      "body": "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n<ResponseStatus xmlns=\"http://www.isapi.org/ver20/XMLSchema\" version=\"2.0\">\n\n<requestURL>\nnull\n</requestURL>\n<statusCode>\n0\n</statusCode>\n<statusString>\nOK\n</statusString>\n<subStatusCode>\nOK\n</subStatusCode>\n</ResponseStatus>"
+    },
+    "status_codes": []
+  },
+  {
+    "section_name": "21.10.4 Get the parameters of a listening host",
+    "summary": "Retrieves the configuration parameters for a single, specific listening host identified by its ID.",
+    "api": {
+      "method": "GET",
+      "endpoint": "/ISAPI/Event/notification/httpHosts/<hostID>?security=<security>&iv=<iv>",
+      "capabilities": {
+        "method": "GET",
+        "endpoint": "/ISAPI/Event/notification/httpHosts/capabilities"
+      }
+    },
+    "request": {
+      "format": "XML",
+      "body": "None"
+    },
+    "response": {
+      "format": "XML",
+      "body": "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n<HttpHostNotification xmlns=\"http://www.isapi.org/ver20/XMLSchema\" version=\"2.0\">\n\n<id>\ntest\n</id>\n<url>\ntest\n</url>\n<protocolType>\nHTTP\n</protocolType>\n<parameterFormatType>\nJSON\n</parameterFormatType>\n<addressingFormatType>\nhostname\n</addressingFormatType>\n<hostName>\ntest\n</hostName>\n<host>\ntest\n</host>\n<ipv6Address>\ntest\n</ipv6Address>\n<portNo>\n1\n</portNo>\n<userName>\ntest\n</userName>\n<httpAuthenticationMethod>\nMD5digest\n</httpAuthenticationMethod>\n<ANPR>\n\n<detectionUpLoadPicturesType>\nall\n</detectionUpLoadPicturesType>\n</ANPR>\n<Extensions>\n\n<intervalBetweenEvents>\n1\n</intervalBetweenEvents>\n</Extensions>\n<uploadImagesDataType>\nURL\n</uploadImagesDataType>\n<httpBroken>\ntrue\n</httpBroken>\n<SubscribeEvent>\n\n<heartbeat>\n30\n</heartbeat>\n<eventMode>\nall\n</eventMode>\n<EventList>\n\n<Event>\n\n<type>\nmixedTargetDetection\n</type>\n<minorAlarm>\n0x400,0x401,0x402,0x403\n</minorAlarm>\n<minorException>\n0x400,0x401,0x402,0x403\n</minorException>\n<minorOperation>\n0x400,0x401,0x402,0x403\n</minorOperation>\n<minorEvent>\n0x01,0x02,0x03,0x04\n</minorEvent>\n<pictureURLType>\nbinary\n</pictureURLType>\n<channels>\n1,2,3,4\n</channels>\n</Event>\n</EventList>\n<channels>\n1,2,3,4\n</channels>\n<pictureURLType>\nbinary\n</pictureURLType>\n<ChangedUploadSub>\n\n<interval>\n5\n</interval>\n<StatusSub>\n\n<all>\ntrue\n</all>\n<channel>\ntrue\n</channel>\n<hd>\ntrue\n</hd>\n<capability>\ntrue\n</capability>\n</StatusSub>\n</ChangedUploadSub>\n</SubscribeEvent>\n<PackingSpaceRecognition>\n\n<upLoadPicturesType>\nall\n</upLoadPicturesType>\n<PicturesTypes>\n\n<picturesType>\nbackgroundImage\n</picturesType>\n</PicturesTypes>\n</PackingSpaceRecognition>\n</HttpHostNotification>"
+    },
+    "status_codes": []
+  },
+  {
+    "section_name": "21.10.9 Get the capabilities of listening hosts parameters",
+    "summary": "Retrieves the capabilities of the device for configuring HTTP listening hosts, including supported protocols, formats, and event subscription options.",
+    "api": {
+      "method": "GET",
+      "endpoint": "/ISAPI/Event/notification/httpHosts/capabilities"
+    },
+    "request": {
+      "format": "XML",
+      "body": "None"
+    },
+    "response": {
+      "format": "XML",
+      "body": "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n<HttpHostNotificationCap xmlns=\"http://www.isapi.org/ver20/XMLSchema\" version=\"2.0\">\n\n<hostNumber>\n0\n</hostNumber>\n<urlLen max=\"10\">\ntest\n</urlLen>\n<url>\ntest\n</url>\n<protocolType opt=\"HTTP,HTTPS,EHome\">\nHTTP\n</protocolType>\n<parameterFormatType opt=\"XML,querystring,JSON\">\nXML\n</parameterFormatType>\n<addressingFormatType opt=\"host,hostname\">\nhost\n</addressingFormatType>\n<hostName min=\"1\" max=\"64\">\ntest\n</hostName>\n<host opt=\"ipv4,ipv6\">\ntest\n</host>\n<portNo min=\"0\" max=\"10\">\n1\n</portNo>\n<userNameLen min=\"0\" max=\"10\">\n1\n</userNameLen>\n<passwordLen min=\"0\" max=\"10\">\n1\n</passwordLen>\n<httpAuthenticationMethod opt=\"MD5digest,none,base64\">\nMD5digest\n</httpAuthenticationMethod>\n<ANPR>\n\n<detectionUpLoadPicturesType opt=\"test\">\ntest\n</detectionUpLoadPicturesType>\n<alarmHttpPushProtocol opt=\"baseline,custom\">\nbaseline\n</alarmHttpPushProtocol>\n</ANPR>\n<HttpHostUploadCtrl>\n\n<postDataTypes>\ntest\n</postDataTypes>\n<epoliceDataTypes>\ntest\n</epoliceDataTypes>\n<eventDataTypes>\ntest\n</eventDataTypes>\n<evidenceDataTypes>\ntest\n</evidenceDataTypes>\n<uploadInterval min=\"1\" max=\"2000\">\n0\n</uploadInterval>\n<uploadTimeout min=\"1\" max=\"6000\">\n0\n</uploadTimeout>\n<noPlateUploadEnabled opt=\"true,false\">\ntrue\n</noPlateUploadEnabled>\n<historyEnabled opt=\"true,false\">\ntrue\n</historyEnabled>\n<uploadTimePlan>\n\n<enabled opt=\"true,false\">\ntrue\n</enabled>\n<timeList>\n\n<timeSpan>\n\n<timeId min=\"0\" max=\"1\">\n0\n</timeId>\n<startHour min=\"0\" max=\"23\">\n0\n</startHour>\n<startMinute min=\"0\" max=\"59\">\n0\n</startMinute>\n<endHour min=\"0\" max=\"23\">\n0\n</endHour>\n<endMinute min=\"0\" max=\"59\">\n0\n</endMinute>\n</timeSpan>\n</timeList>\n</uploadTimePlan>\n</HttpHostUploadCtrl>\n<Extensions>\n\n<intervalBetweenEvents min=\"0\" max=\"10\">\n0\n</intervalBetweenEvents>\n</Extensions>\n<uploadImagesDataType opt=\"URL,binary\">\nURL\n</uploadImagesDataType>\n<httpBroken opt=\"true,false\" def=\"true\">\ntrue\n</httpBroken>\n<SubscribeEventCap>\ntest\n<heartbeat min=\"0\" max=\"10\">\n1\n</heartbeat>\n<channelMode opt=\"all,list\">\nall\n</channelMode>\n<eventMode opt=\"all,list\">\nall\n</eventMode>\n<EventList>\n\n<Event>\ntest\n<type>\nAccessControllerEvent\n</type>\n<minorAlarm opt=\"0x400,0x401,0x402,0x403\">\n0x400,0x401\n</minorAlarm>\n<minorException opt=\"0x400,0x401,0x402,0x403\">\n0x400,0x401\n</minorException>\n<minorOperation opt=\"0x400,0x401,0x402,0x403\">\n0x400,0x401\n</minorOperation>\n<minorEvent opt=\"0x01,0x02,0x03,0x04\">\n0x400,0x401\n</minorEvent>\n<pictureURLType opt=\"binary,localURL,cloudStorageURL,EZVIZURL\" def=\"cloudStorageURL\">\ncloudStorageURL\n</pictureURLType>\n</Event>\n</EventList>\n<pictureURLType opt=\"binary,localURL,cloudStorageURL,EZVIZURL\" def=\"cloudStorageURL\">\ncloudStorageURL\n</pictureURLType>\n<ChangedUploadSub>\n0\n<interval>\n1\n</interval>\n<StatusSub>\ntrue\n<all>\ntrue\n</all>\n<channel>\ntrue\n</channel>\n<hd>\ntrue\n</hd>\n<capability>\ntrue\n</capability>\n</StatusSub>\n</ChangedUploadSub>\n</SubscribeEventCap>\n<PackingSpaceRecognition>\n\n<upLoadPicturesType opt=\"all,picturesTypes,notUpload\" def=\"all\">\nall\n</upLoadPicturesType>\n<PicturesTypes size=\"2\">\n\n<picturesType opt=\"backgroundImage,plateImage\">\nbackgroundImage\n</picturesType>\n</PicturesTypes>\n</PackingSpaceRecognition>\n</HttpHostNotificationCap>"
+    },
+    "status_codes": []
+  },
+  {
+    "section_name": "21.10.10 Delete receiving server(s)",
+    "summary": "Deletes all configured HTTP listening hosts (receiving servers).",
+    "api": {
+      "method": "DELETE",
+      "endpoint": "/ISAPI/Event/notification/httpHosts"
+    },
+    "request": {
+      "format": "XML",
+      "body": "None"
+    },
+    "response": {
+      "format": "XML",
+      "body": "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n<ResponseStatus xmlns=\"http://www.isapi.org/ver20/XMLSchema\" version=\"2.0\">\n\n<requestURL>\nnull\n</requestURL>\n<statusCode>\n0\n</statusCode>\n<statusString>\nOK\n</statusString>\n<subStatusCode>\nOK\n</subStatusCode>\n</ResponseStatus>"
+    },
+    "status_codes": []
+  },
+  {
+    "section_name": "21.10.11 Delete a HTTP listening server",
+    "summary": "Deletes a single, specific HTTP listening server identified by its host ID.",
+    "api": {
+      "method": "DELETE",
+      "endpoint": "/ISAPI/Event/notification/httpHosts/<hostID>"
+    },
+    "request": {
+      "format": "XML",
+      "body": "None"
+    },
+    "response": {
+      "format": "XML",
+      "body": "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n<ResponseStatus xmlns=\"http://www.isapi.org/ver20/XMLSchema\" version=\"2.0\">\n\n<requestURL>\nnull\n</requestURL>\n<statusCode>\n0\n</statusCode>\n<statusString>\nOK\n</statusString>\n<subStatusCode>\nOK\n</subStatusCode>\n</ResponseStatus>"
+    },
+    "status_codes": []
+  }
+]

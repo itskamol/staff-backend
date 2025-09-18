@@ -1,0 +1,226 @@
+[
+  {
+    "section_name": "16.2.1 Check Whether the Device Supports Fingerprint Management",
+    "summary": "Before calling the API for fingerprint management, you must ensure that the device supports fingerprint management. This is done by checking if the 'isSupportFingerPrintCfg' node is returned with a value of 'true'.",
+    "api": {
+      "method": "GET",
+      "endpoint": "/ISAPI/AccessControl/capabilities"
+    },
+    "request": {
+      "format": "XML",
+      "body": "None"
+    },
+    "response": {
+      "format": "XML",
+      "body": "Response body is not detailed in this section. The response should be checked for the presence of the <isSupportFingerPrintCfg> node with a value of 'true'."
+    },
+    "status_codes": []
+  },
+  {
+    "section_name": "16.2.2 Fingerprint Search",
+    "summary": "This endpoint checks if the device supports fingerprint search.",
+    "api": {
+      "method": "GET",
+      "endpoint": "/ISAPI/AccessControl/FingerPrintCfg/capabilities?format=json"
+    },
+    "request": {
+      "format": "JSON",
+      "body": "None"
+    },
+    "response": {
+      "format": "JSON",
+      "body": "Response body is not detailed in this section. A successful call indicates support."
+    },
+    "status_codes": []
+  },
+  {
+    "section_name": "16.2.2 Fingerprint Search",
+    "summary": "Searches the number of fingerprints for a specified person.",
+    "api": {
+      "method": "GET",
+      "endpoint": "/ISAPI/AccessControl/FingerPrint/Count?format=json&employeeNo=<employeeNo>"
+    },
+    "request": {
+      "format": "JSON",
+      "body": "None"
+    },
+    "response": {
+      "format": "JSON",
+      "body": "Response body is not detailed in this section. The returned value of the node 'numberOfFP' is the number of added fingerprints for the specified person."
+    },
+    "status_codes": []
+  },
+  {
+    "section_name": "16.2.2 Fingerprint Search",
+    "summary": "Searches the number of fingerprints for all persons.",
+    "api": {
+      "method": "GET",
+      "endpoint": "/ISAPI/AccessControl/FingerPrint/Count?format=json"
+    },
+    "request": {
+      "format": "JSON",
+      "body": "None"
+    },
+    "response": {
+      "format": "JSON",
+      "body": "Response body is not detailed in this section. The returned value of the node 'numberOfFP' is the number of added fingerprints of all persons."
+    },
+    "status_codes": []
+  },
+  {
+    "section_name": "16.2.2 Fingerprint Search",
+    "summary": "Searches for fingerprint information, which is returned by page.",
+    "api": {
+      "method": "POST",
+      "endpoint": "/ISAPI/AccessControl/FingerPrintUpload?format=json"
+    },
+    "request": {
+      "format": "JSON",
+      "body": "Request body is not detailed in this section."
+    },
+    "response": {
+      "format": "JSON",
+      "body": "Response body is not detailed in this section. The fingerprint information is returned by page. If the value of the child node status of the node FingerPrintInfo is 'NoFP', it indicates that all fingerprint information has been returned."
+    },
+    "status_codes": []
+  },
+  {
+    "section_name": "16.2.3 Fingerprint Applying",
+    "summary": "Applies fingerprint information to the device. If the fingerprint has been added, it will be edited; otherwise, it will be added.",
+    "api": {
+      "method": "POST",
+      "endpoint": "/ISAPI/AccessControl/FingerPrint/SetUp?format=json",
+      "capabilities": {
+        "method": "GET",
+        "endpoint": "/ISAPI/AccessControl/FingerPrintCfg/capabilities?format=json"
+      }
+    },
+    "request": {
+      "format": "JSON",
+      "body": "Request body is not detailed in this section."
+    },
+    "response": {
+      "format": "JSON",
+      "body": "Response body is not detailed in this section. The response contains the nodes 'employeeNo' and 'fingerPrintID'."
+    },
+    "status_codes": []
+  },
+  {
+    "section_name": "16.2.4 Fingerprint Adding",
+    "summary": "Adds fingerprint information to the device. If the fingerprint already exists, an error is reported. This is an asynchronous process.",
+    "api": {
+      "method": "POST",
+      "endpoint": "/ISAPI/AccessControl/FingerPrintDownload?format=json",
+      "capabilities": {
+        "method": "GET",
+        "endpoint": "/ISAPI/AccessControl/FingerPrintCfg/capabilities?format=json"
+      }
+    },
+    "request": {
+      "format": "JSON",
+      "body": "Request body is not detailed in this section."
+    },
+    "response": {
+      "format": "JSON",
+      "body": "A successful call indicates the device has started executing the fingerprint adding process. The progress must be checked via /ISAPI/AccessControl/FingerPrintProgress?format=json."
+    },
+    "status_codes": []
+  },
+  {
+    "section_name": "16.2.4 Fingerprint Adding",
+    "summary": "Gets the progress of a fingerprint adding operation.",
+    "api": {
+      "method": "GET",
+      "endpoint": "/ISAPI/AccessControl/FingerPrintProgress?format=json"
+    },
+    "request": {
+      "format": "JSON",
+      "body": "None"
+    },
+    "response": {
+      "format": "JSON",
+      "body": "Response body is not detailed in this section. This API should be called repeatedly to get the progress."
+    },
+    "status_codes": []
+  },
+  {
+    "section_name": "16.2.5 Fingerprint Information Editing",
+    "summary": "Edits the parameters of fingerprint information on the device (not the fingerprint data itself). An error is reported if the fingerprint does not exist.",
+    "api": {
+      "method": "POST",
+      "endpoint": "/ISAPI/AccessControl/FingerPrintModify?format=json",
+      "capabilities": {
+        "method": "GET",
+        "endpoint": "/ISAPI/AccessControl/FingerPrintCfg/capabilities?format=json"
+      }
+    },
+    "request": {
+      "format": "JSON",
+      "body": "Request body is not detailed in this section."
+    },
+    "response": {
+      "format": "JSON",
+      "body": "Response body is not detailed in this section. The response contains the nodes 'employeeNo' and 'fingerPrintID'."
+    },
+    "status_codes": []
+  },
+  {
+    "section_name": "16.2.6 Fingerprint Deleting",
+    "summary": "Deletes fingerprint information from the device. This is an asynchronous process.",
+    "api": {
+      "method": "PUT",
+      "endpoint": "/ISAPI/AccessControl/FingerPrint/Delete?format=json",
+      "capabilities": {
+        "method": "GET",
+        "endpoint": "/ISAPI/AccessControl/capabilities"
+      }
+    },
+    "request": {
+      "format": "JSON",
+      "body": "Request body is not detailed in this section."
+    },
+    "response": {
+      "format": "JSON",
+      "body": "A successful call indicates the device has started the deleting process. The progress must be checked via /ISAPI/AccessControl/FingerPrint/DeleteProcess?format=json."
+    },
+    "status_codes": []
+  },
+  {
+    "section_name": "16.2.6 Fingerprint Deleting",
+    "summary": "Gets the progress of a fingerprint deleting operation.",
+    "api": {
+      "method": "GET",
+      "endpoint": "/ISAPI/AccessControl/FingerPrint/DeleteProcess?format=json"
+    },
+    "request": {
+      "format": "JSON",
+      "body": "None"
+    },
+    "response": {
+      "format": "JSON",
+      "body": "Response body is not detailed in this section. This API should be called repeatedly to get the progress."
+    },
+    "status_codes": []
+  },
+  {
+    "section_name": "16.2.7 Fingerprint Collecting",
+    "summary": "Collects fingerprint data, fingerprint quality, etc., from the device.",
+    "api": {
+      "method": "POST",
+      "endpoint": "/ISAPI/AccessControl/CaptureFingerPrint",
+      "capabilities": {
+        "method": "GET",
+        "endpoint": "/ISAPI/AccessControl/capabilities"
+      }
+    },
+    "request": {
+      "format": "XML",
+      "body": "Request body is not detailed in this section."
+    },
+    "response": {
+      "format": "XML",
+      "body": "Response body is not detailed in this section."
+    },
+    "status_codes": []
+  }
+]
