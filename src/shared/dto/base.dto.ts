@@ -47,7 +47,7 @@ export class BaseCreateDto {
         required: false,
     })
     @IsOptional()
-    @IsPhoneNumber()
+    @IsPhoneNumber("UZ")
     @MaxLength(500)
     phone?: string;
 

@@ -2,31 +2,35 @@ import { Injectable } from '@nestjs/common';
 import { OrganizationRepository } from './organization.repository';
 import { DataScope } from '@/shared/interfaces';
 import { Organization, Prisma } from '@prisma/client';
-import { CreateOrganizationDto, PaginationDto, UpdateOrganizationDto } from '@/shared/dto';
+import { CreateOrganizationDto, UpdateOrganizationDto } from '@/shared/dto';
+import { QueryDto } from '@/shared/dto/query.dto';
 
 @Injectable()
 export class OrganizationService {
     constructor(private readonly organizationRepository: OrganizationRepository) {}
 
     async getOrganizations(
-        filters: Prisma.OrganizationWhereInput = {},
-        pagination: PaginationDto,
-        q?: string,
+        { search, isActive, sort, order, page, limit }: QueryDto,
         scope?: DataScope
     ) {
-        if (q) {
+        const filters: Prisma.OrganizationWhereInput = { };
+        if (search) {
             filters.OR = [
-                { fullName: { contains: q, mode: 'insensitive' } },
-                { shortName: { contains: q, mode: 'insensitive' } },
+                { fullName: { contains: search, mode: 'insensitive' } },
+                { shortName: { contains: search, mode: 'insensitive' } },
             ];
+        }
+
+        if (typeof isActive === 'boolean') {
+            filters.isActive = isActive;
         }
 
         const [data, total] = await Promise.all([
             this.organizationRepository.findMany(
                 filters,
-                { createdAt: 'desc' },
+                { [sort]: order },
                 { _count: { select: { departments: true } } },
-                pagination,
+                { page, limit },
                 scope
             ),
             this.organizationRepository.count(filters, scope),
@@ -35,8 +39,8 @@ export class OrganizationService {
         return {
             data,
             total,
-            page: pagination.page,
-            limit: pagination.limit,
+            page,
+            limit,
         };
     }
 

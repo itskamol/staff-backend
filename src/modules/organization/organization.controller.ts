@@ -1,4 +1,14 @@
-import { Body, Controller, Get, NotFoundException, Post, Query } from '@nestjs/common';
+import {
+    Body,
+    Controller,
+    Delete,
+    Get,
+    NotFoundException,
+    Param,
+    Patch,
+    Post,
+    Query,
+} from '@nestjs/common';
 import {
     ApiBearerAuth,
     ApiBody,
@@ -15,12 +25,13 @@ import {
     ApiSuccessResponse,
     CreateOrganizationDto,
     OrganizationResponseDto,
-    PaginationDto,
+    UpdateOrganizationDto,
 } from '@/shared/dto';
 import { NoScoping, Roles, Scope } from '@/shared/decorators';
-import { Role } from '@prisma/client';
+import { Prisma, Role } from '@prisma/client';
 import { ApiOkResponseData, ApiOkResponsePaginated } from '@/shared/utils';
 import { DataScope } from '@/shared/interfaces';
+import { QueryDto } from '@/shared/dto/query.dto';
 
 @ApiTags('Organization')
 @ApiBearerAuth()
@@ -55,18 +66,24 @@ export class OrganizationController {
     }
 
     @Get()
+    @Roles(Role.ADMIN)
     @NoScoping()
     @ApiOperation({ summary: 'Get all organizations with pagination' })
     @ApiQuery({
-        name: 'q',
+        name: 'search',
         description: 'Search term (at least 2 characters)',
         minLength: 2,
         required: false,
     })
+    @ApiQuery({ name: 'isActive', required: false, type: Boolean })
+    @ApiQuery({ name: 'sort', required: false, type: String, enum: Prisma.OrganizationScalarFieldEnum })
+    @ApiQuery({ name: 'order', required: false, type: String, enum: ['asc', 'desc'] })
     @ApiOkResponsePaginated(OrganizationResponseDto)
     @ApiResponse({ status: 403, description: 'Forbidden.', type: ApiErrorResponse })
-    async getAllOrganizations(@Query('q') q: string, @Query() paginationDto: PaginationDto) {
-        return this.organizationService.getOrganizations({}, paginationDto, q);
+    async getAllOrganizations(
+        @Query() query: QueryDto,
+    ) {
+        return this.organizationService.getOrganizations(query);
     }
 
     @Get('self')
@@ -82,5 +99,68 @@ export class OrganizationController {
             throw new NotFoundException('Organization not found.');
         }
         return organization;
+    }
+
+    @Patch(':id')
+    @Roles(Role.ADMIN)
+    @NoScoping()
+    @ApiOperation({ summary: 'Update an organization by ID' })
+    @ApiBody({ type: UpdateOrganizationDto })
+    @ApiResponse({
+        status: 200,
+        description: 'The organization has been successfully updated.',
+        schema: {
+            allOf: [
+                { $ref: getSchemaPath(ApiSuccessResponse) },
+                {
+                    properties: {
+                        data: { $ref: getSchemaPath(OrganizationResponseDto) },
+                    },
+                },
+            ],
+        },
+    })
+    @ApiResponse({ status: 400, description: 'Invalid input.', type: ApiErrorResponse })
+    @ApiResponse({ status: 403, description: 'Forbidden.', type: ApiErrorResponse })
+    @ApiResponse({ status: 404, description: 'Organization not found.', type: ApiErrorResponse })
+    async updateOrganization(
+        @Param('id') id: number,
+        @Body() dto: UpdateOrganizationDto,
+        @Scope() scope: DataScope
+    ) {
+        return this.organizationService.updateOrganization(id, dto, scope);
+    }
+
+    @Delete(':id')
+    @Roles(Role.ADMIN)
+    @NoScoping()
+    @ApiOperation({ summary: 'Delete an organization by ID' })
+    @ApiResponse({
+        status: 200,
+        description: 'The organization has been successfully deleted.',
+        schema: {
+            allOf: [
+                { $ref: getSchemaPath(ApiSuccessResponse) },
+                {
+                    properties: {
+                        data: {
+                            type: 'object',
+                            properties: {
+                                message: {
+                                    type: 'string',
+                                    example: 'Organization deleted successfully.',
+                                },
+                            },
+                        },
+                    },
+                },
+            ],
+        },
+    })
+    @ApiResponse({ status: 403, description: 'Forbidden.', type: ApiErrorResponse })
+    @ApiResponse({ status: 404, description: 'Organization not found.', type: ApiErrorResponse })
+    async deleteOrganization(@Param('id') id: number) {
+        await this.organizationService.deleteOrganization(id);
+        return { message: 'Organization deleted successfully.' };
     }
 }

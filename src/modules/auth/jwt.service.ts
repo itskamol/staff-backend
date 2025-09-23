@@ -34,7 +34,9 @@ export class CustomJwtService {
         try {
             const token = this.jwtService.sign(payload, {
                 secret: this.configService.jwtSecret,
-                expiresIn: this.configService.jwtExpirationTime,
+                expiresIn: Number.isFinite(+this.configService.jwtExpirationTime)
+                    ? +this.configService.jwtExpirationTime
+                    : this.configService.jwtExpirationTime,
             });
 
             this.logger.log('Access token generated', {
