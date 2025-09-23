@@ -46,7 +46,7 @@ async function bootstrap() {
 
     app.enableCors();
 
-    await app.listen(port, '192.168.100.225');
+    await app.listen(port);
 
     logger.log(`Application started successfully`, {
         port,
