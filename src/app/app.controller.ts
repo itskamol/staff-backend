@@ -2,6 +2,7 @@ import { Controller, Get } from '@nestjs/common';
 import { AppService } from './app.service';
 import { Public } from '@/shared/decorators';
 import { ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger';
+import { ApiOkResponseData } from '@/shared/utils';
 import { HealthCheckResponseDto } from './health/health.dto';
 
 @ApiTags('App')
@@ -19,11 +20,8 @@ export class AppController {
 
     @Get('health')
     @Public()
-    @ApiOperation({ summary: 'Get the health status of the service' })
-    @ApiResponse({
-        status: 200,
-        description: 'The health status of the service.',
-        type: HealthCheckResponseDto,
+    @ApiOkResponseData(HealthCheckResponseDto, { 
+        summary: 'Get the health status of the service' 
     })
     getHealth(): HealthCheckResponseDto {
         return {

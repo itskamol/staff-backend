@@ -2,6 +2,7 @@ import { Controller, Get } from '@nestjs/common';
 import { HealthService } from './health.service';
 import { Public } from '@/shared/decorators';
 import { ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger';
+import { ApiOkResponseData } from '@/shared/utils';
 import { DetailedHealthCheckResponseDto, HealthCheckResponseDto } from './health.dto';
 import { plainToClass } from 'class-transformer';
 
@@ -12,11 +13,8 @@ export class HealthController {
 
     @Get()
     @Public()
-    @ApiOperation({ summary: 'Get the health status of the service' })
-    @ApiResponse({
-        status: 200,
-        description: 'The health status of the service.',
-        type: HealthCheckResponseDto,
+    @ApiOkResponseData(HealthCheckResponseDto, { 
+        summary: 'Get the health status of the service' 
     })
     async getHealth(): Promise<HealthCheckResponseDto> {
         return this.healthService.getHealthStatus();
@@ -24,11 +22,8 @@ export class HealthController {
 
     @Get('detailed')
     @Public()
-    @ApiOperation({ summary: 'Get a detailed health status of the service and its dependencies' })
-    @ApiResponse({
-        status: 200,
-        description: 'The detailed health status of the service.',
-        type: DetailedHealthCheckResponseDto,
+    @ApiOkResponseData(DetailedHealthCheckResponseDto, { 
+        summary: 'Get a detailed health status of the service and its dependencies' 
     })
     async getDetailedHealth(): Promise<DetailedHealthCheckResponseDto> {
         const result = await this.healthService.getDetailedHealthStatus();

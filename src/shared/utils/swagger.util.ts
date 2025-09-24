@@ -15,10 +15,13 @@ import {
     ApiSuccessResponse,
 } from '../dto/api-response.dto';
 
-export const ApiOkResponseData = <DataDto extends Type<unknown>>(dataDto: DataDto, body?: Type) =>
+export const ApiOkResponseData = <DataDto extends Type<unknown>>(
+    dataDto: DataDto,
+    options?: { body?: Type; summary?: string }
+) =>
     applyDecorators(
-        ...(body ? [ApiBody({ type: body })] : []),
-        ApiOperation({ summary: 'Successful Operation' }),
+        ...(options?.body ? [ApiBody({ type: options.body })] : []),
+        ApiOperation({ summary: options?.summary || 'Successful Operation' }),
         ApiOkResponse({
             schema: {
                 allOf: [
@@ -33,22 +36,28 @@ export const ApiOkResponseData = <DataDto extends Type<unknown>>(dataDto: DataDt
         })
     );
 
-export const ApiOkResponsePaginated = <DataDto extends Type<unknown>>(dataDto: DataDto) =>
-    ApiOkResponse({
-        schema: {
-            allOf: [
-                { $ref: getSchemaPath(ApiPaginatedResponse) },
-                {
-                    properties: {
-                        data: {
-                            type: 'array',
-                            items: { $ref: getSchemaPath(dataDto) },
+export const ApiOkResponsePaginated = <DataDto extends Type<unknown>>(
+    dataDto: DataDto,
+    options?: { summary?: string }
+) =>
+    applyDecorators(
+        ApiOperation({ summary: options?.summary || 'Get paginated list' }),
+        ApiOkResponse({
+            schema: {
+                allOf: [
+                    { $ref: getSchemaPath(ApiPaginatedResponse) },
+                    {
+                        properties: {
+                            data: {
+                                type: 'array',
+                                items: { $ref: getSchemaPath(dataDto) },
+                            },
                         },
                     },
-                },
-            ],
-        },
-    });
+                ],
+            },
+        })
+    );
 
 type ErrorResponseTypes = {
     forbidden?: boolean;
@@ -89,56 +98,175 @@ type ApiQueriesOptions = {
     pagination?: boolean;
     search?: boolean;
     sort?: boolean;
+    filters?: string[]; // Additional filter fields
 };
 
 export const ApiQueries = (
-    { pagination = true, search = false, sort = false }: ApiQueriesOptions,
-    options?: ApiQueryOptions[]
+    { pagination = true, search = false, sort = false, filters = [] }: ApiQueriesOptions = {},
+    customQueries?: ApiQueryOptions[]
 ) => {
-    return applyDecorators(
-        ...(pagination
-            ? [
-                  ApiQuery({
-                      name: 'page',
-                      required: false,
-                      type: Number,
-                      description: 'Page number for pagination (default: 1)',
-                  }),
-                  ApiQuery({
-                      name: 'limit',
-                      required: false,
-                      type: Number,
-                      description: 'Number of items per page (default: 10)',
-                  }),
-              ]
-            : []),
-        ...(search
-            ? [
-                  ApiQuery({
-                      name: 'search',
-                      required: false,
-                      type: String,
-                      description: 'Search term (at least 2 characters)',
-                      minLength: 2,
-                  }),
-              ]
-            : []),
-        ...(sort
-            ? [
-                  ApiQuery({
-                      name: 'sort',
-                      required: false,
-                      type: String,
-                      description: 'Field to sort by',
-                  }),
-                  ApiQuery({
-                      name: 'order',
-                      required: false,
-                      type: String,
-                      description: 'Sort order (asc or desc)',
-                      enum: ['asc', 'desc'],
-                  }),
-              ]
-            : [])
-    );
+    const queries: any[] = [];
+
+    if (pagination) {
+        queries.push(
+            ApiQuery({
+                name: 'page',
+                required: false,
+                type: Number,
+                description: 'Page number for pagination (default: 1)',
+                example: 1,
+            }),
+            ApiQuery({
+                name: 'limit',
+                required: false,
+                type: Number,
+                description: 'Number of items per page (default: 10, max: 100)',
+                example: 10,
+            })
+        );
+    }
+
+    if (search) {
+        queries.push(
+            ApiQuery({
+                name: 'search',
+                required: false,
+                type: String,
+                description: 'Search term (at least 2 characters)',
+                minLength: 2,
+                example: 'john',
+            })
+        );
+    }
+
+    if (sort) {
+        queries.push(
+            ApiQuery({
+                name: 'sort',
+                required: false,
+                type: String,
+                description: 'Field to sort by',
+                example: 'createdAt',
+            }),
+            ApiQuery({
+                name: 'order',
+                required: false,
+                type: String,
+                description: 'Sort order (asc or desc)',
+                enum: ['asc', 'desc'],
+                example: 'desc',
+            })
+        );
+    }
+
+    // Add filter queries
+    if (filters?.length) {
+        filters.forEach(filter => {
+            queries.push(
+                ApiQuery({
+                    name: filter,
+                    required: false,
+                    type: String,
+                    description: `Filter by ${filter}`,
+                })
+            );
+        });
+    }
+
+    // Add custom queries
+    if (customQueries?.length) {
+        queries.push(...customQueries.map(query => ApiQuery(query)));
+    }
+
+    return applyDecorators(...queries);
+};
+
+// Combined decorator for common CRUD operations
+export const ApiCrudOperation = <DataDto extends Type<unknown>>(
+    dataDto: DataDto,
+    operation: 'create' | 'update' | 'delete' | 'get' | 'list',
+    options?: {
+        summary?: string;
+        body?: Type;
+        includeQueries?: ApiQueriesOptions;
+        errorResponses?: ErrorResponseTypes;
+    }
+) => {
+    const decorators: any[] = [];
+
+    // Add operation-specific responses
+    switch (operation) {
+        case 'create':
+            decorators.push(
+                ApiOkResponseData(dataDto, {
+                    body: options?.body,
+                    summary: options?.summary || `Create new ${dataDto.name.toLowerCase()}`,
+                }),
+                ApiErrorResponses({
+                    badRequest: true,
+                    unauthorized: true,
+                    forbidden: true,
+                    conflict: true,
+                    ...options?.errorResponses,
+                })
+            );
+            break;
+        case 'update':
+            decorators.push(
+                ApiOkResponseData(dataDto, {
+                    body: options?.body,
+                    summary: options?.summary || `Update ${dataDto.name.toLowerCase()}`,
+                }),
+                ApiErrorResponses({
+                    badRequest: true,
+                    unauthorized: true,
+                    forbidden: true,
+                    notFound: true,
+                    ...options?.errorResponses,
+                })
+            );
+            break;
+        case 'delete':
+            decorators.push(
+                ApiOperation({
+                    summary: options?.summary || `Delete ${dataDto.name.toLowerCase()}`,
+                }),
+                ApiOkResponse({ description: 'Successfully deleted' }),
+                ApiErrorResponses({
+                    unauthorized: true,
+                    forbidden: true,
+                    notFound: true,
+                    ...options?.errorResponses,
+                })
+            );
+            break;
+        case 'get':
+            decorators.push(
+                ApiOkResponseData(dataDto, {
+                    summary: options?.summary || `Get ${dataDto.name.toLowerCase()} by ID`,
+                }),
+                ApiErrorResponses({
+                    unauthorized: true,
+                    forbidden: true,
+                    notFound: true,
+                    ...options?.errorResponses,
+                })
+            );
+            break;
+        case 'list':
+            decorators.push(
+                ApiOkResponsePaginated(dataDto, {
+                    summary: options?.summary || `Get ${dataDto.name.toLowerCase()} list`,
+                }),
+                ApiQueries(options?.includeQueries || { pagination: true }),
+                ApiErrorResponses({
+                    unauthorized: true,
+                    forbidden: true,
+                    ...options?.errorResponses,
+                })
+            );
+            break;
+    }
+
+    return applyDecorators(...decorators);
 };

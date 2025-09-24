@@ -29,7 +29,7 @@ import {
 } from '@/shared/dto';
 import { NoScoping, Roles, Scope } from '@/shared/decorators';
 import { Prisma, Role } from '@prisma/client';
-import { ApiOkResponseData, ApiOkResponsePaginated } from '@/shared/utils';
+import { ApiOkResponseData, ApiOkResponsePaginated, ApiCrudOperation, ApiErrorResponses, ApiQueries } from '@/shared/utils';
 import { DataScope } from '@/shared/interfaces';
 import { QueryDto } from '@/shared/dto/query.dto';
 
@@ -43,24 +43,10 @@ export class OrganizationController {
     @Roles(Role.ADMIN)
     @Post()
     @NoScoping()
-    @ApiOperation({ summary: 'Create a new organization' })
-    @ApiBody({ type: CreateOrganizationDto })
-    @ApiResponse({
-        status: 201,
-        description: 'The organization has been successfully created.',
-        schema: {
-            allOf: [
-                { $ref: getSchemaPath(ApiSuccessResponse) },
-                {
-                    properties: {
-                        data: { $ref: getSchemaPath(OrganizationResponseDto) },
-                    },
-                },
-            ],
-        },
+    @ApiCrudOperation(OrganizationResponseDto, 'create', {
+        body: CreateOrganizationDto,
+        summary: 'Create a new organization'
     })
-    @ApiResponse({ status: 400, description: 'Invalid input.', type: ApiErrorResponse })
-    @ApiResponse({ status: 403, description: 'Forbidden.', type: ApiErrorResponse })
     async createOrganization(@Body() dto: CreateOrganizationDto) {
         return this.organizationService.createOrganization(dto);
     }
@@ -68,18 +54,15 @@ export class OrganizationController {
     @Get()
     @Roles(Role.ADMIN)
     @NoScoping()
-    @ApiOperation({ summary: 'Get all organizations with pagination' })
-    @ApiQuery({
-        name: 'search',
-        description: 'Search term (at least 2 characters)',
-        minLength: 2,
-        required: false,
+    @ApiCrudOperation(OrganizationResponseDto, 'list', {
+        summary: 'Get all organizations with pagination',
+        includeQueries: { 
+            pagination: true, 
+            search: true, 
+            sort: true, 
+            filters: ['isActive'] 
+        }
     })
-    @ApiQuery({ name: 'isActive', required: false, type: Boolean })
-    @ApiQuery({ name: 'sort', required: false, type: String, enum: Prisma.OrganizationScalarFieldEnum })
-    @ApiQuery({ name: 'order', required: false, type: String, enum: ['asc', 'desc'] })
-    @ApiOkResponsePaginated(OrganizationResponseDto)
-    @ApiResponse({ status: 403, description: 'Forbidden.', type: ApiErrorResponse })
     async getAllOrganizations(
         @Query() query: QueryDto,
     ) {
@@ -89,10 +72,9 @@ export class OrganizationController {
     @Get(':id')
     @Roles(Role.ADMIN)
     @NoScoping()
-    @ApiOperation({ summary: 'Get an organization by ID' })
-    @ApiOkResponseData(OrganizationResponseDto)
-    @ApiResponse({ status: 403, description: 'Forbidden.', type: ApiErrorResponse })
-    @ApiResponse({ status: 404, description: 'Organization not found.', type: ApiErrorResponse })
+    @ApiCrudOperation(OrganizationResponseDto, 'get', {
+        summary: 'Get an organization by ID'
+    })
     async getOrganizationById(@Param('id') id: number) {
         const organization = await this.organizationService.getOrganizationById(id);
         if (!organization) {

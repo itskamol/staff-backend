@@ -21,6 +21,7 @@ import {
 } from './queue.dto';
 import { plainToClass } from 'class-transformer';
 import { ErrorResponseDto } from '@/shared/dto';
+import { ApiOkResponseData, ApiErrorResponses } from '@/shared/utils';
 
 @ApiTags('Admin - Queues')
 @ApiBearerAuth()
@@ -33,13 +34,10 @@ export class QueueController {
 
     @Get('stats')
     @Permissions(PERMISSIONS.ADMIN.QUEUE_READ)
-    @ApiOperation({ summary: 'Get statistics for all queues' })
-    @ApiResponse({
-        status: 200,
-        description: 'Statistics for all queues.',
-        type: QueueStatsResponseDto,
+    @ApiOkResponseData(QueueStatsResponseDto, { 
+        summary: 'Get statistics for all queues' 
     })
-    @ApiResponse({ status: 403, description: 'Forbidden.', type: ErrorResponseDto })
+    @ApiErrorResponses({ forbidden: true })
     async getQueueStats(): Promise<QueueStatsResponseDto> {
         const stats = await this.queueService.getAllQueueStats();
         return { queues: stats };
@@ -47,14 +45,11 @@ export class QueueController {
 
     @Get(':queueName/stats')
     @Permissions(PERMISSIONS.ADMIN.QUEUE_READ)
-    @ApiOperation({ summary: 'Get statistics for a specific queue' })
     @ApiParam({ name: 'queueName', description: 'The name of the queue' })
-    @ApiResponse({
-        status: 200,
-        description: 'Statistics for the specified queue.',
-        type: QueueStatsResponseDto,
+    @ApiOkResponseData(QueueStatsResponseDto, { 
+        summary: 'Get statistics for a specific queue' 
     })
-    @ApiResponse({ status: 403, description: 'Forbidden.', type: ErrorResponseDto })
+    @ApiErrorResponses({ forbidden: true })
     async getQueueStatsByName(
         @Param('queueName') queueName: string
     ): Promise<QueueStatsResponseDto> {
@@ -171,11 +166,8 @@ export class QueueController {
 
     @Get('health')
     @Public()
-    @ApiOperation({ summary: 'Get the health status of all queues' })
-    @ApiResponse({
-        status: 200,
-        description: 'The health status of all queues.',
-        type: QueueHealthResponseDto,
+    @ApiOkResponseData(QueueHealthResponseDto, { 
+        summary: 'Get the health status of all queues' 
     })
     async getQueueHealth(): Promise<QueueHealthResponseDto> {
         try {

@@ -20,7 +20,7 @@ import {
     RefreshTokenResponseDto,
     ValidateTokenResponseDto,
 } from '@/shared/dto';
-import { ApiOkResponseData } from '@/shared/utils';
+import { ApiOkResponseData, ApiErrorResponses } from '@/shared/utils';
 
 @ApiTags('Authentication')
 @Controller('auth')
@@ -36,10 +36,11 @@ export class AuthController {
     @Post('login')
     @Public()
     @HttpCode(HttpStatus.OK)
-    @ApiOperation({ summary: 'Log in a user' })
-    @ApiBody({ type: LoginDto })
-    @ApiOkResponseData(LoginResponseDto)
-    @ApiResponse({ status: 401, description: 'Unauthorized', type: ApiErrorResponse })
+    @ApiOkResponseData(LoginResponseDto, { 
+        body: LoginDto, 
+        summary: 'Log in a user' 
+    })
+    @ApiErrorResponses({ unauthorized: true, badRequest: true })
     async login(@Body() loginDto: LoginDto): Promise<LoginResponseDto> {
         return this.authService.login(loginDto);
     }
@@ -47,10 +48,11 @@ export class AuthController {
     @Post('refresh')
     @Public()
     @HttpCode(HttpStatus.OK)
-    @ApiOperation({ summary: 'Refresh an access token' })
-    @ApiBody({ type: RefreshTokenDto })
-    @ApiOkResponseData(RefreshTokenResponseDto)
-    @ApiResponse({ status: 401, description: 'Unauthorized', type: ApiErrorResponse })
+    @ApiOkResponseData(RefreshTokenResponseDto, { 
+        body: RefreshTokenDto, 
+        summary: 'Refresh an access token' 
+    })
+    @ApiErrorResponses({ unauthorized: true, badRequest: true })
     async refreshToken(@Body() refreshTokenDto: RefreshTokenDto): Promise<RefreshTokenResponseDto> {
         return this.authService.refreshToken(refreshTokenDto);
     }
@@ -61,7 +63,7 @@ export class AuthController {
     @ApiOperation({ summary: 'Log out a user' })
     @ApiBody({ type: LogoutDto })
     @ApiResponse({ status: 204, description: 'Logout successful' })
-    @ApiResponse({ status: 401, description: 'Unauthorized', type: ApiErrorResponse })
+    @ApiErrorResponses({ unauthorized: true })
     async logout(@Body() logoutDto: LogoutDto): Promise<void> {
         await this.authService.logout(logoutDto.refreshToken);
     }
@@ -69,9 +71,10 @@ export class AuthController {
     @Post('validate')
     @ApiBearerAuth()
     @HttpCode(HttpStatus.OK)
-    @ApiOperation({ summary: 'Validate the current access token' })
-    @ApiOkResponseData(ValidateTokenResponseDto)
-    @ApiResponse({ status: 401, description: 'Unauthorized', type: ApiErrorResponse })
+    @ApiOkResponseData(ValidateTokenResponseDto, { 
+        summary: 'Validate the current access token' 
+    })
+    @ApiErrorResponses({ unauthorized: true })
     async validateToken(@User() user: UserContext): Promise<ValidateTokenResponseDto> {
         const data: ValidateTokenResponseDto = {
             valid: true,
