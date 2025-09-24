@@ -16,6 +16,7 @@ import { MorganLoggerMiddleware } from '@/shared/middleware';
 import { XmlJsonService } from '@/shared/services/xml-json.service';
 import { OrganizationModule } from '@/modules/organization/organization.module';
 import { ResponseInterceptor } from '@/shared/interceptors/response.interceptor';
+import { DepartmentModule } from '@/modules/department/department.module';
 @Module({
     imports: [
         ConfigModule,
@@ -25,6 +26,7 @@ import { ResponseInterceptor } from '@/shared/interceptors/response.interceptor'
         AuthModule,
         UserModule,
         OrganizationModule,
+        DepartmentModule
     ],
     controllers: [AppController],
     providers: [

@@ -5,7 +5,7 @@ import {
     Get,
     NotFoundException,
     Param,
-    Patch,
+    Put,
     Post,
     Query,
 } from '@nestjs/common';
@@ -86,6 +86,21 @@ export class OrganizationController {
         return this.organizationService.getOrganizations(query);
     }
 
+    @Get(':id')
+    @Roles(Role.ADMIN)
+    @NoScoping()
+    @ApiOperation({ summary: 'Get an organization by ID' })
+    @ApiOkResponseData(OrganizationResponseDto)
+    @ApiResponse({ status: 403, description: 'Forbidden.', type: ApiErrorResponse })
+    @ApiResponse({ status: 404, description: 'Organization not found.', type: ApiErrorResponse })
+    async getOrganizationById(@Param('id') id: number) {
+        const organization = await this.organizationService.getOrganizationById(id);
+        if (!organization) {
+            throw new NotFoundException('Organization not found.');
+        }
+        return organization;
+    }
+
     @Get('self')
     @ApiOperation({ summary: 'Get the current authenticated user’s organization' })
     @ApiOkResponseData(OrganizationResponseDto)
@@ -101,7 +116,7 @@ export class OrganizationController {
         return organization;
     }
 
-    @Patch(':id')
+    @Put(':id')
     @Roles(Role.ADMIN)
     @NoScoping()
     @ApiOperation({ summary: 'Update an organization by ID' })

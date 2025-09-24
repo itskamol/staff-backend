@@ -32,6 +32,14 @@ export class CreateUserDto {
     password: string;
 
     @ApiProperty({
+        description: 'The ID of the organization the user belongs to.',
+        example: 1,
+    })
+    @IsString()
+    @IsNotEmpty()
+    organizationId: number;
+
+    @ApiProperty({
         description: 'The full name of the user.',
         example: 'John Doe',
         required: false,
@@ -67,6 +75,15 @@ export class UpdateUserDto {
     @IsOptional()
     @IsString()
     username?: string;
+
+    @ApiProperty({
+        description: 'The ID of the organization the user belongs to.',
+        example: 1,
+        required: false,
+    })
+    @IsOptional()
+    @IsString()
+    organizationId?: number;
 
     @ApiProperty({
         description: 'The full name of the user.',
@@ -149,28 +166,32 @@ export class AssignUserToOrganizationDto {
 export class UserResponseDto {
     @ApiProperty({
         description: 'The unique identifier for the user.',
-        example: 'a1b2c3d4-e5f6-7890-1234-567890abcdef',
+        example: 1,
     })
-    id: string;
+    id: number;
 
     @ApiProperty({
         description: 'The email address of the user.',
-        example: 'john.doe@example.com',
+        example: 'username123',
     })
-    email: string;
+    @IsString()
+    username: string;
 
     @ApiProperty({
         description: 'The full name of the user.',
         example: 'John Doe',
-        required: false,
     })
-    fullName?: string;
+    @IsString()
+    @IsNotEmpty()
+    name: string;
 
     @ApiProperty({
-        description: 'Indicates if the user account is active.',
+        description: 'The status of the user account.',
         example: true,
     })
-    isActive: boolean;
+    @IsOptional()
+    @IsBoolean()
+    isActive?: boolean;
 
     @ApiProperty({
         description: 'The date and time when the user was created.',
@@ -185,19 +206,6 @@ export class UserResponseDto {
     updatedAt: Date;
 }
 
-class ManagedBranchDto {
-    @ApiProperty({
-        description: 'The ID of the managed branch.',
-        example: 'a1b2c3d4-e5f6-7890-1234-567890abcdef',
-    })
-    branchId: string;
-
-    @ApiProperty({
-        description: 'The name of the managed branch.',
-        example: 'Main Branch',
-    })
-    branchName: string;
-}
 
 export class OrganizationUserResponseDto extends UserResponseDto {
     @ApiProperty({
@@ -212,12 +220,6 @@ export class OrganizationUserResponseDto extends UserResponseDto {
         example: 'a1b2c3d4-e5f6-7890-1234-567890abcdef',
     })
     organizationId: string;
-
-    @ApiProperty({
-        description: 'A list of branches managed by the user.',
-        type: [ManagedBranchDto],
-    })
-    managedBranches: ManagedBranchDto[];
 }
 
 class UserOrganizationLinkDto {
@@ -239,12 +241,6 @@ class UserOrganizationLinkDto {
         example: Role.ADMIN,
     })
     role: Role;
-
-    @ApiProperty({
-        description: 'A list of branches managed by the user in this organization.',
-        type: [ManagedBranchDto],
-    })
-    managedBranches: ManagedBranchDto[];
 
     @ApiProperty({
         description: 'The date and time when the user joined the organization.',

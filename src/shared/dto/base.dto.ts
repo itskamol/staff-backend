@@ -64,7 +64,7 @@ export class BaseCreateDto {
 
     @ApiProperty({
         description: 'Additional details about the organization in key-value pairs.',
-        example: { key1: 'value1', key2: 'value2' },
+        example: 'some additional details',
         required: false,
     })
     @IsOptional()

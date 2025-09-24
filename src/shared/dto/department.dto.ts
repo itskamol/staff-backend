@@ -9,7 +9,7 @@ export class CreateDepartmentDto extends BaseCreateDto {
     })
     @IsString()
     @IsNotEmpty()
-    organizationId: string;
+    organizationId: number;
 
     @ApiProperty({
         description: 'The ID of the parent department, if this is a sub-department.',
@@ -19,7 +19,7 @@ export class CreateDepartmentDto extends BaseCreateDto {
     @IsOptional()
     @IsString()
     @IsNotEmpty()
-    parentId?: string;
+    parentId?: number;
 }
 
 export class UpdateDepartmentDto extends PartialType(CreateDepartmentDto) {}

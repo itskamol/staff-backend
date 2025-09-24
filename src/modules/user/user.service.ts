@@ -15,7 +15,10 @@ export class UserService {
     /**
      * Create a new user
      */
-    async createUser(createUserDto: CreateUserDto, correlationId?: string): Promise<User> {
+    async createUser(
+        createUserDto: CreateUserDto,
+        correlationId?: string
+    ): Promise<Omit<User, 'password'>> {
         // Validate password strength
         const passwordValidation = PasswordUtil.validatePassword(createUserDto.password);
         if (!passwordValidation.isValid) {
@@ -28,7 +31,7 @@ export class UserService {
         const passwordHash = await PasswordUtil.hash(createUserDto.password);
 
         // Create user
-        const user = await this.userRepository.create({
+        const { password, ...user } = await this.userRepository.create({
             ...createUserDto,
             password: passwordHash,
         });
@@ -66,13 +69,13 @@ export class UserService {
         id: number,
         updateUserDto: UpdateUserDto,
         correlationId?: string
-    ): Promise<User> {
+    ): Promise<Omit<User, 'password'>> {
         const existingUser = await this.userRepository.findById(id);
         if (!existingUser) {
             throw new NotFoundException('User not found');
         }
 
-        const updatedUser = await this.userRepository.update(id, updateUserDto);
+        const { password, ...updatedUser } = await this.userRepository.update(id, updateUserDto);
 
         this.logger.logUserAction(id, 'USER_UPDATED', {
             changes: updateUserDto,
@@ -127,7 +130,7 @@ export class UserService {
     /**
      * Deactivate user
      */
-    async deactivateUser(id: number, correlationId?: string): Promise<User> {
+    async deactivateUser(id: number, correlationId?: string): Promise<Omit<User, 'password'>> {
         const user = await this.updateUser(id, { isActive: false }, correlationId);
 
         this.logger.logUserAction(id, 'USER_DEACTIVATED', { correlationId });
@@ -138,11 +141,15 @@ export class UserService {
     /**
      * Activate user
      */
-    async activateUser(id: number, correlationId?: string): Promise<User> {
+    async activateUser(id: number, correlationId?: string): Promise<Omit<User, 'password'>> {
         const user = await this.updateUser(id, { isActive: true }, correlationId);
 
         this.logger.logUserAction(id, 'USER_ACTIVATED', { correlationId });
 
         return user;
+    }
+
+    async getAllUsers(): Promise<Omit<User, 'password'>[]> {
+        return this.userRepository.findMany();
     }
 }

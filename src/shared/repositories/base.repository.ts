@@ -74,7 +74,7 @@ export abstract class BaseRepository<
         this.logger.debug(`Creating ${this.modelName} with data:`, data);
 
         const createData = scope ? this.applyDataScopeToCreate(data, scope) : data;
-        console.log(data);
+
         const result = await this.getDelegate().create({
             data: createData,
             include,
