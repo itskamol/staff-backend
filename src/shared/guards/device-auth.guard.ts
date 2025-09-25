@@ -16,6 +16,9 @@ interface RequestWithDevice extends RequestWithCorrelation {
 
 @Injectable()
 export class DeviceAuthGuard implements CanActivate {
+    private readonly TIMESTAMP_TOLERANCE_MS = 5 * 60 * 1000; // 5 minutes
+    private readonly DEV_SIGNATURE_PREFIX = 'dev-';
+
     constructor(
         private reflector: Reflector,
         private readonly logger: LoggerService
@@ -61,8 +64,8 @@ export class DeviceAuthGuard implements CanActivate {
             const now = new Date();
             const timeDiff = Math.abs(now.getTime() - requestTime.getTime());
 
-            // Allow 5 minutes tolerance
-            if (timeDiff > 5 * 60 * 1000) {
+            // Allow configured tolerance time
+            if (timeDiff > this.TIMESTAMP_TOLERANCE_MS) {
                 this.logger.warn('Device authentication failed: Request too old', {
                     deviceId,
                     timestamp: requestTime,
@@ -110,8 +113,8 @@ export class DeviceAuthGuard implements CanActivate {
         // 2. Recreate the expected signature using the same algorithm
         // 3. Compare with the provided signature
 
-        // For development/testing, allow signatures starting with 'dev-'
-        if (signature.startsWith('dev-')) {
+        // For development/testing, allow signatures starting with configured prefix
+        if (signature.startsWith(this.DEV_SIGNATURE_PREFIX)) {
             return true;
         }
 

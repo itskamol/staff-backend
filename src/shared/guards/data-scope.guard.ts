@@ -66,17 +66,7 @@ export class DataScopeGuard implements CanActivate {
             throw new ForbiddenException('No organization context available');
         }
 
-        // Attach scope to request for use in services
-
-        this.logger.debug('Data scope applied', {
-            userId: user.sub,
-            url: request.url,
-            method: request.method,
-            correlationId: request.correlationId,
-            module: 'data-scope-guard',
-        });
-
-         const scope: DataScope = {
+        const scope: DataScope = {
             organizationId: user.organizationId,
             departments: user.departments,
         };
@@ -93,7 +83,6 @@ export class DataScopeGuard implements CanActivate {
             correlationId: request.correlationId,
             module: 'data-scope-guard',
         });
-
 
         return true;
     }
