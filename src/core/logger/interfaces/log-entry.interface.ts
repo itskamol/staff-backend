@@ -13,7 +13,7 @@ export interface LogContext {
     // Core identification fields
     correlationId?: string;
     userId?: string;
-    organizationId?: string;
+    organizationId?: number;
     module?: string;
 
     // Request context

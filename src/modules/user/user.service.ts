@@ -59,7 +59,7 @@ export class UserService {
      * Find user by email
      */
     async findByUsername(username: string): Promise<User | null> {
-        return this.userRepository.findByUsername(username);
+        return this.userRepository.findFirst({ username });
     }
 
     /**

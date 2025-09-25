@@ -22,9 +22,4 @@ export class UserRepository extends BaseRepository<
     protected getDelegate() {
         return this.prisma.user;
     }
-
-
-    async findByUsername(username: string): Promise<User | null> {
-        return this.findFirst({ username });
-    }
 }

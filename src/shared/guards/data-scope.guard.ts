@@ -1,8 +1,9 @@
-import { CanActivate, ExecutionContext, Injectable } from '@nestjs/common';
+import { CanActivate, ExecutionContext, ForbiddenException, Injectable } from '@nestjs/common';
 import { Reflector } from '@nestjs/core';
 import { LoggerService } from '@/core/logger';
 import { DataScope, UserContext } from '../interfaces/data-scope.interface';
 import { RequestWithCorrelation } from '../middleware/correlation-id.middleware';
+import { Role } from '@prisma/client';
 
 export interface RequestWithScope extends RequestWithCorrelation {
     user: UserContext;
@@ -35,6 +36,36 @@ export class DataScopeGuard implements CanActivate {
             return true;
         }
 
+        const noScoping = this.reflector.getAllAndOverride<boolean>('noScoping', [
+            context.getHandler(),
+            context.getClass(),
+        ]);
+
+        if (noScoping) {
+            if (user.role !== Role.ADMIN) {
+                this.logger.logUserAction(+user.sub, 'DATA_SCOPE_VIOLATION_NO_SCOPING', {
+                    userId: user.sub,
+                    role: user.role,
+                    url: request.url,
+                    method: request.method,
+                    organizationId: user.organizationId,
+                    correlationId: request.correlationId,
+                });
+                throw new ForbiddenException('Insufficient privileges for system-wide access');
+            }
+            return true;
+        }
+
+        if (!user.organizationId) {
+            this.logger.logUserAction(+user.sub, 'DATA_SCOPE_VIOLATION_NO_ORGANIZATION', {
+                userId: user.sub,
+                role: user.role,
+                url: request.url,
+                method: request.method,
+            });
+            throw new ForbiddenException('No organization context available');
+        }
+
         // Attach scope to request for use in services
 
         this.logger.debug('Data scope applied', {
@@ -44,6 +75,25 @@ export class DataScopeGuard implements CanActivate {
             correlationId: request.correlationId,
             module: 'data-scope-guard',
         });
+
+         const scope: DataScope = {
+            organizationId: user.organizationId,
+            departments: user.departments,
+        };
+
+        // Attach scope to request for use in services
+        request.scope = scope;
+
+        this.logger.debug('Data scope applied', {
+            userId: user.sub,
+            organizationId: scope.organizationId,
+            departments: scope.departments,
+            url: request.url,
+            method: request.method,
+            correlationId: request.correlationId,
+            module: 'data-scope-guard',
+        });
+
 
         return true;
     }

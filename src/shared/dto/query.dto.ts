@@ -18,7 +18,9 @@ export class QueryDto extends PaginationDto {
     @ApiProperty({
         description: 'Filter by active status',
         example: true,
+        type: Boolean,
         required: false,
+        enum: [true, false],
     })
     isActive?: boolean;
 
@@ -39,4 +41,20 @@ export class QueryDto extends PaginationDto {
         required: false,
     })
     order?: 'asc' | 'desc';
+
+    @IsString()
+    @IsOptional()
+    @ApiProperty({
+        description: 'Start date',
+        required: false,
+    })
+    startDate?: string;
+
+    @IsString()
+    @IsOptional()
+    @ApiProperty({
+        required: false,
+        description: 'End date',
+    })
+    endDate?: string;
 }

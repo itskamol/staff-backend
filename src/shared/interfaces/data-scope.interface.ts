@@ -1,11 +1,11 @@
-import { Role } from "@prisma/client";
+import { Role } from '@prisma/client';
 
 export interface DataScope {
-    organizationId: number;
-    departmentId?: number;
+    organizationId?: number;
+    departments?: number[];
 }
 
-export interface UserContext {
+export interface UserContext extends DataScope {
     sub: string;
     username: string;
     role: Role;

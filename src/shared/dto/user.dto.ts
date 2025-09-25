@@ -3,6 +3,7 @@ import {
     IsBoolean,
     IsEnum,
     IsNotEmpty,
+    IsNumber,
     IsOptional,
     IsString,
     Matches,
@@ -82,7 +83,7 @@ export class UpdateUserDto {
         required: false,
     })
     @IsOptional()
-    @IsString()
+    @IsNumber()
     organizationId?: number;
 
     @ApiProperty({

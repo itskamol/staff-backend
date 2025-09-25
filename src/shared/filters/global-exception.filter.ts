@@ -120,10 +120,6 @@ export class GlobalExceptionFilter implements ExceptionFilter {
             details: error.details,
         });
 
-        if (this.configService.isDevelopment) {
-            this.enhanceErrorForDevelopment(error, exception, request);
-        }
-
         if (status === HttpStatus.INTERNAL_SERVER_ERROR && this.configService.isProduction) {
             error.message = 'An unexpected internal error occurred.';
             error.details = undefined;
@@ -131,81 +127,6 @@ export class GlobalExceptionFilter implements ExceptionFilter {
 
         const errorResponse = new ApiErrorResponse(error);
         response.status(status).json(errorResponse);
-    }
-
-    private enhanceErrorForDevelopment(error: ApiErrorDto, exception: unknown, request: RequestWithCorrelation): void {
-        const developmentDetails: any = error.details || {};
-
-        if (exception instanceof Error && exception.stack) {
-            developmentDetails.stackTrace = exception.stack.split('\n');
-        }
-
-        developmentDetails.request = {
-            method: request.method,
-            url: request.url,
-            headers: this.sanitizeHeaders(request.headers),
-            query: request.query,
-            params: request.params,
-            body: this.sanitizeRequestBody(request.body),
-            correlationId: request.correlationId,
-            timestamp: new Date().toISOString(),
-        };
-
-        // Exception type va ma'lumotlari
-        if (exception) {
-            developmentDetails.exception = {
-                type: exception.constructor?.name || 'Unknown',
-                message: exception instanceof Error ? exception.message : String(exception),
-            };
-
-            if (exception instanceof Prisma.PrismaClientKnownRequestError) {
-                developmentDetails.exception.prisma = {
-                    code: exception.code,
-                    meta: exception.meta,
-                    clientVersion: exception.clientVersion,
-                };
-            }
-
-            if (exception instanceof HttpException) {
-                const response = exception.getResponse();
-                developmentDetails.exception.httpException = {
-                    status: exception.getStatus(),
-                    response: typeof response === 'object' ? response : { message: response },
-                };
-            }
-        }
-
-        error.details = developmentDetails;
-    }
-
-    private sanitizeHeaders(headers: any): any {
-        const sensitiveHeaders = ['authorization', 'cookie', 'x-api-key', 'x-auth-token'];
-        const sanitized = { ...headers };
-        
-        sensitiveHeaders.forEach(header => {
-            if (sanitized[header]) {
-                sanitized[header] = '[REDACTED]';
-            }
-        });
-        
-        return sanitized;
-    }
-
-    private sanitizeRequestBody(body: any): any {
-        if (!body || typeof body !== 'object') {
-            return body;
-        }
-
-        const sensitiveFields = ['password', 'token', 'secret', 'key', 'credential'];
-        const sanitized = { ...body };
-        
-        sensitiveFields.forEach(field => {
-            if (sanitized[field]) {
-                sanitized[field] = '[REDACTED]';
-            }
-        });
-        
-        return sanitized;
     }
 
     private getErrorCodeFromStatus(status: number): string {

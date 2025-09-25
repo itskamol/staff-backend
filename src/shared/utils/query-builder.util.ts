@@ -25,7 +25,7 @@ export class QueryBuilder {
     static buildBranchRelationScope(scope: DataScope): any {
         return {
             organizationId: scope.organizationId,
-            departmentId: scope.departmentId,
+            departmentId: scope.departments,
         };
     }
 

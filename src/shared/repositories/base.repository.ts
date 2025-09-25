@@ -43,8 +43,8 @@ export abstract class BaseRepository<
             scopedWhere.organizationId = scope.organizationId;
         }
 
-        if (scope.departmentId) {
-            scopedWhere.departmentId = scope.departmentId;
+        if (scope.departments.length) {
+            scopedWhere.departments = scope.departments;
         }
 
         return scopedWhere;
@@ -60,8 +60,8 @@ export abstract class BaseRepository<
             (scopedData as Record<string, unknown>).organizationId = scope.organizationId;
         }
 
-        if (scope.departmentId && 'departmentId' in scopedData) {
-            (scopedData as Record<string, unknown>).departmentId = scope.departmentId;
+        if (scope.departments.length && 'departments' in scopedData) {
+            (scopedData as Record<string, unknown>).departments = scope.departments;
         }
 
         return scopedData;

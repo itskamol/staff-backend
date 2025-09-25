@@ -1,5 +1,5 @@
 import { ApiProperty, PartialType } from '@nestjs/swagger';
-import { IsNotEmpty, IsOptional, IsString } from 'class-validator';
+import { IsNotEmpty, IsNumber, IsOptional, IsString } from 'class-validator';
 import { BaseCreateDto } from './base.dto';
 
 export class CreateDepartmentDto extends BaseCreateDto {
@@ -7,7 +7,7 @@ export class CreateDepartmentDto extends BaseCreateDto {
         description: 'The ID of the organization this department belongs to.',
         example: 2,
     })
-    @IsString()
+    @IsNumber()
     @IsNotEmpty()
     organizationId: number;
 
@@ -18,7 +18,6 @@ export class CreateDepartmentDto extends BaseCreateDto {
     })
     @IsOptional()
     @IsString()
-    @IsNotEmpty()
     parentId?: number;
 }
 

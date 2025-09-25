@@ -45,20 +45,31 @@ export class DepartmentService {
     }
 
     async getDepartmentById(id: number, scope?: DataScope) {
-        return this.departmentRepository.findById(id, { 
-            organization: true, 
-            parent: true, 
-            children: true, 
-            employees: true 
-        }, scope);
+        return this.departmentRepository.findById(
+            id,
+            {
+                organization: true,
+                parent: true,
+                children: true,
+                employees: true,
+            },
+            scope
+        );
     }
 
-    async createDepartment(data: CreateDepartmentDto): Promise<Department> {
-        return this.departmentRepository.create({
-            ...data,
-            organization: { connect: { id: data.organizationId } },
-            ...(data.parentId && { parent: { connect: { id: data.parentId } } })
-        });
+    async createDepartment(
+        { organizationId, ...data }: CreateDepartmentDto,
+        scope: DataScope
+    ): Promise<Department> {
+        return this.departmentRepository.create(
+            {
+                ...data,
+                organization: { connect: { id: organizationId } },
+                ...(data.parentId && { parent: { connect: { id: data.parentId } } }),
+            },
+            undefined,
+            scope
+        );
     }
 
     async updateDepartment(id: number, data: UpdateDepartmentDto, scope?: DataScope) {

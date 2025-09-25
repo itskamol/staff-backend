@@ -4,7 +4,7 @@ import { CustomJwtService, JwtPayload } from './jwt.service';
 import { CacheService } from '@/core/cache/cache.service';
 import { PasswordUtil } from '@/shared/utils/password.util';
 import { LoginDto, LoginResponseDto, RefreshTokenDto, RefreshTokenResponseDto } from '@/shared/dto';
-import { User } from '@prisma/client';
+import { DepartmentUser, Organization, User } from '@prisma/client';
 
 @Injectable()
 export class AuthService {
@@ -20,7 +20,11 @@ export class AuthService {
     async login(loginDto: LoginDto): Promise<LoginResponseDto> {
         const { username, password } = loginDto;
 
-        const user = await this.userRepository.findByUsername(username);
+        const user: User = await this.userRepository.findFirst({ username }, undefined, {
+            organization: { select: { id: true, isActive: true } },
+            departmentUsers: { select: { departmentId: true } },
+        });
+
         if (!user) {
             throw new UnauthorizedException('Invalid credentials');
         }
@@ -34,11 +38,11 @@ export class AuthService {
             throw new UnauthorizedException('Invalid credentials');
         }
 
-
         const jwtPayload: Omit<JwtPayload, 'iat' | 'exp'> = {
             sub: String(user.id),
             username: user.username,
             role: user.role,
+            organizationId: user.organizationId || undefined,
         };
 
         const tokens = this.jwtService.generateTokenPair(jwtPayload);

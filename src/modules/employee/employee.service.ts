@@ -36,7 +36,7 @@ export class EmployeeService {
         const [employees, total] = await Promise.all([
             this.employeeRepository.findManyWithRoleScope(
                 whereClause,
-                orderBy,
+                { createdAt: 'desc' },
                 undefined,
                 pagination,
                 scope,
@@ -168,10 +168,10 @@ export class EmployeeService {
 
         // Parse date range from query if provided
         const dateRange =
-            query.startDate || query.endDate
+            query.startDate && query.endDate
                 ? {
-                      startDate: query.startDate ? new Date(query.startDate as string) : undefined,
-                      endDate: query.endDate ? new Date(query.endDate as string) : undefined,
+                      startDate: new Date(query.startDate),
+                      endDate: new Date(query.endDate),
                   }
                 : undefined;
 

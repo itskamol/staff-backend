@@ -1,5 +1,6 @@
-import { CanActivate, ExecutionContext, Injectable } from '@nestjs/common';
+import { CanActivate, ExecutionContext, ForbiddenException, Injectable } from '@nestjs/common';
 import { Reflector } from '@nestjs/core';
+import { Role } from '@prisma/client';
 import { UserContext } from '../interfaces/data-scope.interface';
 
 export interface RequestWithUser {
@@ -14,19 +15,28 @@ export class RolesGuard implements CanActivate {
         const request = context.switchToHttp().getRequest<RequestWithUser>();
         const user = request.user;
 
-        // Skip if no user (public routes or unauthenticated)
-        if (!user) {
-            return true;
-        }
+        if (!user) return true;
 
-        // Check if route is marked as public
         const isPublic = this.reflector.getAllAndOverride<boolean>('isPublic', [
             context.getHandler(),
             context.getClass(),
         ]);
 
-        if (isPublic) {
-            return true;
+        if (isPublic) return true;
+
+        const requiredRoles = this.reflector.getAllAndMerge<Role[]>('roles', [
+            context.getHandler(),
+            context.getClass(),
+        ]);
+
+        if (requiredRoles && requiredRoles.length > 0) {
+            const hasRole = requiredRoles.includes(user.role);
+
+            if (!hasRole) {
+                throw new ForbiddenException(
+                    `Access denied. Required roles: ${requiredRoles.join(', ')}`
+                );
+            }
         }
 
         return true;

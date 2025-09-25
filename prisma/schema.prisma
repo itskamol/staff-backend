@@ -22,7 +22,6 @@ model User {
   username       String @unique
   password       String
   organizationId Int?   @map("organization_id")
-  departmentId   Int?   @map("department_id")
   role           Role
 
   // --- Standard Fields ---
@@ -30,12 +29,23 @@ model User {
   createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz(3)
   updatedAt DateTime @updatedAt @map("updated_at") @db.Timestamptz(3)
 
-  organization    Organization?   @relation(fields: [organizationId], references: [id])
-  department      Department?     @relation(fields: [departmentId], references: [id])
-  createdVisitors Visitor[]       @relation("CreatedVisitors")
+  organization    Organization?    @relation(fields: [organizationId], references: [id])
+  createdVisitors Visitor[]        @relation("CreatedVisitors")
   changeHistories ChangeHistory[]
+  departmentUsers DepartmentUser[]
 
   @@map("users")
+}
+
+model DepartmentUser {
+  userId       Int @map("user_id")
+  departmentId Int @map("department_id")
+
+  user       User       @relation(fields: [userId], references: [id])
+  department Department @relation(fields: [departmentId], references: [id])
+
+  @@id([userId, departmentId])
+  @@map("department_users")
 }
 
 model Organization {
@@ -75,11 +85,11 @@ model Department {
   createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz(3)
   updatedAt DateTime @updatedAt @map("updated_at") @db.Timestamptz(3)
 
-  organization Organization @relation(fields: [organizationId], references: [id])
-  parent       Department?  @relation("DepartmentHierarchy", fields: [parentId], references: [id])
-  children     Department[] @relation("DepartmentHierarchy")
-  users        User[]
-  employees    Employee[]
+  organization    Organization     @relation(fields: [organizationId], references: [id])
+  parent          Department?      @relation("DepartmentHierarchy", fields: [parentId], references: [id])
+  children        Department[]     @relation("DepartmentHierarchy")
+  employees       Employee[]
+  departmentUsers DepartmentUser[]
 
   @@map("departments")
 }

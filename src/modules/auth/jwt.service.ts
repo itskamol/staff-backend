@@ -8,6 +8,8 @@ export interface JwtPayload {
     sub: string;
     username: string;
     role: Role;
+    organizationId?: number;
+    departments?: number[];
     iat?: number;
     exp?: number;
 }
@@ -32,13 +34,18 @@ export class CustomJwtService {
      */
     generateAccessToken(payload: Omit<JwtPayload, 'iat' | 'exp'>): string {
         try {
-            const token = this.jwtService.sign(payload, {
+             const tokenPayload = {
+                ...payload,
+                ...(payload?.organizationId && { organizationId: payload.organizationId }),
+                ...(payload?.departments?.length && { departments: payload.departments })
+            };
+
+            const token = this.jwtService.sign(tokenPayload, {
                 secret: this.configService.jwtSecret,
                 expiresIn: Number.isFinite(+this.configService.jwtExpirationTime)
                     ? +this.configService.jwtExpirationTime
                     : this.configService.jwtExpirationTime,
             });
-
             this.logger.log('Access token generated', {
                 userId: payload.sub,
                 module: 'jwt',

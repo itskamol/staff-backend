@@ -9,33 +9,23 @@ import {
     Post,
     Query,
 } from '@nestjs/common';
-import {
-    ApiBearerAuth,
-    ApiBody,
-    ApiExtraModels,
-    ApiOperation,
-    ApiQuery,
-    ApiResponse,
-    ApiTags,
-    getSchemaPath,
-} from '@nestjs/swagger';
+import { ApiBearerAuth, ApiExtraModels, ApiTags } from '@nestjs/swagger';
 import { OrganizationService } from './organization.service';
 import {
-    ApiErrorResponse,
     ApiSuccessResponse,
     CreateOrganizationDto,
     OrganizationResponseDto,
     UpdateOrganizationDto,
 } from '@/shared/dto';
 import { NoScoping, Roles, Scope } from '@/shared/decorators';
-import { Prisma, Role } from '@prisma/client';
-import { ApiOkResponseData, ApiOkResponsePaginated, ApiCrudOperation, ApiErrorResponses, ApiQueries } from '@/shared/utils';
+import { Role } from '@prisma/client';
+import { ApiCrudOperation } from '@/shared/utils';
 import { DataScope } from '@/shared/interfaces';
 import { QueryDto } from '@/shared/dto/query.dto';
 
 @ApiTags('Organization')
 @ApiBearerAuth()
-@Controller('organization')
+@Controller('organizations')
 @ApiExtraModels(ApiSuccessResponse, OrganizationResponseDto)
 export class OrganizationController {
     constructor(private readonly organizationService: OrganizationService) {}
@@ -45,7 +35,7 @@ export class OrganizationController {
     @NoScoping()
     @ApiCrudOperation(OrganizationResponseDto, 'create', {
         body: CreateOrganizationDto,
-        summary: 'Create a new organization'
+        summary: 'Create a new organization',
     })
     async createOrganization(@Body() dto: CreateOrganizationDto) {
         return this.organizationService.createOrganization(dto);
@@ -56,24 +46,31 @@ export class OrganizationController {
     @NoScoping()
     @ApiCrudOperation(OrganizationResponseDto, 'list', {
         summary: 'Get all organizations with pagination',
-        includeQueries: { 
-            pagination: true, 
-            search: true, 
-            sort: true, 
-            filters: ['isActive'] 
-        }
+        includeQueries: {
+            pagination: true,
+            search: true,
+            sort: true,
+            filters: ['isActive'],
+        },
     })
-    async getAllOrganizations(
-        @Query() query: QueryDto,
-    ) {
+    async getAllOrganizations(@Query() query: QueryDto) {
         return this.organizationService.getOrganizations(query);
+    }
+
+    @Get('self')
+    @Roles(Role.ADMIN, Role.HR, Role.DEPARTMENT_LEAD)
+    @ApiCrudOperation(OrganizationResponseDto, 'get', {
+        summary: 'Get the current authenticated user’s organization',
+    })
+    async getCurrentOrganization(@Scope() scope: DataScope) {
+        return this.organizationService.getOrganizationsByScope(scope);
     }
 
     @Get(':id')
     @Roles(Role.ADMIN)
     @NoScoping()
     @ApiCrudOperation(OrganizationResponseDto, 'get', {
-        summary: 'Get an organization by ID'
+        summary: 'Get an organization by ID',
     })
     async getOrganizationById(@Param('id') id: number) {
         const organization = await this.organizationService.getOrganizationById(id);
@@ -83,43 +80,13 @@ export class OrganizationController {
         return organization;
     }
 
-    @Get('self')
-    @ApiOperation({ summary: 'Get the current authenticated user’s organization' })
-    @ApiOkResponseData(OrganizationResponseDto)
-    @ApiResponse({ status: 403, description: 'Forbidden.', type: ApiErrorResponse })
-    @ApiResponse({ status: 404, description: 'Organization not found.', type: ApiErrorResponse })
-    async getCurrentOrganization(@Scope() scope: DataScope) {
-        const organization = await this.organizationService.getOrganizationById(
-            scope.organizationId
-        );
-        if (!organization) {
-            throw new NotFoundException('Organization not found.');
-        }
-        return organization;
-    }
-
     @Put(':id')
     @Roles(Role.ADMIN)
     @NoScoping()
-    @ApiOperation({ summary: 'Update an organization by ID' })
-    @ApiBody({ type: UpdateOrganizationDto })
-    @ApiResponse({
-        status: 200,
-        description: 'The organization has been successfully updated.',
-        schema: {
-            allOf: [
-                { $ref: getSchemaPath(ApiSuccessResponse) },
-                {
-                    properties: {
-                        data: { $ref: getSchemaPath(OrganizationResponseDto) },
-                    },
-                },
-            ],
-        },
+    @ApiCrudOperation(OrganizationResponseDto, 'update', {
+        body: UpdateOrganizationDto,
+        summary: 'Update an organization by ID',
     })
-    @ApiResponse({ status: 400, description: 'Invalid input.', type: ApiErrorResponse })
-    @ApiResponse({ status: 403, description: 'Forbidden.', type: ApiErrorResponse })
-    @ApiResponse({ status: 404, description: 'Organization not found.', type: ApiErrorResponse })
     async updateOrganization(
         @Param('id') id: number,
         @Body() dto: UpdateOrganizationDto,
@@ -131,31 +98,9 @@ export class OrganizationController {
     @Delete(':id')
     @Roles(Role.ADMIN)
     @NoScoping()
-    @ApiOperation({ summary: 'Delete an organization by ID' })
-    @ApiResponse({
-        status: 200,
-        description: 'The organization has been successfully deleted.',
-        schema: {
-            allOf: [
-                { $ref: getSchemaPath(ApiSuccessResponse) },
-                {
-                    properties: {
-                        data: {
-                            type: 'object',
-                            properties: {
-                                message: {
-                                    type: 'string',
-                                    example: 'Organization deleted successfully.',
-                                },
-                            },
-                        },
-                    },
-                },
-            ],
-        },
+    @ApiCrudOperation(OrganizationResponseDto, 'delete', {
+        summary: 'Delete an organization by ID',
     })
-    @ApiResponse({ status: 403, description: 'Forbidden.', type: ApiErrorResponse })
-    @ApiResponse({ status: 404, description: 'Organization not found.', type: ApiErrorResponse })
     async deleteOrganization(@Param('id') id: number) {
         await this.organizationService.deleteOrganization(id);
         return { message: 'Organization deleted successfully.' };

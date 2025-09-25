@@ -26,22 +26,21 @@ import { QueryDto } from '@/shared/dto/query.dto';
 @ApiTags('Departments')
 @ApiBearerAuth()
 @Controller('departments')
+@Roles(Role.ADMIN, Role.DEPARTMENT_LEAD, Role.HR)
 @ApiExtraModels(ApiSuccessResponse, DepartmentResponseDto)
 export class DepartmentController {
     constructor(private readonly departmentService: DepartmentService) {}
 
-    @Roles(Role.ADMIN, Role.DEPARTMENT_LEAD)
     @Post()
     @ApiCrudOperation(DepartmentResponseDto, 'create', {
         body: CreateDepartmentDto,
         summary: 'Create a new department',
     })
-    async createDepartment(@Body() dto: CreateDepartmentDto) {
-        return this.departmentService.createDepartment(dto);
+    async createDepartment(@Body() dto: CreateDepartmentDto, @Scope() scope: DataScope) {
+        return this.departmentService.createDepartment(dto, scope);
     }
 
     @Get()
-    @Roles(Role.ADMIN, Role.DEPARTMENT_LEAD)
     @ApiCrudOperation(DepartmentResponseDto, 'list', {
         summary: 'Get all departments with pagination',
         includeQueries: {
@@ -55,8 +54,16 @@ export class DepartmentController {
         return this.departmentService.getDepartments(query, scope);
     }
 
+    @Get('self')
+    @ApiOkResponseData(DepartmentResponseDto, {
+        summary: "Get the current authenticated user's department",
+    })
+    @ApiErrorResponses({ forbidden: true, notFound: true })
+    async getCurrentDepartment(@Scope() scope: DataScope) {
+        return this.departmentService.getDepartments({ limit: 1 }, scope);
+    }
+
     @Get(':id')
-    @Roles(Role.ADMIN, Role.DEPARTMENT_LEAD)
     @ApiCrudOperation(DepartmentResponseDto, 'get', {
         summary: 'Get a department by ID',
     })
@@ -68,27 +75,7 @@ export class DepartmentController {
         return department;
     }
 
-    @Get('self')
-    @ApiOkResponseData(DepartmentResponseDto, {
-        summary: "Get the current authenticated user's department",
-    })
-    @ApiErrorResponses({ forbidden: true, notFound: true })
-    async getCurrentDepartment(@Scope() scope: DataScope) {
-        if (!scope.departmentId) {
-            throw new NotFoundException('User has no department assigned.');
-        }
-        const department = await this.departmentService.getDepartmentById(
-            scope.departmentId,
-            scope
-        );
-        if (!department) {
-            throw new NotFoundException('Department not found.');
-        }
-        return department;
-    }
-
     @Put(':id')
-    @Roles(Role.ADMIN, Role.DEPARTMENT_LEAD)
     @ApiCrudOperation(DepartmentResponseDto, 'update', {
         body: UpdateDepartmentDto,
         summary: 'Update a department by ID',
@@ -102,7 +89,6 @@ export class DepartmentController {
     }
 
     @Delete(':id')
-    @Roles(Role.ADMIN, Role.DEPARTMENT_LEAD)
     @ApiCrudOperation(DepartmentResponseDto, 'delete', {
         summary: 'Delete a department by ID',
     })

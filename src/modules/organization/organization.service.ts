@@ -13,7 +13,7 @@ export class OrganizationService {
         { search, isActive, sort, order, page, limit }: QueryDto,
         scope?: DataScope
     ) {
-        const filters: Prisma.OrganizationWhereInput = { };
+        const filters: Prisma.OrganizationWhereInput = {};
         if (search) {
             filters.OR = [
                 { fullName: { contains: search, mode: 'insensitive' } },
@@ -46,6 +46,10 @@ export class OrganizationService {
 
     async getOrganizationById(id: number, scope?: DataScope) {
         return this.organizationRepository.findById(id, { departments: true }, scope);
+    }
+
+    async getOrganizationsByScope(scope: DataScope) {
+        return this.organizationRepository.findMany(undefined, undefined, undefined, undefined, scope);
     }
 
     async createOrganization(data: CreateOrganizationDto): Promise<Organization> {
