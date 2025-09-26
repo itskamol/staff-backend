@@ -1,7 +1,7 @@
 import { Injectable, UnauthorizedException } from '@nestjs/common';
-import { PrismaService } from '@staff-control-system/shared/database';
-import { JwtService } from '@staff-control-system/shared/auth';
-import { EncryptionUtil } from '@staff-control-system/shared/utils';
+import { PrismaService } from '@app/shared/database';
+import { JwtService } from '@app/shared/auth';
+import { EncryptionUtil } from '@app/shared/utils';
 import { LoginDto } from './dto/auth.dto';
 
 @Injectable()

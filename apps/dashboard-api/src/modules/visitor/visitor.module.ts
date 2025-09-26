@@ -1,5 +1,5 @@
 import { Module } from '@nestjs/common';
-import { SharedDatabaseModule } from '@staff-control-system/shared/database';
+import { SharedDatabaseModule } from '@app/shared/database';
 import { VisitorController } from './visitor.controller';
 import { VisitorService } from './visitor.service';
 

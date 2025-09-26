@@ -1,7 +1,7 @@
 import { Test, TestingModule } from '@nestjs/testing';
 import { ReportsService } from './reports.service';
-import { PrismaService } from '@staff-control-system/shared/database';
-import { Role } from '@staff-control-system/shared/auth';
+import { PrismaService } from '@app/shared/database';
+import { Role } from '@app/shared/auth';
 import { ReportType, TimeRange } from './dto/reports.dto';
 
 describe('ReportsService', () => {

@@ -1,7 +1,7 @@
 import { Injectable, NotFoundException, ForbiddenException, ConflictException } from '@nestjs/common';
-import { PrismaService } from '@staff-control-system/shared/database';
-import { Role } from '@staff-control-system/shared/auth';
-import { QueryBuilderUtil, PaginationDto } from '@staff-control-system/shared/utils';
+import { PrismaService } from '@app/shared/database';
+import { Role } from '@app/shared/auth';
+import { QueryBuilderUtil, PaginationDto } from '@app/shared/utils';
 import { CreateEmployeeDto, UpdateEmployeeDto, LinkComputerUserDto } from './dto/employee.dto';
 
 @Injectable()

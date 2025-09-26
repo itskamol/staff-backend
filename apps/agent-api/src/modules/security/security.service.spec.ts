@@ -1,6 +1,6 @@
 import { Test, TestingModule } from '@nestjs/testing';
 import { SecurityService } from './security.service';
-import { PrismaService } from '@staff-control-system/shared/database';
+import { PrismaService } from '@app/shared/database';
 import { ApiKeyType, SecurityEventType } from './dto/security.dto';
 import { UnauthorizedException, ForbiddenException } from '@nestjs/common';
 

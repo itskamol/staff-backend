@@ -1,6 +1,6 @@
 import { Injectable, ForbiddenException, BadRequestException } from '@nestjs/common';
-import { PrismaService } from '@staff-control-system/shared/database';
-import { Role } from '@staff-control-system/shared/auth';
+import { PrismaService } from '@app/shared/database';
+import { Role } from '@app/shared/auth';
 import { 
   GenerateReportDto, 
   AttendanceReportDto, 

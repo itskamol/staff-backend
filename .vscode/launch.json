@@ -4,9 +4,9 @@
     {
       "type": "node",
       "request": "launch",
-      "name": "Debug staff-control-system with Nx",
+      "name": "Debug app with Nx",
       "runtimeExecutable": "pnpm exec",
-      "runtimeArgs": ["nx", "serve", "staff-control-system"],
+      "runtimeArgs": ["nx", "serve", "app"],
       "env": {
         "NODE_OPTIONS": "--inspect=9229"
       },
@@ -15,7 +15,7 @@
       "skipFiles": ["<node_internals>/**"],
       "sourceMaps": true,
       "outFiles": [
-        "${workspaceFolder}/apps/staff-control-system/dist/**/*.(m|c|)js",
+        "${workspaceFolder}/apps/app/dist/**/*.(m|c|)js",
         "!**/node_modules/**"
       ]
     },

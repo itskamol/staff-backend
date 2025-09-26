@@ -1,6 +1,6 @@
 import { Test, TestingModule } from '@nestjs/testing';
 import { HIKVisionService } from './hikvision.service';
-import { PrismaService } from '@staff-control-system/shared/database';
+import { PrismaService } from '@app/shared/database';
 import { HIKVisionActionType, HIKVisionEventType, HIKVisionDeviceStatus } from './dto/hikvision.dto';
 import { ActionType, EntryType, ActionMode, VisitorType } from '@prisma/client';
 

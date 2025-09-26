@@ -1,7 +1,7 @@
 import { Injectable, NotFoundException, ForbiddenException } from '@nestjs/common';
-import { PrismaService } from '@staff-control-system/shared/database';
-import { Role } from '@staff-control-system/shared/auth';
-import { QueryBuilderUtil, PaginationDto, EncryptionUtil } from '@staff-control-system/shared/utils';
+import { PrismaService } from '@app/shared/database';
+import { Role } from '@app/shared/auth';
+import { QueryBuilderUtil, PaginationDto, EncryptionUtil } from '@app/shared/utils';
 import { CreateVisitorDto, UpdateVisitorDto, GenerateCodeDto } from './dto/visitor.dto';
 // import * as QRCode from 'qrcode'; // TODO: Install qrcode package
 

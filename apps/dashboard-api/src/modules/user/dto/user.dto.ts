@@ -1,6 +1,6 @@
 import { IsString, IsNotEmpty, IsOptional, IsEnum, IsBoolean, MinLength, IsInt } from 'class-validator';
 import { ApiProperty, PartialType } from '@nestjs/swagger';
-import { Role } from '@staff-control-system/shared/auth';
+import { Role } from '@app/shared/auth';
 
 export class CreateUserDto {
   @ApiProperty({ example: 'John Doe' })

@@ -1,6 +1,6 @@
 import { Module } from '@nestjs/common';
-import { SharedAuthModule } from '@staff-control-system/shared/auth';
-import { SharedDatabaseModule } from '@staff-control-system/shared/database';
+import { SharedAuthModule } from '@app/shared/auth';
+import { SharedDatabaseModule } from '@app/shared/database';
 import { AuthController } from './auth.controller';
 import { AuthService } from './auth.service';
 

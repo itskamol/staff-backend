@@ -28,7 +28,7 @@ Staff Control System loyihasini **NestJS NX monorepo** arxitekturasiga o'tkazish
 
 ### NX Monorepo Structure
 ```
-staff-control-system/
+app/
 ├── apps/
 │   ├── agent-api/          # Agent ma'lumotlarini qabul qiluvchi API
 │   └── dashboard-api/      # Asosiy business logic API
@@ -538,7 +538,7 @@ export class LoggerService {
 **Steps:**
 1. **NX workspace yaratish:**
    ```bash
-   npx create-nx-workspace@latest staff-control-system \
+   npx create-nx-workspace@latest app \
      --preset=nest \
      --package-manager=pnpm \
      --nx-cloud=false

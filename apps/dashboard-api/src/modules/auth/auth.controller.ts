@@ -1,7 +1,7 @@
 import { Controller, Post, Body, HttpCode, HttpStatus } from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiResponse } from '@nestjs/swagger';
-import { Public } from '@staff-control-system/shared/auth';
-import { ApiResponseDto } from '@staff-control-system/shared/utils';
+import { Public } from '@app/shared/auth';
+import { ApiResponseDto } from '@app/shared/utils';
 import { AuthService } from './auth.service';
 import { LoginDto, RefreshTokenDto } from './dto/auth.dto';
 

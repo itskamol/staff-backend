@@ -1,5 +1,5 @@
 import { Module, Global } from '@nestjs/common';
-import { SharedDatabaseModule } from '@staff-control-system/shared/database';
+import { SharedDatabaseModule } from '@app/shared/database';
 import { SecurityController } from './security.controller';
 import { SecurityService } from './security.service';
 import { ApiKeyGuard } from './guards/api-key.guard';

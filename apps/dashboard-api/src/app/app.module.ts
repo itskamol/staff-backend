@@ -2,9 +2,9 @@ import { Module } from '@nestjs/common';
 import { APP_GUARD, APP_INTERCEPTOR, APP_FILTER } from '@nestjs/core';
 import { ConfigModule } from '@nestjs/config';
 
-import { SharedDatabaseModule } from '@staff-control-system/shared/database';
-import { SharedAuthModule, JwtAuthGuard, RolesGuard, DataScopeGuard } from '@staff-control-system/shared/auth';
-import { SharedUtilsModule, ResponseInterceptor, GlobalExceptionFilter } from '@staff-control-system/shared/utils';
+import { SharedDatabaseModule } from '@app/shared/database';
+import { SharedAuthModule, JwtAuthGuard, RolesGuard, DataScopeGuard } from '@app/shared/auth';
+import { SharedUtilsModule, ResponseInterceptor, GlobalExceptionFilter } from '@app/shared/utils';
 import { CoreModule } from '../core/core.module';
 
 import { AppController } from './app.controller';

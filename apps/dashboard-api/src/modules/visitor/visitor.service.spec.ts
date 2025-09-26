@@ -1,8 +1,8 @@
 import { Test, TestingModule } from '@nestjs/testing';
 import { NotFoundException, ForbiddenException } from '@nestjs/common';
 import { VisitorService } from './visitor.service';
-import { PrismaService } from '@staff-control-system/shared/database';
-import { Role } from '@staff-control-system/shared/auth';
+import { PrismaService } from '@app/shared/database';
+import { Role } from '@app/shared/auth';
 import { VisitorCodeType } from '@prisma/client';
 
 describe('VisitorService', () => {

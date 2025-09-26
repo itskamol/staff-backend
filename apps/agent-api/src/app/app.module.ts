@@ -2,8 +2,8 @@ import { Module } from '@nestjs/common';
 import { APP_INTERCEPTOR, APP_FILTER } from '@nestjs/core';
 import { ConfigModule } from '@nestjs/config';
 
-import { SharedDatabaseModule } from '@staff-control-system/shared/database';
-import { SharedUtilsModule, ResponseInterceptor, GlobalExceptionFilter } from '@staff-control-system/shared/utils';
+import { SharedDatabaseModule } from '@app/shared/database';
+import { SharedUtilsModule, ResponseInterceptor, GlobalExceptionFilter } from '@app/shared/utils';
 
 import { AppController } from './app.controller';
 import { AppService } from './app.service';

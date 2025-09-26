@@ -1,7 +1,7 @@
 import { Controller, Get, Post, Put, Delete, Body, Param, Query, ParseIntPipe } from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiResponse } from '@nestjs/swagger';
-import { Roles, Role, User as CurrentUser } from '@staff-control-system/shared/auth';
-import { ApiResponseDto, PaginationDto } from '@staff-control-system/shared/utils';
+import { Roles, Role, User as CurrentUser } from '@app/shared/auth';
+import { ApiResponseDto, PaginationDto } from '@app/shared/utils';
 import { OrganizationService } from './organization.service';
 import { CreateOrganizationDto, UpdateOrganizationDto } from './dto/organization.dto';
 

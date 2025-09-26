@@ -20,7 +20,7 @@ Bu implementation plan Staff Control System loyihasini hozirgi NestJS strukturas
   - _Requirements: 1.1, 1.2, 1.3_
 
 - [x] 3. NX workspace yaratish
-  - `npx create-nx-workspace@latest staff-control-system --preset=nest --package-manager=pnpm`
+  - `npx create-nx-workspace@latest app --preset=nest --package-manager=pnpm`
   - Basic configuration sozlash
   - Workspace structure o'rnatish
   - _Requirements: 1.1, 1.2, 1.3, 1.4, 1.5_

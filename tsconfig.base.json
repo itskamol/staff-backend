@@ -15,9 +15,9 @@
     "skipDefaultLibCheck": true,
     "baseUrl": ".",
     "paths": {
-      "@staff-control-system/shared/auth": ["shared/auth/src/index.ts"],
-      "@staff-control-system/shared/database": ["shared/database/src/index.ts"],
-      "@staff-control-system/shared/utils": ["shared/utils/src/index.ts"]
+      "@app/shared/auth": ["shared/auth/src/index.ts"],
+      "@app/shared/database": ["shared/database/src/index.ts"],
+      "@app/shared/utils": ["shared/utils/src/index.ts"]
     }
   },
   "exclude": ["node_modules", "tmp"]

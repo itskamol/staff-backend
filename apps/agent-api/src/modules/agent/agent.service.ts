@@ -1,6 +1,6 @@
 import { Injectable, UnauthorizedException, BadRequestException, Logger } from '@nestjs/common';
-import { PrismaService } from '@staff-control-system/shared/database';
-import { ValidationUtil, EncryptionUtil } from '@staff-control-system/shared/utils';
+import { PrismaService } from '@app/shared/database';
+import { ValidationUtil, EncryptionUtil } from '@app/shared/utils';
 import { 
   ActiveWindowDto, 
   VisitedSiteDto, 

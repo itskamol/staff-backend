@@ -1,15 +1,15 @@
 import { Injectable, Logger, OnModuleInit } from '@nestjs/common';
-import { PrismaService } from '@staff-control-system/shared/database';
-import { 
-  ProcessingJobDto, 
-  BatchProcessingDto, 
-  ProcessingResultDto, 
+import { PrismaService } from '@app/shared/database';
+import {
+  ProcessingJobDto,
+  BatchProcessingDto,
+  ProcessingResultDto,
   DataValidationResult,
   ComputerUserLinkDto,
   QueueStatusDto,
   ProcessingStatsDto,
   ProcessingStatus,
-  DataType
+  DataType,
 } from './dto/data-processing.dto';
 import { Cron, CronExpression } from '@nestjs/schedule';
 
@@ -21,7 +21,12 @@ interface QueueJob {
   endTime?: Date;
   retryCount: number;
   result?: ProcessingResultDto;
-  error?: any;
+  error?: {
+    message: string;
+    code: string;
+    details?: any;
+    stack?: string;
+  };
 }
 
 @Injectable()
@@ -45,7 +50,9 @@ export class DataProcessingService implements OnModuleInit {
     this.startProcessingLoop();
   }
 
-  async submitJob(jobDto: ProcessingJobDto): Promise<{ jobId: string; status: string }> {
+  async submitJob(
+    jobDto: ProcessingJobDto
+  ): Promise<{ jobId: string; status: string }> {
     const job: QueueJob = {
       id: jobDto.jobId,
       jobDto,
@@ -62,8 +69,12 @@ export class DataProcessingService implements OnModuleInit {
     };
   }
 
-  async submitBatch(batchDto: BatchProcessingDto): Promise<{ batchId: string; jobIds: string[]; status: string }> {
-    const batchId = batchDto.batchId || `batch_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
+  async submitBatch(
+    batchDto: BatchProcessingDto
+  ): Promise<{ batchId: string; jobIds: string[]; status: string }> {
+    const batchId =
+      batchDto.batchId ||
+      `batch_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
     const jobIds: string[] = [];
 
     for (const jobDto of batchDto.jobs) {
@@ -93,22 +104,30 @@ export class DataProcessingService implements OnModuleInit {
     return this.buildProcessingResult(job);
   }
 
-  async getBatchStatus(batchId: string): Promise<{ batchId: string; jobs: ProcessingResultDto[]; summary: any }> {
+  async getBatchStatus(
+    batchId: string
+  ): Promise<{ batchId: string; jobs: ProcessingResultDto[]; summary: any }> {
     const batchJobs: QueueJob[] = [];
-    
+
     for (const job of this.processingQueue.values()) {
       if (job.jobDto.options?.batchId === batchId) {
         batchJobs.push(job);
       }
     }
 
-    const jobs = batchJobs.map(job => this.buildProcessingResult(job));
+    const jobs = batchJobs.map((job) => this.buildProcessingResult(job));
     const summary = {
       total: batchJobs.length,
-      pending: batchJobs.filter(j => j.status === ProcessingStatus.PENDING).length,
-      processing: batchJobs.filter(j => j.status === ProcessingStatus.PROCESSING).length,
-      completed: batchJobs.filter(j => j.status === ProcessingStatus.COMPLETED).length,
-      failed: batchJobs.filter(j => j.status === ProcessingStatus.FAILED).length,
+      pending: batchJobs.filter((j) => j.status === ProcessingStatus.PENDING)
+        .length,
+      processing: batchJobs.filter(
+        (j) => j.status === ProcessingStatus.PROCESSING
+      ).length,
+      completed: batchJobs.filter(
+        (j) => j.status === ProcessingStatus.COMPLETED
+      ).length,
+      failed: batchJobs.filter((j) => j.status === ProcessingStatus.FAILED)
+        .length,
     };
 
     return { batchId, jobs, summary };
@@ -116,7 +135,9 @@ export class DataProcessingService implements OnModuleInit {
 
   async getQueueStatus(): Promise<QueueStatusDto> {
     const jobs = Array.from(this.processingQueue.values());
-    const completedJobs = jobs.filter(j => j.status === ProcessingStatus.COMPLETED);
+    const completedJobs = jobs.filter(
+      (j) => j.status === ProcessingStatus.COMPLETED
+    );
     const totalProcessingTime = completedJobs.reduce((sum, job) => {
       if (job.startTime && job.endTime) {
         return sum + (job.endTime.getTime() - job.startTime.getTime());
@@ -126,21 +147,25 @@ export class DataProcessingService implements OnModuleInit {
 
     const jobsByType: Record<DataType, any> = {} as any;
     for (const dataType of Object.values(DataType)) {
-      const typeJobs = jobs.filter(j => j.jobDto.dataType === dataType);
-      const typeCompleted = typeJobs.filter(j => j.status === ProcessingStatus.COMPLETED);
-      const typeAvgTime = typeCompleted.length > 0 
-        ? typeCompleted.reduce((sum, job) => {
-            if (job.startTime && job.endTime) {
-              return sum + (job.endTime.getTime() - job.startTime.getTime());
-            }
-            return sum;
-          }, 0) / typeCompleted.length
-        : 0;
+      const typeJobs = jobs.filter((j) => j.jobDto.dataType === dataType);
+      const typeCompleted = typeJobs.filter(
+        (j) => j.status === ProcessingStatus.COMPLETED
+      );
+      const typeAvgTime =
+        typeCompleted.length > 0
+          ? typeCompleted.reduce((sum, job) => {
+              if (job.startTime && job.endTime) {
+                return sum + (job.endTime.getTime() - job.startTime.getTime());
+              }
+              return sum;
+            }, 0) / typeCompleted.length
+          : 0;
 
       jobsByType[dataType] = {
         total: typeJobs.length,
         completed: typeCompleted.length,
-        failed: typeJobs.filter(j => j.status === ProcessingStatus.FAILED).length,
+        failed: typeJobs.filter((j) => j.status === ProcessingStatus.FAILED)
+          .length,
         averageTime: typeAvgTime,
       };
     }
@@ -148,23 +173,38 @@ export class DataProcessingService implements OnModuleInit {
     return {
       totalJobs: jobs.length,
       activeJobs: this.activeJobs.size,
-      pendingJobs: jobs.filter(j => j.status === ProcessingStatus.PENDING).length,
-      completedJobs: jobs.filter(j => j.status === ProcessingStatus.COMPLETED).length,
-      failedJobs: jobs.filter(j => j.status === ProcessingStatus.FAILED).length,
-      averageProcessingTime: completedJobs.length > 0 ? totalProcessingTime / completedJobs.length : 0,
+      pendingJobs: jobs.filter((j) => j.status === ProcessingStatus.PENDING)
+        .length,
+      completedJobs: jobs.filter((j) => j.status === ProcessingStatus.COMPLETED)
+        .length,
+      failedJobs: jobs.filter((j) => j.status === ProcessingStatus.FAILED)
+        .length,
+      averageProcessingTime:
+        completedJobs.length > 0
+          ? totalProcessingTime / completedJobs.length
+          : 0,
       throughput: this.calculateThroughput(),
       healthStatus: this.getHealthStatus(),
       jobsByType,
     };
   }
 
-  async getProcessingStats(periodStart: Date, periodEnd: Date): Promise<ProcessingStatsDto> {
-    const jobs = Array.from(this.processingQueue.values()).filter(job => {
-      return job.startTime && job.startTime >= periodStart && job.startTime <= periodEnd;
+  async getProcessingStats(
+    periodStart: Date,
+    periodEnd: Date
+  ): Promise<ProcessingStatsDto> {
+    const jobs = Array.from(this.processingQueue.values()).filter((job) => {
+      return (
+        job.startTime &&
+        job.startTime >= periodStart &&
+        job.startTime <= periodEnd
+      );
     });
 
-    const completedJobs = jobs.filter(j => j.status === ProcessingStatus.COMPLETED);
-    const failedJobs = jobs.filter(j => j.status === ProcessingStatus.FAILED);
+    const completedJobs = jobs.filter(
+      (j) => j.status === ProcessingStatus.COMPLETED
+    );
+    const failedJobs = jobs.filter((j) => j.status === ProcessingStatus.FAILED);
 
     const totalProcessingTime = completedJobs.reduce((sum, job) => {
       if (job.startTime && job.endTime) {
@@ -174,7 +214,7 @@ export class DataProcessingService implements OnModuleInit {
     }, 0);
 
     const errorBreakdown: Record<string, number> = {};
-    failedJobs.forEach(job => {
+    failedJobs.forEach((job) => {
       const errorType = job.error?.code || 'UNKNOWN_ERROR';
       errorBreakdown[errorType] = (errorBreakdown[errorType] || 0) + 1;
     });
@@ -185,15 +225,24 @@ export class DataProcessingService implements OnModuleInit {
       periodStart: periodStart.toISOString(),
       periodEnd: periodEnd.toISOString(),
       totalJobsProcessed: jobs.length,
-      successRate: jobs.length > 0 ? (completedJobs.length / jobs.length) * 100 : 0,
-      averageProcessingTime: completedJobs.length > 0 ? totalProcessingTime / completedJobs.length : 0,
-      peakProcessingTime: Math.max(...completedJobs.map(job => {
-        if (job.startTime && job.endTime) {
-          return job.endTime.getTime() - job.startTime.getTime();
-        }
-        return 0;
-      })),
-      dataVolumeProcessed: jobs.reduce((sum, job) => sum + JSON.stringify(job.jobDto.rawData).length, 0),
+      successRate:
+        jobs.length > 0 ? (completedJobs.length / jobs.length) * 100 : 0,
+      averageProcessingTime:
+        completedJobs.length > 0
+          ? totalProcessingTime / completedJobs.length
+          : 0,
+      peakProcessingTime: Math.max(
+        ...completedJobs.map((job) => {
+          if (job.startTime && job.endTime) {
+            return job.endTime.getTime() - job.startTime.getTime();
+          }
+          return 0;
+        })
+      ),
+      dataVolumeProcessed: jobs.reduce(
+        (sum, job) => sum + JSON.stringify(job.jobDto.rawData).length,
+        0
+      ),
       errorBreakdown,
       hourlyStats,
     };
@@ -210,7 +259,7 @@ export class DataProcessingService implements OnModuleInit {
     if (availableSlots <= 0) return;
 
     const pendingJobs = Array.from(this.processingQueue.values())
-      .filter(job => job.status === ProcessingStatus.PENDING)
+      .filter((job) => job.status === ProcessingStatus.PENDING)
       .sort((a, b) => (b.jobDto.priority || 0) - (a.jobDto.priority || 0))
       .slice(0, availableSlots);
 
@@ -224,22 +273,25 @@ export class DataProcessingService implements OnModuleInit {
     job.status = ProcessingStatus.PROCESSING;
     job.startTime = new Date();
 
-    this.logger.debug(`Processing job: ${job.id} (type: ${job.jobDto.dataType})`);
+    this.logger.debug(
+      `Processing job: ${job.id} (type: ${job.jobDto.dataType})`
+    );
 
     try {
       const result = await this.executeJobProcessing(job.jobDto);
-      
+
       job.status = ProcessingStatus.COMPLETED;
       job.endTime = new Date();
       job.result = result;
-      
+
       this.processingStats.totalProcessed++;
-      this.processingStats.totalTime += job.endTime.getTime() - job.startTime.getTime();
-      
+      this.processingStats.totalTime +=
+        job.endTime.getTime() - job.startTime.getTime();
+
       this.logger.debug(`Job completed: ${job.id}`);
     } catch (error) {
       this.logger.error(`Job failed: ${job.id}`, error.stack);
-      
+
       job.retryCount++;
       job.error = {
         message: error.message,
@@ -264,14 +316,21 @@ export class DataProcessingService implements OnModuleInit {
     }
   }
 
-  private async executeJobProcessing(jobDto: ProcessingJobDto): Promise<ProcessingResultDto> {
+  private async executeJobProcessing(
+    jobDto: ProcessingJobDto
+  ): Promise<ProcessingResultDto> {
     const startTime = new Date();
-    
+
     // Step 1: Validate and sanitize data
-    const validationResult = await this.validateAndSanitizeData(jobDto.rawData, jobDto.dataType);
-    
+    const validationResult = await this.validateAndSanitizeData(
+      jobDto.rawData,
+      jobDto.dataType
+    );
+
     if (!validationResult.isValid && !jobDto.options?.skipValidation) {
-      throw new Error(`Data validation failed: ${validationResult.errors?.join(', ')}`);
+      throw new Error(
+        `Data validation failed: ${validationResult.errors?.join(', ')}`
+      );
     }
 
     // Step 2: Link computer and user if needed
@@ -286,16 +345,28 @@ export class DataProcessingService implements OnModuleInit {
 
     switch (jobDto.dataType) {
       case DataType.ACTIVE_WINDOW:
-        ({ processedData, databaseResult } = await this.processActiveWindowData(validationResult.sanitizedData, linkingResult));
+        ({ processedData, databaseResult } = await this.processActiveWindowData(
+          validationResult.sanitizedData,
+          linkingResult
+        ));
         break;
       case DataType.VISITED_SITE:
-        ({ processedData, databaseResult } = await this.processVisitedSiteData(validationResult.sanitizedData, linkingResult));
+        ({ processedData, databaseResult } = await this.processVisitedSiteData(
+          validationResult.sanitizedData,
+          linkingResult
+        ));
         break;
       case DataType.SCREENSHOT:
-        ({ processedData, databaseResult } = await this.processScreenshotData(validationResult.sanitizedData, linkingResult));
+        ({ processedData, databaseResult } = await this.processScreenshotData(
+          validationResult.sanitizedData,
+          linkingResult
+        ));
         break;
       case DataType.USER_SESSION:
-        ({ processedData, databaseResult } = await this.processUserSessionData(validationResult.sanitizedData, linkingResult));
+        ({ processedData, databaseResult } = await this.processUserSessionData(
+          validationResult.sanitizedData,
+          linkingResult
+        ));
         break;
       default:
         throw new Error(`Unsupported data type: ${jobDto.dataType}`);
@@ -318,12 +389,18 @@ export class DataProcessingService implements OnModuleInit {
         dataSize: JSON.stringify(jobDto.rawData).length,
         memoryUsed: process.memoryUsage().heapUsed,
         cpuTime: duration,
-        ioOperations: databaseResult?.recordsCreated || 0 + databaseResult?.recordsUpdated || 0,
+        ioOperations:
+          databaseResult?.recordsCreated ||
+          0 + databaseResult?.recordsUpdated ||
+          0,
       },
     };
   }
 
-  private async validateAndSanitizeData(rawData: any, dataType: DataType): Promise<DataValidationResult> {
+  private async validateAndSanitizeData(
+    rawData: any,
+    dataType: DataType
+  ): Promise<DataValidationResult> {
     const errors: string[] = [];
     let qualityScore = 100;
 
@@ -338,19 +415,21 @@ export class DataProcessingService implements OnModuleInit {
       case DataType.ACTIVE_WINDOW:
         if (!rawData.processName) errors.push('processName is required');
         if (!rawData.windowTitle) errors.push('windowTitle is required');
-        if (typeof rawData.activeTime !== 'number') errors.push('activeTime must be a number');
+        if (typeof rawData.activeTime !== 'number')
+          errors.push('activeTime must be a number');
         break;
-      
+
       case DataType.VISITED_SITE:
         if (!rawData.url) errors.push('url is required');
-        if (typeof rawData.activeTime !== 'number') errors.push('activeTime must be a number');
+        if (typeof rawData.activeTime !== 'number')
+          errors.push('activeTime must be a number');
         break;
-      
+
       case DataType.SCREENSHOT:
         if (!rawData.imageData) errors.push('imageData is required');
         if (!rawData.timestamp) errors.push('timestamp is required');
         break;
-      
+
       case DataType.USER_SESSION:
         if (!rawData.sessionStart) errors.push('sessionStart is required');
         if (!rawData.username) errors.push('username is required');
@@ -359,7 +438,7 @@ export class DataProcessingService implements OnModuleInit {
 
     // Calculate quality score
     if (errors.length > 0) {
-      qualityScore = Math.max(0, 100 - (errors.length * 20));
+      qualityScore = Math.max(0, 100 - errors.length * 20);
     }
 
     // Sanitize data
@@ -376,7 +455,7 @@ export class DataProcessingService implements OnModuleInit {
   private sanitizeData(data: any): any {
     // Remove potentially harmful content
     const sanitized = JSON.parse(JSON.stringify(data));
-    
+
     // Remove script tags, SQL injection attempts, etc.
     if (typeof sanitized === 'object') {
       for (const key in sanitized) {
@@ -400,7 +479,10 @@ export class DataProcessingService implements OnModuleInit {
     let computer = await this.prisma.computer.findFirst({
       where: {
         OR: [
-          { hostname: linkDto.computerInfo?.hostname },
+          {
+            computerUid:
+              linkDto.computerInfo?.hostname || linkDto.computerIdentifier,
+          },
           { macAddress: linkDto.computerInfo?.macAddress },
           { ipAddress: linkDto.computerInfo?.ipAddress },
         ],
@@ -410,11 +492,11 @@ export class DataProcessingService implements OnModuleInit {
     if (!computer && linkDto.computerInfo) {
       computer = await this.prisma.computer.create({
         data: {
-          hostname: linkDto.computerInfo.hostname || linkDto.computerIdentifier,
+          computerUid:
+            linkDto.computerInfo.hostname || linkDto.computerIdentifier,
           macAddress: linkDto.computerInfo.macAddress,
           ipAddress: linkDto.computerInfo.ipAddress,
-          operatingSystem: linkDto.computerInfo.operatingSystem,
-          domain: linkDto.computerInfo.domain,
+          os: linkDto.computerInfo.operatingSystem,
         },
       });
     }
@@ -427,18 +509,22 @@ export class DataProcessingService implements OnModuleInit {
     let user = await this.prisma.computerUser.findFirst({
       where: {
         username: linkDto.username,
-        computerId: computerId || undefined,
+        sid: linkDto.computerIdentifier || linkDto.username,
       },
     });
 
-    if (!user && computerId) {
-      user = await this.prisma.computerUser.create({
-        data: {
-          username: linkDto.username,
-          computerId,
-        },
-      });
-    }
+    // if (!user) {
+    //   // Need to create with employeeId - find or create a default employee
+    //   const defaultEmployee = await this.findOrCreateDefaultEmployee();
+    //   user = await this.prisma.computerUser.create({
+    //     data: {
+    //       username: linkDto.username,
+    //       sid: linkDto.username, // Use username as SID fallback
+    //       name: linkDto.username,
+    //       employeeId: defaultEmployee.id,
+    //     },
+    //   });
+    // }
 
     if (user) {
       userId = user.id;
@@ -449,26 +535,23 @@ export class DataProcessingService implements OnModuleInit {
       const employee = await this.prisma.employee.findUnique({
         where: { id: linkDto.employeeId },
       });
-      
+
       if (employee) {
         employeeId = employee.id;
-        
-        // Create or update user-computer-employee link
+
+        // Create or update user-computer link
         if (userId && computerId) {
-          await this.prisma.userOnComputer.upsert({
+          await this.prisma.usersOnComputers.upsert({
             where: {
-              userId_computerId: {
-                userId,
-                computerId,
-              },
+              computerId,
+              id: userId,
             },
             update: {
-              employeeId,
+              // Update any fields if needed
             },
             create: {
-              userId,
+              computerUserId: userId,
               computerId,
-              employeeId,
             },
           });
         }
@@ -486,15 +569,19 @@ export class DataProcessingService implements OnModuleInit {
   }
 
   private async processActiveWindowData(data: any, linkingResult?: any) {
-    const userOnComputerId = linkingResult?.userId && linkingResult?.computerId 
-      ? await this.getUserOnComputerId(linkingResult.userId, linkingResult.computerId)
-      : null;
+    const userOnComputerId =
+      linkingResult?.userId && linkingResult?.computerId
+        ? await this.getUserOnComputerId(
+            linkingResult.userId,
+            linkingResult.computerId
+          )
+        : null;
 
     const activeWindow = await this.prisma.activeWindow.create({
       data: {
-        userOnComputerId,
+        usersOnComputersId: userOnComputerId,
         processName: data.processName,
-        windowTitle: data.windowTitle,
+        title: data.windowTitle,
         activeTime: data.activeTime,
         datetime: new Date(data.datetime || Date.now()),
       },
@@ -516,13 +603,17 @@ export class DataProcessingService implements OnModuleInit {
   }
 
   private async processVisitedSiteData(data: any, linkingResult?: any) {
-    const userOnComputerId = linkingResult?.userId && linkingResult?.computerId 
-      ? await this.getUserOnComputerId(linkingResult.userId, linkingResult.computerId)
-      : null;
+    const userOnComputerId =
+      linkingResult?.userId && linkingResult?.computerId
+        ? await this.getUserOnComputerId(
+            linkingResult.userId,
+            linkingResult.computerId
+          )
+        : null;
 
     const visitedSite = await this.prisma.visitedSite.create({
       data: {
-        userOnComputerId,
+        usersOnComputersId: userOnComputerId,
         url: data.url,
         title: data.title || '',
         activeTime: data.activeTime,
@@ -546,14 +637,18 @@ export class DataProcessingService implements OnModuleInit {
   }
 
   private async processScreenshotData(data: any, linkingResult?: any) {
-    const userOnComputerId = linkingResult?.userId && linkingResult?.computerId 
-      ? await this.getUserOnComputerId(linkingResult.userId, linkingResult.computerId)
-      : null;
+    const userOnComputerId =
+      linkingResult?.userId && linkingResult?.computerId
+        ? await this.getUserOnComputerId(
+            linkingResult.userId,
+            linkingResult.computerId
+          )
+        : null;
 
     const screenshot = await this.prisma.screenshot.create({
       data: {
-        userOnComputerId,
-        imageData: data.imageData,
+        usersOnComputersId: userOnComputerId,
+        filePath: data.imageData,
         datetime: new Date(data.datetime || Date.now()),
       },
     });
@@ -592,7 +687,10 @@ export class DataProcessingService implements OnModuleInit {
     };
   }
 
-  private async getUserOnComputerId(userId: number, computerId: number): Promise<number | null> {
+  private async getUserOnComputerId(
+    userId: number,
+    computerId: number
+  ): Promise<number | null> {
     const userOnComputer = await this.prisma.userOnComputer.findUnique({
       where: {
         userId_computerId: {
@@ -611,9 +709,10 @@ export class DataProcessingService implements OnModuleInit {
       status: job.status,
       startTime: job.startTime?.toISOString() || new Date().toISOString(),
       endTime: job.endTime?.toISOString(),
-      duration: job.startTime && job.endTime 
-        ? job.endTime.getTime() - job.startTime.getTime() 
-        : undefined,
+      duration:
+        job.startTime && job.endTime
+          ? job.endTime.getTime() - job.startTime.getTime()
+          : undefined,
       processedData: job.result?.processedData,
       validationResult: job.result?.validationResult,
       linkingResult: job.result?.linkingResult,
@@ -626,9 +725,9 @@ export class DataProcessingService implements OnModuleInit {
   private calculateThroughput(): number {
     const now = new Date();
     const oneMinuteAgo = new Date(now.getTime() - 60000);
-    
-    const recentJobs = Array.from(this.processingQueue.values()).filter(job => 
-      job.endTime && job.endTime >= oneMinuteAgo
+
+    const recentJobs = Array.from(this.processingQueue.values()).filter(
+      (job) => job.endTime && job.endTime >= oneMinuteAgo
     );
 
     return recentJobs.length;
@@ -637,9 +736,15 @@ export class DataProcessingService implements OnModuleInit {
   private getHealthStatus(): 'HEALTHY' | 'WARNING' | 'CRITICAL' {
     const queueSize = this.processingQueue.size;
     const activeJobs = this.activeJobs.size;
-    const failureRate = this.processingStats.totalFailed / (this.processingStats.totalProcessed + this.processingStats.totalFailed);
+    const failureRate =
+      this.processingStats.totalFailed /
+      (this.processingStats.totalProcessed + this.processingStats.totalFailed);
 
-    if (queueSize > 1000 || activeJobs === this.maxConcurrentJobs || failureRate > 0.1) {
+    if (
+      queueSize > 1000 ||
+      activeJobs === this.maxConcurrentJobs ||
+      failureRate > 0.1
+    ) {
       return 'CRITICAL';
     } else if (queueSize > 500 || failureRate > 0.05) {
       return 'WARNING';
@@ -648,7 +753,11 @@ export class DataProcessingService implements OnModuleInit {
     return 'HEALTHY';
   }
 
-  private calculateHourlyStats(jobs: QueueJob[], periodStart: Date, periodEnd: Date) {
+  private calculateHourlyStats(
+    jobs: QueueJob[],
+    periodStart: Date,
+    periodEnd: Date
+  ) {
     const hourlyStats = Array.from({ length: 24 }, (_, hour) => ({
       hour,
       jobsProcessed: 0,
@@ -656,21 +765,26 @@ export class DataProcessingService implements OnModuleInit {
       errorRate: 0,
     }));
 
-    jobs.forEach(job => {
+    jobs.forEach((job) => {
       if (job.startTime) {
         const hour = job.startTime.getHours();
         hourlyStats[hour].jobsProcessed++;
-        
+
         if (job.startTime && job.endTime) {
-          const processingTime = job.endTime.getTime() - job.startTime.getTime();
-          hourlyStats[hour].averageTime = 
-            (hourlyStats[hour].averageTime * (hourlyStats[hour].jobsProcessed - 1) + processingTime) / 
+          const processingTime =
+            job.endTime.getTime() - job.startTime.getTime();
+          hourlyStats[hour].averageTime =
+            (hourlyStats[hour].averageTime *
+              (hourlyStats[hour].jobsProcessed - 1) +
+              processingTime) /
             hourlyStats[hour].jobsProcessed;
         }
-        
+
         if (job.status === ProcessingStatus.FAILED) {
-          hourlyStats[hour].errorRate = 
-            (hourlyStats[hour].errorRate * (hourlyStats[hour].jobsProcessed - 1) + 1) / 
+          hourlyStats[hour].errorRate =
+            (hourlyStats[hour].errorRate *
+              (hourlyStats[hour].jobsProcessed - 1) +
+              1) /
             hourlyStats[hour].jobsProcessed;
         }
       }
@@ -685,8 +799,12 @@ export class DataProcessingService implements OnModuleInit {
     let cleanedCount = 0;
 
     for (const [jobId, job] of this.processingQueue.entries()) {
-      if (job.endTime && job.endTime < cutoffTime && 
-          (job.status === ProcessingStatus.COMPLETED || job.status === ProcessingStatus.FAILED)) {
+      if (
+        job.endTime &&
+        job.endTime < cutoffTime &&
+        (job.status === ProcessingStatus.COMPLETED ||
+          job.status === ProcessingStatus.FAILED)
+      ) {
         this.processingQueue.delete(jobId);
         cleanedCount++;
       }

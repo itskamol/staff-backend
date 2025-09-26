@@ -1,5 +1,5 @@
 {
-  "name": "@staff-control-system/auth",
+  "name": "@app/auth",
   "version": "0.0.1",
   "private": true,
   "type": "commonjs",

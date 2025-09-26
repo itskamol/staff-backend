@@ -1,6 +1,6 @@
 import { Test, TestingModule } from '@nestjs/testing';
 import { DataProcessingService } from './data-processing.service';
-import { PrismaService } from '@staff-control-system/shared/database';
+import { PrismaService } from '@app/shared/database';
 import { DataType, ProcessingStatus } from './dto/data-processing.dto';
 
 describe('DataProcessingService', () => {

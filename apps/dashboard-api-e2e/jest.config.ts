@@ -1,5 +1,5 @@
 export default {
-  displayName: 'staff-control-system-e2e',
+  displayName: 'app-e2e',
   preset: '../../jest.preset.js',
   globalSetup: '<rootDir>/src/support/global-setup.ts',
   globalTeardown: '<rootDir>/src/support/global-teardown.ts',
@@ -14,5 +14,5 @@ export default {
     ],
   },
   moduleFileExtensions: ['ts', 'js', 'html'],
-  coverageDirectory: '../../coverage/staff-control-system-e2e',
+  coverageDirectory: '../../coverage/app-e2e',
 };
