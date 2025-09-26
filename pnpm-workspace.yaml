@@ -1,13 +1,2 @@
-ignoredBuiltDependencies:
-  - cpu-features
-  - msgpackr-extract
-  - protobufjs
-  - ssh2
-  - unrs-resolver
-
-onlyBuiltDependencies:
-  - '@nestjs/core'
-  - '@prisma/client'
-  - '@prisma/engines'
-  - bcrypt
-  - prisma
+autoInstallPeers: true
+strictPeerDependencies: false

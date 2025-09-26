@@ -1,8 +1,0 @@
-.git
-.github
-.vscode
-node_modules
-dist
-npm-debug.log
-.env
-config/environments/*.env
