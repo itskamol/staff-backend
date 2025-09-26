@@ -1,8 +1,7 @@
 import { ArgumentsHost, Catch, ExceptionFilter, HttpException, HttpStatus } from '@nestjs/common';
-import { Response } from 'express';
+import { Request, Response } from 'express';
 import { Prisma } from '@prisma/client';
 import { LoggerService } from '@/core/logger';
-import { RequestWithCorrelation } from '../middleware/correlation-id.middleware';
 import { ApiErrorDto, ApiErrorResponse } from '../dto/api-response.dto';
 import { CustomValidationException } from '../exceptions/validation.exception';
 import { XmlJsonService } from '../services/xml-json.service';
@@ -20,7 +19,7 @@ export class GlobalExceptionFilter implements ExceptionFilter {
     async catch(exception: unknown, host: ArgumentsHost) {
         const ctx = host.switchToHttp();
         const response = ctx.getResponse<Response>();
-        const request = ctx.getRequest<RequestWithCorrelation>();
+        const request = ctx.getRequest<Request>();
 
         let status = HttpStatus.INTERNAL_SERVER_ERROR;
         const error: ApiErrorDto = {

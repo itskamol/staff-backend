@@ -1,8 +1,7 @@
 import { Job } from 'bullmq';
 
 export interface BaseJobData {
-    organizationId: string;
-    correlationId?: string;
+    organizationId: number;
     timestamp?: Date;
 }
 

@@ -1,8 +1,8 @@
 import { Body, Controller, Get, HttpCode, HttpStatus, Param, Post, Query } from '@nestjs/common';
 import { QueueService } from './queue.service';
 import { QueueProducer } from './queue.producer';
-import { Permissions, Public } from '@/shared/decorators';
-import { PERMISSIONS } from '@/shared/constants/permissions.constants';
+import { Roles, Public } from '@/shared/decorators';
+import { Role } from '@prisma/client';
 import {
     ApiBearerAuth,
     ApiBody,
@@ -33,7 +33,7 @@ export class QueueController {
     ) {}
 
     @Get('stats')
-    @Permissions(PERMISSIONS.ADMIN.QUEUE_READ)
+    @Roles(Role.ADMIN)
     @ApiOkResponseData(QueueStatsResponseDto, { 
         summary: 'Get statistics for all queues' 
     })
@@ -44,7 +44,7 @@ export class QueueController {
     }
 
     @Get(':queueName/stats')
-    @Permissions(PERMISSIONS.ADMIN.QUEUE_READ)
+    @Roles(Role.ADMIN)
     @ApiParam({ name: 'queueName', description: 'The name of the queue' })
     @ApiOkResponseData(QueueStatsResponseDto, { 
         summary: 'Get statistics for a specific queue' 
@@ -58,7 +58,7 @@ export class QueueController {
     }
 
     @Post(':queueName/clean')
-    @Permissions(PERMISSIONS.ADMIN.QUEUE_MANAGE)
+    @Roles(Role.ADMIN)
     @HttpCode(HttpStatus.OK)
     @ApiOperation({ summary: 'Clean a queue' })
     @ApiParam({ name: 'queueName', description: 'The name of the queue to clean' })
@@ -90,7 +90,7 @@ export class QueueController {
     }
 
     @Post(':queueName/retry-failed')
-    @Permissions(PERMISSIONS.ADMIN.QUEUE_MANAGE)
+    @Roles(Role.ADMIN)
     @HttpCode(HttpStatus.OK)
     @ApiOperation({ summary: 'Retry all failed jobs in a queue' })
     @ApiParam({ name: 'queueName', description: 'The name of the queue' })
@@ -113,7 +113,7 @@ export class QueueController {
     }
 
     @Post('health-check')
-    @Permissions(PERMISSIONS.ADMIN.SYSTEM_MANAGE)
+    @Roles(Role.ADMIN)
     @HttpCode(HttpStatus.OK)
     @ApiOperation({ summary: 'Trigger a health check job' })
     @ApiBody({
@@ -145,7 +145,7 @@ export class QueueController {
     }
 
     @Post('monitoring')
-    @Permissions(PERMISSIONS.ADMIN.SYSTEM_MANAGE)
+    @Roles(Role.ADMIN)
     @HttpCode(HttpStatus.OK)
     @ApiOperation({ summary: 'Trigger a queue monitoring job' })
     @ApiResponse({

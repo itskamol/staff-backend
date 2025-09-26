@@ -1,11 +1,11 @@
 import { CanActivate, ExecutionContext, ForbiddenException, Injectable } from '@nestjs/common';
 import { Reflector } from '@nestjs/core';
+import { Request } from 'express';
 import { LoggerService } from '@/core/logger';
 import { DataScope, UserContext } from '../interfaces/data-scope.interface';
-import { RequestWithCorrelation } from '../middleware/correlation-id.middleware';
 import { Role } from '@prisma/client';
 
-export interface RequestWithScope extends RequestWithCorrelation {
+export interface RequestWithScope extends Request {
     user: UserContext;
     scope: DataScope;
 }
@@ -49,7 +49,6 @@ export class DataScopeGuard implements CanActivate {
                     url: request.url,
                     method: request.method,
                     organizationId: user.organizationId,
-                    correlationId: request.correlationId,
                 });
                 throw new ForbiddenException('Insufficient privileges for system-wide access');
             }
@@ -80,7 +79,6 @@ export class DataScopeGuard implements CanActivate {
             departments: scope.departments,
             url: request.url,
             method: request.method,
-            correlationId: request.correlationId,
             module: 'data-scope-guard',
         });
 

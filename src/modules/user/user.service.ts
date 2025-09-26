@@ -16,8 +16,7 @@ export class UserService {
      * Create a new user
      */
     async createUser(
-        createUserDto: CreateUserDto,
-        correlationId?: string
+        createUserDto: CreateUserDto
     ): Promise<Omit<User, 'password'>> {
         // Validate password strength
         const passwordValidation = PasswordUtil.validatePassword(createUserDto.password);
@@ -38,7 +37,6 @@ export class UserService {
 
         this.logger.logUserAction(user.id, 'USER_CREATED', {
             username: user.username,
-            correlationId,
         });
 
         return user;
@@ -67,8 +65,7 @@ export class UserService {
      */
     async updateUser(
         id: number,
-        updateUserDto: UpdateUserDto,
-        correlationId?: string
+        updateUserDto: UpdateUserDto
     ): Promise<Omit<User, 'password'>> {
         const existingUser = await this.userRepository.findById(id);
         if (!existingUser) {
@@ -79,7 +76,6 @@ export class UserService {
 
         this.logger.logUserAction(id, 'USER_UPDATED', {
             changes: updateUserDto,
-            correlationId,
         });
 
         return updatedUser;
@@ -90,8 +86,7 @@ export class UserService {
      */
     async changePassword(
         userId: number,
-        changePasswordDto: ChangePasswordDto,
-        correlationId?: string
+        changePasswordDto: ChangePasswordDto
     ): Promise<void> {
         const user = await this.userRepository.findById(userId);
         if (!user) {
@@ -104,9 +99,7 @@ export class UserService {
             user.password
         );
         if (!isCurrentPasswordValid) {
-            this.logger.logUserAction(userId, 'PASSWORD_CHANGE_FAILED_INVALID_CURRENT', {
-                correlationId,
-            });
+            this.logger.logUserAction(userId, 'PASSWORD_CHANGE_FAILED_INVALID_CURRENT');
             throw new ConflictException('Current password is incorrect');
         }
 
@@ -124,16 +117,16 @@ export class UserService {
         // Update password
         await this.userRepository.update(userId, { password: newPasswordHash });
 
-        this.logger.logUserAction(userId, 'PASSWORD_CHANGED', { correlationId });
+        this.logger.logUserAction(userId, 'PASSWORD_CHANGED');
     }
 
     /**
      * Deactivate user
      */
-    async deactivateUser(id: number, correlationId?: string): Promise<Omit<User, 'password'>> {
-        const user = await this.updateUser(id, { isActive: false }, correlationId);
+    async deactivateUser(id: number): Promise<Omit<User, 'password'>> {
+        const user = await this.updateUser(id, { isActive: false });
 
-        this.logger.logUserAction(id, 'USER_DEACTIVATED', { correlationId });
+        this.logger.logUserAction(id, 'USER_DEACTIVATED');
 
         return user;
     }
@@ -141,10 +134,10 @@ export class UserService {
     /**
      * Activate user
      */
-    async activateUser(id: number, correlationId?: string): Promise<Omit<User, 'password'>> {
-        const user = await this.updateUser(id, { isActive: true }, correlationId);
+    async activateUser(id: number): Promise<Omit<User, 'password'>> {
+        const user = await this.updateUser(id, { isActive: true });
 
-        this.logger.logUserAction(id, 'USER_ACTIVATED', { correlationId });
+        this.logger.logUserAction(id, 'USER_ACTIVATED');
 
         return user;
     }

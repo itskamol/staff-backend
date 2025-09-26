@@ -3,7 +3,6 @@ import { AuthGuard } from '@nestjs/passport';
 import { Reflector } from '@nestjs/core';
 import { Observable } from 'rxjs';
 import { LoggerService } from '@/core/logger';
-import { RequestWithCorrelation } from '../middleware/correlation-id.middleware';
 
 @Injectable()
 export class JwtAuthGuard extends AuthGuard('jwt') {
@@ -28,7 +27,7 @@ export class JwtAuthGuard extends AuthGuard('jwt') {
     }
 
     handleRequest(err: Error, user: any, info: any, context: ExecutionContext) {
-        const request = context.switchToHttp().getRequest<RequestWithCorrelation>();
+        const request = context.switchToHttp().getRequest();
 
         if (err || !user) {
             const errorMessage = err?.message || info?.message || 'Authentication failed';

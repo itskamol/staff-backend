@@ -100,15 +100,6 @@ export class LoggerService implements NestLoggerService, OnModuleDestroy {
     }
 
     // Utility methods for common scenarios
-    logWithCorrelationId(
-        correlationId: string,
-        level: LogLevel,
-        message: string,
-        context?: LogContext
-    ): void {
-        this[level](message, { ...context, correlationId });
-    }
-
     logUserAction(userId: number, action: string, details?: any): void {
         this.log(`User action: ${action}`, {
             module: 'user-action',

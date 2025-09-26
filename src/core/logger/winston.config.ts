@@ -24,9 +24,8 @@ export class WinstonConfig {
             printf(({ level, message, timestamp, context, stack }) => {
                 const ctx = context as any;
                 const contextStr = ctx?.module ? ` [${ctx.module}]` : '';
-                const correlationId = ctx?.correlationId ? ` (${ctx.correlationId.slice(0, 8)})` : '';
                 const msg = stack ? `${message}\n${stack}` : message;
-                return `${timestamp}${contextStr} ${level}:${correlationId} ${msg}`;
+                return `${timestamp}${contextStr} ${level}: ${msg}`;
             })
         );
     }

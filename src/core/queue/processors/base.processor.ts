@@ -19,7 +19,6 @@ export abstract class BaseJobProcessor<T extends BaseJobData = BaseJobData>
             this.logger.log(`Processing job: ${name}`, {
                 jobId: id,
                 organizationId: data.organizationId,
-                correlationId: data.correlationId,
             });
 
             const result = await this.execute(job);
@@ -28,7 +27,6 @@ export abstract class BaseJobProcessor<T extends BaseJobData = BaseJobData>
             this.logger.log(`Job completed: ${name}`, {
                 jobId: id,
                 organizationId: data.organizationId,
-                correlationId: data.correlationId,
                 processingTime,
             });
 
@@ -43,7 +41,6 @@ export abstract class BaseJobProcessor<T extends BaseJobData = BaseJobData>
             this.logger.error(`Job failed: ${name}`, error, {
                 jobId: id,
                 organizationId: data.organizationId,
-                correlationId: data.correlationId,
                 processingTime,
                 attemptsMade: job.attemptsMade,
                 attemptsTotal: job.opts.attempts,

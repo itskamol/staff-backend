@@ -4,7 +4,7 @@ import { CustomJwtService, JwtPayload } from './jwt.service';
 import { CacheService } from '@/core/cache/cache.service';
 import { PasswordUtil } from '@/shared/utils/password.util';
 import { LoginDto, LoginResponseDto, RefreshTokenDto, RefreshTokenResponseDto } from '@/shared/dto';
-import { DepartmentUser, Organization, User } from '@prisma/client';
+import { Organization, User } from '@prisma/client';
 
 @Injectable()
 export class AuthService {
@@ -22,7 +22,6 @@ export class AuthService {
 
         const user: User = await this.userRepository.findFirst({ username }, undefined, {
             organization: { select: { id: true, isActive: true } },
-            departmentUsers: { select: { departmentId: true } },
         });
 
         if (!user) {

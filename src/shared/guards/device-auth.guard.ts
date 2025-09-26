@@ -1,7 +1,7 @@
 import { CanActivate, ExecutionContext, Injectable, UnauthorizedException } from '@nestjs/common';
 import { Reflector } from '@nestjs/core';
+import { Request } from 'express';
 import { LoggerService } from '@/core/logger';
-import { RequestWithCorrelation } from '../middleware/correlation-id.middleware';
 
 interface DeviceInfo {
     id: string;
@@ -10,7 +10,7 @@ interface DeviceInfo {
     authenticated: boolean;
 }
 
-interface RequestWithDevice extends RequestWithCorrelation {
+interface RequestWithDevice extends Request {
     device?: DeviceInfo;
 }
 

@@ -54,7 +54,7 @@ export class UserController {
         @Body() createUserDto: CreateUserDto,
         @User() user: UserContext
     ): Promise<Omit<UserModel, 'password'>> {
-        return this.userService.createUser(createUserDto, user.sub);
+        return this.userService.createUser(createUserDto);
     }
 
     @Get()
@@ -95,7 +95,7 @@ export class UserController {
         @Body() updateUserDto: UpdateUserDto,
         @User() user: UserContext
     ): Promise<Omit<UserModel, 'password'>> {
-        return this.userService.updateUser(id, updateUserDto, user.sub);
+        return this.userService.updateUser(id, updateUserDto);
     }
 
     @Put(':id/password')
@@ -111,7 +111,7 @@ export class UserController {
         @Body() changePasswordDto: ChangePasswordDto,
         @User() user: UserContext
     ): Promise<void> {
-        await this.userService.changePassword(id, changePasswordDto, user.sub);
+        await this.userService.changePassword(id, changePasswordDto);
     }
 
     @Put(':id/activate')
@@ -123,7 +123,7 @@ export class UserController {
         @Param('id') id: number,
         @User() user: UserContext
     ): Promise<Omit<UserModel, 'password'>> {
-        return this.userService.activateUser(id, user.sub);
+        return this.userService.activateUser(id);
     }
 
     @Put(':id/deactivate')
@@ -137,6 +137,6 @@ export class UserController {
         @Param('id') id: number,
         @User() user: UserContext
     ): Promise<Omit<UserModel, 'password'>> {
-        return this.userService.deactivateUser(id, user.sub);
+        return this.userService.deactivateUser(id);
     }
 }
