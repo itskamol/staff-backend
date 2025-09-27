@@ -1,0 +1,80 @@
+/*
+ * Custom Swagger UI CSS for Staff Control System
+ */
+body {
+  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+}
+
+.swagger-ui .topbar {
+  background-color: #34495e;
+  border-bottom: 2px solid #16a085;
+}
+
+.swagger-ui .topbar .link {
+  color: #ffffff;
+}
+
+.swagger-ui .topbar .download-url-wrapper .select-label select {
+  border: 1px solid #16a085;
+  background: #34495e;
+  color: #ffffff;
+}
+
+.swagger-ui .info .title {
+  font-size: 2.5em;
+  color: #34495e;
+}
+
+.swagger-ui .info .title small {
+  background-color: #16a085;
+  color: #ffffff;
+}
+
+.swagger-ui .btn.authorize {
+  background-color: #16a085;
+  border-color: #16a085;
+}
+
+.swagger-ui .opblock-tag {
+  background-color: #ecf0f1;
+  color: #34495e;
+  border-color: #bdc3c7;
+}
+
+.swagger-ui .opblock.opblock-get {
+  background: rgba(22, 160, 133, 0.1);
+  border-color: #16a085;
+}
+
+.swagger-ui .opblock.opblock-post {
+  background: rgba(41, 128, 185, 0.1);
+  border-color: #2980b9;
+}
+
+.swagger-ui .opblock.opblock-put {
+  background: rgba(211, 84, 0, 0.1);
+  border-color: #d35400;
+}
+
+.swagger-ui .opblock.opblock-delete {
+  background: rgba(192, 57, 43, 0.1);
+  border-color: #c0392b;
+}
+
+.swagger-ui .opblock.opblock-patch {
+  background: rgba(142, 68, 173, 0.1);
+  border-color: #8e44ad;
+}
+
+.swagger-ui .opblock-summary-method {
+  font-weight: bold;
+}
+
+.swagger-ui .opblock-summary-path {
+  color: #34495e;
+  font-weight: bold;
+}
+
+.swagger-ui .response-col_status {
+  font-weight: bold;
+}

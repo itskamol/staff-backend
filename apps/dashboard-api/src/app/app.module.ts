@@ -16,6 +16,7 @@ import { DepartmentModule } from '../modules/department/department.module';
 import { EmployeeModule } from '../modules/employee/employee.module';
 import { VisitorModule } from '../modules/visitor/visitor.module';
 import { ReportsModule } from '../modules/reports/reports.module';
+import { PolicyModule } from '../modules/policy/policy.module';
 
 @Module({
   imports: [
@@ -34,6 +35,7 @@ import { ReportsModule } from '../modules/reports/reports.module';
     EmployeeModule,
     VisitorModule,
     ReportsModule,
+    PolicyModule
   ],
   controllers: [AppController],
   providers: [
