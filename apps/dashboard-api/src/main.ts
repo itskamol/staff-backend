@@ -8,14 +8,11 @@ import { NestFactory } from '@nestjs/core';
 import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger';
 import { AppModule } from './app/app.module';
 import { NestExpressApplication } from '@nestjs/platform-express';
-import { join } from 'path';
 
 async function bootstrap() {
   const app = await NestFactory.create<NestExpressApplication>(AppModule);
   const globalPrefix = 'api';
   app.setGlobalPrefix(globalPrefix);
-
-  app.useStaticAssets(join(__dirname, '..', 'swagger'));
 
   const config = new DocumentBuilder()
     .setTitle('Staff Control System - Dashboard API')
@@ -33,7 +30,7 @@ async function bootstrap() {
     .build();
   const document = SwaggerModule.createDocument(app, config);
   SwaggerModule.setup('api/docs', app, document, {
-    customCssUrl: '/custom.css',
+    customCssUrl: '/assets/custom.css',
   });
 
   const port = process.env.PORT || 3000;
