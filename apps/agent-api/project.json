@@ -22,10 +22,7 @@
       "dependsOn": ["build"],
       "cache": true,
       "executor": "@nx/js:prune-lockfile",
-      "outputs": [
-        "{workspaceRoot}/dist/agent-api/package.json",
-        "{workspaceRoot}/dist/agent-api/pnpm-lock.yaml"
-      ],
+      "outputs": ["{workspaceRoot}/dist/agent-api/package.json", "{workspaceRoot}/dist/agent-api/pnpm-lock.yaml"],
       "options": {
         "buildTarget": "build"
       }

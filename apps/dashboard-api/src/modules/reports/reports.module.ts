@@ -4,9 +4,9 @@ import { ReportsController } from './reports.controller';
 import { ReportsService } from './reports.service';
 
 @Module({
-  imports: [SharedDatabaseModule],
-  controllers: [ReportsController],
-  providers: [ReportsService],
-  exports: [ReportsService],
+    imports: [SharedDatabaseModule],
+    controllers: [ReportsController],
+    providers: [ReportsService],
+    exports: [ReportsService],
 })
 export class ReportsModule {}

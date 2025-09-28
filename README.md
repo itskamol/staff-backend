@@ -2,7 +2,8 @@
 
 <div align="center">
 
-**Zamonaviy hodimlar nazorat tizimi - Employee Monitoring & Management Platform**
+**Zamonaviy hodimlar nazorat tizimi - Employee Monitoring & Management
+Platform**
 
 [![NestJS](https://img.shields.io/badge/nestjs-E0234E?style=for-the-badge&logo=nestjs&logoColor=white)](https://nestjs.com/)
 [![TypeScript](https://img.shields.io/badge/typescript-3178C6?style=for-the-badge&logo=typescript&logoColor=white)](https://www.typescriptlang.org/)
@@ -14,17 +15,21 @@
 
 ## 📋 Loyiha haqida
 
-Staff Control System - bu zamonaviy korxona va tashkilotlar uchun mo'ljallangan keng qamrovli hodimlar nazorat va boshqaruv tizimidir. Tizim quyidagi asosiy funksiyalarni taqdim etadi:
+Staff Control System - bu zamonaviy korxona va tashkilotlar uchun mo'ljallangan
+keng qamrovli hodimlar nazorat va boshqaruv tizimidir. Tizim quyidagi asosiy
+funksiyalarni taqdim etadi:
 
 ### 🎯 Asosiy imkoniyatlar
+
 - **Hodimlar boshqaruvi** - To'liq ma'lumotlar bazasi va profil boshqaruvi
-- **Tashkilot strukturasi** - Bo'limlar va ierarxiyalar boshqaruvi  
+- **Tashkilot strukturasi** - Bo'limlar va ierarxiyalar boshqaruvi
 - **Kompyuter monitoring** - Ishchi stansiyalari faoliyatini kuzatish
 - **Tashrif nazorati** - Mehmonlar ro'yxati va kirish nazorati
 - **Hisobotlar tizimi** - Batafsil analitika va statistikalar
 - **Agent API** - C# agent orqali real-time ma'lumotlar yig'ish
 
 ### 🏗️ Texnologik stek
+
 - **Backend**: NestJS v11+ (TypeScript)
 - **Ma'lumotlar bazasi**: PostgreSQL + Prisma ORM v6.14
 - **Monorepo**: Nx workspace
@@ -35,6 +40,7 @@ Staff Control System - bu zamonaviy korxona va tashkilotlar uchun mo'ljallangan 
 ## 🚀 Tezkor boshlash
 
 ### Talablar
+
 - Node.js 18+
 - PostgreSQL 14+
 - pnpm 8+
@@ -42,23 +48,27 @@ Staff Control System - bu zamonaviy korxona va tashkilotlar uchun mo'ljallangan 
 ### O'rnatish
 
 1. **Repository klonlash**:
+
 ```bash
 git clone <repository-url>
 cd staff
 ```
 
 2. **Bog'liqliklarni o'rnatish**:
+
 ```bash
 pnpm install
 ```
 
 3. **Muhit o'zgaruvchilarini sozlash**:
+
 ```bash
 cp .env.example .env
 # .env faylida ma'lumotlar bazasi ulanishini sozlang
 ```
 
 4. **Ma'lumotlar bazasini sozlash**:
+
 ```bash
 # Migratsiyalarni bajarish
 npx prisma migrate dev
@@ -70,22 +80,25 @@ npx prisma db seed
 ## 🛠️ Ishga tushirish
 
 ### Barcha xizmatlarni ishga tushirish
+
 ```bash
 # Dashboard API (port 3000)
 npx nx serve dashboard-api
 
-# Agent API (port 3001) 
+# Agent API (port 3001)
 npx nx serve agent-api
 ```
 
 ### Shared kutubxonalarni build qilish
+
 ```bash
 npx nx build shared-auth
-npx nx build shared-database  
+npx nx build shared-database
 npx nx build shared-utils
 ```
 
 ### Ma'lumotlar bazasi boshqaruvi
+
 ```bash
 # Prisma Studio ochish
 npx prisma studio
@@ -116,7 +129,7 @@ staff/
 │   │   └── ...
 │   ├── agent-api/              # Agent API (port 3001)
 │   │   ├── src/
-│   │   │   ├── modules/        
+│   │   │   ├── modules/
 │   │   │   │   ├── agent/      # Agent boshqaruvi
 │   │   │   │   ├── data-processing/ # Ma'lumotlarni qayta ishlash
 │   │   │   │   ├── hikvision/  # Hikvision integratsiyasi
@@ -140,9 +153,10 @@ staff/
 ## 🗄️ Ma'lumotlar bazasi sxemasi
 
 ### Asosiy modellar
+
 - **User** - Tizim foydalanuvchilari
 - **Organization** - Tashkilotlar
-- **Department** - Bo'limlar  
+- **Department** - Bo'limlar
 - **Employee** - Hodimlar
 - **Visitor** - Tashrif buyuruvchilar
 - **Computer** - Ishchi stansiyalari
@@ -150,6 +164,7 @@ staff/
 - **UsersOnComputers** - Foydalanuvchi-kompyuter bog'lanishlari
 
 ### Monitoring modellari
+
 - **ActiveWindow** - Faol oynalar tarixi
 - **VisitedSite** - Tashrif buyurilgan saytlar
 - **Screenshot** - Ekran rasmlari
@@ -159,15 +174,17 @@ staff/
 ## 🔧 API Endpoints
 
 ### Dashboard API (port 3000)
+
 - `POST /auth/login` - Tizimga kirish
 - `GET /users` - Foydalanuvchilar ro'yxati
 - `GET /organizations` - Tashkilotlar
-- `GET /departments` - Bo'limlar 
+- `GET /departments` - Bo'limlar
 - `GET /employees` - Hodimlar
 - `GET /visitors` - Tashrif buyuruvchilar
 - `GET /reports/*` - Turli hisobotlar
 
-### Agent API (port 3001)  
+### Agent API (port 3001)
+
 - `POST /agent/register` - Agent ro'yxatdan o'tkazish
 - `POST /data-processing/job` - Ma'lumotlarni qayta ishlash
 - `GET /data-processing/queue` - Navbat holati
@@ -180,7 +197,7 @@ staff/
 npx nx test dashboard-api
 npx nx test agent-api
 
-# E2E testlar  
+# E2E testlar
 npx nx e2e dashboard-api-e2e
 npx nx e2e agent-api-e2e
 
@@ -191,6 +208,7 @@ npx nx run-many --target=test
 ## 📊 Monitoring va Logging
 
 Tizimda quyidagi monitoring vositalari mavjud:
+
 - **Health checks** - Xizmatlar sog'ligi nazorati
 - **Metrics** - Performance ko'rsatkichlari
 - **Logging** - Batafsil loglar

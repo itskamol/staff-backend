@@ -4,9 +4,9 @@ import { DepartmentController } from './department.controller';
 import { DepartmentService } from './department.service';
 
 @Module({
-  imports: [SharedDatabaseModule],
-  controllers: [DepartmentController],
-  providers: [DepartmentService],
-  exports: [DepartmentService],
+    imports: [SharedDatabaseModule],
+    controllers: [DepartmentController],
+    providers: [DepartmentService],
+    exports: [DepartmentService],
 })
 export class DepartmentModule {}

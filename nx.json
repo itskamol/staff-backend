@@ -37,11 +37,7 @@
       "options": {
         "targetName": "test"
       },
-      "exclude": [
-        "apps/dashboard-api-e2e/**/*",
-        "dashboard-api-e2e/**/*",
-        "agent-api-e2e/**/*"
-      ]
+      "exclude": ["apps/dashboard-api-e2e/**/*", "dashboard-api-e2e/**/*", "agent-api-e2e/**/*"]
     }
   ],
   "targetDefaults": {
@@ -53,5 +49,6 @@
   },
   "tui": {
     "enabled": false
-  }
+  },
+  "nxCloudId": "68d94d64cb49984a57e97239"
 }

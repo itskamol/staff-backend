@@ -2,9 +2,14 @@
 
 ## Overview
 
-Staff Control System loyihasini **NestJS NX monorepo** arxitekturasiga o'tkazish uchun **ikki asosiy backend service**ga bo'lamiz: **Agent API** (C# agentlar va HIKVision qurilmalari uchun) va **Dashboard API** (asosiy business logic va RBAC). Bu arxitektura scalability, maintainability va deployment flexibility ni ta'minlaydi.
+Staff Control System loyihasini **NestJS NX monorepo** arxitekturasiga o'tkazish
+uchun **ikki asosiy backend service**ga bo'lamiz: **Agent API** (C# agentlar va
+HIKVision qurilmalari uchun) va **Dashboard API** (asosiy business logic va
+RBAC). Bu arxitektura scalability, maintainability va deployment flexibility ni
+ta'minlaydi.
 
 **Loyiha maqsadi:**
+
 - HIKVision qurilmalari orqali hodimlarning kirish/chiqish nazorati
 - C# Agent dastur orqali kompyuter faoliyati monitoring
 - Mehmonlar nazorati va bir martalik kodlar
@@ -12,6 +17,7 @@ Staff Control System loyihasini **NestJS NX monorepo** arxitekturasiga o'tkazish
 - Samaradorlik tahlili va hisobotlar
 
 ### Technology Stack
+
 - **Framework:** NestJS v10+ (with NX workspace)
 - **Database:** PostgreSQL 15+ + Prisma ORM v5+
 - **Authentication:** JWT + Passport + **RBAC only**
@@ -27,6 +33,7 @@ Staff Control System loyihasini **NestJS NX monorepo** arxitekturasiga o'tkazish
 ## Architecture
 
 ### NX Monorepo Structure
+
 ```
 app/
 ├── apps/
@@ -60,21 +67,21 @@ graph TB
         A[Computer Agents]
         B[Hikvision Devices]
     end
-    
+
     subgraph "NX Monorepo"
         subgraph "Agent API (apps/agent-api)"
             C[Agent Controller]
             D[Hikvision Controller]
             E[Data Processing Service]
         end
-        
+
         subgraph "Dashboard API (apps/dashboard-api)"
             F[User Management]
             G[Policy Management]
             H[Reports & Analytics]
             O[Device Management]
         end
-        
+
         subgraph "Shared Libraries (libs/)"
             I[Common Types]
             J[Prisma Database]
@@ -82,13 +89,13 @@ graph TB
             P[RBAC Utils]
         end
     end
-    
+
     subgraph "Infrastructure"
         L[(PostgreSQL + Prisma)]
         M[Redis Cache]
         N[File Storage]
     end
-    
+
     A --> C
     B --> D
     C --> E
@@ -101,13 +108,13 @@ graph TB
     F --> M
     G --> M
     H --> M
-    
+
     C --> I
     D --> I
     F --> I
     G --> I
     H --> I
-    
+
     E --> J
     F --> J
     G --> J
@@ -119,15 +126,19 @@ graph TB
 ### Agent API Components
 
 #### 1. Computer Agent Controller
-**Maqsad:** Hodim kompyuterlaridan keladigan monitoring ma'lumotlarini qabul qilish
+
+**Maqsad:** Hodim kompyuterlaridan keladigan monitoring ma'lumotlarini qabul
+qilish
 
 **Endpoints:**
+
 - `POST /api/agent/active-windows` - Faol oynalar ma'lumoti
 - `POST /api/agent/visited-sites` - Tashrif buyurilgan saytlar
 - `POST /api/agent/screenshots` - Skrinshot ma'lumotlari
 - `POST /api/agent/user-sessions` - Foydalanuvchi sessiyalari
 
 **Input Format:**
+
 ```typescript
 interface AgentDataPayload {
   computerUid: string;
@@ -138,14 +149,17 @@ interface AgentDataPayload {
 ```
 
 #### 2. HIKVision Controller
+
 **Maqsad:** HIKVision kirish nazorati qurilmalaridan ma'lumot qabul qilish
 
 **Endpoints:**
+
 - `POST /api/agent/hikvision/actions` - Kirish/chiqish harakatlari
 - `POST /api/agent/hikvision/events` - Qurilma hodisalari
 - `POST /api/agent/hikvision/device-status` - Qurilma holati
 
 **Input Format:**
+
 ```typescript
 interface HikvisionActionPayload {
   deviceId: number;
@@ -162,9 +176,11 @@ interface HikvisionActionPayload {
 ```
 
 #### 3. Data Processing Service
+
 **Maqsad:** Keladigan ma'lumotlarni qayta ishlash va saqlash
 
 **Funksiyalar:**
+
 - Ma'lumotlarni validatsiya qilish
 - Computer va User ma'lumotlarini bog'lash
 - Real-time processing
@@ -173,20 +189,26 @@ interface HikvisionActionPayload {
 ### Dashboard API Components
 
 #### 1. User Management Module
-**Maqsad:** Foydalanuvchi, tashkilot va bo'limlarni boshqarish (Role-based access)
+
+**Maqsad:** Foydalanuvchi, tashkilot va bo'limlarni boshqarish (Role-based
+access)
 
 **Endpoints:**
+
 - `GET/POST/PUT/DELETE /api/users` - [Admin only]
 - `GET/POST/PUT/DELETE /api/organizations` - [Admin, HR-own]
 - `GET/POST/PUT/DELETE /api/departments` - [Admin, HR-own org, Lead-own dept]
-- `GET/POST/PUT/DELETE /api/employees` - [Admin, HR-own org, Lead-own dept, Guard-basic]
+- `GET/POST/PUT/DELETE /api/employees` - [Admin, HR-own org, Lead-own dept,
+  Guard-basic]
 - `POST /api/employees/:id/assign-card` - [Admin, HR-own org]
 - `POST /api/employees/:id/link-computer-user` - [Admin, HR-own org]
 
 #### 2. Policy Management Module
+
 **Maqsad:** Monitoring siyosatlarini boshqarish
 
 **Endpoints:**
+
 - `GET/POST/PUT/DELETE /api/policies` - [Admin, HR-own org]
 - `GET/POST/PUT/DELETE /api/website-groups` - [Admin, HR-own org]
 - `GET/POST/PUT/DELETE /api/app-groups` - [Admin, HR-own org]
@@ -195,30 +217,38 @@ interface HikvisionActionPayload {
 - `GET/POST/PUT/DELETE /api/active-windows-options` - [Admin, HR-own org]
 
 #### 3. Reports & Analytics Module
+
 **Maqsad:** Hisobot va tahlil ma'lumotlarini taqdim etish (Role-based filtered)
 
 **Endpoints:**
+
 - `GET /api/reports/attendance` - [Admin, HR-own org, Lead-own dept, Guard]
 - `GET /api/reports/productivity` - [Admin, HR-own org, Lead-own dept]
 - `GET /api/reports/device-usage` - [Admin only]
 - `GET /api/reports/visitor-logs` - [Admin, HR-own org, Lead-own dept, Guard]
 - `POST /api/reports/custom` - [Admin, HR-own org, Lead-own dept]
 - `GET /api/entry-logs` - [Admin, HR-filtered, Lead-filtered, Guard]
-- `GET /api/monitoring/employee/:id/activity` - [Admin, HR-own org, Lead-own dept]
+- `GET /api/monitoring/employee/:id/activity` - [Admin, HR-own org, Lead-own
+  dept]
 
 #### 4. Visitor Management Module
+
 **Maqsad:** Mehmonlar va bir martalik kodlarni boshqarish
 
 **Endpoints:**
-- `GET/POST/PUT/DELETE /api/visitors` - [Admin, HR-own org, Lead-own dept, Guard-basic]
+
+- `GET/POST/PUT/DELETE /api/visitors` - [Admin, HR-own org, Lead-own dept,
+  Guard-basic]
 - `POST /api/visitors/:id/generate-code` - [Admin, HR-own org]
 - `GET /api/visitors/:id/entry-logs` - [Admin, HR-own org, Lead-own dept, Guard]
 - `GET/POST/PUT/DELETE /api/onetime-codes` - [Admin, HR-own org]
 
 #### 5. Device Management Module
+
 **Maqsad:** HIKVision qurilmalarini boshqarish
 
 **Endpoints:**
+
 - `GET/POST/PUT/DELETE /api/devices` - [Admin only, Guard-status]
 - `GET/POST/PUT/DELETE /api/gates` - [Admin only]
 - `POST /api/devices/:id/test-connection` - [Admin only]
@@ -226,6 +256,7 @@ interface HikvisionActionPayload {
 ### Shared Package Components
 
 #### 1. Common Types
+
 ```typescript
 // Database model types
 export * from './types/database.types';
@@ -238,6 +269,7 @@ export * from './enums/session-type.enum';
 ```
 
 #### 2. Prisma Database
+
 ```typescript
 // Prisma service (libs/shared/database)
 export class PrismaService extends PrismaClient implements OnModuleInit {
@@ -249,7 +281,7 @@ export class PrismaService extends PrismaClient implements OnModuleInit {
 // Repository pattern with Prisma
 export abstract class BaseRepository<T> {
   constructor(protected prisma: PrismaService) {}
-  
+
   // CRUD operatsiyalari with Prisma
   abstract findMany(args?: any): Promise<T[]>;
   abstract findUnique(args: any): Promise<T | null>;
@@ -260,6 +292,7 @@ export abstract class BaseRepository<T> {
 ```
 
 #### 3. Utilities
+
 ```typescript
 // Validation utilities
 export class ValidationUtil {
@@ -277,13 +310,14 @@ export class EncryptionUtil {
 ## Data Models
 
 ### Agent API Data Flow
+
 ```mermaid
 sequenceDiagram
     participant CA as Computer Agent
     participant AA as Agent API
     participant DB as Database
     participant Q as Queue
-    
+
     CA->>AA: POST /api/agent/active-windows
     AA->>AA: Validate payload
     AA->>DB: Find/Create Computer & User
@@ -293,13 +327,14 @@ sequenceDiagram
 ```
 
 ### Dashboard API Data Flow
+
 ```mermaid
 sequenceDiagram
     participant UI as Dashboard UI
     participant DA as Dashboard API
     participant DB as Database
     participant Cache as Redis Cache
-    
+
     UI->>DA: GET /api/reports/activity
     DA->>Cache: Check cache
     alt Cache hit
@@ -315,6 +350,7 @@ sequenceDiagram
 ## Error Handling
 
 ### Agent API Error Handling
+
 ```typescript
 export class AgentErrorHandler {
   static handleValidationError(error: ValidationError): ApiResponse {
@@ -322,23 +358,24 @@ export class AgentErrorHandler {
       success: false,
       error: 'VALIDATION_ERROR',
       message: error.message,
-      timestamp: new Date()
+      timestamp: new Date(),
     };
   }
-  
+
   static handleDatabaseError(error: DatabaseError): ApiResponse {
     // Log error and return generic message
     return {
       success: false,
       error: 'INTERNAL_ERROR',
-      message: 'Ma\'lumot saqlashda xatolik yuz berdi',
-      timestamp: new Date()
+      message: "Ma'lumot saqlashda xatolik yuz berdi",
+      timestamp: new Date(),
     };
   }
 }
 ```
 
 ### Dashboard API Error Handling
+
 ```typescript
 export class DashboardErrorHandler {
   static handleAuthError(error: AuthError): ApiResponse {
@@ -346,16 +383,16 @@ export class DashboardErrorHandler {
       success: false,
       error: 'UNAUTHORIZED',
       message: 'Avtorizatsiya talab qilinadi',
-      timestamp: new Date()
+      timestamp: new Date(),
     };
   }
-  
+
   static handleNotFoundError(resource: string): ApiResponse {
     return {
       success: false,
       error: 'NOT_FOUND',
       message: `${resource} topilmadi`,
-      timestamp: new Date()
+      timestamp: new Date(),
     };
   }
 }
@@ -364,21 +401,25 @@ export class DashboardErrorHandler {
 ## Testing Strategy
 
 ### Unit Testing
+
 - Har bir service va controller uchun unit testlar
 - Mock dependencies ishlatish
 - Jest testing framework
 
 ### Integration Testing
+
 - API endpoint larni test qilish
 - Database bilan integratsiya testlari
 - Queue processing testlari
 
 ### End-to-End Testing
+
 - Agent ma'lumot yuborish va saqlash jarayoni
 - Dashboard API orqali ma'lumot olish
 - Authentication va authorization
 
 ### Performance Testing
+
 - Load testing for Agent API endpoints
 - Database query performance
 - Cache effectiveness
@@ -386,6 +427,7 @@ export class DashboardErrorHandler {
 ## Deployment Strategy
 
 ### Development Environment
+
 ```yaml
 # docker-compose.dev.yml
 version: '3.8'
@@ -393,31 +435,32 @@ services:
   agent-api:
     build: ./apps/agent-api
     ports:
-      - "3001:3000"
+      - '3001:3000'
     environment:
       - NODE_ENV=development
       - DATABASE_URL=postgresql://user:password@postgres:5432/staff_control
-      
+
   dashboard-api:
     build: ./apps/dashboard-api
     ports:
-      - "3002:3000"
+      - '3002:3000'
     environment:
       - NODE_ENV=development
       - DATABASE_URL=postgresql://user:password@postgres:5432/staff_control
-      
+
   postgres:
     image: postgres:15
     environment:
       POSTGRES_DB: staff_control
       POSTGRES_USER: user
       POSTGRES_PASSWORD: password
-      
+
   redis:
     image: redis:7-alpine
 ```
 
 ### Production Deployment
+
 - Docker containers
 - Kubernetes orchestration
 - Load balancer
@@ -425,13 +468,14 @@ services:
 - Redis clustering
 
 ### CI/CD Pipeline
+
 ```yaml
 # .github/workflows/deploy.yml
 name: Deploy
 on:
   push:
     branches: [main]
-    
+
 jobs:
   test:
     runs-on: ubuntu-latest
@@ -441,7 +485,7 @@ jobs:
         run: |
           pnpm install
           pnpm test
-          
+
   build-and-deploy:
     needs: test
     runs-on: ubuntu-latest
@@ -460,6 +504,7 @@ jobs:
 ## Security Considerations
 
 ### Agent API Security
+
 - API key authentication for C# agents and HIKVision devices
 - Rate limiting per agent/device
 - Input validation and sanitization
@@ -468,6 +513,7 @@ jobs:
 - Device ID validation
 
 ### Dashboard API Security
+
 - JWT token authentication (15 min access, 7 day refresh)
 - **RBAC only system**: Admin, HR, Department Lead, Guard
 - Data scoping per organization/department
@@ -477,6 +523,7 @@ jobs:
 - Prisma-based role and permission queries
 
 ### Data Security
+
 - Encryption at rest
 - Encryption in transit
 - Sensitive data masking in logs
@@ -485,33 +532,36 @@ jobs:
 ## Monitoring and Logging
 
 ### Application Monitoring
+
 - Health check endpoints
 - Metrics collection (Prometheus)
 - Performance monitoring
 - Error tracking
 
 ### Logging Strategy
+
 ```typescript
 export class LoggerService {
   static logAgentData(data: AgentDataPayload): void {
     logger.info('Agent data received', {
       computerUid: data.computerUid,
       dataType: data.data.type,
-      timestamp: data.timestamp
+      timestamp: data.timestamp,
     });
   }
-  
+
   static logError(error: Error, context: string): void {
     logger.error('Application error', {
       error: error.message,
       stack: error.stack,
-      context
+      context,
     });
   }
 }
 ```
 
 ### Alerting
+
 - Database connection failures
 - High error rates
 - Performance degradation
@@ -522,6 +572,7 @@ export class LoggerService {
 ### Current State Analysis
 
 **Hozirgi loyiha holati:**
+
 - Single NestJS application (src/ struktura)
 - Prisma ORM v6.14 + PostgreSQL database
 - Modules: auth, user, organization, department, employee
@@ -536,7 +587,9 @@ export class LoggerService {
 **Maqsad:** NX monorepo yaratish va basic structure o'rnatish
 
 **Steps:**
+
 1. **NX workspace yaratish:**
+
    ```bash
    npx create-nx-workspace@latest app \
      --preset=nest \
@@ -545,11 +598,13 @@ export class LoggerService {
    ```
 
 2. **Dashboard API application yaratish:**
+
    ```bash
    nx g @nx/nest:app dashboard-api --port=3000
    ```
 
 3. **Agent API application yaratish:**
+
    ```bash
    nx g @nx/nest:app agent-api --port=3001
    ```
@@ -557,7 +612,7 @@ export class LoggerService {
 4. **Shared libraries yaratish:**
    ```bash
    nx g @nx/nest:lib shared/database
-   nx g @nx/nest:lib shared/auth  
+   nx g @nx/nest:lib shared/auth
    nx g @nx/nest:lib shared/utils
    nx g @nx/nest:lib shared/types
    ```
@@ -567,7 +622,9 @@ export class LoggerService {
 **Maqsad:** Prisma schema va database servicelarni shared library ga ko'chirish
 
 **Steps:**
+
 1. **Prisma schema ko'chirish:**
+
    ```bash
    # Existing: prisma/schema.prisma
    # New: libs/shared/database/prisma/schema.prisma
@@ -577,6 +634,7 @@ export class LoggerService {
    ```
 
 2. **PrismaService shared qilish:**
+
    ```typescript
    // libs/shared/database/src/lib/prisma.service.ts
    import { Injectable, OnModuleInit } from '@nestjs/common';
@@ -591,6 +649,7 @@ export class LoggerService {
    ```
 
 3. **Database module yaratish:**
+
    ```typescript
    // libs/shared/database/src/lib/database.module.ts
    import { Global, Module } from '@nestjs/common';
@@ -606,10 +665,13 @@ export class LoggerService {
 
 #### Phase 3: Auth System Migration (2-3 kun)
 
-**Maqsad:** Authentication va authorization systemni shared library ga ko'chirish
+**Maqsad:** Authentication va authorization systemni shared library ga
+ko'chirish
 
 **Steps:**
+
 1. **Auth guards ko'chirish:**
+
    ```bash
    # Existing: src/shared/guards/
    # New: libs/shared/auth/src/lib/guards/
@@ -617,6 +679,7 @@ export class LoggerService {
    ```
 
 2. **JWT service ko'chirish:**
+
    ```bash
    # Existing: src/modules/auth/jwt.service.ts
    # New: libs/shared/auth/src/lib/jwt.service.ts
@@ -635,7 +698,9 @@ export class LoggerService {
 **Maqsad:** Existing modullarni Dashboard API ga ko'chirish
 
 **Steps:**
+
 1. **Core modules ko'chirish:**
+
    ```bash
    # User management
    cp -r src/modules/auth/* apps/dashboard-api/src/modules/auth/
@@ -646,6 +711,7 @@ export class LoggerService {
    ```
 
 2. **Core services ko'chirish:**
+
    ```bash
    # Config, Logger, Cache services
    cp -r src/core/* apps/dashboard-api/src/core/
@@ -664,17 +730,19 @@ export class LoggerService {
 **Maqsad:** Agent API yaratish va C# agent endpoints
 
 **Steps:**
+
 1. **Agent controllers yaratish:**
+
    ```typescript
    // apps/agent-api/src/modules/agent/agent.controller.ts
    @Controller('agent')
    export class AgentController {
      @Post('active-windows')
      async receiveActiveWindows(@Body() payload: AgentDataPayload) {}
-     
+
      @Post('visited-sites')
      async receiveVisitedSites(@Body() payload: AgentDataPayload) {}
-     
+
      @Post('screenshots')
      async receiveScreenshots(@Body() payload: AgentDataPayload) {}
    }
@@ -695,7 +763,9 @@ export class LoggerService {
 **Maqsad:** Docker va environment configuration yangilash
 
 **Steps:**
+
 1. **Docker configuration yangilash:**
+
    ```yaml
    # docker-compose.yml
    version: '3.8'
@@ -703,14 +773,14 @@ export class LoggerService {
      dashboard-api:
        build: ./apps/dashboard-api
        ports:
-         - "3000:3000"
+         - '3000:3000'
        environment:
          - DATABASE_URL=${DATABASE_URL}
-         
+
      agent-api:
        build: ./apps/agent-api
        ports:
-         - "3001:3000"
+         - '3001:3000'
        environment:
          - DATABASE_URL=${DATABASE_URL}
    ```
@@ -733,6 +803,7 @@ export class LoggerService {
 **Maqsad:** Migration testlari va validation
 
 **Steps:**
+
 1. **Unit testlarni ko'chirish va yangilash**
 2. **Integration testlar yaratish**
 3. **API endpoints testlari**
@@ -742,6 +813,7 @@ export class LoggerService {
 ### Migration Checklist
 
 #### Pre-Migration
+
 - [ ] Existing system full backup
 - [ ] Database backup
 - [ ] Environment variables documentation
@@ -749,6 +821,7 @@ export class LoggerService {
 - [ ] Performance baseline metrics
 
 #### During Migration
+
 - [ ] NX workspace setup completed
 - [ ] Shared libraries created and configured
 - [ ] Database layer migrated successfully
@@ -759,6 +832,7 @@ export class LoggerService {
 - [ ] All tests passing
 
 #### Post-Migration
+
 - [ ] Performance comparison completed
 - [ ] Security audit passed
 - [ ] Documentation updated

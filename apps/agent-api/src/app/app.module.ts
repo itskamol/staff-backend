@@ -13,29 +13,29 @@ import { DataProcessingModule } from '../modules/data-processing/data-processing
 import { SecurityModule } from '../modules/security/security.module';
 
 @Module({
-  imports: [
-    ConfigModule.forRoot({
-      isGlobal: true,
-      envFilePath: ['.env', '.env.local'],
-    }),
-    SharedDatabaseModule,
-    SharedUtilsModule,
-    SecurityModule,
-    AgentModule,
-    HIKVisionModule,
-    DataProcessingModule,
-  ],
-  controllers: [AppController],
-  providers: [
-    AppService,
-    {
-      provide: APP_INTERCEPTOR,
-      useClass: ResponseInterceptor,
-    },
-    {
-      provide: APP_FILTER,
-      useClass: GlobalExceptionFilter,
-    },
-  ],
+    imports: [
+        ConfigModule.forRoot({
+            isGlobal: true,
+            envFilePath: ['.env', '.env.local'],
+        }),
+        SharedDatabaseModule,
+        SharedUtilsModule,
+        SecurityModule,
+        AgentModule,
+        HIKVisionModule,
+        DataProcessingModule,
+    ],
+    controllers: [AppController],
+    providers: [
+        AppService,
+        {
+            provide: APP_INTERCEPTOR,
+            useClass: ResponseInterceptor,
+        },
+        {
+            provide: APP_FILTER,
+            useClass: GlobalExceptionFilter,
+        },
+    ],
 })
 export class AppModule {}

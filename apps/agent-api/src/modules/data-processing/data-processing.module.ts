@@ -5,12 +5,9 @@ import { DataProcessingController } from './data-processing.controller';
 import { DataProcessingService } from './data-processing.service';
 
 @Module({
-  imports: [
-    SharedDatabaseModule,
-    ScheduleModule.forRoot(),
-  ],
-  controllers: [DataProcessingController],
-  providers: [DataProcessingService],
-  exports: [DataProcessingService],
+    imports: [SharedDatabaseModule, ScheduleModule.forRoot()],
+    controllers: [DataProcessingController],
+    providers: [DataProcessingService],
+    exports: [DataProcessingService],
 })
 export class DataProcessingModule {}

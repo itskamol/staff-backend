@@ -19,47 +19,47 @@ import { ReportsModule } from '../modules/reports/reports.module';
 import { PolicyModule } from '../modules/policy/policy.module';
 
 @Module({
-  imports: [
-    ConfigModule.forRoot({
-      isGlobal: true,
-      envFilePath: ['.env', '.env.local'],
-    }),
-    CoreModule,
-    SharedDatabaseModule,
-    SharedAuthModule,
-    SharedUtilsModule,
-    AuthModule,
-    UserModule,
-    OrganizationModule,
-    DepartmentModule,
-    EmployeeModule,
-    VisitorModule,
-    ReportsModule,
-    PolicyModule
-  ],
-  controllers: [AppController],
-  providers: [
-    AppService,
-    {
-      provide: APP_INTERCEPTOR,
-      useClass: ResponseInterceptor,
-    },
-    {
-      provide: APP_FILTER,
-      useClass: GlobalExceptionFilter,
-    },
-    {
-      provide: APP_GUARD,
-      useClass: JwtAuthGuard,
-    },
-    {
-      provide: APP_GUARD,
-      useClass: RolesGuard,
-    },
-    {
-      provide: APP_GUARD,
-      useClass: DataScopeGuard,
-    },
-  ],
+    imports: [
+        ConfigModule.forRoot({
+            isGlobal: true,
+            envFilePath: ['.env', '.env.local'],
+        }),
+        CoreModule,
+        SharedDatabaseModule,
+        SharedAuthModule,
+        SharedUtilsModule,
+        AuthModule,
+        UserModule,
+        OrganizationModule,
+        DepartmentModule,
+        EmployeeModule,
+        VisitorModule,
+        ReportsModule,
+        PolicyModule,
+    ],
+    controllers: [AppController],
+    providers: [
+        AppService,
+        {
+            provide: APP_INTERCEPTOR,
+            useClass: ResponseInterceptor,
+        },
+        {
+            provide: APP_FILTER,
+            useClass: GlobalExceptionFilter,
+        },
+        {
+            provide: APP_GUARD,
+            useClass: JwtAuthGuard,
+        },
+        {
+            provide: APP_GUARD,
+            useClass: RolesGuard,
+        },
+        {
+            provide: APP_GUARD,
+            useClass: DataScopeGuard,
+        },
+    ],
 })
 export class AppModule {}

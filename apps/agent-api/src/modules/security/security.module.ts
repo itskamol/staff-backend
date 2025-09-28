@@ -8,19 +8,9 @@ import { IpWhitelistGuard } from './guards/ip-whitelist.guard';
 
 @Global()
 @Module({
-  imports: [SharedDatabaseModule],
-  controllers: [SecurityController],
-  providers: [
-    SecurityService,
-    ApiKeyGuard,
-    RateLimitGuard,
-    IpWhitelistGuard,
-  ],
-  exports: [
-    SecurityService,
-    ApiKeyGuard,
-    RateLimitGuard,
-    IpWhitelistGuard,
-  ],
+    imports: [SharedDatabaseModule],
+    controllers: [SecurityController],
+    providers: [SecurityService, ApiKeyGuard, RateLimitGuard, IpWhitelistGuard],
+    exports: [SecurityService, ApiKeyGuard, RateLimitGuard, IpWhitelistGuard],
 })
 export class SecurityModule {}

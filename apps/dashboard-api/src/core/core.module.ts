@@ -7,18 +7,8 @@ import { QueueService } from './queue/queue.service';
 
 @Global()
 @Module({
-  imports: [ConfigModule],
-  providers: [
-    AppConfigService,
-    AppLoggerService,
-    CacheService,
-    QueueService,
-  ],
-  exports: [
-    AppConfigService,
-    AppLoggerService,
-    CacheService,
-    QueueService,
-  ],
+    imports: [ConfigModule],
+    providers: [AppConfigService, AppLoggerService, CacheService, QueueService],
+    exports: [AppConfigService, AppLoggerService, CacheService, QueueService],
 })
 export class CoreModule {}

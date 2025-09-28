@@ -33,9 +33,7 @@
     "copy-workspace-modules": {
       "dependsOn": ["build"],
       "cache": true,
-      "outputs": [
-        "{workspaceRoot}/dist/apps/dashboard-api/workspace_modules"
-      ],
+      "outputs": ["{workspaceRoot}/dist/apps/dashboard-api/workspace_modules"],
       "executor": "@nx/js:copy-workspace-modules",
       "options": {
         "buildTarget": "build"
