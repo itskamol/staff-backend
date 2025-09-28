@@ -25,10 +25,9 @@ async function bootstrap() {
     .addTag('Data Processing', 'Asynchronous data processing')
     .addTag('Security', 'API security management')
     .build();
+
   const document = SwaggerModule.createDocument(app, config);
-  SwaggerModule.setup('api/docs', app, document, {
-    customCssUrl: '/assets/custom.css',
-  });
+  SwaggerModule.setup('api/docs', app, document);
 
   const port = process.env.AGENT_API_PORT || 3001;
   await app.listen(port);
