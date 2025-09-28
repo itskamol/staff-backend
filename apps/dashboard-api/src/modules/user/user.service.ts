@@ -11,7 +11,7 @@ export class UserService {
     async findAll(paginationDto: PaginationDto) {
         const query = QueryBuilderUtil.buildQuery(paginationDto);
 
-        const [users, totalRecords] = await Promise.all([
+        const [users, total] = await Promise.all([
             this.prisma.user.findMany({
                 ...query,
                 select: {
@@ -48,7 +48,7 @@ export class UserService {
 
         return QueryBuilderUtil.buildResponse(
             users,
-            totalRecords,
+            total,
             paginationDto.page || 1,
             paginationDto.limit || 10
         );
@@ -104,6 +104,12 @@ export class UserService {
 
         if (existingUser) {
             throw new ConflictException('Username already exists');
+        }
+
+        if (!createUserDto.organizationId) {
+            await this.prisma.organization.findFirst({
+                where: { id: createUserDto.organizationId },
+            });
         }
 
         // Hash password

@@ -68,18 +68,14 @@ export class QueryBuilderUtil {
         };
     }
 
-    static buildResponse<T>(data: T[], totalRecords: number, page: number, limit: number) {
-        const totalPages = Math.ceil(totalRecords / limit);
+    static buildResponse<T>(data: T[], total: number, page: number, limit: number) {
 
         return {
             data,
-            pagination: {
-                currentPage: page,
-                totalPages,
-                totalRecords,
+            meta: {
+                page,
+                total,
                 limit,
-                hasNext: page < totalPages,
-                hasPrev: page > 1,
             },
         };
     }
