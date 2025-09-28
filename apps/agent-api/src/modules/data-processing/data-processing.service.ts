@@ -568,7 +568,9 @@ export class DataProcessingService implements OnModuleInit {
                 usersOnComputersId: userOnComputerId,
                 url: data.url,
                 title: data.title || '',
-                activeTime: data.activeTime,
+                processName: data.processName || 'Unknown',
+                icon: data.icon || null,
+                activeTime: data.activeTime || 0,
                 datetime: new Date(data.datetime || Date.now()),
             },
         });
@@ -598,6 +600,9 @@ export class DataProcessingService implements OnModuleInit {
             data: {
                 usersOnComputersId: userOnComputerId,
                 filePath: data.imageData,
+                title: data.title || null,
+                processName: data.processName || 'Unknown',
+                icon: data.icon || null,
                 datetime: new Date(data.datetime || Date.now()),
             },
         });
@@ -637,12 +642,12 @@ export class DataProcessingService implements OnModuleInit {
     }
 
     private async getUserOnComputerId(userId: number, computerId: number): Promise<number | null> {
-        const userOnComputer = await this.prisma.userOnComputer.findUnique({
+        const userOnComputer = await this.prisma.usersOnComputers.findFirst({
             where: {
-                userId_computerId: {
-                    userId,
-                    computerId,
+                computerUser: {
+                    employeeId: userId,
                 },
+                computerId: computerId,
             },
         });
 
