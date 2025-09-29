@@ -1,151 +1,208 @@
 import {
+    Body,
     Controller,
+    Delete,
     Get,
+    NotFoundException,
+    Param,
     Post,
     Put,
-    Delete,
-    Body,
-    Param,
     Query,
-    ParseIntPipe,
 } from '@nestjs/common';
-import { ApiTags, ApiOperation, ApiResponse } from '@nestjs/swagger';
-import { Roles, Role, User as CurrentUser } from '@app/shared/auth';
-import { ApiResponseDto, PaginationDto } from '@app/shared/utils';
+import {
+    ApiBearerAuth,
+    ApiExtraModels,
+    ApiParam,
+    ApiTags,
+} from '@nestjs/swagger';
 import { EmployeeService } from './employee.service';
-import { CreateEmployeeDto, UpdateEmployeeDto, LinkComputerUserDto } from './dto/employee.dto';
-
+import { ActivityReportResponseDto, ApiSuccessResponse, AssignCardDto, AssignCarDto, ComputerUserResponseDto, CreateEmployeeDto, EmployeeResponseDto, EntryLogResponseDto, LinkComputerUserDto, UpdateEmployeeDto } from '../../shared/dto';
+import { ApiCrudOperation, ApiErrorResponses, ApiOkResponseData } from '../../shared/utils';
+import { DataScope, Role, Roles, User } from '@app/shared/auth';
+import { QueryDto } from '../../shared/dto/query.dto';
+import { UserContext } from '../../shared/interfaces';
+import { Scope } from '../../shared/decorators';
 @ApiTags('Employees')
+@ApiBearerAuth()
 @Controller('employees')
+@ApiExtraModels(ApiSuccessResponse, EmployeeResponseDto)
 export class EmployeeController {
     constructor(private readonly employeeService: EmployeeService) {}
 
     @Get()
     @Roles(Role.ADMIN, Role.HR, Role.DEPARTMENT_LEAD, Role.GUARD)
-    @ApiOperation({ summary: 'Get all employees' })
-    @ApiResponse({ status: 200, description: 'Employees retrieved successfully' })
-    async findAll(
-        @Query() paginationDto: PaginationDto,
-        @CurrentUser() user: any
-    ): Promise<ApiResponseDto> {
-        const result = await this.employeeService.findAll(paginationDto, user);
-        return ApiResponseDto.success(result, 'Employees retrieved successfully');
-    }
-
-    @Get(':id')
-    @Roles(Role.ADMIN, Role.HR, Role.DEPARTMENT_LEAD, Role.GUARD)
-    @ApiOperation({ summary: 'Get employee by ID' })
-    @ApiResponse({ status: 200, description: 'Employee retrieved successfully' })
-    @ApiResponse({ status: 404, description: 'Employee not found' })
-    async findOne(
-        @Param('id', ParseIntPipe) id: number,
-        @CurrentUser() user: any
-    ): Promise<ApiResponseDto> {
-        const employee = await this.employeeService.findOne(id, user);
-        return ApiResponseDto.success(employee, 'Employee retrieved successfully');
+    @ApiCrudOperation(EmployeeResponseDto, 'list', {
+        summary: 'Get all employees',
+        includeQueries: { 
+            pagination: true, 
+            search: true, 
+            sort: true, 
+            filters: ['isActive', 'departmentId'] 
+        }
+    })
+    async getAllEmployees(
+        @Query() query: QueryDto,
+        @Scope() scope: DataScope,
+        @User() user: UserContext
+    ) {
+        return this.employeeService.getEmployees(query, scope, user);
     }
 
     @Post()
     @Roles(Role.ADMIN, Role.HR)
-    @ApiOperation({ summary: 'Create new employee' })
-    @ApiResponse({ status: 201, description: 'Employee created successfully' })
-    @ApiResponse({ status: 400, description: 'Invalid input data' })
-    async create(
-        @Body() createEmployeeDto: CreateEmployeeDto,
-        @CurrentUser() user: any
-    ): Promise<ApiResponseDto> {
-        const employee = await this.employeeService.create(createEmployeeDto, user);
-        return ApiResponseDto.success(employee, 'Employee created successfully');
+    @ApiCrudOperation(EmployeeResponseDto, 'create', {
+        body: CreateEmployeeDto,
+        summary: 'Create a new employee'
+    })
+    async createEmployee(
+        @Body() dto: CreateEmployeeDto,
+        @Scope() scope: DataScope,
+        @User() user: UserContext
+    ) {
+        return this.employeeService.createEmployee(dto, scope, user);
     }
 
     @Put(':id')
     @Roles(Role.ADMIN, Role.HR)
-    @ApiOperation({ summary: 'Update employee' })
-    @ApiResponse({ status: 200, description: 'Employee updated successfully' })
-    @ApiResponse({ status: 404, description: 'Employee not found' })
-    async update(
-        @Param('id', ParseIntPipe) id: number,
-        @Body() updateEmployeeDto: UpdateEmployeeDto,
-        @CurrentUser() user: any
-    ): Promise<ApiResponseDto> {
-        const employee = await this.employeeService.update(id, updateEmployeeDto, user);
-        return ApiResponseDto.success(employee, 'Employee updated successfully');
+    @ApiParam({ name: 'id', description: 'Employee ID' })
+    @ApiCrudOperation(EmployeeResponseDto, 'update', {
+        body: UpdateEmployeeDto,
+        summary: 'Update an employee'
+    })
+    async updateEmployee(
+        @Param('id') id: number,
+        @Body() dto: UpdateEmployeeDto,
+        @Scope() scope: DataScope,
+        @User() user: UserContext
+    ) {
+        return this.employeeService.updateEmployee(id, dto, scope, user);
     }
 
     @Delete(':id')
     @Roles(Role.ADMIN, Role.HR)
-    @ApiOperation({ summary: 'Delete employee' })
-    @ApiResponse({ status: 200, description: 'Employee deleted successfully' })
-    @ApiResponse({ status: 404, description: 'Employee not found' })
-    async remove(
-        @Param('id', ParseIntPipe) id: number,
-        @CurrentUser() user: any
-    ): Promise<ApiResponseDto> {
-        await this.employeeService.remove(id, user);
-        return ApiResponseDto.success(null, 'Employee deleted successfully');
-    }
-
-    @Get(':id/computer-users')
-    @Roles(Role.ADMIN, Role.HR, Role.DEPARTMENT_LEAD)
-    @ApiOperation({ summary: 'Get employee computer users' })
-    @ApiResponse({ status: 200, description: 'Computer users retrieved successfully' })
-    async getComputerUsers(
-        @Param('id', ParseIntPipe) id: number,
-        @CurrentUser() user: any
-    ): Promise<ApiResponseDto> {
-        const result = await this.employeeService.getComputerUsers(id, user);
-        return ApiResponseDto.success(result, 'Computer users retrieved successfully');
-    }
-
-    @Post(':id/link-computer-user')
-    @Roles(Role.ADMIN, Role.HR)
-    @ApiOperation({ summary: 'Link employee to computer user' })
-    @ApiResponse({ status: 200, description: 'Computer user linked successfully' })
-    async linkComputerUser(
-        @Param('id', ParseIntPipe) id: number,
-        @Body() linkDto: LinkComputerUserDto,
-        @CurrentUser() user: any
-    ): Promise<ApiResponseDto> {
-        const result = await this.employeeService.linkComputerUser(id, linkDto, user);
-        return ApiResponseDto.success(result, 'Computer user linked successfully');
-    }
-
-    @Delete(':id/unlink-computer-user/:computerUserId')
-    @Roles(Role.ADMIN, Role.HR)
-    @ApiOperation({ summary: 'Unlink employee from computer user' })
-    @ApiResponse({ status: 200, description: 'Computer user unlinked successfully' })
-    async unlinkComputerUser(
-        @Param('id', ParseIntPipe) id: number,
-        @Param('computerUserId', ParseIntPipe) computerUserId: number,
-        @CurrentUser() user: any
-    ): Promise<ApiResponseDto> {
-        await this.employeeService.unlinkComputerUser(id, computerUserId, user);
-        return ApiResponseDto.success(null, 'Computer user unlinked successfully');
+    @ApiParam({ name: 'id', description: 'Employee ID' })
+    @ApiCrudOperation(EmployeeResponseDto, 'delete', {
+        summary: 'Delete an employee'
+    })
+    async deleteEmployee(
+        @Param('id') id: number,
+        @Scope() scope: DataScope,
+        @User() user: UserContext
+    ) {
+        await this.employeeService.deleteEmployee(id, scope, user);
+        return { message: 'Employee deleted successfully.' };
     }
 
     @Get(':id/entry-logs')
     @Roles(Role.ADMIN, Role.HR, Role.DEPARTMENT_LEAD, Role.GUARD)
-    @ApiOperation({ summary: 'Get employee entry logs' })
-    @ApiResponse({ status: 200, description: 'Entry logs retrieved successfully' })
-    async getEntryLogs(
-        @Param('id', ParseIntPipe) id: number,
-        @Query() paginationDto: PaginationDto,
-        @CurrentUser() user: any
-    ): Promise<ApiResponseDto> {
-        const result = await this.employeeService.getEntryLogs(id, paginationDto, user);
-        return ApiResponseDto.success(result, 'Entry logs retrieved successfully');
+    @ApiParam({ name: 'id', description: 'Employee ID' })
+    @ApiOkResponseData(EntryLogResponseDto, {
+        summary: 'Get employee entry logs'
+    })
+    @ApiErrorResponses({ forbidden: true, notFound: true })
+    async getEmployeeEntryLogs(
+        @Param('id') id: number,
+        @Query() query: QueryDto,
+        @Scope() scope: DataScope,
+        @User() user: UserContext
+    ) {
+        return this.employeeService.getEmployeeEntryLogs(id, query, scope, user);
     }
 
     @Get(':id/activity-report')
     @Roles(Role.ADMIN, Role.HR, Role.DEPARTMENT_LEAD)
-    @ApiOperation({ summary: 'Get employee activity report' })
-    @ApiResponse({ status: 200, description: 'Activity report retrieved successfully' })
-    async getActivityReport(
-        @Param('id', ParseIntPipe) id: number,
-        @Query() paginationDto: PaginationDto,
-        @CurrentUser() user: any
-    ): Promise<ApiResponseDto> {
-        const result = await this.employeeService.getActivityReport(id, paginationDto, user);
-        return ApiResponseDto.success(result, 'Activity report retrieved successfully');
+    @ApiParam({ name: 'id', description: 'Employee ID' })
+    @ApiOkResponseData(ActivityReportResponseDto, {
+        summary: 'Get employee activity report'
+    })
+    @ApiErrorResponses({ forbidden: true, notFound: true })
+    async getEmployeeActivityReport(
+        @Param('id') id: number,
+        @Query() query: QueryDto,
+        @Scope() scope: DataScope,
+        @User() user: UserContext
+    ) {
+        return this.employeeService.getEmployeeActivityReport(id, query, scope, user);
+    }
+
+    @Get(':id/computer-users')
+    @Roles(Role.ADMIN, Role.HR, Role.DEPARTMENT_LEAD)
+    @ApiParam({ name: 'id', description: 'Employee ID' })
+    @ApiOkResponseData(ComputerUserResponseDto, {
+        summary: 'Get employee computer users'
+    })
+    @ApiErrorResponses({ forbidden: true, notFound: true })
+    async getEmployeeComputerUsers(
+        @Param('id') id: number,
+        @Scope() scope: DataScope,
+        @User() user: UserContext
+    ) {
+        return this.employeeService.getEmployeeComputerUsers(id, scope, user);
+    }
+
+    @Post(':id/assign-card')
+    @Roles(Role.ADMIN, Role.HR)
+    @ApiParam({ name: 'id', description: 'Employee ID' })
+    @ApiOkResponseData(Object, {
+        summary: 'Assign card to employee'
+    })
+    @ApiErrorResponses({ forbidden: true, notFound: true, badRequest: true })
+    async assignCardToEmployee(
+        @Param('id') id: number,
+        @Body() dto: AssignCardDto,
+        @Scope() scope: DataScope,
+        @User() user: UserContext
+    ) {
+        return this.employeeService.assignCardToEmployee(id, dto, scope, user);
+    }
+
+    @Post(':id/assign-car')
+    @Roles(Role.ADMIN, Role.HR)
+    @ApiParam({ name: 'id', description: 'Employee ID' })
+    @ApiOkResponseData(Object, {
+        summary: 'Assign car to employee'
+    })
+    @ApiErrorResponses({ forbidden: true, notFound: true, badRequest: true })
+    async assignCarToEmployee(
+        @Param('id') id: number,
+        @Body() dto: AssignCarDto,
+        @Scope() scope: DataScope,
+        @User() user: UserContext
+    ) {
+        return this.employeeService.assignCarToEmployee(id, dto, scope, user);
+    }
+
+    @Post(':id/link-computer-user')
+    @Roles(Role.ADMIN, Role.HR)
+    @ApiParam({ name: 'id', description: 'Employee ID' })
+    @ApiOkResponseData(Object, {
+        summary: 'Link computer user to employee'
+    })
+    @ApiErrorResponses({ forbidden: true, notFound: true, badRequest: true })
+    async linkComputerUserToEmployee(
+        @Param('id') id: number,
+        @Body() dto: LinkComputerUserDto,
+        @Scope() scope: DataScope,
+        @User() user: UserContext
+    ) {
+        return this.employeeService.linkComputerUserToEmployee(id, dto, scope, user);
+    }
+
+    @Delete(':id/unlink-computer-user/:computer_user_id')
+    @Roles(Role.ADMIN, Role.HR)
+    @ApiParam({ name: 'id', description: 'Employee ID' })
+    @ApiParam({ name: 'computer_user_id', description: 'Computer User ID' })
+    @ApiOkResponseData(Object, {
+        summary: 'Unlink computer user from employee'
+    })
+    @ApiErrorResponses({ forbidden: true, notFound: true })
+    async unlinkComputerUserFromEmployee(
+        @Param('id') id: number,
+        @Param('computer_user_id') computerUserId: number,
+        @Scope() scope: DataScope,
+        @User() user: UserContext
+    ) {
+        await this.employeeService.unlinkComputerUserFromEmployee(id, computerUserId, scope, user);
+        return { message: 'Computer user unlinked successfully.' };
     }
 }

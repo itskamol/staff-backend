@@ -1,238 +1,78 @@
-import {
-    Injectable,
-    NotFoundException,
-    ConflictException,
-    ForbiddenException,
-} from '@nestjs/common';
-import { PrismaService } from '@app/shared/database';
-import { Role } from '@app/shared/auth';
-import { QueryBuilderUtil, PaginationDto } from '@app/shared/utils';
-import { CreateOrganizationDto, UpdateOrganizationDto } from './dto/organization.dto';
+import { Injectable } from '@nestjs/common';
+import { OrganizationRepository } from './organization.repository';
+import { Organization, Prisma } from '@prisma/client';
+import { DataScope } from '@app/shared/auth';
+import { QueryDto } from '../../shared/dto/query.dto';
+import { CreateOrganizationDto, UpdateOrganizationDto } from '../../shared/dto';
 
 @Injectable()
 export class OrganizationService {
-    constructor(private readonly prisma: PrismaService) {}
+    constructor(private readonly organizationRepository: OrganizationRepository) {}
 
-    async findAll(paginationDto: PaginationDto, user: any) {
-        const query = QueryBuilderUtil.buildQuery(paginationDto);
-
-        // Apply role-based filtering
-        if (user.role === Role.HR) {
-            query.where.id = user.organizationId;
+    async getOrganizations(
+        { search, isActive, sort, order, page, limit }: QueryDto,
+        scope?: DataScope
+    ) {
+        const filters: Prisma.OrganizationWhereInput = {};
+        if (search) {
+            filters.OR = [
+                { fullName: { contains: search, mode: 'insensitive' } },
+                { shortName: { contains: search, mode: 'insensitive' } },
+            ];
         }
 
-        const [organizations, totalRecords] = await Promise.all([
-            this.prisma.organization.findMany({
-                ...query,
-                select: {
-                    id: true,
-                    fullName: true,
-                    shortName: true,
-                    address: true,
-                    phone: true,
-                    email: true,
-                    additionalDetails: true,
-                    isActive: true,
-                    createdAt: true,
-                    updatedAt: true,
+        if (typeof isActive === 'boolean') {
+            filters.isActive = isActive;
+        }
+
+        const [data, total] = await Promise.all([
+            this.organizationRepository.findMany(
+                filters,
+                { [sort]: order },
+                {
                     _count: {
-                        select: {
-                            departments: true,
-                            users: true,
-                        },
+                        select: { departments: true, employees: true },
                     },
                 },
-            }),
-            this.prisma.organization.count({ where: query.where }),
+                { page, limit },
+                undefined,
+                scope,
+            ),
+            this.organizationRepository.count(filters, scope),
         ]);
 
-        return QueryBuilderUtil.buildResponse(
-            organizations,
-            totalRecords,
-            paginationDto.page || 1,
-            paginationDto.limit || 10
+        return {
+            data,
+            total,
+            page,
+            limit,
+        };
+    }
+
+    async getOrganizationById(id: number, scope?: DataScope) {
+        return this.organizationRepository.findById(id, { departments: true }, scope);
+    }
+
+    async getOrganizationsByScope(scope: DataScope) {
+        return this.organizationRepository.findMany(
+            undefined,
+            undefined,
+            undefined,
+            undefined,
+            undefined,
+            scope,
         );
     }
 
-    async findOne(id: number, user: any) {
-        // Check access permissions
-        if (user.role === Role.HR && user.organizationId !== id) {
-            throw new ForbiddenException('Access denied to this organization');
-        }
-
-        const organization = await this.prisma.organization.findUnique({
-            where: { id },
-            select: {
-                id: true,
-                fullName: true,
-                shortName: true,
-                address: true,
-                phone: true,
-                email: true,
-                logo: true,
-                additionalDetails: true,
-                isActive: true,
-                createdAt: true,
-                updatedAt: true,
-                _count: {
-                    select: {
-                        departments: true,
-                        users: true,
-                    },
-                },
-            },
-        });
-
-        if (!organization) {
-            throw new NotFoundException('Organization not found');
-        }
-
-        return organization;
+    async createOrganization(data: CreateOrganizationDto): Promise<Organization> {
+        return this.organizationRepository.create(data);
     }
 
-    async create(createOrganizationDto: CreateOrganizationDto) {
-        const { shortName, email } = createOrganizationDto;
-
-        // Check if shortName already exists
-        const existingOrg = await this.prisma.organization.findUnique({
-            where: { shortName },
-        });
-
-        if (existingOrg) {
-            throw new ConflictException('Organization short name already exists');
-        }
-
-        const organization = await this.prisma.organization.create({
-            data: createOrganizationDto,
-            select: {
-                id: true,
-                fullName: true,
-                shortName: true,
-                address: true,
-                phone: true,
-                email: true,
-                additionalDetails: true,
-                isActive: true,
-                createdAt: true,
-                updatedAt: true,
-            },
-        });
-
-        return organization;
+    async updateOrganization(id: number, data: UpdateOrganizationDto, scope?: DataScope) {
+        return this.organizationRepository.update(id, data, undefined, scope);
     }
 
-    async update(id: number, updateOrganizationDto: UpdateOrganizationDto) {
-        // Check if organization exists
-        const existingOrg = await this.prisma.organization.findUnique({
-            where: { id },
-        });
-
-        if (!existingOrg) {
-            throw new NotFoundException('Organization not found');
-        }
-
-        // Check if shortName is being changed and already exists
-        if (
-            updateOrganizationDto.shortName &&
-            updateOrganizationDto.shortName !== existingOrg.shortName
-        ) {
-            const duplicateOrg = await this.prisma.organization.findUnique({
-                where: { shortName: updateOrganizationDto.shortName },
-            });
-
-            if (duplicateOrg) {
-                throw new ConflictException('Organization short name already exists');
-            }
-        }
-
-        const organization = await this.prisma.organization.update({
-            where: { id },
-            data: updateOrganizationDto,
-            select: {
-                id: true,
-                fullName: true,
-                shortName: true,
-                address: true,
-                phone: true,
-                email: true,
-                additionalDetails: true,
-                isActive: true,
-                createdAt: true,
-                updatedAt: true,
-            },
-        });
-
-        return organization;
-    }
-
-    async remove(id: number) {
-        // Check if organization exists
-        const existingOrg = await this.prisma.organization.findUnique({
-            where: { id },
-            include: {
-                departments: true,
-                users: true,
-            },
-        });
-
-        if (!existingOrg) {
-            throw new NotFoundException('Organization not found');
-        }
-
-        // Check if organization has dependencies
-        if (existingOrg.departments.length > 0 || existingOrg.users.length > 0) {
-            // Soft delete
-            await this.prisma.organization.update({
-                where: { id },
-                data: { isActive: false },
-            });
-        } else {
-            // Hard delete
-            await this.prisma.organization.delete({
-                where: { id },
-            });
-        }
-    }
-
-    async getDepartments(id: number, paginationDto: PaginationDto, user: any) {
-        // Check access permissions
-        if (user.role === Role.HR && user.organizationId !== id) {
-            throw new ForbiddenException('Access denied to this organization');
-        }
-
-        const query = QueryBuilderUtil.buildQuery(paginationDto);
-        query.where.organizationId = id;
-
-        const [departments, totalRecords] = await Promise.all([
-            this.prisma.department.findMany({
-                ...query,
-                select: {
-                    id: true,
-                    fullName: true,
-                    shortName: true,
-                    address: true,
-                    phone: true,
-                    email: true,
-                    additionalDetails: true,
-                    isActive: true,
-                    createdAt: true,
-                    updatedAt: true,
-                    _count: {
-                        select: {
-                            employees: true,
-                            children: true,
-                        },
-                    },
-                },
-            }),
-            this.prisma.department.count({ where: query.where }),
-        ]);
-
-        return QueryBuilderUtil.buildResponse(
-            departments,
-            totalRecords,
-            paginationDto.page || 1,
-            paginationDto.limit || 10
-        );
+    async deleteOrganization(id: number, scope?: DataScope) {
+        return this.organizationRepository.delete(id, scope);
     }
 }

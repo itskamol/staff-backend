@@ -1,524 +1,311 @@
-import {
-    Injectable,
-    NotFoundException,
-    ForbiddenException,
-    ConflictException,
-} from '@nestjs/common';
-import { PrismaService } from '@app/shared/database';
-import { Role } from '@app/shared/auth';
-import { QueryBuilderUtil, PaginationDto } from '@app/shared/utils';
-import { CreateEmployeeDto, UpdateEmployeeDto, LinkComputerUserDto } from './dto/employee.dto';
+import { Injectable, NotFoundException } from '@nestjs/common';
+import { EmployeeRepository } from './employee.repository';
+import { DataScope } from '@app/shared/auth';
+import { QueryDto } from '../../shared/dto/query.dto';
+import { UserContext } from '../../shared/interfaces';
+import { CreateEmployeeDto, UpdateEmployeeDto } from '../../shared/dto';
+import { DepartmentService } from '../department/department.service';
 
 @Injectable()
 export class EmployeeService {
-    constructor(private readonly prisma: PrismaService) {}
+    constructor(
+        private readonly employeeRepository: EmployeeRepository,
+        private readonly departmentService: DepartmentService
+    ) {}
 
-    async findAll(paginationDto: PaginationDto, user: any) {
-        const query = QueryBuilderUtil.buildQuery(paginationDto);
+    async getEmployees(query: QueryDto, scope: DataScope, user: UserContext) {
+        const { page = 1, limit = 10, search, sort, order, ...filters } = query;
 
-        // Apply role-based filtering
-        if (user.role === Role.HR) {
-            // HR can see employees from their organization
-            query.where.department = {
-                organizationId: user.organizationId,
-            };
-        } else if (user.role === Role.DEPARTMENT_LEAD) {
-            // Department lead can see employees from their departments
-            query.where.departmentId = { in: user.departmentIds || [] };
-        } else if (user.role === Role.GUARD) {
-            // Guard can see basic employee info for entry/exit
-            // No additional filtering needed, but limited fields
+        // Build where clause
+        let whereClause: any = {};
+
+        // Apply search
+        if (search) {
+            whereClause.OR = [
+                { name: { contains: search, mode: 'insensitive' } },
+                { email: { contains: search, mode: 'insensitive' } },
+                { phone: { contains: search, mode: 'insensitive' } },
+            ];
         }
 
-        const [employees, totalRecords] = await Promise.all([
-            this.prisma.employee.findMany({
-                ...query,
-                select: {
-                    id: true,
-                    name: true,
-                    address: true,
-                    phone: true,
-                    email: true,
-                    photo: true,
-                    additionalDetails: user.role === Role.GUARD ? false : true,
-                    isActive: true,
-                    createdAt: true,
-                    updatedAt: true,
-                    department: {
-                        select: {
-                            id: true,
-                            fullName: true,
-                            shortName: true,
-                            organization: {
-                                select: {
-                                    id: true,
-                                    fullName: true,
-                                    shortName: true,
-                                },
-                            },
-                        },
-                    },
-                    policy:
-                        user.role === Role.GUARD
-                            ? false
-                            : {
-                                  select: {
-                                      id: true,
-                                      title: true,
-                                  },
-                              },
-                    _count:
-                        user.role === Role.GUARD
-                            ? false
-                            : {
-                                  select: {
-                                      computerUsers: true,
-                                      credentials: true,
-                                      actions: true,
-                                  },
-                              },
-                },
-            }),
-            this.prisma.employee.count({ where: query.where }),
+        // Apply filters
+        Object.keys(filters).forEach(key => {
+            if (filters[key] !== undefined) {
+                whereClause[key] = filters[key];
+            }
+        });
+
+        const orderBy = sort ? { [sort]: order || 'asc' } : { createdAt: 'desc' };
+        const pagination = { page, limit };
+
+        const [employees, total] = await Promise.all([
+            this.employeeRepository.findManyWithRoleScope(
+                whereClause,
+                { createdAt: 'desc' },
+                undefined,
+                pagination,
+                scope,
+                user.role
+            ),
+            this.employeeRepository.countWithRoleScope(whereClause, scope, user.role),
         ]);
 
-        return QueryBuilderUtil.buildResponse(
-            employees,
-            totalRecords,
-            paginationDto.page || 1,
-            paginationDto.limit || 10
-        );
+        return {
+            data: employees,
+            meta: {
+                total,
+                page,
+                limit,
+                totalPages: Math.ceil(total / limit),
+            },
+        };
     }
 
-    async findOne(id: number, user: any) {
-        const employee = await this.prisma.employee.findUnique({
-            where: { id },
-            select: {
-                id: true,
-                name: true,
-                address: true,
-                phone: true,
-                email: true,
-                photo: true,
-                additionalDetails: user.role === Role.GUARD ? false : true,
-                isActive: true,
-                createdAt: true,
-                updatedAt: true,
-                department: {
-                    select: {
-                        id: true,
-                        fullName: true,
-                        shortName: true,
-                        organizationId: true,
-                        organization: {
-                            select: {
-                                id: true,
-                                fullName: true,
-                                shortName: true,
-                            },
-                        },
-                    },
-                },
-                policy:
-                    user.role === Role.GUARD
-                        ? false
-                        : {
-                              select: {
-                                  id: true,
-                                  title: true,
-                                  activeWindow: true,
-                                  screenshot: true,
-                                  visitedSites: true,
-                              },
-                          },
-                computerUsers:
-                    user.role === Role.GUARD
-                        ? false
-                        : {
-                              select: {
-                                  id: true,
-                                  sid: true,
-                                  name: true,
-                                  domain: true,
-                                  username: true,
-                                  isAdmin: true,
-                                  isInDomain: true,
-                              },
-                          },
-                credentials:
-                    user.role === Role.GUARD
-                        ? false
-                        : {
-                              select: {
-                                  id: true,
-                                  code: true,
-                                  type: true,
-                                  isActive: true,
-                              },
-                          },
-            },
-        });
-
-        if (!employee) {
-            throw new NotFoundException('Employee not found');
-        }
-
-        // Check access permissions
-        if (user.role === Role.HR && employee.department.organizationId !== user.organizationId) {
-            throw new ForbiddenException('Access denied to this employee');
-        }
-
-        if (
-            user.role === Role.DEPARTMENT_LEAD &&
-            !user.departmentIds?.includes(employee.department.id)
-        ) {
-            throw new ForbiddenException('Access denied to this employee');
-        }
-
-        return employee;
-    }
-
-    async create(createEmployeeDto: CreateEmployeeDto, user: any) {
-        // Check if department exists and access permissions
-        const department = await this.prisma.department.findUnique({
-            where: { id: createEmployeeDto.departmentId },
-            select: {
-                id: true,
-                organizationId: true,
-            },
-        });
+    async createEmployee(dto: CreateEmployeeDto, scope: DataScope, user: UserContext) {
+        const department = await this.departmentService.getDepartmentById(dto.departmentId, scope);
 
         if (!department) {
-            throw new NotFoundException('Department not found');
+            throw new NotFoundException('Department not found or access denied');
         }
 
-        // Check access permissions
-        if (user.role === Role.HR && department.organizationId !== user.organizationId) {
-            throw new ForbiddenException('Cannot create employee in different organization');
-        }
-
-        const employee = await this.prisma.employee.create({
-            data: createEmployeeDto,
-            select: {
-                id: true,
-                name: true,
-                address: true,
-                phone: true,
-                email: true,
-                photo: true,
-                additionalDetails: true,
-                isActive: true,
-                createdAt: true,
-                updatedAt: true,
-                department: {
-                    select: {
-                        id: true,
-                        fullName: true,
-                        shortName: true,
-                        organization: {
-                            select: {
-                                id: true,
-                                fullName: true,
-                                shortName: true,
-                            },
-                        },
-                    },
-                },
+        const createData = {
+            name: dto.name,
+            address: dto.address,
+            phone: dto.phone,
+            email: dto.email,
+            photo: dto.photo,
+            additionalDetails: dto.additionalDetails,
+            isActive: dto.isActive ?? true,
+            department: {
+                connect: { id: dto.departmentId },
             },
-        });
-
-        return employee;
-    }
-
-    async update(id: number, updateEmployeeDto: UpdateEmployeeDto, user: any) {
-        // Check if employee exists and access permissions
-        const existingEmployee = await this.findOne(id, user);
-
-        const employee = await this.prisma.employee.update({
-            where: { id },
-            data: updateEmployeeDto,
-            select: {
-                id: true,
-                name: true,
-                address: true,
-                phone: true,
-                email: true,
-                photo: true,
-                additionalDetails: true,
-                isActive: true,
-                createdAt: true,
-                updatedAt: true,
-                department: {
-                    select: {
-                        id: true,
-                        fullName: true,
-                        shortName: true,
-                        organization: {
-                            select: {
-                                id: true,
-                                fullName: true,
-                                shortName: true,
-                            },
-                        },
-                    },
-                },
-            },
-        });
-
-        return employee;
-    }
-
-    async remove(id: number, user: any) {
-        // Check if employee exists and access permissions
-        await this.findOne(id, user);
-
-        // Check if employee has dependencies
-        const employeeWithDeps = await this.prisma.employee.findUnique({
-            where: { id },
-            include: {
-                computerUsers: true,
-                credentials: true,
-                actions: true,
-            },
-        });
-
-        if (
-            employeeWithDeps?.computerUsers.length ||
-            employeeWithDeps?.credentials.length ||
-            employeeWithDeps?.actions.length
-        ) {
-            // Soft delete
-            await this.prisma.employee.update({
-                where: { id },
-                data: { isActive: false },
-            });
-        } else {
-            // Hard delete
-            await this.prisma.employee.delete({
-                where: { id },
-            });
-        }
-    }
-
-    async getComputerUsers(id: number, user: any) {
-        // Check access permissions first
-        await this.findOne(id, user);
-
-        const computerUsers = await this.prisma.computerUser.findMany({
-            where: { employeeId: id },
-            select: {
-                id: true,
-                sid: true,
-                name: true,
-                domain: true,
-                username: true,
-                isAdmin: true,
-                isInDomain: true,
-                isActive: true,
-                createdAt: true,
-                updatedAt: true,
-                _count: {
-                    select: {
-                        usersOnComputers: true,
-                    },
-                },
-            },
-        });
-
-        return computerUsers;
-    }
-
-    async linkComputerUser(id: number, linkDto: LinkComputerUserDto, user: any) {
-        // Check access permissions first
-        await this.findOne(id, user);
-
-        // Check if computer user exists
-        const computerUser = await this.prisma.computerUser.findUnique({
-            where: { id: linkDto.computerUserId },
-        });
-
-        if (!computerUser) {
-            throw new NotFoundException('Computer user not found');
-        }
-
-        // Check if already linked to another employee
-        if (computerUser.employeeId && computerUser.employeeId !== id) {
-            throw new ConflictException('Computer user is already linked to another employee');
-        }
-
-        // Link computer user to employee
-        const updatedComputerUser = await this.prisma.computerUser.update({
-            where: { id: linkDto.computerUserId },
-            data: { employeeId: id },
-            select: {
-                id: true,
-                sid: true,
-                name: true,
-                domain: true,
-                username: true,
-                isAdmin: true,
-                isInDomain: true,
-                employee: {
-                    select: {
-                        id: true,
-                        name: true,
-                    },
-                },
-            },
-        });
-
-        return updatedComputerUser;
-    }
-
-    async unlinkComputerUser(id: number, computerUserId: number, user: any) {
-        // Check access permissions first
-        await this.findOne(id, user);
-
-        // Check if computer user exists and is linked to this employee
-        const computerUser = await this.prisma.computerUser.findUnique({
-            where: { id: computerUserId },
-        });
-
-        if (!computerUser) {
-            throw new NotFoundException('Computer user not found');
-        }
-
-        if (computerUser.employeeId !== id) {
-            throw new ConflictException('Computer user is not linked to this employee');
-        }
-
-        // Unlink computer user from employee
-        await this.prisma.computerUser.update({
-            where: { id: computerUserId },
-            data: { employeeId: null },
-        });
-    }
-
-    async getEntryLogs(id: number, paginationDto: PaginationDto, user: any) {
-        // Check access permissions first
-        await this.findOne(id, user);
-
-        const query = QueryBuilderUtil.buildQuery(paginationDto);
-        query.where.employeeId = id;
-
-        const [actions, totalRecords] = await Promise.all([
-            this.prisma.action.findMany({
-                where: query.where,
-                skip: query.skip,
-                take: query.take,
-                orderBy: { actionTime: 'desc' },
-                select: {
-                    id: true,
-                    actionTime: true,
-                    entryType: true,
-                    actionType: true,
-                    actionResult: true,
-                    actionMode: true,
-                    device: {
-                        select: {
-                            id: true,
-                            name: true,
-                            gate: {
-                                select: {
-                                    id: true,
-                                    name: true,
-                                },
-                            },
-                        },
-                    },
+            ...(dto.policyId && {
+                policy: {
+                    connect: { id: dto.policyId },
                 },
             }),
-            this.prisma.action.count({ where: query.where }),
-        ]);
+            organization: {
+                connect: { id: department.organizationId },
+            },
+        };
 
-        return QueryBuilderUtil.buildResponse(
-            actions,
-            totalRecords,
-            paginationDto.page || 1,
-            paginationDto.limit || 10
-        );
+        return await this.employeeRepository.createWithValidation(createData, scope, user.role);
     }
 
-    async getActivityReport(id: number, paginationDto: PaginationDto, user: any) {
-        // Check access permissions first
-        const employee = await this.findOne(id, user);
-
-        // Get computer users for this employee
-        const computerUsers = await this.prisma.computerUser.findMany({
-            where: { employeeId: id },
-            select: { id: true },
-        });
-
-        if (computerUsers.length === 0) {
-            return QueryBuilderUtil.buildResponse(
-                [],
-                0,
-                paginationDto.page || 1,
-                paginationDto.limit || 10
-            );
-        }
-
-        const computerUserIds = computerUsers.map(cu => cu.id);
-
-        // Get users on computers
-        const usersOnComputers = await this.prisma.usersOnComputers.findMany({
-            where: { computerUserId: { in: computerUserIds } },
-            select: { id: true },
-        });
-
-        if (usersOnComputers.length === 0) {
-            return QueryBuilderUtil.buildResponse(
-                [],
-                0,
-                paginationDto.page || 1,
-                paginationDto.limit || 10
-            );
-        }
-
-        const usersOnComputersIds = usersOnComputers.map(uoc => uoc.id);
-
-        const query = QueryBuilderUtil.buildQuery(paginationDto);
-        query.where.usersOnComputersId = { in: usersOnComputersIds };
-
-        // Get activity data (active windows, visited sites, etc.)
-        const [activities, totalRecords] = await Promise.all([
-            this.prisma.activeWindow.findMany({
-                where: query.where,
-                skip: query.skip,
-                take: query.take,
-                orderBy: { datetime: 'desc' },
-                select: {
-                    id: true,
-                    datetime: true,
-                    title: true,
-                    processName: true,
-                    activeTime: true,
-                    usersOnComputers: {
-                        select: {
-                            computerUser: {
-                                select: {
-                                    name: true,
-                                    username: true,
-                                },
-                            },
-                            computer: {
-                                select: {
-                                    computerUid: true,
-                                    ipAddress: true,
-                                },
-                            },
-                        },
-                    },
-                },
+    async updateEmployee(id: number, dto: UpdateEmployeeDto, scope: DataScope, user: UserContext) {
+        const updateData: any = {
+            ...(dto.name && { name: dto.name }),
+            ...(dto.address !== undefined && { address: dto.address }),
+            ...(dto.phone !== undefined && { phone: dto.phone }),
+            ...(dto.email !== undefined && { email: dto.email }),
+            ...(dto.photo !== undefined && { photo: dto.photo }),
+            ...(dto.additionalDetails !== undefined && {
+                additionalDetails: dto.additionalDetails,
             }),
-            this.prisma.activeWindow.count({ where: query.where }),
-        ]);
+            ...(dto.isActive !== undefined && { isActive: dto.isActive }),
+        };
 
-        return QueryBuilderUtil.buildResponse(
-            activities,
-            totalRecords,
-            paginationDto.page || 1,
-            paginationDto.limit || 10
+        if (dto.departmentId) {
+            updateData.department = {
+                connect: { id: dto.departmentId },
+            };
+        }
+
+        if (dto.policyId) {
+            updateData.policy = {
+                connect: { id: dto.policyId },
+            };
+        }
+
+        return await this.employeeRepository.updateWithValidation(id, updateData, scope, user.role);
+    }
+
+    async deleteEmployee(id: number, scope: DataScope, user: UserContext) {
+        // Verify access through repository
+        const employee = await this.employeeRepository.findByIdWithRoleScope(
+            id,
+            undefined,
+            scope,
+            user.role
         );
+        if (!employee) {
+            throw new NotFoundException('Employee not found or access denied');
+        }
+
+        return await this.employeeRepository.delete(id);
+    }
+
+    async getEmployeeEntryLogs(id: number, query: QueryDto, scope: DataScope, user: UserContext) {
+        // Verify access to employee
+        const employee = await this.employeeRepository.findByIdWithRoleScope(
+            id,
+            undefined,
+            scope,
+            user.role
+        );
+        if (!employee) {
+            throw new NotFoundException('Employee not found or access denied');
+        }
+
+        const { page = 1, limit = 10 } = query;
+        const pagination = { page, limit };
+
+        const { logs, total } = await this.employeeRepository.getEmployeeEntryLogs(id, pagination);
+
+        return {
+            data: logs,
+            meta: {
+                total,
+                page,
+                limit,
+                totalPages: Math.ceil(total / limit),
+            },
+        };
+    }
+
+    async getEmployeeActivityReport(
+        id: number,
+        query: QueryDto,
+        scope: DataScope,
+        user: UserContext
+    ) {
+        // Verify access to employee
+        const employee = await this.employeeRepository.findByIdWithRoleScope(
+            id,
+            undefined,
+            scope,
+            user.role
+        );
+        if (!employee) {
+            throw new NotFoundException('Employee not found or access denied');
+        }
+
+        // Parse date range from query if provided
+        const dateRange =
+            query.startDate && query.endDate
+                ? {
+                      startDate: new Date(query.startDate),
+                      endDate: new Date(query.endDate),
+                  }
+                : undefined;
+
+        return await this.employeeRepository.getEmployeeActivityStats(id, dateRange);
+    }
+
+    async getEmployeeComputerUsers(id: number, scope: DataScope, user: UserContext) {
+        // Verify access to employee
+        const employee = await this.employeeRepository.findByIdWithRoleScope(
+            id,
+            undefined,
+            scope,
+            user.role
+        );
+        if (!employee) {
+            throw new NotFoundException('Employee not found or access denied');
+        }
+
+        const computerUsers = await this.employeeRepository.getEmployeeComputerUsers(id);
+
+        return {
+            employeeId: id,
+            data: computerUsers,
+        };
+    }
+
+    async assignCardToEmployee(id: number, dto: any, scope: DataScope, user: UserContext) {
+        // Verify access to employee
+        const employee = await this.employeeRepository.findByIdWithRoleScope(
+            id,
+            undefined,
+            scope,
+            user.role
+        );
+        if (!employee) {
+            throw new NotFoundException('Employee not found or access denied');
+        }
+
+        const credential = await this.employeeRepository.assignCredential(id, {
+            code: dto.cardId,
+            type: 'CARD',
+            additionalDetails: dto.additionalDetails,
+        });
+
+        return {
+            employeeId: id,
+            credential,
+            message: 'Card assigned successfully',
+        };
+    }
+
+    async assignCarToEmployee(id: number, dto: any, scope: DataScope, user: UserContext) {
+        // Verify access to employee
+        const employee = await this.employeeRepository.findByIdWithRoleScope(
+            id,
+            undefined,
+            scope,
+            user.role
+        );
+        if (!employee) {
+            throw new NotFoundException('Employee not found or access denied');
+        }
+
+        const credential = await this.employeeRepository.assignCredential(id, {
+            code: dto.carId,
+            type: 'CAR',
+            additionalDetails: dto.additionalDetails,
+        });
+
+        return {
+            employeeId: id,
+            credential,
+            message: 'Car assigned successfully',
+        };
+    }
+
+    async linkComputerUserToEmployee(id: number, dto: any, scope: DataScope, user: UserContext) {
+        // Verify access to employee
+        const employee = await this.employeeRepository.findByIdWithRoleScope(
+            id,
+            undefined,
+            scope,
+            user.role
+        );
+        if (!employee) {
+            throw new NotFoundException('Employee not found or access denied');
+        }
+
+        const computerUser = await this.employeeRepository.linkComputerUser(id, dto.computerUserId);
+
+        return {
+            employeeId: id,
+            computerUser,
+            message: 'Computer user linked successfully',
+        };
+    }
+
+    async unlinkComputerUserFromEmployee(
+        id: number,
+        computerUserId: number,
+        scope: DataScope,
+        user: UserContext
+    ) {
+        // Verify access to employee
+        const employee = await this.employeeRepository.findByIdWithRoleScope(
+            id,
+            undefined,
+            scope,
+            user.role
+        );
+        if (!employee) {
+            throw new NotFoundException('Employee not found or access denied');
+        }
+
+        await this.employeeRepository.unlinkComputerUser(id, computerUserId);
+
+        return {
+            employeeId: id,
+            computerUserId,
+            message: 'Computer user unlinked successfully',
+        };
     }
 }

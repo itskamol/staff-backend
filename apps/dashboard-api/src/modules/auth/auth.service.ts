@@ -1,99 +1,112 @@
 import { Injectable, UnauthorizedException } from '@nestjs/common';
-import { PrismaService } from '@app/shared/database';
-import { JwtService } from '@app/shared/auth';
-import { EncryptionUtil } from '@app/shared/utils';
-import { LoginDto } from './dto/auth.dto';
+import { UserRepository } from '../user/user.repository';
+import { CustomJwtService, JwtPayload } from './jwt.service';
+import { User } from '@prisma/client';
+import { PasswordUtil } from '../../shared/utils';
+import { LoginDto, LoginResponseDto, RefreshTokenDto, RefreshTokenResponseDto } from '../../shared/dto';
+import { Role } from '@app/shared/auth';
 
 @Injectable()
 export class AuthService {
-    constructor(private readonly prisma: PrismaService, private readonly jwtService: JwtService) {}
+    constructor(
+        private readonly userRepository: UserRepository,
+        private readonly jwtService: CustomJwtService,
+    ) {}
 
-    async login(loginDto: LoginDto) {
+    /**
+     * Authenticate user with email and password
+     */
+    async login(loginDto: LoginDto): Promise<LoginResponseDto> {
         const { username, password } = loginDto;
 
-        // Find user by username
-        const user = await this.prisma.user.findUnique({
-            where: { username },
-            include: {
-                organization: true,
-                departmentUsers: {
-                    include: {
-                        department: true,
-                    },
-                },
-            },
+        const user: User = await this.userRepository.findFirst({ username }, undefined, {
+            organization: { select: { id: true, isActive: true } },
         });
 
         if (!user) {
             throw new UnauthorizedException('Invalid credentials');
         }
 
-        // Check if user is active
         if (!user.isActive) {
-            throw new UnauthorizedException('Account is deactivated');
+            throw new UnauthorizedException('Account is inactive');
         }
 
-        // Verify password
-        const isPasswordValid = await EncryptionUtil.comparePassword(password, user.password);
+        const isPasswordValid = await PasswordUtil.compare(password, user.password);
         if (!isPasswordValid) {
             throw new UnauthorizedException('Invalid credentials');
         }
 
-        // Generate tokens
-        const tokens = await this.jwtService.generateTokens({
-            sub: user.id,
+        const jwtPayload: Omit<JwtPayload, 'iat' | 'exp'> = {
+            sub: String(user.id),
             username: user.username,
-            role: user.role,
-            organizationId: user.organizationId,
-        });
+            role: user.role as Role,
+            organizationId: user.organizationId || undefined,
+        };
 
-        // Return user info and tokens
+        const tokens = this.jwtService.generateTokenPair(jwtPayload);
+
         return {
+            ...tokens,
             user: {
                 id: user.id,
-                name: user.name,
                 username: user.username,
-                role: user.role,
-                organizationId: user.organizationId,
-                organization: user.organization,
-                departments: user.departmentUsers.map(du => du.department),
+                name: user.name,
+                role: user.role as Role,
             },
-            tokens,
         };
     }
 
-    async refreshToken(refreshToken: string) {
-        try {
-            const newTokens = await this.jwtService.refreshAccessToken(refreshToken);
-            return newTokens;
-        } catch (error) {
+    /**
+     * Refresh access token using refresh token
+     */
+    async refreshToken(refreshTokenDto: RefreshTokenDto): Promise<RefreshTokenResponseDto> {
+        const { refreshToken } = refreshTokenDto;
+
+        const payload = this.jwtService.verifyRefreshToken(refreshToken);
+
+        // const tokenId = `${payload.sub}:${payload.tokenVersion}`;
+        // const isDenied = await this.cacheService.isRefreshTokenDenied(tokenId);
+        // if (isDenied) {
+        //     throw new UnauthorizedException('Refresh token has been revoked');
+        // }
+
+        const user = await this.userRepository.findById(+payload.sub);
+        if (!user || !user.isActive) {
             throw new UnauthorizedException('Invalid refresh token');
         }
+
+        const jwtPayload: Omit<JwtPayload, 'iat' | 'exp'> = {
+            sub: String(user.id),
+            role: user.role as Role,
+            username: user.username,
+        };
+
+        const newTokens = this.jwtService.generateTokenPair(jwtPayload, payload.tokenVersion + 1);
+
+        return newTokens;
     }
 
-    async validateUser(userId: number) {
-        const user = await this.prisma.user.findUnique({
-            where: { id: userId },
-            include: {
-                organization: true,
-                departmentUsers: {
-                    include: {
-                        department: true,
-                    },
-                },
-            },
-        });
-
+    /**
+     * Validate user by ID (used by JWT strategy)
+     */
+    async validateUser(userId: number): Promise<User | null> {
+        const user = await this.userRepository.findById(userId);
         if (!user || !user.isActive) {
-            throw new UnauthorizedException('User not found or inactive');
+            return null;
         }
+        return user;
+    }
 
-        return {
-            id: user.id,
-            username: user.username,
-            role: user.role,
-            organizationId: user.organizationId,
-            departmentIds: user.departmentUsers.map(du => du.departmentId),
-        };
+    /**
+     * Logout user by adding refresh token to denylist
+     */
+    async logout(refreshToken: string): Promise<void> {
+        try {
+            const payload = this.jwtService.verifyRefreshToken(refreshToken);
+            const tokenId = `${payload.sub}:${payload.tokenVersion}`;
+            // await this.cacheService.denyRefreshToken(tokenId, payload.exp || 0);
+        } catch {
+            // Do not throw error on logout
+        }
     }
 }

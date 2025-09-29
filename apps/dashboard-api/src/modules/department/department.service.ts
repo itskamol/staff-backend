@@ -1,346 +1,83 @@
-import { Injectable, NotFoundException, ForbiddenException } from '@nestjs/common';
-import { PrismaService } from '@app/shared/database';
-import { Role } from '@app/shared/auth';
-import { QueryBuilderUtil, PaginationDto } from '@app/shared/utils';
-import { CreateDepartmentDto, UpdateDepartmentDto } from './dto/department.dto';
+import { Injectable } from '@nestjs/common';
+import { DepartmentRepository } from './department.repository';
+import { Department, Prisma } from '@prisma/client';
+import { QueryDto } from '../../shared/dto/query.dto';
+import { DataScope } from '@app/shared/auth';
+import { CreateDepartmentDto, UpdateDepartmentDto } from '../../shared/dto';
 
 @Injectable()
 export class DepartmentService {
-    constructor(private readonly prisma: PrismaService) {}
+    constructor(private readonly departmentRepository: DepartmentRepository) {}
 
-    async findAll(paginationDto: PaginationDto, user: any) {
-        const query = QueryBuilderUtil.buildQuery(paginationDto);
-
-        // Apply role-based filtering
-        if (user.role === Role.HR) {
-            query.where.organizationId = user.organizationId;
-        } else if (user.role === Role.DEPARTMENT_LEAD) {
-            query.where.id = { in: user.departmentIds || [] };
+    async getDepartments(
+        { search, isActive, sort, order, page, limit }: QueryDto,
+        scope?: DataScope
+    ) {
+        const filters: Prisma.DepartmentWhereInput = {};
+        if (search) {
+            filters.OR = [
+                { fullName: { contains: search, mode: 'insensitive' } },
+                { shortName: { contains: search, mode: 'insensitive' } },
+            ];
         }
 
-        const [departments, totalRecords] = await Promise.all([
-            this.prisma.department.findMany({
-                ...query,
-                select: {
-                    id: true,
-                    organizationId: true,
-                    parentId: true,
-                    fullName: true,
-                    shortName: true,
-                    address: true,
-                    phone: true,
-                    email: true,
-                    additionalDetails: true,
-                    isActive: true,
-                    createdAt: true,
-                    updatedAt: true,
-                    organization: {
-                        select: {
-                            id: true,
-                            fullName: true,
-                            shortName: true,
-                        },
-                    },
-                    parent: {
-                        select: {
-                            id: true,
-                            fullName: true,
-                            shortName: true,
-                        },
-                    },
-                    _count: {
-                        select: {
-                            children: true,
-                            employees: true,
-                        },
-                    },
-                },
-            }),
-            this.prisma.department.count({ where: query.where }),
+        if (typeof isActive === 'boolean') {
+            filters.isActive = isActive;
+        }
+
+        const [data, total] = await Promise.all([
+            this.departmentRepository.findMany(
+                filters,
+                { [sort]: order },
+                { _count: { select: { employees: true, children: true } } },
+                { page, limit },
+                undefined,
+                scope
+            ),
+            this.departmentRepository.count(filters, scope),
         ]);
 
-        return QueryBuilderUtil.buildResponse(
-            departments,
-            totalRecords,
-            paginationDto.page || 1,
-            paginationDto.limit || 10
-        );
+        return {
+            data,
+            total,
+            page,
+            limit,
+        };
     }
 
-    async findOne(id: number, user: any) {
-        // Check access permissions
-        if (user.role === Role.DEPARTMENT_LEAD && !user.departmentIds?.includes(id)) {
-            throw new ForbiddenException('Access denied to this department');
-        }
-
-        const department = await this.prisma.department.findUnique({
-            where: { id },
-            select: {
-                id: true,
-                organizationId: true,
-                parentId: true,
-                fullName: true,
-                shortName: true,
-                address: true,
-                phone: true,
-                email: true,
-                additionalDetails: true,
-                isActive: true,
-                createdAt: true,
-                updatedAt: true,
-                organization: {
-                    select: {
-                        id: true,
-                        fullName: true,
-                        shortName: true,
-                    },
-                },
-                parent: {
-                    select: {
-                        id: true,
-                        fullName: true,
-                        shortName: true,
-                    },
-                },
-                _count: {
-                    select: {
-                        children: true,
-                        employees: true,
-                    },
-                },
-            },
-        });
-
-        if (!department) {
-            throw new NotFoundException('Department not found');
-        }
-
-        // Additional access check for HR
-        if (user.role === Role.HR && department.organizationId !== user.organizationId) {
-            throw new ForbiddenException('Access denied to this department');
-        }
-
-        return department;
-    }
-
-    async create(createDepartmentDto: CreateDepartmentDto, user: any) {
-        // For HR users, auto-assign their organization
-        if (user.role === Role.HR) {
-            createDepartmentDto.organizationId = user.organizationId;
-        }
-
-        // Verify organization access
-        if (user.role === Role.HR && createDepartmentDto.organizationId !== user.organizationId) {
-            throw new ForbiddenException('Cannot create department in different organization');
-        }
-
-        // Check if organization exists
-        const organization = await this.prisma.organization.findUnique({
-            where: { id: createDepartmentDto.organizationId },
-        });
-
-        if (!organization) {
-            throw new NotFoundException('Organization not found');
-        }
-
-        // Check parent department if provided
-        if (createDepartmentDto.parentId) {
-            const parentDepartment = await this.prisma.department.findUnique({
-                where: { id: createDepartmentDto.parentId },
-            });
-
-            if (!parentDepartment) {
-                throw new NotFoundException('Parent department not found');
-            }
-
-            if (parentDepartment.organizationId !== createDepartmentDto.organizationId) {
-                throw new ForbiddenException('Parent department must be in the same organization');
-            }
-        }
-
-        const department = await this.prisma.department.create({
-            data: createDepartmentDto,
-            select: {
-                id: true,
-                organizationId: true,
-                parentId: true,
-                fullName: true,
-                shortName: true,
-                address: true,
-                phone: true,
-                email: true,
-                additionalDetails: true,
-                isActive: true,
-                createdAt: true,
-                updatedAt: true,
-                organization: {
-                    select: {
-                        id: true,
-                        fullName: true,
-                        shortName: true,
-                    },
-                },
-            },
-        });
-
-        return department;
-    }
-
-    async update(id: number, updateDepartmentDto: UpdateDepartmentDto, user: any) {
-        // Check if department exists and access permissions
-        const existingDepartment = await this.prisma.department.findUnique({
-            where: { id },
-        });
-
-        if (!existingDepartment) {
-            throw new NotFoundException('Department not found');
-        }
-
-        // Check access permissions
-        if (user.role === Role.HR && existingDepartment.organizationId !== user.organizationId) {
-            throw new ForbiddenException('Access denied to this department');
-        }
-
-        const department = await this.prisma.department.update({
-            where: { id },
-            data: updateDepartmentDto,
-            select: {
-                id: true,
-                organizationId: true,
-                parentId: true,
-                fullName: true,
-                shortName: true,
-                address: true,
-                phone: true,
-                email: true,
-                additionalDetails: true,
-                isActive: true,
-                createdAt: true,
-                updatedAt: true,
-                organization: {
-                    select: {
-                        id: true,
-                        fullName: true,
-                        shortName: true,
-                    },
-                },
-            },
-        });
-
-        return department;
-    }
-
-    async remove(id: number, user: any) {
-        // Check if department exists and access permissions
-        const existingDepartment = await this.prisma.department.findUnique({
-            where: { id },
-            include: {
+    async getDepartmentById(id: number, scope?: DataScope) {
+        return this.departmentRepository.findById(
+            id,
+            {
+                organization: true,
+                parent: true,
                 children: true,
                 employees: true,
             },
-        });
-
-        if (!existingDepartment) {
-            throw new NotFoundException('Department not found');
-        }
-
-        // Check access permissions
-        if (user.role === Role.HR && existingDepartment.organizationId !== user.organizationId) {
-            throw new ForbiddenException('Access denied to this department');
-        }
-
-        // Check if department has dependencies
-        if (existingDepartment.children.length > 0 || existingDepartment.employees.length > 0) {
-            // Soft delete
-            await this.prisma.department.update({
-                where: { id },
-                data: { isActive: false },
-            });
-        } else {
-            // Hard delete
-            await this.prisma.department.delete({
-                where: { id },
-            });
-        }
-    }
-
-    async getSubDepartments(id: number, paginationDto: PaginationDto, user: any) {
-        // Check access permissions first
-        await this.findOne(id, user);
-
-        const query = QueryBuilderUtil.buildQuery(paginationDto);
-        query.where.parentId = id;
-
-        const [subDepartments, totalRecords] = await Promise.all([
-            this.prisma.department.findMany({
-                ...query,
-                select: {
-                    id: true,
-                    fullName: true,
-                    shortName: true,
-                    address: true,
-                    phone: true,
-                    email: true,
-                    additionalDetails: true,
-                    isActive: true,
-                    createdAt: true,
-                    updatedAt: true,
-                    _count: {
-                        select: {
-                            children: true,
-                            employees: true,
-                        },
-                    },
-                },
-            }),
-            this.prisma.department.count({ where: query.where }),
-        ]);
-
-        return QueryBuilderUtil.buildResponse(
-            subDepartments,
-            totalRecords,
-            paginationDto.page || 1,
-            paginationDto.limit || 10
+            scope
         );
     }
 
-    async getEmployees(id: number, paginationDto: PaginationDto, user: any) {
-        // Check access permissions first
-        await this.findOne(id, user);
-
-        const query = QueryBuilderUtil.buildQuery(paginationDto);
-        query.where.departmentId = id;
-
-        const [employees, totalRecords] = await Promise.all([
-            this.prisma.employee.findMany({
-                ...query,
-                select: {
-                    id: true,
-                    name: true,
-                    address: true,
-                    phone: true,
-                    email: true,
-                    photo: true,
-                    additionalDetails: true,
-                    isActive: true,
-                    createdAt: true,
-                    updatedAt: true,
-                    policy: {
-                        select: {
-                            id: true,
-                            title: true,
-                        },
-                    },
-                },
-            }),
-            this.prisma.employee.count({ where: query.where }),
-        ]);
-
-        return QueryBuilderUtil.buildResponse(
-            employees,
-            totalRecords,
-            paginationDto.page || 1,
-            paginationDto.limit || 10
+    async createDepartment(
+        { organizationId, parentId,...data }: CreateDepartmentDto,
+        scope: DataScope
+    ): Promise<Department> {
+        return this.departmentRepository.create(
+            {
+                ...data,
+                organization: { connect: { id: organizationId } },
+                ...(parentId && { parent: { connect: { id: parentId } } }),
+            },
+            undefined,
+            scope
         );
+    }
+
+    async updateDepartment(id: number, data: UpdateDepartmentDto, scope?: DataScope) {
+        return this.departmentRepository.update(id, data, undefined, scope);
+    }
+
+    async deleteDepartment(id: number, scope?: DataScope) {
+        return this.departmentRepository.delete(id, scope);
     }
 }

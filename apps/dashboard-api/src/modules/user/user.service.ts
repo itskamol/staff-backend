@@ -1,261 +1,164 @@
-import { Injectable, NotFoundException, ConflictException } from '@nestjs/common';
-import { PrismaService } from '@app/shared/database';
-import { Role } from '@app/shared/auth';
-import { EncryptionUtil, QueryBuilderUtil, PaginationDto } from '@app/shared/utils';
-import { CreateUserDto, UpdateUserDto } from './dto/user.dto';
+import { ConflictException, Injectable, NotFoundException } from '@nestjs/common';
+import { Prisma, User } from '@prisma/client';
+import { UserRepository } from './user.repository';
+import { LoggerService } from '../../core/logger';
+import { CreateUserDto, UpdateCurrentUserDto, UpdateUserDto } from '../../shared/dto';
+import { PasswordUtil } from '../../shared/utils';
+import { QueryDto } from '../../shared/dto/query.dto';
 
 @Injectable()
 export class UserService {
-    constructor(private readonly prisma: PrismaService) {}
+    constructor(
+        private readonly userRepository: UserRepository,
+        private readonly logger: LoggerService
+    ) {}
 
-    async findAll(paginationDto: PaginationDto) {
-        const query = QueryBuilderUtil.buildQuery(paginationDto);
-
-        const [users, total] = await Promise.all([
-            this.prisma.user.findMany({
-                ...query,
-                select: {
-                    id: true,
-                    name: true,
-                    username: true,
-                    role: true,
-                    organizationId: true,
-                    isActive: true,
-                    createdAt: true,
-                    updatedAt: true,
-                    organization: {
-                        select: {
-                            id: true,
-                            fullName: true,
-                            shortName: true,
-                        },
-                    },
-                    departmentUsers: {
-                        select: {
-                            department: {
-                                select: {
-                                    id: true,
-                                    fullName: true,
-                                    shortName: true,
-                                },
-                            },
-                        },
-                    },
-                },
-            }),
-            this.prisma.user.count({ where: query.where }),
-        ]);
-
-        return QueryBuilderUtil.buildResponse(
-            users,
-            total,
-            paginationDto.page || 1,
-            paginationDto.limit || 10
-        );
-    }
-
-    async findOne(id: number) {
-        const user = await this.prisma.user.findUnique({
-            where: { id },
-            select: {
-                id: true,
-                name: true,
-                username: true,
-                role: true,
-                organizationId: true,
-                isActive: true,
-                createdAt: true,
-                updatedAt: true,
-                organization: {
-                    select: {
-                        id: true,
-                        fullName: true,
-                        shortName: true,
-                    },
-                },
-                departmentUsers: {
-                    select: {
-                        department: {
-                            select: {
-                                id: true,
-                                fullName: true,
-                                shortName: true,
-                            },
-                        },
-                    },
-                },
-            },
-        });
-
-        if (!user) {
-            throw new NotFoundException('User not found');
-        }
-
-        return user;
-    }
-
-    async create(createUserDto: CreateUserDto) {
-        const { username, password, ...userData } = createUserDto;
-
+    /**
+     * Create a new user
+     */
+    async createUser(createUserDto: CreateUserDto): Promise<Omit<User, 'password'>> {
         // Check if username already exists
-        const existingUser = await this.prisma.user.findUnique({
-            where: { username },
+        const existingUser = await this.userRepository.findFirst({
+            username: createUserDto.username,
         });
 
         if (existingUser) {
             throw new ConflictException('Username already exists');
         }
+        // Hash password
+        const passwordHash = await this.validateAndHashPassword(createUserDto.password);
 
-        if (!createUserDto.organizationId) {
-            await this.prisma.organization.findFirst({
-                where: { id: createUserDto.organizationId },
-            });
+        // Create user
+        const { password, ...user } = await this.userRepository.create({
+            ...createUserDto,
+            password: passwordHash,
+        });
+
+        this.logger.logUserAction(user.id, 'USER_CREATED', {
+            username: user.username,
+        });
+
+        return user;
+    }
+
+    /**
+     * Find user by ID
+     */
+    async findById(id: number): Promise<Omit<User, 'password'>> {
+        const { password, ...user } = await this.userRepository.findById(id);
+        return user;
+    }
+
+    /**
+     * Find user by email
+     */
+    async findByUsername(username: string): Promise<User | null> {
+        return this.userRepository.findFirst({ username });
+    }
+
+    /**
+     * Update user
+     */
+    async updateUser(id: number, updateUserDto: UpdateUserDto): Promise<Omit<User, 'password'>> {
+        const existingUser = await this.userRepository.findById(id);
+        if (!existingUser) {
+            throw new NotFoundException('User not found');
+        }
+
+        if (updateUserDto.password) {
+            updateUserDto.password = await this.validateAndHashPassword(updateUserDto.password);
+        }
+
+        const { password, ...updatedUser } = await this.userRepository.update(id, updateUserDto);
+
+        this.logger.logUserAction(id, 'USER_UPDATED', {
+            changes: updateUserDto,
+        });
+
+        return updatedUser;
+    }
+
+    async updateCurrentUser(
+        id: number,
+        { currentPassword, newPassword, ...updateUserData }: UpdateCurrentUserDto
+    ): Promise<Omit<User, 'password'>> {
+        const updateUserDto: Prisma.UserUpdateInput = updateUserData;
+
+        const user = await this.userRepository.findById(id);
+        if (!user) {
+            throw new NotFoundException('User not found');
+        }
+
+        if (currentPassword && newPassword) {
+            const isPasswordValid = await PasswordUtil.compare(currentPassword, user.password);
+
+            if (!isPasswordValid) {
+                throw new ConflictException('Current password is incorrect');
+            }
+
+            updateUserDto.password = await this.validateAndHashPassword(newPassword);
+        }
+
+        return this.userRepository.update(id, updateUserDto);
+    }
+
+    async getAllUsers({ search, isActive, sort, order, page, limit }: QueryDto) {
+        const filters: Prisma.UserWhereInput = {};
+        if (search) {
+            filters.OR = [
+                { name: { contains: search, mode: 'insensitive' } },
+                { username: { contains: search, mode: 'insensitive' } },
+            ];
+        }
+
+        if (typeof isActive === 'boolean') {
+            filters.isActive = isActive;
+        }
+
+        const [data, total] = await Promise.all([
+            this.userRepository.findMany(
+                filters,
+                { [sort]: order },
+                undefined,
+                { page, limit },
+                { password: false }
+            ),
+            this.userRepository.count(filters),
+        ]);
+
+        return {
+            data,
+            total,
+            page,
+            limit,
+        };
+    }
+
+    async deleteUser(id: number): Promise<Omit<User, 'password'>> {
+        const existingUser = await this.userRepository.findById(id);
+        if (!existingUser) {
+            throw new NotFoundException('User not found');
+        }
+
+        const { password, ...deletedUser } = await this.userRepository.delete(id);
+
+        this.logger.logUserAction(id, 'USER_DELETED', {
+            username: deletedUser.username,
+        });
+
+        return deletedUser;
+    }
+
+    private validateAndHashPassword(password: string): Promise<string> {
+        // Validate password strength
+        const passwordValidation = PasswordUtil.validatePassword(password);
+        if (!passwordValidation.isValid) {
+            throw new ConflictException(
+                `Password validation failed: ${passwordValidation.errors.join(', ')}`
+            );
         }
 
         // Hash password
-        const hashedPassword = await EncryptionUtil.hashPassword(password);
-
-        const user = await this.prisma.user.create({
-            data: {
-                ...userData,
-                username,
-                password: hashedPassword,
-            },
-            select: {
-                id: true,
-                name: true,
-                username: true,
-                role: true,
-                organizationId: true,
-                isActive: true,
-                createdAt: true,
-                updatedAt: true,
-            },
-        });
-
-        return user;
-    }
-
-    async update(id: number, updateUserDto: UpdateUserDto) {
-        const { password, ...userData } = updateUserDto;
-
-        // Check if user exists
-        const existingUser = await this.prisma.user.findUnique({
-            where: { id },
-        });
-
-        if (!existingUser) {
-            throw new NotFoundException('User not found');
-        }
-
-        // Prepare update data
-        const updateData: any = { ...userData };
-
-        // Hash password if provided
-        if (password) {
-            updateData.password = await EncryptionUtil.hashPassword(password);
-        }
-
-        const user = await this.prisma.user.update({
-            where: { id },
-            data: updateData,
-            select: {
-                id: true,
-                name: true,
-                username: true,
-                role: true,
-                organizationId: true,
-                isActive: true,
-                createdAt: true,
-                updatedAt: true,
-            },
-        });
-
-        return user;
-    }
-
-    async remove(id: number) {
-        // Check if user exists
-        const existingUser = await this.prisma.user.findUnique({
-            where: { id },
-        });
-
-        if (!existingUser) {
-            throw new NotFoundException('User not found');
-        }
-
-        // Soft delete by setting isActive to false
-        await this.prisma.user.update({
-            where: { id },
-            data: { isActive: false },
-        });
-    }
-
-    async assignOrganization(id: number, organizationId: number) {
-        // Check if user exists
-        const existingUser = await this.prisma.user.findUnique({
-            where: { id },
-        });
-
-        if (!existingUser) {
-            throw new NotFoundException('User not found');
-        }
-
-        // Check if organization exists
-        const organization = await this.prisma.organization.findUnique({
-            where: { id: organizationId },
-        });
-
-        if (!organization) {
-            throw new NotFoundException('Organization not found');
-        }
-
-        const user = await this.prisma.user.update({
-            where: { id },
-            data: { organizationId },
-            select: {
-                id: true,
-                name: true,
-                username: true,
-                role: true,
-                organizationId: true,
-                isActive: true,
-                organization: {
-                    select: {
-                        id: true,
-                        fullName: true,
-                        shortName: true,
-                    },
-                },
-            },
-        });
-
-        return user;
-    }
-
-    async changeRole(id: number, role: Role) {
-        // Check if user exists
-        const existingUser = await this.prisma.user.findUnique({
-            where: { id },
-        });
-
-        if (!existingUser) {
-            throw new NotFoundException('User not found');
-        }
-
-        const user = await this.prisma.user.update({
-            where: { id },
-            data: { role },
-            select: {
-                id: true,
-                name: true,
-                username: true,
-                role: true,
-                organizationId: true,
-                isActive: true,
-            },
-        });
-
-        return user;
+        return PasswordUtil.hash(password);
     }
 }

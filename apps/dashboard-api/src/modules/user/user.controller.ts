@@ -1,93 +1,126 @@
 import {
+    Body,
     Controller,
     Get,
-    Post,
-    Put,
-    Delete,
-    Body,
+    NotFoundException,
     Param,
+    Put,
+    Post,
     Query,
-    ParseIntPipe,
+    Delete,
 } from '@nestjs/common';
-import { ApiTags, ApiOperation, ApiResponse, ApiBearerAuth } from '@nestjs/swagger';
-import { Roles, Role, User as CurrentUser } from '@app/shared/auth';
-import { ApiResponseDto, PaginationDto } from '@app/shared/utils';
+import { ApiBearerAuth, ApiExtraModels, ApiParam, ApiTags } from '@nestjs/swagger';
 import { UserService } from './user.service';
-import { CreateUserDto, UpdateUserDto } from './dto/user.dto';
+import { User as UserModel } from '@prisma/client';
+import { NoScoping, Role, Roles, User } from '@app/shared/auth';
+import { ApiSuccessResponse, CreateUserDto, UpdateUserDto, UserResponseDto } from '../../shared/dto';
+import { ApiCrudOperation } from '../../shared/utils';
+import { UserContext } from '../../shared/interfaces';
+import { QueryDto } from '../../shared/dto/query.dto';
 
 @ApiTags('Users')
 @ApiBearerAuth()
-@Controller('users')
 @Roles(Role.ADMIN)
+@Controller('users')
+@ApiExtraModels(ApiSuccessResponse, UserResponseDto)
 export class UserController {
     constructor(private readonly userService: UserService) {}
 
+    @Post()
+    @NoScoping()
+    @ApiCrudOperation(UserResponseDto, 'create', {
+        body: CreateUserDto,
+        summary: 'Create a new user',
+        errorResponses: { badRequest: true, conflict: true },
+    })
+    async createUser(
+        @Body() createUserDto: CreateUserDto,
+        @User() user: UserContext
+    ): Promise<Omit<UserModel, 'password'>> {
+        return this.userService.createUser(createUserDto);
+    }
+
+    @Get('roles')
+    @ApiCrudOperation(String, 'list', {
+        summary: 'Get all user roles',
+        includeQueries: { pagination: false },
+    })
+    async getUserRoles() {
+        return Object.values(Role);
+    }
+
     @Get()
-    @ApiOperation({ summary: 'Get all users' })
-    @ApiResponse({ status: 200, description: 'Users retrieved successfully' })
-    async findAll(@Query() paginationDto: PaginationDto): Promise<ApiResponseDto> {
-        const result = await this.userService.findAll(paginationDto);
-        return ApiResponseDto.success(result, 'Users retrieved successfully');
+    @ApiCrudOperation(UserResponseDto, 'list', {
+        summary: 'Get all users',
+        includeQueries: {
+            pagination: true,
+            search: true,
+            sort: true,
+            filters: ['isActive'],
+        },
+    })
+    async getAllUsers(@Query() query: QueryDto) {
+        return this.userService.getAllUsers(query);
+    }
+
+    @Get('me')
+    @ApiCrudOperation(UserResponseDto, 'get', {
+        summary: 'Get current user',
+    })
+    async getCurrentUser(@User() user: UserContext): Promise<Omit<UserModel, 'password'>> {
+        const currentUser = await this.userService.findById(+user.sub);
+        if (!currentUser) {
+            throw new NotFoundException('User not found');
+        }
+        return currentUser;
     }
 
     @Get(':id')
-    @ApiOperation({ summary: 'Get user by ID' })
-    @ApiResponse({ status: 200, description: 'User retrieved successfully' })
-    @ApiResponse({ status: 404, description: 'User not found' })
-    async findOne(@Param('id', ParseIntPipe) id: number): Promise<ApiResponseDto> {
-        const user = await this.userService.findOne(id);
-        return ApiResponseDto.success(user, 'User retrieved successfully');
+    @ApiParam({ name: 'id', description: 'ID of the user' })
+    @ApiCrudOperation(UserResponseDto, 'get', {
+        summary: 'Get a specific user by ID',
+    })
+    async getUserById(@Param('id') id: number): Promise<Omit<UserModel, 'password'>> {
+        const user = await this.userService.findById(id);
+        if (!user) {
+            throw new NotFoundException('User not found');
+        }
+        return user;
     }
 
-    @Post()
-    @ApiOperation({ summary: 'Create new user' })
-    @ApiResponse({ status: 201, description: 'User created successfully' })
-    @ApiResponse({ status: 400, description: 'Invalid input data' })
-    async create(@Body() createUserDto: CreateUserDto): Promise<ApiResponseDto> {
-        const user = await this.userService.create(createUserDto);
-        return ApiResponseDto.success(user, 'User created successfully');
+    @Put('me')
+    @ApiCrudOperation(UserResponseDto, 'update', {
+        body: UpdateUserDto,
+        summary: 'Update current user',
+    })
+    async updateCurrentUser(
+        @Body() updateUserDto: UpdateUserDto,
+        @User() user: UserContext
+    ): Promise<UserResponseDto> {
+        return this.userService.updateUser(+user.sub, updateUserDto);
     }
 
     @Put(':id')
-    @ApiOperation({ summary: 'Update user' })
-    @ApiResponse({ status: 200, description: 'User updated successfully' })
-    @ApiResponse({ status: 404, description: 'User not found' })
-    async update(
-        @Param('id', ParseIntPipe) id: number,
-        @Body() updateUserDto: UpdateUserDto
-    ): Promise<ApiResponseDto> {
-        const user = await this.userService.update(id, updateUserDto);
-        return ApiResponseDto.success(user, 'User updated successfully');
+    @ApiParam({ name: 'id', description: 'ID of the user to update' })
+    @ApiCrudOperation(UserResponseDto, 'update', {
+        body: UpdateUserDto,
+        summary: 'Update a user',
+    })
+    async updateUser(
+        @Param('id') id: number,
+        @Body() updateUserDto: UpdateUserDto,
+        @User() user: UserContext
+    ): Promise<UserResponseDto> {
+        return this.userService.updateUser(id, updateUserDto);
     }
 
     @Delete(':id')
-    @ApiOperation({ summary: 'Delete user' })
-    @ApiResponse({ status: 200, description: 'User deleted successfully' })
-    @ApiResponse({ status: 404, description: 'User not found' })
-    async remove(@Param('id', ParseIntPipe) id: number): Promise<ApiResponseDto> {
-        await this.userService.remove(id);
-        return ApiResponseDto.success(null, 'User deleted successfully');
-    }
-
-    @Post(':id/assign-organization')
-    @ApiOperation({ summary: 'Assign user to organization' })
-    @ApiResponse({ status: 200, description: 'User assigned to organization successfully' })
-    async assignOrganization(
-        @Param('id', ParseIntPipe) id: number,
-        @Body('organizationId', ParseIntPipe) organizationId: number
-    ): Promise<ApiResponseDto> {
-        const user = await this.userService.assignOrganization(id, organizationId);
-        return ApiResponseDto.success(user, 'User assigned to organization successfully');
-    }
-
-    @Post(':id/change-role')
-    @ApiOperation({ summary: 'Change user role' })
-    @ApiResponse({ status: 200, description: 'User role changed successfully' })
-    async changeRole(
-        @Param('id', ParseIntPipe) id: number,
-        @Body('role') role: Role
-    ): Promise<ApiResponseDto> {
-        const user = await this.userService.changeRole(id, role);
-        return ApiResponseDto.success(user, 'User role changed successfully');
+    @ApiParam({ name: 'id', description: 'ID of the user to delete' })
+    @ApiCrudOperation(UserResponseDto, 'delete', {
+        summary: 'Delete a user',
+        errorResponses: { notFound: true },
+    })
+    async deleteUser(@Param('id') id: number): Promise<UserResponseDto> {
+        return this.userService.deleteUser(id);
     }
 }

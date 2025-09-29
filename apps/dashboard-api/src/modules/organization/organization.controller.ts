@@ -1,94 +1,108 @@
 import {
-    Controller,
-    Get,
-    Post,
-    Put,
-    Delete,
     Body,
+    Controller,
+    Delete,
+    Get,
+    NotFoundException,
     Param,
+    Put,
+    Post,
     Query,
-    ParseIntPipe,
 } from '@nestjs/common';
-import { ApiTags, ApiOperation, ApiResponse, ApiBearerAuth } from '@nestjs/swagger';
-import { Roles, Role, User as CurrentUser } from '@app/shared/auth';
-import { ApiResponseDto, PaginationDto } from '@app/shared/utils';
+import { ApiBearerAuth, ApiExtraModels, ApiTags } from '@nestjs/swagger';
 import { OrganizationService } from './organization.service';
-import { CreateOrganizationDto, UpdateOrganizationDto } from './dto/organization.dto';
+import {
+    ApiSuccessResponse,
+    CreateOrganizationDto,
+    OrganizationResponseDto,
+    UpdateOrganizationDto,
+} from '../../shared/dto';
+import { DataScope, NoScoping, Role, Roles } from '@app/shared/auth';
+import { ApiCrudOperation } from '../../shared/utils';
+import { QueryDto } from '../../shared/dto/query.dto';
+import { Scope } from '../../shared/decorators';
 
-@ApiTags('Organizations')
+@ApiTags('Organization')
 @ApiBearerAuth()
 @Controller('organizations')
+@ApiExtraModels(ApiSuccessResponse, OrganizationResponseDto)
 export class OrganizationController {
     constructor(private readonly organizationService: OrganizationService) {}
 
+    @Roles(Role.ADMIN)
+    @Post()
+    @NoScoping()
+    @ApiCrudOperation(OrganizationResponseDto, 'create', {
+        body: CreateOrganizationDto,
+        summary: 'Create a new organization',
+    })
+    async createOrganization(@Body() dto: CreateOrganizationDto) {
+        return this.organizationService.createOrganization(dto);
+    }
+
     @Get()
-    @Roles(Role.ADMIN, Role.HR)
-    @ApiOperation({ summary: 'Get all organizations' })
-    @ApiResponse({ status: 200, description: 'Organizations retrieved successfully' })
-    async findAll(
-        @Query() paginationDto: PaginationDto,
-        @CurrentUser() user: any
-    ): Promise<ApiResponseDto> {
-        const result = await this.organizationService.findAll(paginationDto, user);
-        return ApiResponseDto.success(result, 'Organizations retrieved successfully');
+    @Roles(Role.ADMIN)
+    @NoScoping()
+    @ApiCrudOperation(OrganizationResponseDto, 'list', {
+        summary: 'Get all organizations with pagination',
+        includeQueries: {
+            pagination: true,
+            search: true,
+            sort: true,
+            filters: ['isActive'],
+        },
+    })
+    async getAllOrganizations(@Query() query: QueryDto) {
+        console.log('OrganizationController -> getAllOrganizations -> query', query);
+        return this.organizationService.getOrganizations(query);
+    }
+
+    @Get('self')
+    @Roles(Role.ADMIN, Role.HR, Role.DEPARTMENT_LEAD)
+    @ApiCrudOperation(OrganizationResponseDto, 'get', {
+        summary: "Get the current authenticated user's organization",
+    })
+    async getCurrentOrganization(@Scope() scope: DataScope) {
+        return this.organizationService.getOrganizationsByScope(scope);
     }
 
     @Get(':id')
-    @Roles(Role.ADMIN, Role.HR)
-    @ApiOperation({ summary: 'Get organization by ID' })
-    @ApiResponse({ status: 200, description: 'Organization retrieved successfully' })
-    @ApiResponse({ status: 404, description: 'Organization not found' })
-    async findOne(
-        @Param('id', ParseIntPipe) id: number,
-        @CurrentUser() user: any
-    ): Promise<ApiResponseDto> {
-        const organization = await this.organizationService.findOne(id, user);
-        return ApiResponseDto.success(organization, 'Organization retrieved successfully');
-    }
-
-    @Post()
     @Roles(Role.ADMIN)
-    @ApiOperation({ summary: 'Create new organization' })
-    @ApiResponse({ status: 201, description: 'Organization created successfully' })
-    @ApiResponse({ status: 400, description: 'Invalid input data' })
-    async create(@Body() createOrganizationDto: CreateOrganizationDto): Promise<ApiResponseDto> {
-        const organization = await this.organizationService.create(createOrganizationDto);
-        return ApiResponseDto.success(organization, 'Organization created successfully');
+    @NoScoping()
+    @ApiCrudOperation(OrganizationResponseDto, 'get', {
+        summary: 'Get an organization by ID',
+    })
+    async getOrganizationById(@Param('id') id: number) {
+        const organization = await this.organizationService.getOrganizationById(id);
+        if (!organization) {
+            throw new NotFoundException('Organization not found.');
+        }
+        return organization;
     }
 
     @Put(':id')
     @Roles(Role.ADMIN)
-    @ApiOperation({ summary: 'Update organization' })
-    @ApiResponse({ status: 200, description: 'Organization updated successfully' })
-    @ApiResponse({ status: 404, description: 'Organization not found' })
-    async update(
-        @Param('id', ParseIntPipe) id: number,
-        @Body() updateOrganizationDto: UpdateOrganizationDto
-    ): Promise<ApiResponseDto> {
-        const organization = await this.organizationService.update(id, updateOrganizationDto);
-        return ApiResponseDto.success(organization, 'Organization updated successfully');
+    @NoScoping()
+    @ApiCrudOperation(OrganizationResponseDto, 'update', {
+        body: UpdateOrganizationDto,
+        summary: 'Update an organization by ID',
+    })
+    async updateOrganization(
+        @Param('id') id: number,
+        @Body() dto: UpdateOrganizationDto,
+        @Scope() scope: DataScope
+    ) {
+        return this.organizationService.updateOrganization(id, dto, scope);
     }
 
     @Delete(':id')
     @Roles(Role.ADMIN)
-    @ApiOperation({ summary: 'Delete organization' })
-    @ApiResponse({ status: 200, description: 'Organization deleted successfully' })
-    @ApiResponse({ status: 404, description: 'Organization not found' })
-    async remove(@Param('id', ParseIntPipe) id: number): Promise<ApiResponseDto> {
-        await this.organizationService.remove(id);
-        return ApiResponseDto.success(null, 'Organization deleted successfully');
-    }
-
-    @Get(':id/departments')
-    @Roles(Role.ADMIN, Role.HR)
-    @ApiOperation({ summary: 'Get organization departments' })
-    @ApiResponse({ status: 200, description: 'Departments retrieved successfully' })
-    async getDepartments(
-        @Param('id', ParseIntPipe) id: number,
-        @Query() paginationDto: PaginationDto,
-        @CurrentUser() user: any
-    ): Promise<ApiResponseDto> {
-        const result = await this.organizationService.getDepartments(id, paginationDto, user);
-        return ApiResponseDto.success(result, 'Departments retrieved successfully');
+    @NoScoping()
+    @ApiCrudOperation(OrganizationResponseDto, 'delete', {
+        summary: 'Delete an organization by ID',
+    })
+    async deleteOrganization(@Param('id') id: number) {
+        await this.organizationService.deleteOrganization(id);
+        return { message: 'Organization deleted successfully.' };
     }
 }

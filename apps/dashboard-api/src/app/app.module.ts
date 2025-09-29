@@ -1,11 +1,10 @@
-import { Module } from '@nestjs/common';
+import { MiddlewareConsumer, Module, NestModule, RequestMethod } from '@nestjs/common';
 import { APP_GUARD, APP_INTERCEPTOR, APP_FILTER } from '@nestjs/core';
 import { ConfigModule } from '@nestjs/config';
 
 import { SharedDatabaseModule } from '@app/shared/database';
 import { SharedAuthModule, JwtAuthGuard, RolesGuard, DataScopeGuard } from '@app/shared/auth';
 import { SharedUtilsModule, ResponseInterceptor, GlobalExceptionFilter } from '@app/shared/utils';
-import { CoreModule } from '../core/core.module';
 
 import { AppController } from './app.controller';
 import { AppService } from './app.service';
@@ -17,6 +16,8 @@ import { EmployeeModule } from '../modules/employee/employee.module';
 import { VisitorModule } from '../modules/visitor/visitor.module';
 import { ReportsModule } from '../modules/reports/reports.module';
 import { PolicyModule } from '../modules/policy/policy.module';
+import { LoggerModule } from '../core/logger';
+import { MorganLoggerMiddleware } from '../shared/middleware';
 
 @Module({
     imports: [
@@ -24,7 +25,6 @@ import { PolicyModule } from '../modules/policy/policy.module';
             isGlobal: true,
             envFilePath: ['.env', '.env.local'],
         }),
-        CoreModule,
         SharedDatabaseModule,
         SharedAuthModule,
         SharedUtilsModule,
@@ -36,14 +36,11 @@ import { PolicyModule } from '../modules/policy/policy.module';
         VisitorModule,
         ReportsModule,
         PolicyModule,
+        LoggerModule
     ],
     controllers: [AppController],
     providers: [
         AppService,
-        {
-            provide: APP_INTERCEPTOR,
-            useClass: ResponseInterceptor,
-        },
         {
             provide: APP_FILTER,
             useClass: GlobalExceptionFilter,
@@ -62,4 +59,11 @@ import { PolicyModule } from '../modules/policy/policy.module';
         },
     ],
 })
-export class AppModule {}
+export class AppModule implements NestModule {
+    configure(consumer: MiddlewareConsumer) {
+        consumer
+            .apply(MorganLoggerMiddleware)
+            .exclude('health', 'favicon.ico')
+            .forRoutes({ path: '*path', method: RequestMethod.ALL });
+    }
+}

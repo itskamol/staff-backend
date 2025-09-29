@@ -24,9 +24,9 @@ export class JwtService {
         });
 
         return {
-            access_token: accessToken,
-            refresh_token: refreshToken,
-            expires_in: 900, // 15 minutes
+            accessToken: accessToken,
+            refreshToken: refreshToken,
+            expiresIn: 900, // 15 minutes
         };
     }
 

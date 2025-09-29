@@ -1,114 +1,93 @@
 import {
-    Controller,
-    Get,
-    Post,
-    Put,
-    Delete,
     Body,
+    Controller,
+    Delete,
+    Get,
+    NotFoundException,
     Param,
+    Put,
+    Post,
     Query,
-    ParseIntPipe,
 } from '@nestjs/common';
-import { ApiTags, ApiOperation, ApiResponse, ApiBearerAuth } from '@nestjs/swagger';
-import { Roles, Role, User as CurrentUser } from '@app/shared/auth';
-import { ApiResponseDto, PaginationDto } from '@app/shared/utils';
+import { ApiBearerAuth, ApiExtraModels, ApiTags } from '@nestjs/swagger';
 import { DepartmentService } from './department.service';
-import { CreateDepartmentDto, UpdateDepartmentDto } from './dto/department.dto';
+import { DataScope, Role, Roles } from '@app/shared/auth';
+import { ApiSuccessResponse, CreateDepartmentDto, DepartmentResponseDto, UpdateDepartmentDto } from '../../shared/dto';
+import { ApiCrudOperation, ApiErrorResponses, ApiOkResponseData } from '../../shared/utils';
+import { Scope } from '../../shared/decorators';
+import { QueryDto } from '../../shared/dto/query.dto';
 
 @ApiTags('Departments')
 @ApiBearerAuth()
 @Controller('departments')
+@Roles(Role.ADMIN, Role.DEPARTMENT_LEAD, Role.HR)
+@ApiExtraModels(ApiSuccessResponse, DepartmentResponseDto)
 export class DepartmentController {
     constructor(private readonly departmentService: DepartmentService) {}
 
+    @Post()
+    @ApiCrudOperation(DepartmentResponseDto, 'create', {
+        body: CreateDepartmentDto,
+        summary: 'Create a new department',
+    })
+    async createDepartment(@Body() dto: CreateDepartmentDto, @Scope() scope: DataScope) {
+        return this.departmentService.createDepartment(dto, scope);
+    }
+
     @Get()
-    @Roles(Role.ADMIN, Role.HR, Role.DEPARTMENT_LEAD)
-    @ApiOperation({ summary: 'Get all departments' })
-    @ApiResponse({ status: 200, description: 'Departments retrieved successfully' })
-    async findAll(
-        @Query() paginationDto: PaginationDto,
-        @CurrentUser() user: any
-    ): Promise<ApiResponseDto> {
-        const result = await this.departmentService.findAll(paginationDto, user);
-        return ApiResponseDto.success(result, 'Departments retrieved successfully');
+    @ApiCrudOperation(DepartmentResponseDto, 'list', {
+        summary: 'Get all departments with pagination',
+        includeQueries: {
+            pagination: true,
+            search: true,
+            sort: true,
+            filters: ['isActive'],
+        },
+    })
+    async getAllDepartments(@Query() query: QueryDto, @Scope() scope: DataScope) {
+        return this.departmentService.getDepartments(query, scope);
+    }
+
+    @Get('self')
+    @ApiOkResponseData(DepartmentResponseDto, {
+        summary: "Get the current authenticated user's department",
+    })
+    @ApiErrorResponses({ forbidden: true, notFound: true })
+    async getCurrentDepartment(@Scope() scope: DataScope) {
+        return this.departmentService.getDepartments({ limit: 1 }, scope);
     }
 
     @Get(':id')
-    @Roles(Role.ADMIN, Role.HR, Role.DEPARTMENT_LEAD)
-    @ApiOperation({ summary: 'Get department by ID' })
-    @ApiResponse({ status: 200, description: 'Department retrieved successfully' })
-    @ApiResponse({ status: 404, description: 'Department not found' })
-    async findOne(
-        @Param('id', ParseIntPipe) id: number,
-        @CurrentUser() user: any
-    ): Promise<ApiResponseDto> {
-        const department = await this.departmentService.findOne(id, user);
-        return ApiResponseDto.success(department, 'Department retrieved successfully');
-    }
-
-    @Post()
-    @Roles(Role.ADMIN, Role.HR)
-    @ApiOperation({ summary: 'Create new department' })
-    @ApiResponse({ status: 201, description: 'Department created successfully' })
-    @ApiResponse({ status: 400, description: 'Invalid input data' })
-    async create(
-        @Body() createDepartmentDto: CreateDepartmentDto,
-        @CurrentUser() user: any
-    ): Promise<ApiResponseDto> {
-        const department = await this.departmentService.create(createDepartmentDto, user);
-        return ApiResponseDto.success(department, 'Department created successfully');
+    @ApiCrudOperation(DepartmentResponseDto, 'get', {
+        summary: 'Get a department by ID',
+    })
+    async getDepartmentById(@Param('id') id: number, @Scope() scope: DataScope) {
+        const department = await this.departmentService.getDepartmentById(id, scope);
+        if (!department) {
+            throw new NotFoundException('Department not found.');
+        }
+        return department;
     }
 
     @Put(':id')
-    @Roles(Role.ADMIN, Role.HR)
-    @ApiOperation({ summary: 'Update department' })
-    @ApiResponse({ status: 200, description: 'Department updated successfully' })
-    @ApiResponse({ status: 404, description: 'Department not found' })
-    async update(
-        @Param('id', ParseIntPipe) id: number,
-        @Body() updateDepartmentDto: UpdateDepartmentDto,
-        @CurrentUser() user: any
-    ): Promise<ApiResponseDto> {
-        const department = await this.departmentService.update(id, updateDepartmentDto, user);
-        return ApiResponseDto.success(department, 'Department updated successfully');
+    @ApiCrudOperation(DepartmentResponseDto, 'update', {
+        body: UpdateDepartmentDto,
+        summary: 'Update a department by ID',
+    })
+    async updateDepartment(
+        @Param('id') id: number,
+        @Body() dto: UpdateDepartmentDto,
+        @Scope() scope: DataScope
+    ) {
+        return this.departmentService.updateDepartment(id, dto, scope);
     }
 
     @Delete(':id')
-    @Roles(Role.ADMIN, Role.HR)
-    @ApiOperation({ summary: 'Delete department' })
-    @ApiResponse({ status: 200, description: 'Department deleted successfully' })
-    @ApiResponse({ status: 404, description: 'Department not found' })
-    async remove(
-        @Param('id', ParseIntPipe) id: number,
-        @CurrentUser() user: any
-    ): Promise<ApiResponseDto> {
-        await this.departmentService.remove(id, user);
-        return ApiResponseDto.success(null, 'Department deleted successfully');
-    }
-
-    @Get(':id/sub-departments')
-    @Roles(Role.ADMIN, Role.HR, Role.DEPARTMENT_LEAD)
-    @ApiOperation({ summary: 'Get department sub-departments' })
-    @ApiResponse({ status: 200, description: 'Sub-departments retrieved successfully' })
-    async getSubDepartments(
-        @Param('id', ParseIntPipe) id: number,
-        @Query() paginationDto: PaginationDto,
-        @CurrentUser() user: any
-    ): Promise<ApiResponseDto> {
-        const result = await this.departmentService.getSubDepartments(id, paginationDto, user);
-        return ApiResponseDto.success(result, 'Sub-departments retrieved successfully');
-    }
-
-    @Get(':id/employees')
-    @Roles(Role.ADMIN, Role.HR, Role.DEPARTMENT_LEAD)
-    @ApiOperation({ summary: 'Get department employees' })
-    @ApiResponse({ status: 200, description: 'Employees retrieved successfully' })
-    async getEmployees(
-        @Param('id', ParseIntPipe) id: number,
-        @Query() paginationDto: PaginationDto,
-        @CurrentUser() user: any
-    ): Promise<ApiResponseDto> {
-        const result = await this.departmentService.getEmployees(id, paginationDto, user);
-        return ApiResponseDto.success(result, 'Employees retrieved successfully');
+    @ApiCrudOperation(DepartmentResponseDto, 'delete', {
+        summary: 'Delete a department by ID',
+    })
+    async deleteDepartment(@Param('id') id: number, @Scope() scope: DataScope) {
+        await this.departmentService.deleteDepartment(id, scope);
+        return { message: 'Department deleted successfully.' };
     }
 }

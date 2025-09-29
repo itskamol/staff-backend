@@ -1042,8 +1042,9 @@ Department mavjud va tegishli huquq bor
 
 **UC-13: Department Sub-departmentlarini Olish**
 
-**API**: GET /api/departments/:id/sub-departments **Actor**: Admin/HR/Department
-Lead **Precondition**: Department mavjud va access huquqi bor
+**API**: GET `/api/departments/:id/sub-departments` **Actor**:
+Admin/HR/Department Lead **Precondition**: Department mavjud va access huquqi
+bor
 
 **Permission-based Access**:
 
@@ -1055,7 +1056,7 @@ Lead **Precondition**: Department mavjud va access huquqi bor
 
 1. User department sahifasini ochadi
 2. "Sub-departments" tabini tanlaydi
-3. Frontend GET /api/departments/:id/sub-departments ga request yuboradi
+3. Frontend GET `/api/departments/:id/sub-departments` ga request yuboradi
 4. Server permission check qiladi
 5. Sub-departments ro'yxatini qaytaradi
 
@@ -1131,12 +1132,12 @@ Lead **Precondition**: Department mavjud va access huquqi bor
 
 **UC-14: Hodimlar Ro'yxatini Olish (Role-based)**
 
-**API**: GET /api/employees **Actor**: Admin/HR/Department Lead/Guard
+**API**: GET `/api/employees` **Actor**: Admin/HR/Department Lead/Guard
 
 **Admin Flow**:
 
 1. Admin "Employees" sahifasini ochadi
-2. Frontend GET /api/employees ga request yuboradi (filter yo'q)
+2. Frontend GET `/api/employees` ga request yuboradi (filter yo'q)
 3. Server barcha hodimlarni qaytaradi (barcha organizationlar)
 4. Admin to'liq CRUD permissions oladi
 
@@ -1286,7 +1287,7 @@ Lead **Precondition**: Department mavjud va access huquqi bor
 
 **UC-22: Hodim Tahrirlash**
 
-**API**: PUT /api/employees/:id **Actor**: Admin/HR
+**API**: PUT `/api/employees/:id` **Actor**: Admin/HR
 
 **Permission Check Flow**:
 
@@ -1299,13 +1300,15 @@ Lead **Precondition**: Department mavjud va access huquqi bor
 
 **Request Body**:
 
-{  
- "name": "Karimov Bobur Shavkatovich",  
- "address": "Toshkent sh., Yashnobod tumani, 22-uy",  
- "phone": "+998901111333",  
- "email": "bobur.karimov.new@company.uz",  
- "additional_details": "Middle Frontend Developer"  
+```json
+{
+  "name": "Karimov Bobur Shavkatovich",
+  "address": "Toshkent sh., Yashnobod tumani, 22-uy",
+  "phone": "+998901111333",
+  "email": "bobur.karimov.new@company.uz",
+  "additional_details": "Middle Frontend Developer"
 }
+```
 
 **Backend Permission Logic**:
 
@@ -1330,7 +1333,7 @@ Lead **Precondition**: Department mavjud va access huquqi bor
 
 **UC-16: Hodim O'chirish**
 
-**API**: DELETE /api/employees/:id **Actor**: Admin/HR
+**API**: DELETE `/api/employees/:id` **Actor**: Admin/HR
 
 **Dependency Check Flow**:
 
@@ -1361,7 +1364,7 @@ Lead **Precondition**: Department mavjud va access huquqi bor
 
 **UC-17: Hodim Entry/Exit Loglarini Olish**
 
-**API**: GET /api/employees/:id/entry-logs **Actor**: Admin/HR/Department
+**API**: GET `/api/employees/:id/entry-logs` **Actor**: Admin/HR/Department
 Lead/Guard
 
 **Permission-based Access**:
@@ -1380,7 +1383,7 @@ Lead/Guard
 **Main Flow**:
 
 1. User hodim sahifasida "Entry/Exit Logs" tabini tanlaydi
-2. Frontend GET /api/employees/:id/entry-logs ga request yuboradi
+2. Frontend GET `/api/employees/:id/entry-logs` ga request yuboradi
 3. Server permission check qiladi
 4. Entry logs ro'yxatini qaytaradi
 
@@ -1448,7 +1451,7 @@ Lead/Guard
 
 **UC-18: Hodim Activity Report Olish**
 
-**API**: GET /api/employees/:id/activity-report **Actor**: Admin/HR/Department
+**API**: `GET /api/employees/:id/activity-report` **Actor**: Admin/HR/Department
 Lead
 
 **Query Parameters**:
@@ -1461,7 +1464,7 @@ Lead
 
 1. Lead/HR "Employee Activity" sahifasini ochadi
 2. Sana oralig'ini tanlaydi
-3. Frontend GET /api/employees/:id/activity-report ga request yuboradi
+3. Frontend `GET /api/employees/:id/activity-report` ga request yuboradi
 4. Server comprehensive activity report yaratadi
 
 **Success Response (200)**:
@@ -1534,13 +1537,13 @@ Lead
 
 **UC-18: Hodim Computer Users Olish**
 
-**API**: GET /api/employees/:id/computer-users **Actor**: Admin/HR/Department
+**API**: GET `/api/employees/:id/computer-users` **Actor**: Admin/HR/Department
 Lead
 
 **Main Flow**:
 
 1. User employee sahifasida "Computer Access" tabini tanlaydi
-2. Frontend GET /api/employees/:id/computer-users ga request yuboradi
+2. Frontend GET `/api/employees/:id/computer-users` ga request yuboradi
 3. Server employee bilan bog'langan barcha computer users ro'yxatini qaytaradi
 
 **Success Response (200)**:
@@ -1586,7 +1589,7 @@ Lead
 
 **UC-19: Hodimga Karta Biriktirish**
 
-**API**: POST /api/employees/:id/assign-card **Actor**: Admin/HR
+**API**: POST `/api/employees/:id/assign-card` **Actor**: Admin/HR
 
 **Request Body**:
 
@@ -1620,7 +1623,7 @@ CARD_ALREADY_EXISTS
 
 **UC-20: Hodimga Mashina Biriktirish**
 
-**API**: POST /api/employees/:id/assign-car **Actor**: Admin/HR
+**API**: POST `/api/employees/:id/assign-car` **Actor**: Admin/HR
 
 **Request Body**:
 
@@ -1654,7 +1657,7 @@ CARD_ALREADY_EXISTS
 
 **UC-21: Computer User bilan Bog'lash**
 
-**API**: POST /api/employees/:id/link-computer-user
+**API**: POST `/api/employees/:id/link-computer-user`
 
 **Role**: HR/Admin
 
@@ -1680,7 +1683,7 @@ CARD_ALREADY_EXISTS
 
 **UC-22: Computer User Bog'lanishini O'chirish**
 
-**API**: DELETE /api/employees/:id/unlink-computer-user/:computer_user_id
+**API**: DELETE `/api/employees/:id/unlink-computer-user/:computer_user_id`
 **Actor**: Admin/HR
 
 **Main Flow**:
@@ -1749,7 +1752,7 @@ public class UserInfo
 
 **UC-24: Entry/Exit Loglar Ro'yxatini Olish (Role-based)**
 
-**API**: GET /api/entry-logs **Actor**: Admin/HR/Department Lead/Guard
+**API**: GET `/api/entry-logs` **Actor**: Admin/HR/Department Lead/Guard
 
 **Admin Flow**:
 
@@ -1844,7 +1847,7 @@ public class UserInfo
 
 **UC-25: Bugungi Entry/Exit Loglar**
 
-**API**: GET /api/entry-logs/today **Actor**: Admin/HR/Department Lead/Guard
+**API**: GET `/api/entry-logs/today` **Actor**: Admin/HR/Department Lead/Guard
 
 **Real-time Dashboard Flow**:
 
@@ -1944,7 +1947,7 @@ public class UserInfo
 
 **UC-26: Entry/Exit Hisoboti**
 
-**API**: GET /api/entry-logs/report **Actor**: Admin/HR/Department Lead/Guard
+**API**: GET `/api/entry-logs/report` **Actor**: Admin/HR/Department Lead/Guard
 
 **Comprehensive Report Flow**:
 

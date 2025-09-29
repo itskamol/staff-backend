@@ -1,13 +1,31 @@
-import { Logger } from '@nestjs/common';
 import { NestFactory } from '@nestjs/core';
-import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger';
+import { ValidationPipe } from '@nestjs/common';
 import { AppModule } from './app/app.module';
-import { NestExpressApplication } from '@nestjs/platform-express';
+import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger';
+import { ConfigService } from './core/config/config.service';
+import { CustomValidationException } from './shared/exceptions/validation.exception';
+import { LoggerService } from './core/logger';
+import { ApiErrorResponse, ApiPaginatedResponse, ApiSuccessResponse } from './shared/dto';
 
 async function bootstrap() {
-    const app = await NestFactory.create<NestExpressApplication>(AppModule);
-    const globalPrefix = 'api';
-    app.setGlobalPrefix(globalPrefix);
+    const app = await NestFactory.create(AppModule);
+
+    const logger = app.get(LoggerService);
+    app.useLogger(logger);
+
+    const configService = app.get(ConfigService);
+    const port = configService.port;
+
+    app.useGlobalPipes(
+        new ValidationPipe({
+            whitelist: true,
+            forbidNonWhitelisted: true,
+            transform: true,
+            exceptionFactory: errors => new CustomValidationException(errors),
+        })
+    );
+
+    app.setGlobalPrefix('api/v1');
 
     const config = new DocumentBuilder()
         .setTitle('Staff Control System - Dashboard API')
@@ -23,13 +41,30 @@ async function bootstrap() {
         .addTag('Reports', 'Analytics and reporting')
         .addTag('Policies', 'Security and monitoring policies')
         .build();
-    const document = SwaggerModule.createDocument(app, config);
-    SwaggerModule.setup('api/docs', app, document);
+    const document = SwaggerModule.createDocument(app, config, {
+        extraModels: [ApiSuccessResponse, ApiErrorResponse, ApiPaginatedResponse],
+    });
 
-    const port = process.env.PORT || 3000;
-    await app.listen(port);
-    Logger.log(`🚀 Application is running on: http://localhost:${port}/${globalPrefix}`);
-    Logger.log(`📄 Swagger documentation is available at: http://localhost:${port}/api/docs`);
+    SwaggerModule.setup('api/docs', app, document, {
+        jsonDocumentUrl: 'api/docs-json',
+        customSiteTitle: 'Sector Staff API Docs',
+    });
+
+    app.enableCors();
+
+    await app.listen(port, '0.0.0.0');
+
+    logger.log(`Application started successfully`, {
+        port,
+        environment: configService.nodeEnv,
+        module: 'bootstrap',
+    });
+
+    logger.log(`Application is running on: http://localhost:${port}/api/v1`);
 }
 
-bootstrap();
+bootstrap().catch(error => {
+    // eslint-disable-next-line no-console
+    console.error('Failed to start application:', error);
+    process.exit(1);
+});

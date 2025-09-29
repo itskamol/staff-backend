@@ -17,7 +17,7 @@
     "paths": {
       "@app/shared/auth": ["shared/auth/src/index.ts"],
       "@app/shared/database": ["shared/database/src/index.ts"],
-      "@app/shared/utils": ["shared/utils/src/index.ts"]
+      "@app/shared/utils": ["shared/utils/src/index.ts"],
     }
   },
   "exclude": ["node_modules", "tmp"]

@@ -1,108 +1,127 @@
 import { Injectable } from '@nestjs/common';
 import { ConfigService as NestConfigService } from '@nestjs/config';
-
-export interface DatabaseConfig {
-    url: string;
-    host: string;
-    port: number;
-    username: string;
-    password: string;
-    database: string;
-}
-
-export interface JwtConfig {
-    secret: string;
-    expiresIn: string;
-    refreshSecret: string;
-    refreshExpiresIn: string;
-}
-
-export interface RedisConfig {
-    host: string;
-    port: number;
-    password?: string;
-    db: number;
-}
-
-export interface AppConfig {
-    port: number;
-    environment: string;
-    apiPrefix: string;
-    corsOrigins: string[];
-    maxFileSize: number;
-    uploadPath: string;
-}
+import * as os from 'os';
 
 @Injectable()
-export class AppConfigService {
+export class ConfigService {
     constructor(private readonly configService: NestConfigService) {}
 
-    get app(): AppConfig {
-        return {
-            port: this.configService.get<number>('PORT', 3000),
-            environment: this.configService.get<string>('NODE_ENV', 'development'),
-            apiPrefix: this.configService.get<string>('API_PREFIX', 'api'),
-            corsOrigins: this.configService.get<string>('CORS_ORIGINS', '*').split(','),
-            maxFileSize: this.configService.get<number>('MAX_FILE_SIZE', 10 * 1024 * 1024), // 10MB
-            uploadPath: this.configService.get<string>('UPLOAD_PATH', './uploads'),
-        };
+    get nodeEnv(): string {
+        return this.configService.get<string>('NODE_ENV', 'development');
     }
 
-    get database(): DatabaseConfig {
+    get port(): number {
+        return this.configService.get<number>('PORT', 3000);
+    }
+
+    get uploadDir(): string {
+        return this.configService.get<string>('UPLOAD_DIR', './uploads')
+    }
+
+    get databaseUrl(): string {
         const url = this.configService.get<string>('DATABASE_URL');
-
-        if (url) {
-            const parsed = new URL(url);
-            return {
-                url,
-                host: parsed.hostname,
-                port: parseInt(parsed.port) || 5432,
-                username: parsed.username,
-                password: parsed.password,
-                database: parsed.pathname.slice(1),
-            };
+        if (!url) {
+            throw new Error('DATABASE_URL is required but not provided in environment variables');
         }
-
-        return {
-            url: '',
-            host: this.configService.get<string>('DB_HOST', 'localhost'),
-            port: this.configService.get<number>('DB_PORT', 5432),
-            username: this.configService.get<string>('DB_USERNAME', 'postgres'),
-            password: this.configService.get<string>('DB_PASSWORD', ''),
-            database: this.configService.get<string>('DB_DATABASE', 'staff_control'),
-        };
+        return url;
     }
 
-    get jwt(): JwtConfig {
-        return {
-            secret: this.configService.get<string>('JWT_SECRET', 'your-secret-key'),
-            expiresIn: this.configService.get<string>('JWT_EXPIRES_IN', '1d'),
-            refreshSecret: this.configService.get<string>(
-                'JWT_REFRESH_SECRET',
-                'your-refresh-secret'
-            ),
-            refreshExpiresIn: this.configService.get<string>('JWT_REFRESH_EXPIRES_IN', '7d'),
-        };
+    get redisUrl(): string {
+        const url = this.configService.get<string>('REDIS_URL', 'redis://localhost:6379');
+
+        if (!url) {
+            throw new Error('REDIS_URL is required but not provided in environment variables');
+        }
+        return url;
     }
 
-    get redis(): RedisConfig {
-        return {
-            host: this.configService.get<string>('REDIS_HOST', 'localhost'),
-            port: this.configService.get<number>('REDIS_PORT', 6379),
-            password: this.configService.get<string>('REDIS_PASSWORD'),
-            db: this.configService.get<number>('REDIS_DB', 0),
-        };
+    get jwtSecret(): string {
+        return this.configService.get<string>('JWT_SECRET', 'default_jwt_secret');
+    }
+
+    get jwtExpirationTime(): string {
+        return this.configService.get<string>('JWT_EXPIRATION', '15m');
+    }
+
+    get refreshTokenSecret(): string {
+        return this.configService.get<string>('REFRESH_TOKEN_SECRET', 'default_refresh_secret');
+    }
+
+    get encryptionSecretKey(): string {
+        return this.configService.get<string>('SECRET_ENCRYPTION_KEY', 'default_encryption_key');
+    }
+
+    get refreshTokenExpirationTime(): string {
+        return this.configService.get<string>('REFRESH_TOKEN_EXPIRATION', '7d');
+    }
+
+    get logLevel(): string {
+        return this.configService.get<string>('LOG_LEVEL', 'info');
+    }
+
+    get enableFileLogging(): boolean {
+        return this.configService.get<string>('ENABLE_FILE_LOGGING', 'false') === 'true';
+    }
+
+    get logFormat(): 'json' | 'pretty' {
+        return this.configService.get<string>('LOG_FORMAT', 'pretty') as 'json' | 'pretty';
     }
 
     get isDevelopment(): boolean {
-        return this.app.environment === 'development';
+        return this.nodeEnv === 'development';
     }
 
     get isProduction(): boolean {
-        return this.app.environment === 'production';
+        return this.nodeEnv === 'production';
     }
 
     get isTest(): boolean {
-        return this.app.environment === 'test';
+        return this.nodeEnv === 'test';
+    }
+
+    get isDocker(): boolean {
+        return this.nodeEnv === 'docker';
+    }
+
+    get hostIp(): string {
+        if (this.isDocker) {
+            return this.configService.get<string>('HOST_IP', 'host.docker.internal');
+        }
+
+        const interfaces = os.networkInterfaces();
+        for (const name of Object.keys(interfaces)) {
+            for (const iface of interfaces[name]!) {
+                if (iface.family === 'IPv4' && !iface.internal) {
+                    return iface.address;
+                }
+            }
+        }
+
+        return '';
+    }
+
+    validateConfig(): void {
+        const requiredVars = ['DATABASE_URL', 'REDIS_URL'];
+
+        const missing = requiredVars.filter(varName => {
+            const value = this.configService.get<string>(varName);
+            return !value || value.trim() === '';
+        });
+
+        if (missing.length > 0) {
+            throw new Error(
+                `Missing required environment variables: ${missing.join(', ')}\n` +
+                    `Please check your environment configuration files in config/environments/`
+            );
+        }
+
+        try {
+            const jwtSecret = this.jwtSecret; // This will throw if too short
+            const refreshTokenSecret = this.refreshTokenSecret; // This will throw if too short
+            void jwtSecret;
+            void refreshTokenSecret;
+        } catch (error) {
+            throw new Error(`Configuration validation failed: ${error.message}`);
+        }
     }
 }
