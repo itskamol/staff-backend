@@ -53,7 +53,6 @@ export class OrganizationController {
         },
     })
     async getAllOrganizations(@Query() query: QueryDto) {
-        console.log('OrganizationController -> getAllOrganizations -> query', query);
         return this.organizationService.getOrganizations(query);
     }
 

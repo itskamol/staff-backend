@@ -10,13 +10,14 @@ import {
     ParseIntPipe,
 } from '@nestjs/common';
 import { ApiTags, ApiBearerAuth } from '@nestjs/swagger';
-import { Roles, Role, User as CurrentUser } from '@app/shared/auth';
+import { Roles, Role, User as CurrentUser, DataScope } from '@app/shared/auth';
 import { ApiResponseDto, PaginationDto } from '@app/shared/utils';
 import { VisitorService } from './visitor.service';
 import { CreateVisitorDto, UpdateVisitorDto, GenerateCodeDto } from './dto/visitor.dto';
 import { ApiCrudOperation } from '../../shared/utils';
 import { UserContext } from '../../shared/interfaces';
 import { Action, OnetimeCode } from '@prisma/client';
+import { Scope } from '../../shared/decorators';
 
 @ApiTags('Visitors')
 @ApiBearerAuth()
@@ -37,10 +38,10 @@ export class VisitorController {
     })
     async findAll(
         @Query() paginationDto: PaginationDto,
-        @CurrentUser() user: UserContext
-    ): Promise<ApiResponseDto> {
-        const result = await this.visitorService.findAll(paginationDto, user);
-        return ApiResponseDto.success(result, 'Visitors retrieved successfully');
+        @CurrentUser() user: UserContext,
+        @Scope() scope: DataScope
+    ) {
+        return this.visitorService.findAll(paginationDto, scope, user);
     }
 
     @Get(':id')

@@ -43,7 +43,7 @@ export class ReportsController {
     })
     async getAttendanceReport(
         @Query() attendanceReportDto: AttendanceReportDto,
-        @CurrentUser() user: any
+        @CurrentUser() user: UserContext
     ): Promise<ApiResponseDto> {
         const report = await this.reportsService.generateAttendanceReport(
             attendanceReportDto,
@@ -61,7 +61,7 @@ export class ReportsController {
     })
     async getProductivityReport(
         @Query() productivityReportDto: ProductivityReportDto,
-        @CurrentUser() user: any
+        @CurrentUser() user: UserContext
     ): Promise<ApiResponseDto> {
         const report = await this.reportsService.generateProductivityReport(
             productivityReportDto,
@@ -79,7 +79,7 @@ export class ReportsController {
     })
     async getDeviceUsageReport(
         @Query() deviceUsageReportDto: DeviceUsageReportDto,
-        @CurrentUser() user: any
+        @CurrentUser() user: UserContext
     ): Promise<ApiResponseDto> {
         const report = await this.reportsService.generateDeviceUsageReport(
             deviceUsageReportDto,
@@ -118,7 +118,7 @@ export class ReportsController {
         status: 200,
         description: 'Dashboard summary retrieved successfully',
     })
-    async getDashboardSummary(@CurrentUser() user: any): Promise<ApiResponseDto> {
+    async getDashboardSummary(@CurrentUser() user: UserContext): Promise<ApiResponseDto> {
         const today = new Date();
         const startOfMonth = new Date(today.getFullYear(), today.getMonth(), 1);
 
@@ -178,7 +178,7 @@ export class ReportsController {
     @Roles(Role.ADMIN, Role.HR, Role.DEPARTMENT_LEAD)
     @ApiOperation({ summary: 'Download exported report' })
     @ApiResponse({ status: 200, description: 'Report file downloaded' })
-    async downloadReport(@Param('reportId') reportId: string, @CurrentUser() user: any) {
+    async downloadReport(@Param('reportId') reportId: string, @CurrentUser() user: UserContext) {
         // TODO: Implement actual file download
         // This would serve the generated report files
         return {

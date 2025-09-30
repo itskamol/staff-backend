@@ -18,7 +18,7 @@ export class OrganizationRepository extends BaseRepository<
     }
 
     protected readonly modelName = Prisma.ModelName.Organization;
-    
+
     protected getDelegate() {
         return this.prisma.organization;
     }

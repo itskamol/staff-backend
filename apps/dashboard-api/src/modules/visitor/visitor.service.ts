@@ -1,25 +1,29 @@
 import { Injectable, NotFoundException, ForbiddenException } from '@nestjs/common';
 import { PrismaService } from '@app/shared/database';
-import { Role } from '@app/shared/auth';
-import { QueryBuilderUtil, PaginationDto, EncryptionUtil } from '@app/shared/utils';
+import { DataScope, Role } from '@app/shared/auth';
+import { QueryBuilderUtil, PaginationDto, EncryptionUtil, QueryDto } from '@app/shared/utils';
 import { CreateVisitorDto, UpdateVisitorDto, GenerateCodeDto } from './dto/visitor.dto';
 import { UserContext } from '../../shared/interfaces';
+import { VisitorRepository } from './visitor.repository';
+import { Prisma } from '@prisma/client';
 // import * as QRCode from 'qrcode'; // TODO: Install qrcode package
 
 @Injectable()
 export class VisitorService {
-    constructor(private readonly prisma: PrismaService) {}
+    constructor(
+        private readonly prisma: PrismaService,
+        private readonly visitorRepository: VisitorRepository
+    ) {}
 
-    async findAll(paginationDto: PaginationDto, user: UserContext) {
-        const query = QueryBuilderUtil.buildQuery(paginationDto);
-
+    async findAll(query: QueryDto, scope: DataScope, user: UserContext) {
+        const where: Prisma.VisitorWhereInput = {};
         // Apply role-based filtering
         if (user.role === Role.HR) {
-            query.where.creator = {
+            where.creator = {
                 organizationId: user.organizationId,
             };
         } else if (user.role === Role.DEPARTMENT_LEAD) {
-            query.where.creator = {
+            where.creator = {
                 departmentUsers: {
                     some: {
                         departmentId: { in: user.departmentIds || [] },
@@ -28,53 +32,46 @@ export class VisitorService {
             };
         }
 
-        const [visitors, totalRecords] = await Promise.all([
-            this.prisma.visitor.findMany({
-                where: query.where,
-                skip: query.skip,
-                take: query.take,
-                orderBy: { createdAt: 'desc' },
+        const select = {
+            id: true,
+            firstName: true,
+            lastName: true,
+            middleName: true,
+            birthday: true,
+            phone: true,
+            passportNumber: user.role === Role.GUARD ? false : true,
+            pinfl: user.role === Role.GUARD ? false : true,
+            workPlace: true,
+            additionalDetails: user.role === Role.GUARD ? false : true,
+            createdAt: true,
+            creator: {
                 select: {
                     id: true,
-                    firstName: true,
-                    lastName: true,
-                    middleName: true,
-                    birthday: true,
-                    phone: true,
-                    passportNumber: user.role === Role.GUARD ? false : true,
-                    pinfl: user.role === Role.GUARD ? false : true,
-                    workPlace: true,
-                    additionalDetails: user.role === Role.GUARD ? false : true,
-                    createdAt: true,
-                    creator: {
+                    name: true,
+                    organization: {
                         select: {
                             id: true,
-                            name: true,
-                            organization: {
-                                select: {
-                                    id: true,
-                                    fullName: true,
-                                    shortName: true,
-                                },
-                            },
-                        },
-                    },
-                    _count: {
-                        select: {
-                            onetimeCodes: true,
-                            actions: true,
+                            fullName: true,
+                            shortName: true,
                         },
                     },
                 },
-            }),
-            this.prisma.visitor.count({ where: query.where }),
-        ]);
+            },
+            _count: {
+                select: {
+                    onetimeCodes: true,
+                    actions: true,
+                },
+            },
+        };
 
-        return QueryBuilderUtil.buildResponse(
-            visitors,
-            totalRecords,
-            paginationDto.page || 1,
-            paginationDto.limit || 10
+        return this.visitorRepository.findManyWithPagination(
+            where,
+            { createdAt: 'desc' },
+            undefined,
+            { page: query.page, limit: query.limit },
+            scope,
+            select
         );
     }
 

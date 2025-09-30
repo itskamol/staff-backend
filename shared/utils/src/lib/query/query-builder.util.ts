@@ -69,14 +69,11 @@ export class QueryBuilderUtil {
     }
 
     static buildResponse<T>(data: T[], total: number, page: number, limit: number) {
-
         return {
             data,
-            meta: {
-                page,
-                total,
-                limit,
-            },
+            page,
+            total,
+            limit,
         };
     }
 }

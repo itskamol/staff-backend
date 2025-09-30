@@ -3,12 +3,13 @@ import { PrismaService } from '@app/shared/database';
 import { Role } from '@app/shared/auth';
 import { QueryBuilderUtil, PaginationDto } from '@app/shared/utils';
 import { CreatePolicyDto, UpdatePolicyDto } from './dto/policy.dto';
+import { UserContext } from '../../shared/interfaces';
 
 @Injectable()
 export class PolicyService {
     constructor(private readonly prisma: PrismaService) {}
 
-    async findAll(paginationDto: PaginationDto, user: any) {
+    async findAll(paginationDto: PaginationDto, user: UserContext) {
         const query = QueryBuilderUtil.buildQuery(paginationDto);
 
         // Apply role-based filtering
@@ -56,7 +57,7 @@ export class PolicyService {
         );
     }
 
-    async findOne(id: number, user: any) {
+    async findOne(id: number, user: UserContext) {
         const policy = await this.prisma.policy.findUnique({
             where: { id },
             select: {
@@ -147,7 +148,7 @@ export class PolicyService {
         return policy;
     }
 
-    async create(createPolicyDto: CreatePolicyDto, user: any) {
+    async create(createPolicyDto: CreatePolicyDto, user: UserContext) {
         const policy = await this.prisma.policy.create({
             data: createPolicyDto,
             select: {
@@ -165,7 +166,7 @@ export class PolicyService {
         return policy;
     }
 
-    async update(id: number, updatePolicyDto: UpdatePolicyDto, user: any) {
+    async update(id: number, updatePolicyDto: UpdatePolicyDto, user: UserContext) {
         // Check if policy exists and access permissions
         await this.findOne(id, user);
 
@@ -187,7 +188,7 @@ export class PolicyService {
         return policy;
     }
 
-    async remove(id: number, user: any) {
+    async remove(id: number, user: UserContext) {
         // Check if policy exists and access permissions
         const policy = await this.findOne(id, user);
 

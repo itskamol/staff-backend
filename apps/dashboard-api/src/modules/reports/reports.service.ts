@@ -14,12 +14,13 @@ import {
     DeviceUsageReportData,
     VisitorActivityReportData,
 } from './dto/reports.dto';
+import { UserContext } from '../../shared/interfaces';
 
 @Injectable()
 export class ReportsService {
     constructor(private readonly prisma: PrismaService) {}
 
-    async generateReport(generateReportDto: GenerateReportDto, user: any) {
+    async generateReport(generateReportDto: GenerateReportDto, user: UserContext) {
         const {
             reportType,
             timeRange,
@@ -96,13 +97,13 @@ export class ReportsService {
             timeRange: dateRange,
             data: reportData,
             generatedAt: new Date(),
-            generatedBy: user.name,
+            generatedBy: +user.sub,
         };
     }
 
     async generateAttendanceReport(
         dto: AttendanceReportDto,
-        user: any
+        user: UserContext
     ): Promise<AttendanceReportData[]> {
         const { startDate, endDate, departmentId } = dto;
 
@@ -217,7 +218,7 @@ export class ReportsService {
 
     async generateProductivityReport(
         dto: ProductivityReportDto,
-        user: any
+        user: UserContext
     ): Promise<ProductivityReportData[]> {
         const { startDate, endDate, employeeIds } = dto;
 
@@ -354,7 +355,7 @@ export class ReportsService {
 
     async generateDeviceUsageReport(
         dto: DeviceUsageReportDto,
-        user: any
+        user: UserContext
     ): Promise<DeviceUsageReportData[]> {
         const { startDate, endDate, gateIds } = dto;
 
@@ -428,7 +429,7 @@ export class ReportsService {
 
     async generateVisitorActivityReport(
         dateRange: any,
-        user: any
+        user: UserContext
     ): Promise<VisitorActivityReportData[]> {
         // Build where clause based on user role
         const whereClause: any = {
@@ -499,7 +500,7 @@ export class ReportsService {
         return reportData;
     }
 
-    async generateSecurityEventsReport(dateRange: any, user: any) {
+    async generateSecurityEventsReport(dateRange: any, user: UserContext) {
         // TODO: Implement security events report
         // This would include failed access attempts, unauthorized entries, etc.
         return [];
@@ -595,7 +596,7 @@ export class ReportsService {
         };
     }
 
-    private async applyRoleBasedFiltering(params: any, user: any) {
+    private async applyRoleBasedFiltering(params: any, user: UserContext) {
         const { departmentIds, employeeIds } = params;
 
         // For HR role, filter by organization

@@ -14,6 +14,7 @@ import { Roles, Role, User as CurrentUser } from '@app/shared/auth';
 import { ApiResponseDto, PaginationDto } from '@app/shared/utils';
 import { PolicyService } from './policy.service';
 import { CreatePolicyDto, UpdatePolicyDto } from './dto/policy.dto';
+import { UserContext } from '../../shared/interfaces';
 
 @ApiTags('Policies')
 @Controller('policies')
@@ -27,7 +28,7 @@ export class PolicyController {
     @ApiResponse({ status: 200, description: 'Policies retrieved successfully' })
     async findAll(
         @Query() paginationDto: PaginationDto,
-        @CurrentUser() user: any
+        @CurrentUser() user: UserContext
     ): Promise<ApiResponseDto> {
         const result = await this.policyService.findAll(paginationDto, user);
         return ApiResponseDto.success(result, 'Policies retrieved successfully');
@@ -39,7 +40,7 @@ export class PolicyController {
     @ApiResponse({ status: 404, description: 'Policy not found' })
     async findOne(
         @Param('id', ParseIntPipe) id: number,
-        @CurrentUser() user: any
+        @CurrentUser() user: UserContext
     ): Promise<ApiResponseDto> {
         const policy = await this.policyService.findOne(id, user);
         return ApiResponseDto.success(policy, 'Policy retrieved successfully');
@@ -51,7 +52,7 @@ export class PolicyController {
     @ApiResponse({ status: 400, description: 'Invalid input data' })
     async create(
         @Body() createPolicyDto: CreatePolicyDto,
-        @CurrentUser() user: any
+        @CurrentUser() user: UserContext
     ): Promise<ApiResponseDto> {
         const policy = await this.policyService.create(createPolicyDto, user);
         return ApiResponseDto.success(policy, 'Policy created successfully');
@@ -64,7 +65,7 @@ export class PolicyController {
     async update(
         @Param('id', ParseIntPipe) id: number,
         @Body() updatePolicyDto: UpdatePolicyDto,
-        @CurrentUser() user: any
+        @CurrentUser() user: UserContext
     ): Promise<ApiResponseDto> {
         const policy = await this.policyService.update(id, updatePolicyDto, user);
         return ApiResponseDto.success(policy, 'Policy updated successfully');
@@ -76,7 +77,7 @@ export class PolicyController {
     @ApiResponse({ status: 404, description: 'Policy not found' })
     async remove(
         @Param('id', ParseIntPipe) id: number,
-        @CurrentUser() user: any
+        @CurrentUser() user: UserContext
     ): Promise<ApiResponseDto> {
         await this.policyService.remove(id, user);
         return ApiResponseDto.success(null, 'Policy deleted successfully');
