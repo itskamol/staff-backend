@@ -205,6 +205,17 @@ export class AssignUserToOrganizationDto {
     branchIds?: string[];
 }
 
+export class AssignUserToDepartmentDto {
+    @ApiProperty({
+        description: 'The IDs of the departments to assign the user to.',
+        example: [1, 2, 3],
+        type: [Number],
+    })
+    @IsNotEmpty({ each: true })
+    @IsNumber({}, { each: true })
+    departmentIds: number[];
+}
+
 export class UserResponseDto {
     @ApiProperty({
         description: 'The unique identifier for the user.',

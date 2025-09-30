@@ -13,10 +13,16 @@ import { ApiBearerAuth, ApiExtraModels, ApiParam, ApiTags } from '@nestjs/swagge
 import { UserService } from './user.service';
 import { User as UserModel } from '@prisma/client';
 import { NoScoping, Role, Roles, User } from '@app/shared/auth';
-import { ApiSuccessResponse, CreateUserDto, UpdateUserDto, UserResponseDto } from '../../shared/dto';
+import {
+    ApiSuccessResponse,
+    AssignUserToDepartmentDto,
+    CreateUserDto,
+    UpdateUserDto,
+    UserResponseDto,
+} from '../../shared/dto';
 import { ApiCrudOperation } from '../../shared/utils';
 import { UserContext } from '../../shared/interfaces';
-import { QueryDto } from '../../shared/dto/query.dto';
+import { QueryDto } from '@app/shared/utils';
 
 @ApiTags('Users')
 @ApiBearerAuth()
@@ -41,8 +47,9 @@ export class UserController {
     }
 
     @Get('roles')
-    @ApiCrudOperation(String, 'list', {
+    @ApiCrudOperation(String as any, 'list', {
         summary: 'Get all user roles',
+        arrayItemType: 'string',
         includeQueries: { pagination: false },
     })
     async getUserRoles() {
@@ -56,7 +63,6 @@ export class UserController {
             pagination: true,
             search: true,
             sort: true,
-            filters: ['isActive'],
         },
     })
     async getAllUsers(@Query() query: QueryDto) {
@@ -122,5 +128,19 @@ export class UserController {
     })
     async deleteUser(@Param('id') id: number): Promise<UserResponseDto> {
         return this.userService.deleteUser(id);
+    }
+
+    @Post(':id/assign-department')
+    @ApiParam({ name: 'id', description: 'ID of the user to assign department' })
+    @ApiCrudOperation(UserResponseDto, 'update', {
+        body: AssignUserToDepartmentDto,
+        summary: 'Assign a department to a user',
+        errorResponses: { notFound: true, badRequest: true },
+    })
+    async assignDepartment(
+        @Param('id') id: number,
+        @Body() assignUserToDepartmentDto: AssignUserToDepartmentDto
+    ): Promise<UserResponseDto> {
+        return this.userService.assignDepartment(id, assignUserToDepartmentDto.departmentIds);
     }
 }

@@ -10,21 +10,12 @@ import { Observable } from 'rxjs';
 import { map } from 'rxjs/operators';
 import { ApiMetaDto, ApiPaginatedResponse, ApiSuccessResponse } from '../dto/api-response.dto';
 import { PaginationResponseDto } from '../dto/pagination.dto';
-import { BYPASS_RESPONSE_INTERCEPTOR } from '../decorators/bypass-interceptor.decorator';
 
 @Injectable()
 export class ResponseInterceptor<T> implements NestInterceptor<T, ApiSuccessResponse<T>> {
     constructor(private readonly reflector: Reflector) {}
 
     intercept(context: ExecutionContext, next: CallHandler): Observable<any> {
-        const bypass = this.reflector.get<boolean>(
-            BYPASS_RESPONSE_INTERCEPTOR,
-            context.getHandler()
-        );
-
-        if (bypass) {
-            return next.handle();
-        }
 
         const httpContext = context.switchToHttp();
         const response = httpContext.getResponse();

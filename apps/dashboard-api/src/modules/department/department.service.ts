@@ -45,6 +45,17 @@ export class DepartmentService {
         };
     }
 
+    async getDepartmentsWithScope(scope?: DataScope) {
+        return this.departmentRepository.findMany(
+            {},
+            {},
+            { _count: { select: { employees: true, children: true } } },
+            undefined,
+            undefined,
+            scope
+        );
+    }
+
     async getDepartmentById(id: number, scope?: DataScope) {
         return this.departmentRepository.findById(
             id,
@@ -59,7 +70,7 @@ export class DepartmentService {
     }
 
     async createDepartment(
-        { organizationId, parentId,...data }: CreateDepartmentDto,
+        { organizationId, parentId, ...data }: CreateDepartmentDto,
         scope: DataScope
     ): Promise<Department> {
         return this.departmentRepository.create(

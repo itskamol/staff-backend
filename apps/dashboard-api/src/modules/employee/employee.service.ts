@@ -35,7 +35,7 @@ export class EmployeeService {
             }
         });
 
-        const orderBy = sort ? { [sort]: order || 'asc' } : { createdAt: 'desc' };
+        // const orderBy = sort ? { [sort]: order || 'asc' } : { createdAt: 'desc' };
         const pagination = { page, limit };
 
         const [employees, total] = await Promise.all([
@@ -52,12 +52,9 @@ export class EmployeeService {
 
         return {
             data: employees,
-            meta: {
-                total,
-                page,
-                limit,
-                totalPages: Math.ceil(total / limit),
-            },
+            total,
+            page,
+            limit,
         };
     }
 
@@ -75,21 +72,23 @@ export class EmployeeService {
             email: dto.email,
             photo: dto.photo,
             additionalDetails: dto.additionalDetails,
-            isActive: dto.isActive ?? true,
+            isActive: dto.isActive,
             department: {
                 connect: { id: dto.departmentId },
             },
-            ...(dto.policyId && {
-                policy: {
-                    connect: { id: dto.policyId },
-                },
-            }),
+            ...(dto.policyId
+                ? {
+                      policy: {
+                          connect: { id: dto.policyId },
+                      },
+                  }
+                : {}),
             organization: {
                 connect: { id: department.organizationId },
             },
         };
 
-        return await this.employeeRepository.createWithValidation(createData, scope, user.role);
+        return await this.employeeRepository.createWithValidation(createData, undefined, user.role);
     }
 
     async updateEmployee(id: number, dto: UpdateEmployeeDto, scope: DataScope, user: UserContext) {

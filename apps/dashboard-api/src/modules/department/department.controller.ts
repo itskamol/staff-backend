@@ -15,7 +15,7 @@ import { DataScope, Role, Roles } from '@app/shared/auth';
 import { ApiSuccessResponse, CreateDepartmentDto, DepartmentResponseDto, UpdateDepartmentDto } from '../../shared/dto';
 import { ApiCrudOperation, ApiErrorResponses, ApiOkResponseData } from '../../shared/utils';
 import { Scope } from '../../shared/decorators';
-import { QueryDto } from '../../shared/dto/query.dto';
+import { QueryDto } from '@app/shared/utils';
 
 @ApiTags('Departments')
 @ApiBearerAuth()
@@ -52,9 +52,8 @@ export class DepartmentController {
     @ApiOkResponseData(DepartmentResponseDto, {
         summary: "Get the current authenticated user's department",
     })
-    @ApiErrorResponses({ forbidden: true, notFound: true })
     async getCurrentDepartment(@Scope() scope: DataScope) {
-        return this.departmentService.getDepartments({ limit: 1 }, scope);
+        return this.departmentService.getDepartmentsWithScope(scope);
     }
 
     @Get(':id')

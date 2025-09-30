@@ -14,16 +14,4 @@ export class PaginationDto {
     @Min(1)
     @Max(100)
     limit?: number = 10;
-
-    @IsOptional()
-    @IsString()
-    sort?: string;
-
-    @IsOptional()
-    @IsString()
-    order?: 'asc' | 'desc' = 'asc';
-
-    @IsOptional()
-    @IsString()
-    search?: string;
 }

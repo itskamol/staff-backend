@@ -1,15 +1,17 @@
 import { ConflictException, Injectable, NotFoundException } from '@nestjs/common';
-import { Prisma, User } from '@prisma/client';
+import { Prisma, Role, User } from '@prisma/client';
 import { UserRepository } from './user.repository';
 import { LoggerService } from '../../core/logger';
 import { CreateUserDto, UpdateCurrentUserDto, UpdateUserDto } from '../../shared/dto';
 import { PasswordUtil } from '../../shared/utils';
 import { QueryDto } from '../../shared/dto/query.dto';
+import { PrismaService } from '@app/shared/database';
 
 @Injectable()
 export class UserService {
     constructor(
         private readonly userRepository: UserRepository,
+        private readonly prisma: PrismaService,
         private readonly logger: LoggerService
     ) {}
 
@@ -100,6 +102,29 @@ export class UserService {
         }
 
         return this.userRepository.update(id, updateUserDto);
+    }
+
+    async assignDepartment(id: number, departmentIds: number[]): Promise<Omit<User, 'password'>> {
+        const user = await this.userRepository.findById(id);
+        if (!user) {
+            throw new NotFoundException('User not found');
+        }
+
+        if (user.role !== Role.DEPARTMENT_LEAD) {
+            throw new ConflictException(
+                'Only users with DEPARTMENT_LEAD role can be assigned departments'
+            );
+        }
+
+        await this.userRepository.update(id, {
+            departmentUsers: {
+                createMany: {
+                    data: departmentIds.map(departmentId => ({ departmentId })),
+                },
+            },
+        });
+
+        return this.findById(id);
     }
 
     async getAllUsers({ search, isActive, sort, order, page, limit }: QueryDto) {

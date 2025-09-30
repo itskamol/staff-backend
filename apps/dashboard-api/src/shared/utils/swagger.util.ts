@@ -180,6 +180,32 @@ export const ApiQueries = (
     return applyDecorators(...queries);
 };
 
+export const ApiOkResponseArray = (
+    itemType: 'string' | 'number' | 'boolean' | Type<unknown>,
+    options?: { summary?: string }
+) =>
+    applyDecorators(
+        ApiOperation({ summary: options?.summary || 'Successful Operation' }),
+        ApiOkResponse({
+            schema: {
+                allOf: [
+                    { $ref: getSchemaPath(ApiSuccessResponse) },
+                    {
+                        properties: {
+                            data: {
+                                type: 'array',
+                                items:
+                                    typeof itemType === 'string'
+                                        ? { type: itemType }
+                                        : { $ref: getSchemaPath(itemType) },
+                            },
+                        },
+                    },
+                ],
+            },
+        })
+    );
+
 // Combined decorator for common CRUD operations
 export const ApiCrudOperation = <DataDto extends Type<unknown>>(
     dataDto: DataDto,
@@ -189,6 +215,7 @@ export const ApiCrudOperation = <DataDto extends Type<unknown>>(
         body?: Type;
         includeQueries?: ApiQueriesOptions;
         errorResponses?: ErrorResponseTypes;
+        arrayItemType?: 'string' | 'number' | 'boolean';
     }
 ) => {
     const decorators: any[] = [];
@@ -253,18 +280,31 @@ export const ApiCrudOperation = <DataDto extends Type<unknown>>(
             );
             break;
         case 'list':
+            if (options?.arrayItemType) {
+                decorators.push(
+                    ApiOkResponseArray(options.arrayItemType, {
+                        summary: options?.summary || `Get list`,
+                    })
+                );
+            } else {
+                decorators.push(
+                    ...(options?.includeQueries?.pagination
+                        ? [
+                              ApiOkResponsePaginated(dataDto, {
+                                  summary:
+                                      options?.summary || `Get ${dataDto.name.toLowerCase()} list`,
+                              }),
+                          ]
+                        : [
+                              ApiOkResponseData(dataDto, {
+                                  summary:
+                                      options?.summary || `Get ${dataDto.name.toLowerCase()} list`,
+                              }),
+                          ])
+                );
+            }
+
             decorators.push(
-                ...(options?.includeQueries?.pagination
-                    ? [
-                          ApiOkResponsePaginated(dataDto, {
-                              summary: options?.summary || `Get ${dataDto.name.toLowerCase()} list`,
-                          }),
-                      ]
-                    : [
-                          ApiOkResponseData(dataDto, {
-                              summary: options?.summary || `Get ${dataDto.name.toLowerCase()} list`,
-                          }),
-                      ]),
                 ApiQueries(options?.includeQueries || { pagination: true }),
                 ApiErrorResponses({
                     unauthorized: true,

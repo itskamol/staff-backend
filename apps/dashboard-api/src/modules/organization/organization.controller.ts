@@ -19,10 +19,10 @@ import {
 } from '../../shared/dto';
 import { DataScope, NoScoping, Role, Roles } from '@app/shared/auth';
 import { ApiCrudOperation } from '../../shared/utils';
-import { QueryDto } from '../../shared/dto/query.dto';
 import { Scope } from '../../shared/decorators';
+import { QueryDto } from '@app/shared/utils';
 
-@ApiTags('Organization')
+@ApiTags('Organizations')
 @ApiBearerAuth()
 @Controller('organizations')
 @ApiExtraModels(ApiSuccessResponse, OrganizationResponseDto)

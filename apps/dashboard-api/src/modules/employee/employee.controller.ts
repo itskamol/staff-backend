@@ -3,7 +3,6 @@ import {
     Controller,
     Delete,
     Get,
-    NotFoundException,
     Param,
     Post,
     Put,
@@ -19,9 +18,10 @@ import { EmployeeService } from './employee.service';
 import { ActivityReportResponseDto, ApiSuccessResponse, AssignCardDto, AssignCarDto, ComputerUserResponseDto, CreateEmployeeDto, EmployeeResponseDto, EntryLogResponseDto, LinkComputerUserDto, UpdateEmployeeDto } from '../../shared/dto';
 import { ApiCrudOperation, ApiErrorResponses, ApiOkResponseData } from '../../shared/utils';
 import { DataScope, Role, Roles, User } from '@app/shared/auth';
-import { QueryDto } from '../../shared/dto/query.dto';
 import { UserContext } from '../../shared/interfaces';
 import { Scope } from '../../shared/decorators';
+import { QueryDto } from '@app/shared/utils';
+
 @ApiTags('Employees')
 @ApiBearerAuth()
 @Controller('employees')
@@ -99,7 +99,6 @@ export class EmployeeController {
     @ApiOkResponseData(EntryLogResponseDto, {
         summary: 'Get employee entry logs'
     })
-    @ApiErrorResponses({ forbidden: true, notFound: true })
     async getEmployeeEntryLogs(
         @Param('id') id: number,
         @Query() query: QueryDto,
@@ -115,7 +114,6 @@ export class EmployeeController {
     @ApiOkResponseData(ActivityReportResponseDto, {
         summary: 'Get employee activity report'
     })
-    @ApiErrorResponses({ forbidden: true, notFound: true })
     async getEmployeeActivityReport(
         @Param('id') id: number,
         @Query() query: QueryDto,
@@ -131,7 +129,6 @@ export class EmployeeController {
     @ApiOkResponseData(ComputerUserResponseDto, {
         summary: 'Get employee computer users'
     })
-    @ApiErrorResponses({ forbidden: true, notFound: true })
     async getEmployeeComputerUsers(
         @Param('id') id: number,
         @Scope() scope: DataScope,
@@ -195,7 +192,6 @@ export class EmployeeController {
     @ApiOkResponseData(Object, {
         summary: 'Unlink computer user from employee'
     })
-    @ApiErrorResponses({ forbidden: true, notFound: true })
     async unlinkComputerUserFromEmployee(
         @Param('id') id: number,
         @Param('computer_user_id') computerUserId: number,

@@ -115,7 +115,7 @@ model Employee {
   department    Department     @relation(fields: [departmentId], references: [id])
   policy        Policy?        @relation(fields: [policyId], references: [id])
   credentials   Credential[]
-  computerUsers ComputerUser[]
+  ll ComputerUser[]
   actions       Action[]
   organization  Organization   @relation(fields: [organizationId], references: [id])
 

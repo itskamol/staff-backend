@@ -5,5 +5,6 @@ export * from './lib/database/database.util';
 export * from './lib/query/query-builder.util';
 export * from './lib/dto/api-response.dto';
 export * from './lib/dto/pagination.dto';
+export * from './lib/dto/query.dto';
 export * from './lib/interceptors/response.interceptor';
 export * from './lib/filters/global-exception.filter';
