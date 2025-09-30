@@ -35,27 +35,19 @@ export class EmployeeService {
             }
         });
 
-        // const orderBy = sort ? { [sort]: order || 'asc' } : { createdAt: 'desc' };
         const pagination = { page, limit };
 
-        const [employees, total] = await Promise.all([
-            this.employeeRepository.findManyWithRoleScope(
-                whereClause,
-                { createdAt: 'desc' },
-                undefined,
-                pagination,
-                scope,
-                user.role
-            ),
-            this.employeeRepository.countWithRoleScope(whereClause, scope, user.role),
-        ]);
+        return this.employeeRepository.findManyWithPagination(
+            whereClause,
+            sort ? { [sort]: order || 'asc' } : { createdAt: 'desc' },
+            { department: { select: { shortName: true } } },
+            pagination,
+            scope
+        );
+    }
 
-        return {
-            data: employees,
-            total,
-            page,
-            limit,
-        };
+    async getEmployeeById(id: number, scope: DataScope, user: UserContext) {
+        return this.employeeRepository.findByIdWithRoleScope(id, undefined, scope, user.role);
     }
 
     async createEmployee(dto: CreateEmployeeDto, scope: DataScope, user: UserContext) {

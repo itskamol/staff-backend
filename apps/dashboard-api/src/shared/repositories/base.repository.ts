@@ -240,14 +240,6 @@ export abstract class BaseRepository<
         include?: TInclude,
         scope?: DataScope
     ): Promise<TEntity> {
-        if (!id) {
-            throw new BadRequestException('ID is required');
-        }
-
-        if (!data || Object.keys(data).length === 0) {
-            throw new BadRequestException('Update data is required');
-        }
-
         this.logger.debug(`Updating ${this.modelName} with ID ${id}:`, data);
 
         // First verify the record exists and is accessible with scope
@@ -288,10 +280,6 @@ export abstract class BaseRepository<
      * Delete a record by ID
      */
     async delete(id: string | number, scope?: DataScope): Promise<TEntity> {
-        if (!id) {
-            throw new BadRequestException('ID is required');
-        }
-
         this.logger.debug(`Deleting ${this.modelName} with ID: ${id}`);
 
         // First verify the record exists and is accessible with scope

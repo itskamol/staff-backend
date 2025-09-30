@@ -49,7 +49,7 @@ export class OrganizationController {
             pagination: true,
             search: true,
             sort: true,
-            filters: ['isActive'],
+            filters: { isActive: Boolean },
         },
     })
     async getAllOrganizations(@Query() query: QueryDto) {

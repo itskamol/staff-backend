@@ -9,24 +9,35 @@ import {
     Query,
     ParseIntPipe,
 } from '@nestjs/common';
-import { ApiTags, ApiOperation, ApiResponse } from '@nestjs/swagger';
+import { ApiTags, ApiBearerAuth } from '@nestjs/swagger';
 import { Roles, Role, User as CurrentUser } from '@app/shared/auth';
 import { ApiResponseDto, PaginationDto } from '@app/shared/utils';
 import { VisitorService } from './visitor.service';
 import { CreateVisitorDto, UpdateVisitorDto, GenerateCodeDto } from './dto/visitor.dto';
+import { ApiCrudOperation } from '../../shared/utils';
+import { UserContext } from '../../shared/interfaces';
+import { Action, OnetimeCode } from '@prisma/client';
 
 @ApiTags('Visitors')
+@ApiBearerAuth()
 @Controller('visitors')
 export class VisitorController {
     constructor(private readonly visitorService: VisitorService) {}
 
     @Get()
     @Roles(Role.ADMIN, Role.HR, Role.DEPARTMENT_LEAD, Role.GUARD)
-    @ApiOperation({ summary: 'Get all visitors' })
-    @ApiResponse({ status: 200, description: 'Visitors retrieved successfully' })
+    @ApiCrudOperation(ApiResponseDto, 'list', {
+        summary: 'Get all visitors with pagination',
+        includeQueries: {
+            pagination: true,
+            search: true,
+            sort: true,
+            filters: { isActive: Boolean },
+        },
+    })
     async findAll(
         @Query() paginationDto: PaginationDto,
-        @CurrentUser() user: any
+        @CurrentUser() user: UserContext
     ): Promise<ApiResponseDto> {
         const result = await this.visitorService.findAll(paginationDto, user);
         return ApiResponseDto.success(result, 'Visitors retrieved successfully');
@@ -34,12 +45,13 @@ export class VisitorController {
 
     @Get(':id')
     @Roles(Role.ADMIN, Role.HR, Role.DEPARTMENT_LEAD, Role.GUARD)
-    @ApiOperation({ summary: 'Get visitor by ID' })
-    @ApiResponse({ status: 200, description: 'Visitor retrieved successfully' })
-    @ApiResponse({ status: 404, description: 'Visitor not found' })
+    @ApiCrudOperation(ApiResponseDto, 'get', {
+        summary: 'Get visitor by ID',
+        errorResponses: { notFound: true },
+    })
     async findOne(
         @Param('id', ParseIntPipe) id: number,
-        @CurrentUser() user: any
+        @CurrentUser() user: UserContext
     ): Promise<ApiResponseDto> {
         const visitor = await this.visitorService.findOne(id, user);
         return ApiResponseDto.success(visitor, 'Visitor retrieved successfully');
@@ -47,26 +59,31 @@ export class VisitorController {
 
     @Post()
     @Roles(Role.ADMIN, Role.HR)
-    @ApiOperation({ summary: 'Create new visitor' })
-    @ApiResponse({ status: 201, description: 'Visitor created successfully' })
-    @ApiResponse({ status: 400, description: 'Invalid input data' })
+    @ApiCrudOperation(ApiResponseDto, 'create', {
+        body: CreateVisitorDto,
+        summary: 'Create a new visitor',
+        errorResponses: { badRequest: true, conflict: true },
+    })
     async create(
         @Body() createVisitorDto: CreateVisitorDto,
-        @CurrentUser() user: any
+        @CurrentUser() user: UserContext
     ): Promise<ApiResponseDto> {
+        console.log('Current User:', user);
         const visitor = await this.visitorService.create(createVisitorDto, user);
         return ApiResponseDto.success(visitor, 'Visitor created successfully');
     }
 
     @Put(':id')
     @Roles(Role.ADMIN, Role.HR)
-    @ApiOperation({ summary: 'Update visitor' })
-    @ApiResponse({ status: 200, description: 'Visitor updated successfully' })
-    @ApiResponse({ status: 404, description: 'Visitor not found' })
+    @ApiCrudOperation(ApiResponseDto, 'update', {
+        body: UpdateVisitorDto,
+        summary: 'Update visitor details',
+        errorResponses: { badRequest: true, notFound: true, conflict: true },
+    })
     async update(
         @Param('id', ParseIntPipe) id: number,
         @Body() updateVisitorDto: UpdateVisitorDto,
-        @CurrentUser() user: any
+        @CurrentUser() user: UserContext
     ): Promise<ApiResponseDto> {
         const visitor = await this.visitorService.update(id, updateVisitorDto, user);
         return ApiResponseDto.success(visitor, 'Visitor updated successfully');
@@ -74,12 +91,13 @@ export class VisitorController {
 
     @Delete(':id')
     @Roles(Role.ADMIN, Role.HR)
-    @ApiOperation({ summary: 'Delete visitor' })
-    @ApiResponse({ status: 200, description: 'Visitor deleted successfully' })
-    @ApiResponse({ status: 404, description: 'Visitor not found' })
+    @ApiCrudOperation(ApiResponseDto, 'delete', {
+        summary: 'Delete a visitor',
+        errorResponses: { notFound: true },
+    })
     async remove(
         @Param('id', ParseIntPipe) id: number,
-        @CurrentUser() user: any
+        @CurrentUser() user: UserContext
     ): Promise<ApiResponseDto> {
         await this.visitorService.remove(id, user);
         return ApiResponseDto.success(null, 'Visitor deleted successfully');
@@ -87,13 +105,15 @@ export class VisitorController {
 
     @Post(':id/generate-code')
     @Roles(Role.ADMIN, Role.HR)
-    @ApiOperation({ summary: 'Generate onetime code for visitor' })
-    @ApiResponse({ status: 200, description: 'Code generated successfully' })
-    @ApiResponse({ status: 404, description: 'Visitor not found' })
+    @ApiCrudOperation(ApiResponseDto, 'create', {
+        body: GenerateCodeDto,
+        summary: 'Generate a visitor code',
+        errorResponses: { badRequest: true, notFound: true },
+    })
     async generateCode(
         @Param('id', ParseIntPipe) id: number,
         @Body() generateCodeDto: GenerateCodeDto,
-        @CurrentUser() user: any
+        @CurrentUser() user: UserContext
     ): Promise<ApiResponseDto> {
         const code = await this.visitorService.generateCode(id, generateCodeDto, user);
         return ApiResponseDto.success(code, 'Code generated successfully');
@@ -101,12 +121,18 @@ export class VisitorController {
 
     @Get(':id/entry-logs')
     @Roles(Role.ADMIN, Role.HR, Role.DEPARTMENT_LEAD, Role.GUARD)
-    @ApiOperation({ summary: 'Get visitor entry logs' })
-    @ApiResponse({ status: 200, description: 'Entry logs retrieved successfully' })
+    @ApiCrudOperation(ApiResponseDto<Action>, 'list', {
+        summary: 'Get entry logs for a visitor with pagination',
+        includeQueries: {
+            pagination: true,
+            sort: true,
+        },
+        errorResponses: { notFound: true },
+    })
     async getEntryLogs(
         @Param('id', ParseIntPipe) id: number,
         @Query() paginationDto: PaginationDto,
-        @CurrentUser() user: any
+        @CurrentUser() user: UserContext
     ): Promise<ApiResponseDto> {
         const result = await this.visitorService.getEntryLogs(id, paginationDto, user);
         return ApiResponseDto.success(result, 'Entry logs retrieved successfully');
@@ -114,9 +140,10 @@ export class VisitorController {
 
     @Get('validate-code/:code')
     @Roles(Role.ADMIN, Role.HR, Role.DEPARTMENT_LEAD, Role.GUARD)
-    @ApiOperation({ summary: 'Validate visitor code' })
-    @ApiResponse({ status: 200, description: 'Code validated successfully' })
-    @ApiResponse({ status: 404, description: 'Invalid or expired code' })
+    @ApiCrudOperation(ApiResponseDto<OnetimeCode>, 'get', {
+        summary: 'Validate a visitor code',
+        errorResponses: { notFound: true, badRequest: true },
+    })
     async validateCode(@Param('code') code: string): Promise<ApiResponseDto> {
         const result = await this.visitorService.validateCode(code);
         return ApiResponseDto.success(result, 'Code validated successfully');
@@ -124,12 +151,13 @@ export class VisitorController {
 
     @Put('codes/:codeId/deactivate')
     @Roles(Role.ADMIN, Role.HR)
-    @ApiOperation({ summary: 'Deactivate visitor code' })
-    @ApiResponse({ status: 200, description: 'Code deactivated successfully' })
-    @ApiResponse({ status: 404, description: 'Code not found' })
+    @ApiCrudOperation(ApiResponseDto<OnetimeCode>, 'update', {
+        summary: 'Deactivate a visitor code',
+        errorResponses: { notFound: true, badRequest: true },
+    })
     async deactivateCode(
         @Param('codeId', ParseIntPipe) codeId: number,
-        @CurrentUser() user: any
+        @CurrentUser() user: UserContext
     ): Promise<ApiResponseDto> {
         const result = await this.visitorService.deactivateCode(codeId, user);
         return ApiResponseDto.success(result, 'Code deactivated successfully');

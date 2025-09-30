@@ -136,27 +136,14 @@ export class UserService {
             ];
         }
 
-        if (typeof isActive === 'boolean') {
-            filters.isActive = isActive;
-        }
+        if (isActive) filters.isActive = isActive;
 
-        const [data, total] = await Promise.all([
-            this.userRepository.findMany(
-                filters,
-                { [sort]: order },
-                undefined,
-                { page, limit },
-                { password: false }
-            ),
-            this.userRepository.count(filters),
-        ]);
-
-        return {
-            data,
-            total,
-            page,
-            limit,
-        };
+        return this.userRepository.findManyWithPagination(
+            filters,
+            { [sort]: order },
+            { departmentUsers: { select: { departmentId: true } } },
+            { page, limit }
+        );
     }
 
     async deleteUser(id: number): Promise<Omit<User, 'password'>> {

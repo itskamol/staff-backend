@@ -22,7 +22,6 @@ export class QueryDto extends PaginationDto {
     })
     @ApiProperty({
         description: 'Filter by active status',
-        example: true,
         type: Boolean,
         required: false,
         enum: [true, false],

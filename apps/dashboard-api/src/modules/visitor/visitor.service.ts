@@ -3,13 +3,14 @@ import { PrismaService } from '@app/shared/database';
 import { Role } from '@app/shared/auth';
 import { QueryBuilderUtil, PaginationDto, EncryptionUtil } from '@app/shared/utils';
 import { CreateVisitorDto, UpdateVisitorDto, GenerateCodeDto } from './dto/visitor.dto';
+import { UserContext } from '../../shared/interfaces';
 // import * as QRCode from 'qrcode'; // TODO: Install qrcode package
 
 @Injectable()
 export class VisitorService {
     constructor(private readonly prisma: PrismaService) {}
 
-    async findAll(paginationDto: PaginationDto, user: any) {
+    async findAll(paginationDto: PaginationDto, user: UserContext) {
         const query = QueryBuilderUtil.buildQuery(paginationDto);
 
         // Apply role-based filtering
@@ -77,7 +78,7 @@ export class VisitorService {
         );
     }
 
-    async findOne(id: number, user: any) {
+    async findOne(id: number, user: UserContext) {
         const visitor = await this.prisma.visitor.findUnique({
             where: { id },
             select: {
@@ -148,37 +149,18 @@ export class VisitorService {
         return visitor;
     }
 
-    async create(createVisitorDto: CreateVisitorDto, user: any) {
+    async create(createVisitorDto: CreateVisitorDto, user: UserContext) {
         const visitor = await this.prisma.visitor.create({
             data: {
                 ...createVisitorDto,
-                creatorId: user.id,
-            },
-            select: {
-                id: true,
-                firstName: true,
-                lastName: true,
-                middleName: true,
-                birthday: true,
-                phone: true,
-                passportNumber: true,
-                pinfl: true,
-                workPlace: true,
-                additionalDetails: true,
-                createdAt: true,
-                creator: {
-                    select: {
-                        id: true,
-                        name: true,
-                    },
-                },
+                creator: { connect: { id: +user.sub } },
             },
         });
 
         return visitor;
     }
 
-    async update(id: number, updateVisitorDto: UpdateVisitorDto, user: any) {
+    async update(id: number, updateVisitorDto: UpdateVisitorDto, user: UserContext) {
         // Check if visitor exists and access permissions
         await this.findOne(id, user);
 
@@ -203,7 +185,7 @@ export class VisitorService {
         return visitor;
     }
 
-    async remove(id: number, user: any) {
+    async remove(id: number, user: UserContext) {
         // Check if visitor exists and access permissions
         const visitor = await this.findOne(id, user);
 
@@ -227,7 +209,7 @@ export class VisitorService {
         });
     }
 
-    async generateCode(id: number, generateCodeDto: GenerateCodeDto, user: any) {
+    async generateCode(id: number, generateCodeDto: GenerateCodeDto, user: UserContext) {
         // Check if visitor exists and access permissions
         const visitor = await this.findOne(id, user);
 
@@ -305,7 +287,7 @@ export class VisitorService {
         }
     }
 
-    async getEntryLogs(id: number, paginationDto: PaginationDto, user: any) {
+    async getEntryLogs(id: number, paginationDto: PaginationDto, user: UserContext) {
         // Check access permissions first
         await this.findOne(id, user);
 
@@ -384,7 +366,7 @@ export class VisitorService {
         return onetimeCode;
     }
 
-    async deactivateCode(codeId: number, user: any) {
+    async deactivateCode(codeId: number, user: UserContext) {
         // Check if code exists and user has access
         const onetimeCode = await this.prisma.onetimeCode.findUnique({
             where: { id: codeId },

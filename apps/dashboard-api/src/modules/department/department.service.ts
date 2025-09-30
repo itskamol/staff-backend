@@ -25,24 +25,15 @@ export class DepartmentService {
             filters.isActive = isActive;
         }
 
-        const [data, total] = await Promise.all([
-            this.departmentRepository.findMany(
-                filters,
-                { [sort]: order },
-                { _count: { select: { employees: true, children: true } } },
-                { page, limit },
-                undefined,
-                scope
-            ),
-            this.departmentRepository.count(filters, scope),
-        ]);
+        const result = await this.departmentRepository.findManyWithPagination(
+            filters,
+            { [sort]: order },
+            { _count: { select: { employees: true, children: true } } },
+            { page, limit },
+            scope,
+        );
 
-        return {
-            data,
-            total,
-            page,
-            limit,
-        };
+        return result;
     }
 
     async getDepartmentsWithScope(scope?: DataScope) {

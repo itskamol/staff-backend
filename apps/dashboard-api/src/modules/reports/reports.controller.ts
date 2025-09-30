@@ -10,6 +10,8 @@ import {
     DeviceUsageReportDto,
     ReportType,
 } from './dto/reports.dto';
+import { ApiCrudOperation } from '../../shared/utils';
+import { UserContext } from '../../shared/interfaces';
 
 @ApiTags('Reports')
 @ApiBearerAuth()
@@ -19,13 +21,14 @@ export class ReportsController {
 
     @Post('generate')
     @Roles(Role.ADMIN, Role.HR, Role.DEPARTMENT_LEAD)
-    @ApiOperation({ summary: 'Generate comprehensive report' })
-    @ApiResponse({ status: 200, description: 'Report generated successfully' })
-    @ApiResponse({ status: 400, description: 'Invalid report parameters' })
-    @ApiResponse({ status: 403, description: 'Access denied' })
+    @ApiCrudOperation(PaginationDto, 'create', {
+        body: GenerateReportDto,
+        summary: 'Generate a new report',
+        errorResponses: { badRequest: true, forbidden: true },
+    })
     async generateReport(
         @Body() generateReportDto: GenerateReportDto,
-        @CurrentUser() user: any
+        @CurrentUser() user: UserContext
     ): Promise<ApiResponseDto> {
         const report = await this.reportsService.generateReport(generateReportDto, user);
         return ApiResponseDto.success(report, 'Report generated successfully');

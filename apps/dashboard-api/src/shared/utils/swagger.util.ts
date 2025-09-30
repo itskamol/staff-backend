@@ -98,11 +98,11 @@ type ApiQueriesOptions = {
     pagination?: boolean;
     search?: boolean;
     sort?: boolean;
-    filters?: string[]; // Additional filter fields
+    filters?: Record<string, Type<unknown>>;
 };
 
 export const ApiQueries = (
-    { pagination = true, search = false, sort = false, filters = [] }: ApiQueriesOptions = {},
+    { pagination = true, search = false, sort = false, filters = {} }: ApiQueriesOptions = {},
     customQueries?: ApiQueryOptions[]
 ) => {
     const queries: any[] = [];
@@ -159,14 +159,14 @@ export const ApiQueries = (
     }
 
     // Add filter queries
-    if (filters?.length) {
-        filters.forEach(filter => {
+    if (filters && Object.keys(filters).length) {
+        Object.entries(filters).forEach(([field, type]) => {
             queries.push(
                 ApiQuery({
-                    name: filter,
+                    name: field,
                     required: false,
-                    type: String,
-                    description: `Filter by ${filter}`,
+                    type: type,
+                    description: `Filter by ${field}`,
                 })
             );
         });

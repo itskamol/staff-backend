@@ -72,7 +72,7 @@ export class OrganizationService {
         return this.organizationRepository.update(id, data, undefined, scope);
     }
 
-    async deleteOrganization(id: number, scope?: DataScope) {
+    async deleteOrganization(id: number, scope?: DataScope) {       
         return this.organizationRepository.delete(id, scope);
     }
 }

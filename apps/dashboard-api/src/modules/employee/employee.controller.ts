@@ -3,6 +3,7 @@ import {
     Controller,
     Delete,
     Get,
+    NotFoundException,
     Param,
     Post,
     Put,
@@ -35,9 +36,9 @@ export class EmployeeController {
         summary: 'Get all employees',
         includeQueries: { 
             pagination: true, 
-            search: true, 
-            sort: true, 
-            filters: ['isActive', 'departmentId'] 
+            search: true,
+            sort: true,
+            filters: { isActive: Boolean, departmentId: Number },
         }
     })
     async getAllEmployees(
@@ -60,6 +61,24 @@ export class EmployeeController {
         @User() user: UserContext
     ) {
         return this.employeeService.createEmployee(dto, scope, user);
+    }
+
+    @Get(':id')
+    @Roles(Role.ADMIN, Role.HR, Role.DEPARTMENT_LEAD, Role.GUARD)
+    @ApiParam({ name: 'id', description: 'Employee ID' })
+    @ApiCrudOperation(EmployeeResponseDto, 'get', {
+        summary: 'Get an employee by ID'
+    })
+    async getEmployeeById(
+        @Param('id') id: number,
+        @Scope() scope: DataScope,
+        @User() user: UserContext
+    ) {
+        const employee = await this.employeeService.getEmployeeById(id, scope, user);
+        if (!employee) {
+            throw new NotFoundException('Employee not found');
+        }
+        return employee;
     }
 
     @Put(':id')

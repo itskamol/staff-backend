@@ -41,7 +41,7 @@ export class DepartmentController {
             pagination: true,
             search: true,
             sort: true,
-            filters: ['isActive'],
+            filters: { isActive: Boolean },
         },
     })
     async getAllDepartments(@Query() query: QueryDto, @Scope() scope: DataScope) {
