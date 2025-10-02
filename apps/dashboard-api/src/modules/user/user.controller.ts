@@ -17,6 +17,7 @@ import {
     ApiSuccessResponse,
     AssignUserToDepartmentDto,
     CreateUserDto,
+    UpdateCurrentUserDto,
     UpdateUserDto,
     UserResponseDto,
 } from '../../shared/dto';
@@ -100,10 +101,10 @@ export class UserController {
         summary: 'Update current user',
     })
     async updateCurrentUser(
-        @Body() updateUserDto: UpdateUserDto,
+        @Body() updateUserDto: UpdateCurrentUserDto,
         @User() user: UserContext
     ): Promise<UserResponseDto> {
-        return this.userService.updateUser(+user.sub, updateUserDto);
+        return this.userService.updateCurrentUser(+user.sub, updateUserDto);
     }
 
     @Put(':id')
@@ -117,7 +118,7 @@ export class UserController {
         @Body() updateUserDto: UpdateUserDto,
         @User() user: UserContext
     ): Promise<UserResponseDto> {
-        return this.userService.updateUser(id, updateUserDto);
+        return this.userService.updateUser(id, updateUserDto, user);
     }
 
     @Delete(':id')
@@ -126,8 +127,8 @@ export class UserController {
         summary: 'Delete a user',
         errorResponses: { notFound: true },
     })
-    async deleteUser(@Param('id') id: number): Promise<UserResponseDto> {
-        return this.userService.deleteUser(id);
+    async deleteUser(@Param('id') id: number, @User() user: UserContext): Promise<UserResponseDto> {
+        return this.userService.deleteUser(id, user);
     }
 
     @Post(':id/assign-department')

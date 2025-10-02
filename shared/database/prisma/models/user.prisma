@@ -1,0 +1,31 @@
+model User {
+    id             Int    @id @default(autoincrement())
+    name           String
+    username       String @unique
+    password       String
+    organizationId Int?   @map("organization_id")
+    role           Role
+
+    // --- Standard Fields ---
+    isActive  Boolean  @default(true) @map("is_active")
+    createdAt DateTime @default(now()) @map("created_at")
+    updatedAt DateTime @updatedAt @map("updated_at")
+
+    organization    Organization?    @relation(fields: [organizationId], references: [id])
+    createdVisitors Visitor[]        @relation("CreatedVisitors")
+    changeHistories ChangeHistory[]
+    departmentUsers DepartmentUser[]
+
+    @@map("users")
+}
+
+model DepartmentUser {
+    userId       Int @map("user_id")
+    departmentId Int @map("department_id")
+
+    user       User       @relation(fields: [userId], references: [id])
+    department Department @relation(fields: [departmentId], references: [id])
+
+    @@id([userId, departmentId])
+    @@map("department_users")
+}

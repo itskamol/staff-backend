@@ -4,17 +4,19 @@ import { Role } from '@app/shared/auth';
 import { QueryBuilderUtil, PaginationDto } from '@app/shared/utils';
 import { CreatePolicyDto, UpdatePolicyDto } from './dto/policy.dto';
 import { UserContext } from '../../shared/interfaces';
+import { PolicyRepository } from './repositories/policy.repository';
 
 @Injectable()
 export class PolicyService {
-    constructor(private readonly prisma: PrismaService) {}
+    constructor(
+        private readonly prisma: PrismaService,
+        private readonly policyRepository: PolicyRepository,
+    ) {}
 
     async findAll(paginationDto: PaginationDto, user: UserContext) {
         const query = QueryBuilderUtil.buildQuery(paginationDto);
 
-        // Apply role-based filtering
         if (user.role === Role.HR) {
-            // HR can only see policies from their organization
             query.where.employees = {
                 some: {
                     department: {
@@ -33,9 +35,6 @@ export class PolicyService {
                 select: {
                     id: true,
                     title: true,
-                    activeWindow: true,
-                    screenshot: true,
-                    visitedSites: true,
                     isActive: true,
                     createdAt: true,
                     updatedAt: true,
@@ -63,58 +62,9 @@ export class PolicyService {
             select: {
                 id: true,
                 title: true,
-                activeWindow: true,
-                screenshot: true,
-                visitedSites: true,
                 isActive: true,
                 createdAt: true,
                 updatedAt: true,
-                screenshotOptions: {
-                    select: {
-                        id: true,
-                        interval: true,
-                        isGrayscale: true,
-                        captureAllWindow: true,
-                    },
-                },
-                visitedSitesOptions: {
-                    select: {
-                        id: true,
-                        usefulGroup: {
-                            select: {
-                                id: true,
-                                title: true,
-                                type: true,
-                            },
-                        },
-                        unusefulGroup: {
-                            select: {
-                                id: true,
-                                title: true,
-                                type: true,
-                            },
-                        },
-                    },
-                },
-                activeWindowsOptions: {
-                    select: {
-                        id: true,
-                        usefulGroup: {
-                            select: {
-                                id: true,
-                                title: true,
-                                type: true,
-                            },
-                        },
-                        unusefulGroup: {
-                            select: {
-                                id: true,
-                                title: true,
-                                type: true,
-                            },
-                        },
-                    },
-                },
                 employees: {
                     select: {
                         id: true,
@@ -154,9 +104,6 @@ export class PolicyService {
             select: {
                 id: true,
                 title: true,
-                activeWindow: true,
-                screenshot: true,
-                visitedSites: true,
                 isActive: true,
                 createdAt: true,
                 updatedAt: true,
@@ -176,9 +123,6 @@ export class PolicyService {
             select: {
                 id: true,
                 title: true,
-                activeWindow: true,
-                screenshot: true,
-                visitedSites: true,
                 isActive: true,
                 createdAt: true,
                 updatedAt: true,

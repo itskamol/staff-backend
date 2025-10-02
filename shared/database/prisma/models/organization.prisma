@@ -1,0 +1,46 @@
+model Organization {
+    id                Int     @id @default(autoincrement())
+    fullName          String  @map("full_name")
+    shortName         String  @unique @map("short_name")
+    address           String?
+    phone             String?
+    email             String?
+    logo              String?
+    additionalDetails String? @map("additional_details")
+
+    // --- Standard Fields ---
+    isActive  Boolean  @default(true) @map("is_active")
+    createdAt DateTime @default(now()) @map("created_at")
+    updatedAt DateTime @updatedAt @map("updated_at")
+
+    users       User[]
+    departments Department[]
+    employees   Employee[]
+
+    @@map("organizations")
+}
+
+model Department {
+    id                Int     @id @default(autoincrement())
+    organizationId    Int     @map("organization_id")
+    parentId          Int?    @map("parent_id")
+    fullName          String  @map("full_name")
+    shortName         String  @map("short_name")
+    address           String?
+    phone             String?
+    email             String?
+    additionalDetails String? @map("additional_details")
+
+    // --- Standard Fields ---
+    isActive  Boolean  @default(true) @map("is_active")
+    createdAt DateTime @default(now()) @map("created_at")
+    updatedAt DateTime @updatedAt @map("updated_at")
+
+    organization    Organization     @relation(fields: [organizationId], references: [id])
+    parent          Department?      @relation("DepartmentHierarchy", fields: [parentId], references: [id])
+    children        Department[]     @relation("DepartmentHierarchy")
+    employees       Employee[]
+    departmentUsers DepartmentUser[]
+
+    @@map("departments")
+}

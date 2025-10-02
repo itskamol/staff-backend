@@ -1,0 +1,80 @@
+model Policy {
+    id    Int    @id @default(autoincrement())
+    title String
+
+    isActiveWindowEnabled Boolean @default(true) @map("active_window")
+    isScreenshotEnabled   Boolean @default(true) @map("screenshot")
+    isVisitedSitesEnabled Boolean @default(true) @map("visited_sites")
+    isDefault             Boolean @default(false) @map("is_default")
+
+    // screenshot
+    screenshotInterval    Int?     @map("screenshot_interval") // in minutes
+    screenshotIsGrayscale Boolean? @map("screenshot_is_grayscale")
+    screenshotCaptureAll  Boolean? @map("screenshot_capture_all")
+
+    // --- Standard Fields ---
+    isActive  Boolean  @default(true) @map("is_active")
+    createdAt DateTime @default(now()) @map("created_at")
+    updatedAt DateTime @updatedAt @map("updated_at")
+
+    employees Employee[]
+    options   PolicyOption[]
+
+    @@map("policies")
+}
+
+model PolicyOption {
+    id       Int        @id @default(autoincrement())
+    policyId Int        @map("policy_id")
+    groupId  Int        @map("group_id")
+    type     OptionType
+
+    isActive  Boolean  @default(true) @map("is_active")
+    createdAt DateTime @default(now()) @map("created_at")
+    updatedAt DateTime @updatedAt @map("updated_at")
+
+    policy Policy @relation(fields: [policyId], references: [id], onDelete: Cascade)
+    group  Group  @relation(fields: [groupId], references: [id], onDelete: Cascade)
+
+    @@unique([policyId, groupId], name: "policy_group_unique")
+    @@map("policy_group_rules")
+}
+
+model Group {
+    id   Int          @id @default(autoincrement())
+    name String
+    type ResourceType
+
+    isActive  Boolean  @default(true) @map("is_active")
+    createdAt DateTime @default(now()) @map("created_at")
+    updatedAt DateTime @updatedAt @map("updated_at")
+
+    options        PolicyOption[]
+    resourceGroups ResourceGroups[]
+
+    @@map("groups")
+}
+
+model ResourceGroups {
+    id         Int @id @default(autoincrement())
+    resourceId Int @map("resource_id")
+    groupId    Int @map("group_id")
+
+    createdAt DateTime @default(now()) @map("created_at")
+
+    resource Resource @relation(fields: [resourceId], references: [id], onDelete: Cascade)
+    group    Group    @relation(fields: [groupId], references: [id], onDelete: Cascade)
+
+    @@map("resource_groups")
+}
+
+model Resource {
+    id    Int    @id @default(autoincrement())
+    value String
+    type  String
+
+    createdAt      DateTime         @default(now()) @map("created_at")
+    resourceGroups ResourceGroups[]
+
+    @@map("resources")
+}

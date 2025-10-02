@@ -1,0 +1,43 @@
+model Employee {
+    id                Int     @id @default(autoincrement())
+    departmentId      Int     @map("department_id")
+    organizationId    Int     @map("organization_id")
+    policyId          Int?    @map("policy_id")
+    name              String
+    address           String?
+    phone             String?
+    email             String?
+    photo             String?
+    additionalDetails String? @map("additional_details")
+
+    // --- Standard Fields ---
+    isActive  Boolean  @default(true) @map("is_active")
+    createdAt DateTime @default(now()) @map("created_at")
+    updatedAt DateTime @updatedAt @map("updated_at")
+
+    department    Department     @relation(fields: [departmentId], references: [id])
+    policy        Policy?        @relation(fields: [policyId], references: [id])
+    credentials   Credential[]
+    computerUsers ComputerUser[]
+    actions       Action[]
+    organization  Organization   @relation(fields: [organizationId], references: [id])
+
+    @@map("employees")
+}
+
+model Credential {
+    id                Int        @id @default(autoincrement())
+    employeeId        Int        @map("employee_id")
+    code              String
+    type              ActionType
+    additionalDetails String?    @map("additional_details")
+
+    // --- Standard Fields ---
+    isActive  Boolean  @default(true) @map("is_active")
+    createdAt DateTime @default(now()) @map("created_at")
+    updatedAt DateTime @updatedAt @map("updated_at")
+
+    employee Employee @relation(fields: [employeeId], references: [id])
+
+    @@map("credentials")
+}

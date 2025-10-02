@@ -3,11 +3,11 @@
   "version": "0.0.0",
   "license": "MIT",
   "scripts": {
-    "db:generate": "prisma generate --schema=shared/database/prisma/schema.prisma",
-    "db:migrate": "prisma migrate dev --schema=shared/database/prisma/schema.prisma",
-    "db:push": "prisma db push --schema=shared/database/prisma/schema.prisma",
-    "db:seed": "ts-node --esm shared/database/prisma/seed.ts",
-    "db:studio": "prisma studio --schema=shared/database/prisma/schema.prisma",
+    "db:generate": "prisma generate",
+    "db:migrate": "prisma migrate dev",
+    "db:push": "prisma db push",
+    "db:seed": "ts-node shared/database/prisma/seed.ts",
+    "db:studio": "prisma studio",
     "lint": "nx run-many --target=lint --all --parallel",
     "test": "nx run-many --target=test --all --parallel",
     "format": "nx format:write"

@@ -1,0 +1,71 @@
+enum Role {
+  ADMIN
+  HR
+  DEPARTMENT_LEAD
+  GUARD
+}
+
+enum EntryType {
+  ENTER
+  EXIT
+  BOTH
+}
+
+enum ActionType {
+  PHOTO
+  CARD
+  CAR
+  QR
+  PERSONAL_CODE
+  ONE_TIME_ID
+  USER
+}
+
+enum WelcomeText {
+  NO_TEXT
+  CUSTOM_TEXT
+  EMPLOYEE_NAME
+}
+
+enum WelcomePhoto {
+  NO_PHOTO
+  CUSTOM_PHOTO
+  EMPLOYEE_PHOTO
+}
+
+enum VisitorType {
+  EMPLOYEE
+  VISITOR
+}
+
+enum ActionMode {
+  ONLINE
+  OFFLINE
+}
+
+enum SessionType {
+  UNLOCKED
+  LOCKED
+  LOGIN
+  LOGOUT
+}
+
+enum RuleType {
+  USEFUL
+  UNUSEFUL
+}
+
+enum OptionType {
+  WEBSITE
+  ACTIVE_WINDOW
+}
+
+enum ResourceType {
+  WEBSITE
+  APPLICATION
+}
+
+enum VisitorCodeType {
+  ONETIME
+  MULTIPLE
+}

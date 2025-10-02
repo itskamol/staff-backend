@@ -6,6 +6,7 @@ import { CreateUserDto, UpdateCurrentUserDto, UpdateUserDto } from '../../shared
 import { PasswordUtil } from '../../shared/utils';
 import { QueryDto } from '../../shared/dto/query.dto';
 import { PrismaService } from '@app/shared/database';
+import { UserContext } from '../../shared/interfaces';
 
 @Injectable()
 export class UserService {
@@ -61,15 +62,18 @@ export class UserService {
     /**
      * Update user
      */
-    async updateUser(id: number, updateUserDto: UpdateUserDto): Promise<Omit<User, 'password'>> {
+    async updateUser(
+        id: number,
+        updateUserDto: UpdateUserDto,
+        user: UserContext
+    ): Promise<Omit<User, 'password'>> {
         const existingUser = await this.userRepository.findById(id);
-        if (!existingUser) {
-            throw new NotFoundException('User not found');
-        }
+        if (!existingUser) throw new NotFoundException('User not found');
 
-        if (updateUserDto.password) {
+        if (+user.sub === id) throw new ConflictException('You can only update your own profile');
+
+        if (updateUserDto.password)
             updateUserDto.password = await this.validateAndHashPassword(updateUserDto.password);
-        }
 
         const { password, ...updatedUser } = await this.userRepository.update(id, updateUserDto);
 
@@ -146,7 +150,9 @@ export class UserService {
         );
     }
 
-    async deleteUser(id: number): Promise<Omit<User, 'password'>> {
+    async deleteUser(id: number, user: UserContext): Promise<Omit<User, 'password'>> {
+        if (+user.sub === id) throw new ConflictException('User cannot delete themselves');
+
         const existingUser = await this.userRepository.findById(id);
         if (!existingUser) {
             throw new NotFoundException('User not found');
