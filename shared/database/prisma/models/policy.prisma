@@ -1,5 +1,6 @@
 model Policy {
     id    Int    @id @default(autoincrement())
+    organizationId Int    @map("organization_id")
     title String
 
     isActiveWindowEnabled Boolean @default(true) @map("active_window")
@@ -17,6 +18,7 @@ model Policy {
     createdAt DateTime @default(now()) @map("created_at")
     updatedAt DateTime @updatedAt @map("updated_at")
 
+    organization Organization @relation(fields: [organizationId], references: [id])
     employees Employee[]
     options   PolicyOption[]
 

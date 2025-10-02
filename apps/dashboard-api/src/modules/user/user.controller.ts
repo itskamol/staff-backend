@@ -97,7 +97,7 @@ export class UserController {
 
     @Put('me')
     @ApiCrudOperation(UserResponseDto, 'update', {
-        body: UpdateUserDto,
+        body: UpdateCurrentUserDto,
         summary: 'Update current user',
     })
     async updateCurrentUser(

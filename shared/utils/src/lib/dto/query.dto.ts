@@ -61,4 +61,13 @@ export class QueryDto extends PaginationDto {
         description: 'End date',
     })
     endDate?: string;
+
+    @ApiProperty({
+        description: 'Additional filters as key-value pairs',
+        example: { departmentId: 3, role: 'admin' },
+        required: false,
+        type: Object,
+    })
+    @IsOptional()
+    filters?: Record<string, any>;
 }
