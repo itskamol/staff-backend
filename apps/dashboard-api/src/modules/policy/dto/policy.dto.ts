@@ -31,6 +31,14 @@ export class CreatePolicyDto {
     @IsBoolean()
     isVisitedSitesEnabled: boolean;
 
+    @ApiProperty({
+        example: 1,
+        description: 'Organization ID to which the policy belongs'
+    })
+    @IsInt()
+    @IsNotEmpty({ message: 'Organization ID is required'})
+    organizationId: number;
+
     @ApiProperty({ 
         example: 60,
         description: 'Screenshot interval in seconds (Required when isScreenshotEnabled is true)',

@@ -261,6 +261,7 @@ CREATE TABLE "public"."departments" (
 -- CreateTable
 CREATE TABLE "public"."policies" (
     "id" SERIAL NOT NULL,
+    "organization_id" INTEGER NOT NULL,
     "title" TEXT NOT NULL,
     "active_window" BOOLEAN NOT NULL DEFAULT true,
     "screenshot" BOOLEAN NOT NULL DEFAULT true,
@@ -448,6 +449,9 @@ ALTER TABLE "public"."departments" ADD CONSTRAINT "departments_organization_id_f
 
 -- AddForeignKey
 ALTER TABLE "public"."departments" ADD CONSTRAINT "departments_parent_id_fkey" FOREIGN KEY ("parent_id") REFERENCES "public"."departments"("id") ON DELETE SET NULL ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE "public"."policies" ADD CONSTRAINT "policies_organization_id_fkey" FOREIGN KEY ("organization_id") REFERENCES "public"."organizations"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
 
 -- AddForeignKey
 ALTER TABLE "public"."policy_group_rules" ADD CONSTRAINT "policy_group_rules_policy_id_fkey" FOREIGN KEY ("policy_id") REFERENCES "public"."policies"("id") ON DELETE CASCADE ON UPDATE CASCADE;

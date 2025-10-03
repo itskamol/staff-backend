@@ -16,7 +16,6 @@
     "vueIndentScriptAndStyle": false,
     "embeddedLanguageFormatting": "auto",
     "singleAttributePerLine": false,
-    "plugins": ["prettier-plugin-prisma"],
     "overrides": [
         {
             "files": "*.json",

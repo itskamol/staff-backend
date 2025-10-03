@@ -68,8 +68,15 @@ export class PolicyService {
         return policy;
     }
 
-    async create(createPolicyDto: CreatePolicyDto, scope: DataScope) {
-        return this.policyRepository.create(createPolicyDto, undefined, scope);
+    async create({ organizationId, ...createPolicyDto }: CreatePolicyDto, scope: DataScope) {
+        return this.policyRepository.create(
+            {
+                ...createPolicyDto,
+                organization: { connect: { id: organizationId } },
+            },
+            undefined,
+            scope
+        );
     }
 
     async update(id: number, updatePolicyDto: UpdatePolicyDto, user: UserContext) {
@@ -92,14 +99,15 @@ export class PolicyService {
     }
 
     async remove(id: number, scope: DataScope, user: UserContext) {
-        const policy = await this.policyRepository.findById(
-            id,
-            undefined,
-            scope
-        );
+        const policy = await this.policyRepository.findById(id, undefined, scope);
 
         if (!policy) throw new NotFoundException('Policy not found');
 
-        const defaultPolicy = await this.policyRepository.findFirst({ isDefault: true }, undefined, undefined, scope);
+        const defaultPolicy = await this.policyRepository.findFirst(
+            { isDefault: true },
+            undefined,
+            undefined,
+            scope
+        );
     }
 }
