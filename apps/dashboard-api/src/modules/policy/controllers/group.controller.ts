@@ -1,5 +1,5 @@
 import { Controller, Get, Post, Put, Delete, Body, Param, Query } from '@nestjs/common';
-import { ApiTags, ApiBearerAuth } from '@nestjs/swagger';
+import { ApiTags, ApiBearerAuth, ApiExtraModels } from '@nestjs/swagger';
 import { Roles, Role, User as CurrentUser, DataScope } from '@app/shared/auth';
 import { QueryDto } from '@app/shared/utils';
 import { GroupService } from '../services/group.service';
@@ -12,6 +12,7 @@ import { ResourceType } from '@prisma/client';
 @ApiTags('Policy Groups')
 @Controller('policies/groups')
 @ApiBearerAuth()
+@ApiExtraModels(GroupDto, )
 @Roles(Role.ADMIN, Role.HR)
 export class GroupController {
     constructor(private readonly groupService: GroupService) {}

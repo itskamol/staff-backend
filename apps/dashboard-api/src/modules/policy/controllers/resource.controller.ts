@@ -1,5 +1,5 @@
 import { Controller, Get, Post, Put, Delete, Body, Param, Query } from '@nestjs/common';
-import { ApiTags, ApiBearerAuth } from '@nestjs/swagger';
+import { ApiTags, ApiBearerAuth, ApiExtraModels } from '@nestjs/swagger';
 import { Roles, Role, User as CurrentUser, DataScope } from '@app/shared/auth';
 import { QueryDto } from '@app/shared/utils';
 import { ResourceService } from '../services/resource.service';
@@ -11,6 +11,7 @@ import { Scope } from 'apps/dashboard-api/src/shared/decorators';
 @ApiTags('Policy Resources')
 @Controller('policies/resources')
 @ApiBearerAuth()
+@ApiExtraModels(ResourceResponseDto)
 @Roles(Role.ADMIN, Role.HR)
 export class ResourceController {
     constructor(private readonly resourceService: ResourceService) {}
