@@ -226,7 +226,7 @@ export const ApiCrudOperation = <DataDto extends Type<unknown>>(
             decorators.push(
                 ApiOkResponseData(dataDto, {
                     body: options?.body,
-                    summary: options?.summary || `Create new ${dataDto.name.toLowerCase()}`,
+                    summary: options?.summary || `Create new ${dataDto?.name?.toLowerCase()}`,
                 }),
                 ApiErrorResponses({
                     badRequest: true,
@@ -241,7 +241,7 @@ export const ApiCrudOperation = <DataDto extends Type<unknown>>(
             decorators.push(
                 ApiOkResponseData(dataDto, {
                     body: options?.body,
-                    summary: options?.summary || `Update ${dataDto.name.toLowerCase()}`,
+                    summary: options?.summary || `Update ${dataDto?.name?.toLowerCase()}`,
                 }),
                 ApiErrorResponses({
                     badRequest: true,
@@ -255,7 +255,7 @@ export const ApiCrudOperation = <DataDto extends Type<unknown>>(
         case 'delete':
             decorators.push(
                 ApiOperation({
-                    summary: options?.summary || `Delete ${dataDto.name.toLowerCase()}`,
+                    summary: options?.summary || `Delete ${dataDto?.name?.toLowerCase()}`,
                 }),
                 ApiOkResponse({ description: 'Successfully deleted' }),
                 ApiErrorResponses({
@@ -269,7 +269,7 @@ export const ApiCrudOperation = <DataDto extends Type<unknown>>(
         case 'get':
             decorators.push(
                 ApiOkResponseData(dataDto, {
-                    summary: options?.summary || `Get ${dataDto.name.toLowerCase()} by ID`,
+                    summary: options?.summary || `Get ${dataDto?.name?.toLowerCase()} by ID`,
                 }),
                 ApiErrorResponses({
                     unauthorized: true,
@@ -292,13 +292,13 @@ export const ApiCrudOperation = <DataDto extends Type<unknown>>(
                         ? [
                               ApiOkResponsePaginated(dataDto, {
                                   summary:
-                                      options?.summary || `Get ${dataDto.name.toLowerCase()} list`,
+                                      options?.summary || `Get ${dataDto?.name?.toLowerCase()} list`,
                               }),
                           ]
                         : [
                               ApiOkResponseData(dataDto, {
                                   summary:
-                                      options?.summary || `Get ${dataDto.name.toLowerCase()} list`,
+                                      options?.summary || `Get ${dataDto?.name?.toLowerCase()} list`,
                               }),
                           ])
                 );
