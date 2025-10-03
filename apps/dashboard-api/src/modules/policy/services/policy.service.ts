@@ -2,9 +2,9 @@ import { Injectable, NotFoundException, ForbiddenException } from '@nestjs/commo
 import { PrismaService } from '@app/shared/database';
 import { DataScope, Role } from '@app/shared/auth';
 import { QueryBuilderUtil, PaginationDto, QueryDto } from '@app/shared/utils';
-import { CreatePolicyDto, UpdatePolicyDto } from './dto/policy.dto';
-import { UserContext } from '../../shared/interfaces';
-import { PolicyRepository } from './repositories/policy.repository';
+import { CreatePolicyDto, UpdatePolicyDto } from '../dto/policy.dto';
+import { UserContext } from '../../../shared/interfaces';
+import { PolicyRepository } from '../repositories/policy.repository';
 import { Prisma } from '@prisma/client';
 
 @Injectable()

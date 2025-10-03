@@ -1,18 +1,51 @@
-import { PrismaService } from "@app/shared/database";
-import { Injectable } from "@nestjs/common";
-import { Prisma } from "@prisma/client";
-import { BaseRepository } from "apps/dashboard-api/src/shared/repositories/base.repository";
-
+import { PrismaService } from '@app/shared/database';
+import { Injectable } from '@nestjs/common';
+import { Resource, Prisma, ResourceType } from '@prisma/client';
+import { BaseRepository } from 'apps/dashboard-api/src/shared/repositories/base.repository';
 
 @Injectable()
-export class ResourceRepository extends BaseRepository<any, any, any, any, any, any, any, any> {
-    constructor(protected readonly primsa: PrismaService) {
-        super(primsa);
+export class ResourceRepository extends BaseRepository<
+    Resource,
+    Prisma.ResourceCreateInput,
+    Prisma.ResourceUpdateInput,
+    Prisma.ResourceWhereInput,
+    Prisma.ResourceWhereUniqueInput,
+    Prisma.ResourceOrderByWithRelationInput,
+    Prisma.ResourceInclude,
+    Prisma.ResourceSelect
+> {
+    constructor(protected readonly prisma: PrismaService) {
+        super(prisma);
     }
 
-    protected modelName: string = Prisma.ModelName.Resource;
+    protected readonly modelName = Prisma.ModelName.Resource;
 
     protected getDelegate() {
-        return this.primsa.resource;
+        return this.prisma.resource;
+    }
+
+    async findByType(type: ResourceType, include?: Prisma.ResourceInclude) {
+        return this.findMany({ type }, undefined, include);
+    }
+
+    async findByValue(value: string) {
+        return this.findFirst({ value });
+    }
+
+    async bulkCreate(resources: Prisma.ResourceCreateInput[]) {
+        return this.prisma.resource.createMany({
+            data: resources,
+            skipDuplicates: true
+        });
+    }
+
+    async findWithGroupCount(where?: Prisma.ResourceWhereInput) {
+        return this.findMany(where, undefined, {
+            _count: {
+                select: {
+                    resourceGroups: true
+                }
+            }
+        });
     }
 }
