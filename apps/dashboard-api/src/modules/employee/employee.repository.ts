@@ -1,8 +1,8 @@
 import { Injectable } from '@nestjs/common';
-import { Employee, Prisma } from '@prisma/client';
+import { Employee, Prisma, Role } from '@prisma/client';
 import { BaseRepository } from '../../shared/repositories/base.repository';
 import { PrismaService } from '@app/shared/database';
-import { DataScope, Role } from '@app/shared/auth';
+import { DataScope } from '@app/shared/auth';
 
 export type EmployeeWithRelations = Employee & {
     department?: {

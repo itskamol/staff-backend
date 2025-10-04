@@ -1,6 +1,6 @@
 import { PrismaService } from '@app/shared/database';
 import { Injectable } from '@nestjs/common';
-import { OnetimeCode, Prisma } from '@prisma/client';
+import { OnetimeCode, Prisma, VisitorCodeType } from '@prisma/client';
 import { BaseRepository } from 'apps/dashboard-api/src/shared/repositories/base.repository';
 
 @Injectable()
@@ -51,7 +51,7 @@ export class OnetimeCodeRepository extends BaseRepository<
         }, { createdAt: 'desc' }, include);
     }
 
-    async findByCodeType(codeType: string, include?: Prisma.OnetimeCodeInclude) {
+    async findByCodeType(codeType: VisitorCodeType, include?: Prisma.OnetimeCodeInclude) {
         return this.findMany({ codeType }, { createdAt: 'desc' }, include);
     }
 

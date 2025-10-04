@@ -1,6 +1,6 @@
 import { Module } from '@nestjs/common';
-import { EmployeeController } from './employee.controller';
-import { EmployeeService } from './employee.service';
+import { EmployeeController } from './controllers/employee.controller';
+import { EmployeeService } from './services/employee.service';
 import { EmployeeRepository } from './employee.repository';
 import { DepartmentService } from '../department/department.service';
 import { DepartmentRepository } from '../department/department.repository';

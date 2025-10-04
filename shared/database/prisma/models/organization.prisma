@@ -13,10 +13,11 @@ model Organization {
     createdAt DateTime @default(now()) @map("created_at")
     updatedAt DateTime @updatedAt @map("updated_at")
 
-    policies  Policy[]
+    policies    Policy[]
     users       User[]
     departments Department[]
     employees   Employee[]
+    groups      EmployeeGroup[]
 
     @@map("organizations")
 }

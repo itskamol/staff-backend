@@ -1,11 +1,8 @@
 import { Injectable, CanActivate, ExecutionContext } from '@nestjs/common';
 import { Reflector } from '@nestjs/core';
-import { Role } from './roles.guard';
+import { DataScope } from '../interfaces/data-scope.interface';
+import { Role } from '@prisma/client';
 
-export interface DataScope {
-    organizationId?: number;
-    departments?: number[];
-}
 
 @Injectable()
 export class DataScopeGuard implements CanActivate {

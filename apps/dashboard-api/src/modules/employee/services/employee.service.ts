@@ -1,10 +1,10 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
-import { EmployeeRepository } from './employee.repository';
-import { DataScope } from '@app/shared/auth';
-import { QueryDto } from '../../shared/dto/query.dto';
-import { UserContext } from '../../shared/interfaces';
-import { CreateEmployeeDto, UpdateEmployeeDto } from '../../shared/dto';
-import { DepartmentService } from '../department/department.service';
+import { EmployeeRepository } from '../employee.repository';
+import { DataScope, UserContext } from '@app/shared/auth';
+// import { UserContext } from '../../../shared/interfaces';
+import { CreateEmployeeDto, UpdateEmployeeDto } from '../../../shared/dto';
+import { DepartmentService } from '../../department/department.service';
+import { QueryDto } from '@app/shared/utils';
 
 @Injectable()
 export class EmployeeService {

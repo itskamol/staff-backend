@@ -29,7 +29,7 @@ export class ComputerUserRepository extends BaseRepository<
     }
 
     async findByEmployeeId(employeeId: number, include?: Prisma.ComputerUserInclude) {
-        return this.findMany({ employeeId: employeeId }, undefined, include);
+        return this.findMany({ employeeId }, undefined, include);
     }
 
     async findByComputerId(computerId: number, include?: Prisma.ComputerUserInclude) {

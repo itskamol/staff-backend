@@ -14,15 +14,28 @@ export class OnetimeCodeService {
         private readonly onetimeCodeRepository: OnetimeCodeRepository
     ) {}
 
-    async findAll(query: QueryDto & { visitorId?: string; codeType?: string; isActive?: string }, scope: DataScope, user: UserContext) {
-        const { page, limit, sort = 'createdAt', order = 'desc', search, visitorId, codeType, isActive } = query;
+    async findAll(
+        query: QueryDto & { visitorId?: string; codeType?: VisitorCodeType },
+        scope: DataScope,
+        user: UserContext
+    ) {
+        const {
+            page,
+            limit,
+            sort = 'createdAt',
+            order = 'desc',
+            search,
+            visitorId,
+            codeType,
+            isActive,
+        } = query;
         const where: Prisma.OnetimeCodeWhereInput = {};
 
         if (search) {
             where.OR = [
                 { code: { contains: search, mode: 'insensitive' } },
                 { visitor: { firstName: { contains: search, mode: 'insensitive' } } },
-                { visitor: { lastName: { contains: search, mode: 'insensitive' } } }
+                { visitor: { lastName: { contains: search, mode: 'insensitive' } } },
             ];
         }
 
@@ -31,11 +44,11 @@ export class OnetimeCodeService {
         }
 
         if (codeType) {
-            where.codeType = codeType as VisitorCodeType;
+            where.codeType = codeType;
         }
 
-        if (isActive !== undefined) {
-            where.isActive = isActive === 'true';
+        if (typeof isActive === 'boolean') {
+            where.isActive = isActive;
         }
 
         return this.onetimeCodeRepository.findManyWithPagination(
@@ -47,9 +60,9 @@ export class OnetimeCodeService {
                         id: true,
                         firstName: true,
                         lastName: true,
-                        workPlace: true
-                    }
-                }
+                        workPlace: true,
+                    },
+                },
             },
             { page, limit },
             scope
@@ -70,11 +83,11 @@ export class OnetimeCodeService {
                         select: {
                             id: true,
                             name: true,
-                            username: true
-                        }
-                    }
-                }
-            }
+                            username: true,
+                        },
+                    },
+                },
+            },
         });
 
         if (!onetimeCode) {
@@ -87,7 +100,7 @@ export class OnetimeCodeService {
     async create(createOnetimeCodeDto: CreateOnetimeCodeDto, scope: DataScope) {
         // Verify visitor exists
         const visitor = await this.prisma.visitor.findUnique({
-            where: { id: createOnetimeCodeDto.visitorId }
+            where: { id: createOnetimeCodeDto.visitorId },
         });
 
         if (!visitor) {
@@ -100,17 +113,21 @@ export class OnetimeCodeService {
             throw new BadRequestException('Code already exists');
         }
 
-        return this.onetimeCodeRepository.create({
-            code: createOnetimeCodeDto.code,
-            codeType: createOnetimeCodeDto.codeType,
-            startDate: new Date(createOnetimeCodeDto.startDate),
-            endDate: new Date(createOnetimeCodeDto.endDate),
-            additionalDetails: createOnetimeCodeDto.additionalDetails,
-            isActive: createOnetimeCodeDto.isActive,
-            visitor: {
-                connect: { id: createOnetimeCodeDto.visitorId }
-            }
-        }, undefined, scope);
+        return this.onetimeCodeRepository.create(
+            {
+                code: createOnetimeCodeDto.code,
+                codeType: createOnetimeCodeDto.codeType,
+                startDate: new Date(createOnetimeCodeDto.startDate),
+                endDate: new Date(createOnetimeCodeDto.endDate),
+                additionalDetails: createOnetimeCodeDto.additionalDetails,
+                isActive: createOnetimeCodeDto.isActive,
+                visitor: {
+                    connect: { id: createOnetimeCodeDto.visitorId },
+                },
+            },
+            undefined,
+            scope
+        );
     }
 
     async update(id: number, updateOnetimeCodeDto: UpdateOnetimeCodeDto, user: UserContext) {
@@ -125,11 +142,11 @@ export class OnetimeCodeService {
         }
 
         const updateData: any = { ...updateOnetimeCodeDto };
-        
+
         if (updateOnetimeCodeDto.startDate) {
             updateData.startDate = new Date(updateOnetimeCodeDto.startDate);
         }
-        
+
         if (updateOnetimeCodeDto.endDate) {
             updateData.endDate = new Date(updateOnetimeCodeDto.endDate);
         }
@@ -163,9 +180,9 @@ export class OnetimeCodeService {
                 select: {
                     id: true,
                     firstName: true,
-                    lastName: true
-                }
-            }
+                    lastName: true,
+                },
+            },
         });
     }
 
@@ -176,9 +193,9 @@ export class OnetimeCodeService {
                     id: true,
                     firstName: true,
                     lastName: true,
-                    workPlace: true
-                }
-            }
+                    workPlace: true,
+                },
+            },
         });
     }
 
@@ -189,21 +206,21 @@ export class OnetimeCodeService {
                     id: true,
                     firstName: true,
                     lastName: true,
-                    workPlace: true
-                }
-            }
+                    workPlace: true,
+                },
+            },
         });
     }
 
     async validateCode(code: string) {
         const isValid = await this.onetimeCodeRepository.isCodeValid(code);
-        
+
         if (!isValid) {
             throw new BadRequestException('Invalid or expired code');
         }
 
         const codeRecord = await this.onetimeCodeRepository.findByCode(code);
-        
+
         return {
             valid: true,
             code: {
@@ -211,18 +228,23 @@ export class OnetimeCodeService {
                 code: codeRecord.code,
                 codeType: codeRecord.codeType,
                 startDate: codeRecord.startDate,
-                endDate: codeRecord.endDate
+                endDate: codeRecord.endDate,
             },
             visitor: {
-                id: codeRecord.visitorId
-            }
+                id: codeRecord.visitorId,
+            },
         };
     }
 
-    async generateCode(visitorId: number, codeType: VisitorCodeType, validityHours: number = 24, additionalDetails?: string) {
+    async generateCode(
+        visitorId: number,
+        codeType: VisitorCodeType,
+        validityHours: number = 24,
+        additionalDetails?: string
+    ) {
         // Verify visitor exists
         const visitor = await this.prisma.visitor.findUnique({
-            where: { id: visitorId }
+            where: { id: visitorId },
         });
 
         if (!visitor) {
@@ -231,7 +253,7 @@ export class OnetimeCodeService {
 
         // Generate unique code
         const code = await this.onetimeCodeRepository.generateUniqueCode();
-        
+
         const startDate = new Date();
         const endDate = new Date();
         endDate.setHours(endDate.getHours() + validityHours);
@@ -244,8 +266,8 @@ export class OnetimeCodeService {
             additionalDetails,
             isActive: true,
             visitor: {
-                connect: { id: visitorId }
-            }
+                connect: { id: visitorId },
+            },
         });
     }
 }

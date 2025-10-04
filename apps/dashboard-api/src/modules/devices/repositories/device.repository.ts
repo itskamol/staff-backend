@@ -1,6 +1,6 @@
 import { PrismaService } from '@app/shared/database';
 import { Injectable } from '@nestjs/common';
-import { Device, Prisma } from '@prisma/client';
+import { Device, DeviceType, Prisma } from '@prisma/client';
 import { BaseRepository } from 'apps/dashboard-api/src/shared/repositories/base.repository';
 
 @Injectable()
@@ -25,31 +25,28 @@ export class DeviceRepository extends BaseRepository<
     }
 
     async findByIpAddress(ipAddress: string) {
-        return this.findFirst({ ip_address: ipAddress });
+        return this.findFirst({ ipAddress });
     }
 
-    async findByType(type: string, include?: Prisma.DeviceInclude) {
+    async findByType(type: DeviceType, include?: Prisma.DeviceInclude) {
         return this.findMany({ type }, undefined, include);
     }
 
     async findOnlineDevices() {
-        return this.findMany({ status: 'online' });
+        return this.findMany({ isActive: true });
     }
 
-    async updateStatus(id: number, status: string, lastPing?: Date) {
-        return this.update(id, {
-            status,
-            last_ping: lastPing || new Date()
-        });
+    async updateStatus(id: number, isActive: boolean) {
+        return this.update(id, { isActive });
     }
 
     async findWithActionCount(where?: Prisma.DeviceWhereInput) {
         return this.findMany(where, undefined, {
             _count: {
                 select: {
-                    actions: true
-                }
-            }
+                    actions: true,
+                },
+            },
         });
     }
 }

@@ -4,7 +4,7 @@ import { IsEnum, IsNotEmpty, IsString } from 'class-validator';
 
 export class CreateResourceDto {
     @ApiProperty({
-        example: 'Document',
+        example: ResourceType.APPLICATION,
         description: 'Type of the resource',
         enum: ResourceType,
     })
@@ -14,7 +14,7 @@ export class CreateResourceDto {
     type: ResourceType;
 
     @ApiProperty({
-        example: 'Quarterly Report Q1 2024',
+        example: 'code',
         description: 'Name of the resource',
     })
     @IsString()

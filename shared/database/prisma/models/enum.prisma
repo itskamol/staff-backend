@@ -50,11 +50,6 @@ enum SessionType {
   LOGOUT
 }
 
-enum RuleType {
-  USEFUL
-  UNUSEFUL
-}
-
 enum OptionType {
   WEBSITE
   ACTIVE_WINDOW
@@ -68,4 +63,14 @@ enum ResourceType {
 enum VisitorCodeType {
   ONETIME
   MULTIPLE
+}
+
+enum DeviceType {
+  FACE
+  CARD
+  CAR
+  QR
+  ACCESS_CONTROL
+  BIOMETRIC
+  OTHER
 }

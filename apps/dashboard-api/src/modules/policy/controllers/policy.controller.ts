@@ -35,7 +35,7 @@ export class PolicyController {
         @CurrentUser() user: UserContext,
         @Scope() scope: DataScope
     ) {
-        const result = await this.policyService.findAll(query, scope, user);
+        return this.policyService.findAll(query, scope, user);
     }
 
     @Get(':id')

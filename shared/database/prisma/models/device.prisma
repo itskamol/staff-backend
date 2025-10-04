@@ -31,24 +31,29 @@ model Gate {
 }
 
 model Device {
-    id               Int          @id @default(autoincrement())
-    gateId           Int          @map("gate_id")
-    name             String
-    entryType        EntryType    @map("entry_type")
-    ipAddress        String       @map("ip_address")
+    id               Int           @id @default(autoincrement())
+    gateId           Int?          @map("gate_id")
+    name             String?
+    entryType        EntryType?    @map("entry_type")
+    type             DeviceType?   @map("type")
+    manufacturer     String?
+    model            String?
+    firmware         String?
+    serialNumber     String?       @map("serial_number")
+    ipAddress        String?       @map("ip_address")
     login            String?
     password         String?
-    welcomeText      String?      @map("welcome_text")
-    welcomeTextType  WelcomeText  @map("welcome_text_type")
-    welcomePhoto     String?      @map("welcome_photo")
-    welcomePhotoType WelcomePhoto @map("welcome_photo_type")
+    welcomeText      String?       @map("welcome_text")
+    welcomeTextType  WelcomeText?  @map("welcome_text_type")
+    welcomePhoto     String?       @map("welcome_photo")
+    welcomePhotoType WelcomePhoto? @map("welcome_photo_type")
 
     // --- Standard Fields ---
     isActive  Boolean  @default(true) @map("is_active")
     createdAt DateTime @default(now()) @map("created_at")
     updatedAt DateTime @updatedAt @map("updated_at")
 
-    gate    Gate     @relation(fields: [gateId], references: [id])
+    gate    Gate?    @relation(fields: [gateId], references: [id])
     actions Action[]
 
     @@map("devices")

@@ -51,15 +51,6 @@ export class ComputerUserController {
         return await this.computerUserService.findOne(id, user);
     }
 
-    @Post()
-    @ApiCrudOperation(ComputerUserDto, 'create', {
-        body: CreateComputerUserDto,
-        summary: 'Create new computer user',
-    })
-    async create(@Body() createComputerUserDto: CreateComputerUserDto, @Scope() scope: DataScope) {
-        return await this.computerUserService.create(createComputerUserDto, scope);
-    }
-
     @Put(':id')
     @ApiCrudOperation(ComputerUserDto, 'update', {
         body: UpdateComputerUserDto,

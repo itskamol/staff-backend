@@ -8,7 +8,7 @@ export class CreateComputerUserDto {
     })
     @IsString()
     @IsNotEmpty()
-    sid_id: string;
+    sid: string;
 
     @ApiProperty({ 
         example: 12345,

@@ -1,7 +1,7 @@
-import { Injectable, NotFoundException, ForbiddenException } from '@nestjs/common';
+import { Injectable, NotFoundException } from '@nestjs/common';
 import { PrismaService } from '@app/shared/database';
-import { DataScope, Role } from '@app/shared/auth';
-import { QueryBuilderUtil, PaginationDto, QueryDto } from '@app/shared/utils';
+import { DataScope } from '@app/shared/auth';
+import { QueryDto } from '@app/shared/utils';
 import { CreatePolicyDto, UpdatePolicyDto } from '../dto/policy.dto';
 import { UserContext } from '../../../shared/interfaces';
 import { PolicyRepository } from '../repositories/policy.repository';
@@ -28,6 +28,7 @@ export class PolicyService {
             {
                 _count: { select: { employees: true } },
                 options: true,
+                organization: { select: { id: true, fullName: true, shortName: true } },
             },
             { page, limit },
             scope

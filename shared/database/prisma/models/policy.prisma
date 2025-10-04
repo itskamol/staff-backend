@@ -18,8 +18,8 @@ model Policy {
     createdAt DateTime @default(now()) @map("created_at")
     updatedAt DateTime @updatedAt @map("updated_at")
 
-    organization Organization   @relation(fields: [organizationId], references: [id])
-    employees    Employee[]
+    organization Organization    @relation(fields: [organizationId], references: [id])
+    employees    EmployeeGroup[]
     options      PolicyOption[]
 
     @@map("policies")
@@ -35,14 +35,14 @@ model PolicyOption {
     createdAt DateTime @default(now()) @map("created_at")
     updatedAt DateTime @updatedAt @map("updated_at")
 
-    policy Policy @relation(fields: [policyId], references: [id], onDelete: Cascade)
-    group  Group  @relation(fields: [groupId], references: [id], onDelete: Cascade)
+    policy Policy        @relation(fields: [policyId], references: [id], onDelete: Cascade)
+    group  ResourceGroup @relation(fields: [groupId], references: [id], onDelete: Cascade)
 
     @@unique([policyId, groupId], name: "policy_group_unique")
     @@map("policy_group_rules")
 }
 
-model Group {
+model ResourceGroup {
     id   Int          @id @default(autoincrement())
     name String
     type ResourceType
@@ -54,7 +54,7 @@ model Group {
     options        PolicyOption[]
     resourceGroups ResourceGroups[]
 
-    @@map("groups")
+    @@map("resource_group")
 }
 
 model ResourceGroups {
@@ -64,8 +64,8 @@ model ResourceGroups {
 
     createdAt DateTime @default(now()) @map("created_at")
 
-    resource Resource @relation(fields: [resourceId], references: [id], onDelete: Cascade)
-    group    Group    @relation(fields: [groupId], references: [id], onDelete: Cascade)
+    resource Resource      @relation(fields: [resourceId], references: [id], onDelete: Cascade)
+    group    ResourceGroup @relation(fields: [groupId], references: [id], onDelete: Cascade)
 
     @@map("resource_groups")
 }

@@ -15,13 +15,14 @@ import {
     ApiParam,
     ApiTags,
 } from '@nestjs/swagger';
-import { EmployeeService } from './employee.service';
-import { ActivityReportResponseDto, ApiSuccessResponse, AssignCardDto, AssignCarDto, ComputerUserResponseDto, CreateEmployeeDto, EmployeeResponseDto, EntryLogResponseDto, LinkComputerUserDto, UpdateEmployeeDto } from '../../shared/dto';
-import { ApiCrudOperation, ApiErrorResponses, ApiOkResponseData } from '../../shared/utils';
-import { DataScope, Role, Roles, User } from '@app/shared/auth';
-import { UserContext } from '../../shared/interfaces';
-import { Scope } from '../../shared/decorators';
+import { EmployeeService } from '../services/employee.service';
+import { ActivityReportResponseDto, ApiSuccessResponse, AssignCardDto, AssignCarDto, ComputerUserResponseDto, CreateEmployeeDto, EmployeeResponseDto, EntryLogResponseDto, LinkComputerUserDto, UpdateEmployeeDto } from '../../../shared/dto';
+import { ApiCrudOperation, ApiErrorResponses, ApiOkResponseData } from '../../../shared/utils';
+import { DataScope, Roles, User } from '@app/shared/auth';
+import { UserContext } from '../../../shared/interfaces';
+import { Scope } from '../../../shared/decorators';
 import { QueryDto } from '@app/shared/utils';
+import { Role } from '@prisma/client';
 
 @ApiTags('Employees')
 @ApiBearerAuth()

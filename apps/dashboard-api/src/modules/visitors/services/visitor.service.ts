@@ -11,12 +11,14 @@ import {
 import { UserContext } from '../../../shared/interfaces';
 import { VisitorRepository } from '../repositories/visitor.repository';
 import { OnetimeCode, Prisma, Visitor, VisitorCodeType } from '@prisma/client';
+import { OnetimeCodeRepository } from '../../onetime-codes/repositories/onetime-code.repository';
 
 @Injectable()
 export class VisitorService {
     constructor(
         private readonly prisma: PrismaService,
-        private readonly visitorRepository: VisitorRepository
+        private readonly visitorRepository: VisitorRepository,
+        private readonly codeRepository: OnetimeCodeRepository
     ) {}
 
     async findAll(query: QueryDto & { creatorId?: string }, scope: DataScope, user: UserContext) {
@@ -331,20 +333,13 @@ export class VisitorService {
     }
 
     async validateCode(code: string) {
-        const visitor =
-            await this.visitorRepository.findByCode(code);
+        const visitor = await this.visitorRepository.findByCode(code);
 
         if (!visitor) {
             throw new NotFoundException('Invalid or expired code');
         }
 
-        const activeCode = visitor.onetimeCodes.find(
-            c =>
-                c.code === code &&
-                c.isActive &&
-                new Date() >= c.startDate &&
-                new Date() <= c.endDate
-        );
+        const activeCode = await this.codeRepository.findFirst({ code, isActive: true });
 
         if (!activeCode) {
             throw new BadRequestException('Code is not active or expired');

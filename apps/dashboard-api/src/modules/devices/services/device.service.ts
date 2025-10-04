@@ -2,10 +2,10 @@ import { Injectable, NotFoundException, BadRequestException } from '@nestjs/comm
 import { PrismaService } from '@app/shared/database';
 import { DataScope } from '@app/shared/auth';
 import { QueryDto } from '@app/shared/utils';
-import { CreateDeviceDto, UpdateDeviceDto, DeviceType } from '../dto/device.dto';
+import { CreateDeviceDto, UpdateDeviceDto } from '../dto/device.dto';
 import { UserContext } from '../../../shared/interfaces';
 import { DeviceRepository } from '../repositories/device.repository';
-import { Prisma } from '@prisma/client';
+import { DeviceType, Prisma } from '@prisma/client';
 
 @Injectable()
 export class DeviceService {
@@ -14,23 +14,19 @@ export class DeviceService {
         private readonly deviceRepository: DeviceRepository
     ) {}
 
-    async findAll(query: QueryDto & { type?: string; status?: string }, scope: DataScope, user: UserContext) {
-        const { page, limit, sort = 'createdAt', order = 'desc', search, type, status } = query;
+    async findAll(query: QueryDto & { type?: DeviceType }, scope: DataScope, user: UserContext) {
+        const { page, limit, sort = 'createdAt', order = 'desc', search, type } = query;
         const where: Prisma.DeviceWhereInput = {};
 
         if (search) {
             where.OR = [
                 { name: { contains: search, mode: 'insensitive' } },
-                { ip_address: { contains: search, mode: 'insensitive' } }
+                { ipAddress: { contains: search, mode: 'insensitive' } },
             ];
         }
 
         if (type) {
-            where.type = type as DeviceType;
-        }
-
-        if (status) {
-            where.status = status;
+            where.type = type;
         }
 
         return this.deviceRepository.findManyWithPagination(
@@ -39,9 +35,9 @@ export class DeviceService {
             {
                 _count: {
                     select: {
-                        actions: true
-                    }
-                }
+                        actions: true,
+                    },
+                },
             },
             { page, limit },
             scope
@@ -52,25 +48,12 @@ export class DeviceService {
         const device = await this.deviceRepository.findById(id, {
             actions: {
                 take: 10,
-                orderBy: { action_time: 'desc' },
+                orderBy: { actionTime: 'desc' },
                 include: {
-                    entryLogs: {
-                        include: {
-                            employee: {
-                                select: {
-                                    id: true,
-                                    name: true
-                                }
-                            }
-                        }
-                    }
-                }
+                    employee: { select: { id: true, name: true } },
+                },
             },
-            _count: {
-                select: {
-                    actions: true
-                }
-            }
+            _count: { select: { actions: true } },
         });
 
         if (!device) {
@@ -87,11 +70,7 @@ export class DeviceService {
             throw new BadRequestException('Device with this IP address already exists');
         }
 
-        return this.deviceRepository.create({
-            ...createDeviceDto,
-            status: 'offline',
-            last_ping: new Date()
-        }, undefined, scope);
+        return this.deviceRepository.create({ ...createDeviceDto }, undefined, scope);
     }
 
     async update(id: number, updateDeviceDto: UpdateDeviceDto, user: UserContext) {
@@ -99,7 +78,9 @@ export class DeviceService {
 
         // Check if updating to existing IP
         if (updateDeviceDto.ip_address) {
-            const existing = await this.deviceRepository.findByIpAddress(updateDeviceDto.ip_address);
+            const existing = await this.deviceRepository.findByIpAddress(
+                updateDeviceDto.ip_address
+            );
             if (existing && existing.id !== id) {
                 throw new BadRequestException('Device with this IP address already exists');
             }
@@ -109,13 +90,17 @@ export class DeviceService {
     }
 
     async remove(id: number, scope: DataScope, user: UserContext) {
-        const device = await this.deviceRepository.findById(id, {
-            _count: {
-                select: {
-                    actions: true
-                }
-            }
-        }, scope);
+        const device = await this.deviceRepository.findById(
+            id,
+            {
+                _count: {
+                    select: {
+                        actions: true,
+                    },
+                },
+            },
+            scope
+        );
 
         if (!device) {
             throw new NotFoundException('Device not found');
@@ -123,7 +108,7 @@ export class DeviceService {
 
         if ((device as any)._count?.actions > 0) {
             // Soft delete if has actions
-            return this.deviceRepository.update(id, { is_active: false });
+            return this.deviceRepository.update(id, { isActive: false });
         }
 
         return this.deviceRepository.delete(id, scope);
@@ -131,7 +116,7 @@ export class DeviceService {
 
     async testConnection(id: number, timeout: number = 5) {
         const device = await this.deviceRepository.findById(id);
-        
+
         if (!device) {
             throw new NotFoundException('Device not found');
         }
@@ -139,35 +124,31 @@ export class DeviceService {
         try {
             // Simulate connection test (replace with actual HIKVision SDK call)
             const connectionResult = await this.performConnectionTest(device, timeout);
-            
+
             // Update device status based on test result
-            await this.deviceRepository.updateStatus(
-                id, 
-                connectionResult.success ? 'online' : 'offline',
-                new Date()
-            );
+            await this.deviceRepository.updateStatus(id, connectionResult.success);
 
             return {
                 success: connectionResult.success,
                 message: connectionResult.message,
                 response_time: connectionResult.responseTime,
-                tested_at: new Date()
+                tested_at: new Date(),
             };
         } catch (error) {
-            await this.deviceRepository.updateStatus(id, 'error', new Date());
+            await this.deviceRepository.updateStatus(id, false);
             throw new BadRequestException(`Connection test failed: ${error.message}`);
         }
     }
 
     private async performConnectionTest(device: any, timeout: number) {
         // Mock implementation - replace with actual HIKVision SDK
-        return new Promise<{ success: boolean; message: string; responseTime: number }>((resolve) => {
+        return new Promise<{ success: boolean; message: string; responseTime: number }>(resolve => {
             setTimeout(() => {
                 const success = Math.random() > 0.2; // 80% success rate for demo
                 resolve({
                     success,
                     message: success ? 'Connection successful' : 'Connection failed',
-                    responseTime: Math.floor(Math.random() * 1000) + 100
+                    responseTime: Math.floor(Math.random() * 1000) + 100,
                 });
             }, Math.min(timeout * 1000, 2000));
         });
@@ -181,7 +162,7 @@ export class DeviceService {
         return this.deviceRepository.findOnlineDevices();
     }
 
-    async updateDeviceStatus(id: number, status: string) {
-        return this.deviceRepository.updateStatus(id, status, new Date());
+    async updateDeviceStatus(id: number, isActive: boolean) {
+        return this.deviceRepository.updateStatus(id, isActive);
     }
 }

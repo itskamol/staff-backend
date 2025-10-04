@@ -1,12 +1,6 @@
 import { Injectable, CanActivate, ExecutionContext } from '@nestjs/common';
 import { Reflector } from '@nestjs/core';
-
-export enum Role {
-    ADMIN = 'ADMIN',
-    HR = 'HR',
-    DEPARTMENT_LEAD = 'DEPARTMENT_LEAD',
-    GUARD = 'GUARD',
-}
+import { Role } from '@prisma/client'
 
 @Injectable()
 export class RolesGuard implements CanActivate {

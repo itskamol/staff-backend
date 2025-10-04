@@ -2,7 +2,7 @@ import { Injectable, NotFoundException, BadRequestException } from '@nestjs/comm
 import { PrismaService } from '@app/shared/database';
 import { DataScope } from '@app/shared/auth';
 import { QueryDto } from '@app/shared/utils';
-import { CreateComputerUserDto, UpdateComputerUserDto } from '../dto/computer-user.dto';
+import { UpdateComputerUserDto } from '../dto/computer-user.dto';
 import { UserContext } from '../../../shared/interfaces';
 import { ComputerUserRepository } from '../repositories/computer-user.repository';
 import { Prisma } from '@prisma/client';
@@ -14,26 +14,38 @@ export class ComputerUserService {
         private readonly computerUserRepository: ComputerUserRepository
     ) {}
 
-    async findAll(query: QueryDto & { linked?: string; computer_id?: string }, scope: DataScope, user: UserContext) {
-        const { page, limit, sort = 'createdAt', order = 'desc', search, linked, computer_id } = query;
+    async findAll(
+        query: QueryDto & { linked?: string; computerId?: number },
+        scope: DataScope,
+        user: UserContext
+    ) {
+        const {
+            page,
+            limit,
+            sort = 'createdAt',
+            order = 'desc',
+            search,
+            linked,
+            computerId,
+        } = query;
         const where: Prisma.ComputerUserWhereInput = {};
 
         if (search) {
             where.OR = [
                 { name: { contains: search, mode: 'insensitive' } },
                 { username: { contains: search, mode: 'insensitive' } },
-                { domain: { contains: search, mode: 'insensitive' } }
+                { domain: { contains: search, mode: 'insensitive' } },
             ];
         }
 
         if (linked === 'true') {
-            where.employee_id = { not: null };
+            where.employeeId = { not: null };
         } else if (linked === 'false') {
-            where.employee_id = null;
+            where.employeeId = null;
         }
 
-        if (computer_id) {
-            where.computer_id = parseInt(computer_id);
+        if (computerId) {
+            where.id = computerId;
         }
 
         return this.computerUserRepository.findManyWithPagination(
@@ -44,35 +56,15 @@ export class ComputerUserService {
                     select: {
                         id: true,
                         name: true,
-                        sub_department: {
+                        department: {
                             select: {
                                 id: true,
-                                full_name: true,
-                                department: {
-                                    select: {
-                                        id: true,
-                                        full_name: true,
-                                        organization: {
-                                            select: {
-                                                id: true,
-                                                full_name: true
-                                            }
-                                        }
-                                    }
-                                }
-                            }
-                        }
-                    }
+                                fullName: true,
+                                shortName: true,
+                            },
+                        },
+                    },
                 },
-                computer: {
-                    select: {
-                        id: true,
-                        computer_id: true,
-                        os: true,
-                        ip_address: true,
-                        mac_address: true
-                    }
-                }
             },
             { page, limit },
             scope
@@ -85,56 +77,14 @@ export class ComputerUserService {
                 select: {
                     id: true,
                     name: true,
-                    personal_id: true,
-                    sub_department: {
-                        select: {
-                            id: true,
-                            full_name: true,
-                            department: {
-                                select: {
-                                    id: true,
-                                    full_name: true,
-                                    organization: {
-                                        select: {
-                                            id: true,
-                                            full_name: true
-                                        }
-                                    }
-                                }
-                            }
-                        }
-                    }
-                }
+                    department: {
+                        select: { id: true, fullName: true, shortName: true },
+                    },
+                },
             },
-            computer: {
-                select: {
-                    id: true,
-                    computer_id: true,
-                    os: true,
-                    ip_address: true,
-                    mac_address: true
-                }
+            usersOnComputers: {
+                include: { computer: true },
             },
-            activeWindows: {
-                take: 10,
-                orderBy: { created_at: 'desc' },
-                select: {
-                    id: true,
-                    process_name: true,
-                    window_title: true,
-                    created_at: true
-                }
-            },
-            visitedSites: {
-                take: 10,
-                orderBy: { created_at: 'desc' },
-                select: {
-                    id: true,
-                    url: true,
-                    title: true,
-                    created_at: true
-                }
-            }
         });
 
         if (!computerUser) {
@@ -142,27 +92,6 @@ export class ComputerUserService {
         }
 
         return computerUser;
-    }
-
-    async create(createComputerUserDto: CreateComputerUserDto, scope: DataScope) {
-        // Check if SID already exists
-        const existing = await this.computerUserRepository.findBySid(createComputerUserDto.sid_id);
-        if (existing) {
-            throw new BadRequestException('Computer user with this SID already exists');
-        }
-
-        return this.computerUserRepository.create({
-            sid_id: createComputerUserDto.sid_id,
-            name: createComputerUserDto.name,
-            domain: createComputerUserDto.domain,
-            username: createComputerUserDto.username,
-            is_admin: createComputerUserDto.is_admin,
-            is_in_domain: createComputerUserDto.is_in_domain,
-            is_active: createComputerUserDto.is_active,
-            computer: {
-                connect: { id: createComputerUserDto.computer_id }
-            }
-        }, undefined, scope);
     }
 
     async update(id: number, updateComputerUserDto: UpdateComputerUserDto, user: UserContext) {
@@ -183,28 +112,22 @@ export class ComputerUserService {
 
     async findUnlinked(scope: DataScope) {
         return this.computerUserRepository.findUnlinked({
-            computer: {
-                select: {
-                    id: true,
-                    computer_id: true,
-                    os: true,
-                    ip_address: true,
-                    mac_address: true
-                }
-            }
+            usersOnComputers: {
+                include: { computer: true },
+            },
         });
     }
 
     async linkEmployee(id: number, employeeId: number, user: UserContext) {
         const computerUser = await this.findOne(id, user);
-        
-        if (computerUser.employee_id) {
+
+        if (computerUser.employeeId) {
             throw new BadRequestException('Computer user is already linked to an employee');
         }
 
         // Verify employee exists
         const employee = await this.prisma.employee.findUnique({
-            where: { id: employeeId }
+            where: { id: employeeId },
         });
 
         if (!employee) {
@@ -216,8 +139,8 @@ export class ComputerUserService {
 
     async unlinkEmployee(id: number, user: UserContext) {
         const computerUser = await this.findOne(id, user);
-        
-        if (!computerUser.employee_id) {
+
+        if (!computerUser.employeeId) {
             throw new BadRequestException('Computer user is not linked to any employee');
         }
 
@@ -226,15 +149,9 @@ export class ComputerUserService {
 
     async findByEmployeeId(employeeId: number) {
         return this.computerUserRepository.findByEmployeeId(employeeId, {
-            computer: {
-                select: {
-                    id: true,
-                    computer_id: true,
-                    os: true,
-                    ip_address: true,
-                    mac_address: true
-                }
-            }
+            usersOnComputers: {
+                include: { computer: true },
+            },
         });
     }
 }

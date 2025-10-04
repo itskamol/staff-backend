@@ -1,17 +1,6 @@
 import { IsString, IsNotEmpty, IsOptional, IsBoolean, IsInt, IsEnum, IsIP } from 'class-validator';
 import { ApiProperty, PartialType } from '@nestjs/swagger';
-
-export enum DeviceType {
-    HIKVISION = 'HIKVISION',
-    ACCESS_CONTROL = 'ACCESS_CONTROL',
-    CAMERA = 'CAMERA'
-}
-
-export enum EntryType {
-    ENTER = 'enter',
-    EXIT = 'exit',
-    BOTH = 'both'
-}
+import { DeviceType, EntryType } from '@prisma/client';
 
 export class CreateDeviceDto {
     @ApiProperty({ 

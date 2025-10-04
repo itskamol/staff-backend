@@ -301,7 +301,7 @@ POST   /api/users/:id/assign-department     [Admin only]
 4. Server login va parolni tekshiradi:
    - User mavjudligini tekshiradi
    - Parol to'g'riligini tekshiradi (bcrypt)
-   - User faolligini (is_active) tekshiradi
+   - User faolligini (isActive) tekshiradi
 5. Muvaffaqiyatli bo'lsa:
    - JWT access token yaratadi (15 daqiqa)
    - JWT refresh token yaratadi (7 kun)
@@ -497,7 +497,7 @@ Authorization: Bearer \<access_token\>
 **Query Parameters (ixtiyoriy)**:
 
 ```
-?page=1&limit=10&search=tashkilot_nomi&is_active=true&sort=created_at&order=desc
+?page=1&limit=10&search=tashkilot_nomi&isActive=true&sort=createdAt&order=desc
 ```
 
 **Main Flow**:
@@ -521,25 +521,22 @@ Authorization: Bearer \<access_token\>
     "organizations": [
       {
         "id": 1,
-        "full_name": "O'zbekiston Respublikasi Vazirlar Mahkamasi",
-        "short_name": "VzM",
+        "fullName": "O'zbekiston Respublikasi Vazirlar Mahkamasi",
+        "shortName": "VzM",
         "address": "Toshkent sh., Mustaqillik maydoni",
         "phone": "+998712391234",
         "email": "info@gov.uz",
-        "additional_details": "Davlat boshqaruv organi",
-        "is_active": true,
+        "additionalDetails": "Davlat boshqaruv organi",
+        "isActive": true,
         "departments_count": 15,
         "employees_count": 245,
-        "created_at": "2024-01-15T09:00:00Z",
-        "updated_at": "2024-03-20T14:30:00Z"
+        "createdAt": "2024-01-15T09:00:00Z",
+        "updatedAt": "2024-03-20T14:30:00Z"
       }
     ],
-    "pagination": {
-      "current_page": 1,
-      "total_pages": 3,
-      "total_records": 25,
-      "limit": 10
-    }
+    "page": 1,
+    "total": 25,
+    "limit": 10
   }
 }
 ```
@@ -551,12 +548,12 @@ huquqlari mavjud **Request Body**:
 
 ```json
 {
-  "full_name": "Aloqachi Technologies LLC",
-  "short_name": "Aloqachi",
+  "fullName": "Aloqachi Technologies LLC",
+  "shortName": "Aloqachi",
   "address": "Toshkent sh., Chilonzor tumani, 5-mavze",
   "phone": "+998901234567",
   "email": "info@aloqachi.uz",
-  "additional_details": "IT kompaniyasi"
+  "additionalDetails": "IT kompaniyasi"
 }
 ```
 
@@ -572,7 +569,7 @@ huquqlari mavjud **Request Body**:
    - Phone format tekshiradi
 6. Frontend POST /api/organizations ga request yuboradi
 7. Server ma'lumotlarni validate qiladi:
-   - Unique fields (email, short_name) tekshiradi
+   - Unique fields (email, shortName) tekshiradi
    - Data types va formatlarni tekshiradi
 8. Server yangi tashkilot yaratadi
 9. Server yaratilgan tashkilot ma'lumotlarini qaytaradi
@@ -587,15 +584,15 @@ huquqlari mavjud **Request Body**:
   "data": {
     "organization": {
       "id": 26,
-      "full_name": "Aloqachi Technologies LLC",
-      "short_name": "Aloqachi",
+      "fullName": "Aloqachi Technologies LLC",
+      "shortName": "Aloqachi",
       "address": "Toshkent sh., Chilonzor tumani, 5-mavze",
       "phone": "+998901234567",
       "email": "info@aloqachi.uz",
-      "additional_details": "IT kompaniyasi",
-      "is_active": true,
-      "created_at": "2024-08-24T12:00:00Z",
-      "updated_at": "2024-08-24T12:00:00Z"
+      "additionalDetails": "IT kompaniyasi",
+      "isActive": true,
+      "createdAt": "2024-08-24T12:00:00Z",
+      "updatedAt": "2024-08-24T12:00:00Z"
     }
   }
 }
@@ -624,12 +621,12 @@ mavjud va admin huquqlari bor **Request Body**:
 
 ```json
 {
-  "full_name": "Aloqachi Technologies LLC (Updated)",
-  "short_name": "Aloqachi-Tech",
+  "fullName": "Aloqachi Technologies LLC (Updated)",
+  "shortName": "Aloqachi-Tech",
   "address": "Toshkent sh., Yashnobod tumani, 7-mavze",
   "phone": "+998901234568",
   "email": "contact@aloqachi.uz",
-  "additional_details": "Software development company"
+  "additionalDetails": "Software development company"
 }
 ```
 
@@ -659,15 +656,15 @@ mavjud va admin huquqlari bor **Request Body**:
   "data": {
     "organization": {
       "id": 26,
-      "full_name": "Aloqachi Technologies LLC (Updated)",
-      "short_name": "Aloqachi-Tech",
+      "fullName": "Aloqachi Technologies LLC (Updated)",
+      "shortName": "Aloqachi-Tech",
       "address": "Toshkent sh., Yashnobod tumani, 7-mavze",
       "phone": "+998901234568",
       "email": "contact@aloqachi.uz",
-      "additional_details": "Software development company",
-      "is_active": true,
-      "created_at": "2024-08-24T12:00:00Z",
-      "updated_at": "2024-08-24T12:30:00Z"
+      "additionalDetails": "Software development company",
+      "isActive": true,
+      "createdAt": "2024-08-24T12:00:00Z",
+      "updatedAt": "2024-08-24T12:30:00Z"
     }
   }
 }
@@ -692,7 +689,7 @@ Tashkilot mavjud va admin huquqlari bor **Path Parameter**: organization ID
    - Departments mavjudmi?
    - Employees mavjudmi?
    - Active entries mavjudmi?
-9. Agar bog'liqliklar mavjud bo'lsa - soft delete (is_active \= false)
+9. Agar bog'liqliklar mavjud bo'lsa - soft delete (isActive \= false)
 10. Agar bog'liqliklar yo'q bo'lsa - hard delete
 11. Change history ga yozuv qo'shadi
 12. Server muvaffaqiyat javobini qaytaradi
@@ -770,7 +767,7 @@ Tashkilot mavjud va admin huquqlari bor **Path Parameter**: organization ID
 **Query Parameters**:
 
 ```
-?organization_id=1&search=IT&is_active=true&sort=name&order=asc&page=1&limit=10
+?organization_id=1&search=IT&isActive=true&sort=name&order=asc&page=1&limit=10
 ```
 
 **Success Response (Admin - All departments)**:
@@ -783,31 +780,30 @@ Tashkilot mavjud va admin huquqlari bor **Path Parameter**: organization ID
       {
         "id": 1,
         "organization_id": 1,
-        "organization_name": "VzM",
-        "full_name": "Iqtisodiyot va moliya departamenti",
-        "short_name": "IMD",
+        "organizationName": "VzM",
+        "fullName": "Iqtisodiyot va moliya departamenti",
+        "shortName": "IMD",
         "address": "Toshkent sh., Mustaqillik maydoni, 1-bino",
         "phone": "+998712391235",
         "email": "econ@gov.uz",
-        "additional_details": "Iqtisodiy masalalar",
-        "is_active": true,
-        "sub_departments_count": 5,
-        "employees_count": 45,
-        "created_at": "2024-01-20T09:00:00Z",
-        "updated_at": "2024-03-15T14:00:00Z"
+        "additionalDetails": "Iqtisodiy masalalar",
+        "isActive": true,
+        "_count": {
+          "childrens": 5,
+          "employees": 5
+        },
+        "createdAt": "2024-01-20T09:00:00Z",
+        "updatedAt": "2024-03-15T14:00:00Z"
       }
     ],
-    "pagination": {
-      "current_page": 1,
-      "total_pages": 8,
-      "total_records": 75,
-      "limit": 10
-    },
+    "page": 1,
+    "total": 75,
+    "limit": 10,
     "user_permissions": {
       "can_create": true,
       "can_edit": true,
       "can_delete": true,
-      "can_view_all_orgs": true
+      "can_viewAll_orgs": true
     }
   }
 }
@@ -823,29 +819,26 @@ Tashkilot mavjud va admin huquqlari bor **Path Parameter**: organization ID
       {
         "id": 1,
         "organization_id": 1,
-        "full_name": "Iqtisodiyot va moliya departamenti",
-        "short_name": "IMD",
+        "fullName": "Iqtisodiyot va moliya departamenti",
+        "shortName": "IMD",
         "address": "Toshkent sh., Mustaqillik maydoni, 1-bino",
         "phone": "+998712391235",
         "email": "econ@gov.uz",
-        "additional_details": "Iqtisodiy masalalar",
-        "is_active": true,
+        "additionalDetails": "Iqtisodiy masalalar",
+        "isActive": true,
         "sub_departments_count": 5,
         "employees_count": 45,
-        "created_at": "2024-01-20T09:00:00Z"
+        "createdAt": "2024-01-20T09:00:00Z"
       }
     ],
-    "pagination": {
-      "current_page": 1,
-      "total_pages": 2,
-      "total_records": 15,
-      "limit": 10
-    },
+    "page": 1,
+    "total": 15,
+    "limit": 10,
     "user_permissions": {
       "can_create": true,
       "can_edit": true,
       "can_delete": true,
-      "can_view_all_orgs": false
+      "can_viewAll_orgs": false
     }
   }
 }
@@ -861,18 +854,18 @@ Tashkilot mavjud va admin huquqlari bor **Path Parameter**: organization ID
       {
         "id": 1,
         "organization_id": 1,
-        "full_name": "Iqtisodiyot va moliya departamenti",
-        "short_name": "IMD",
+        "fullName": "Iqtisodiyot va moliya departamenti",
+        "shortName": "IMD",
         "sub_departments_count": 5,
         "employees_count": 45,
-        "is_active": true
+        "isActive": true
       }
     ],
     "user_permissions": {
       "can_create": false,
       "can_edit": false,
       "can_delete": false,
-      "can_view_all_orgs": false
+      "can_viewAll_orgs": false
     }
   }
 }
@@ -901,12 +894,12 @@ HR huquqlari mavjud
 ```json
 {
   "organization_id": 2,
-  "full_name": "Axborot texnologiyalari departamenti",
-  "short_name": "ATD",
+  "fullName": "Axborot texnologiyalari departamenti",
+  "shortName": "ATD",
   "address": "Toshkent sh., Chilonzor tumani",
   "phone": "+998712391240",
   "email": "it@company.uz",
-  "additional_details": "IT va dasturiy ta'minot"
+  "additionalDetails": "IT va dasturiy ta'minot"
 }
 ```
 
@@ -914,12 +907,12 @@ HR huquqlari mavjud
 
 ```json
 {
-  "full_name": "Marketing departamenti",
-  "short_name": "MD",
+  "fullName": "Marketing departamenti",
+  "shortName": "MD",
   "address": "Toshkent sh., Mirobod tumani",
   "phone": "+998712391241",
   "email": "marketing@company.uz",
-  "additional_details": "Marketing va reklama"
+  "additionalDetails": "Marketing va reklama"
 }
 ```
 
@@ -933,15 +926,15 @@ HR huquqlari mavjud
     "department": {
       "id": 26,
       "organization_id": 2,
-      "full_name": "Axborot texnologiyalari departamenti",
-      "short_name": "ATD",
+      "fullName": "Axborot texnologiyalari departamenti",
+      "shortName": "ATD",
       "address": "Toshkent sh., Chilonzor tumani",
       "phone": "+998712391240",
       "email": "it@company.uz",
-      "additional_details": "IT va dasturiy ta'minot",
-      "is_active": true,
-      "created_at": "2024-08-24T15:00:00Z",
-      "updated_at": "2024-08-24T15:00:00Z"
+      "additionalDetails": "IT va dasturiy ta'minot",
+      "isActive": true,
+      "createdAt": "2024-08-24T15:00:00Z",
+      "updatedAt": "2024-08-24T15:00:00Z"
     }
   }
 }
@@ -965,12 +958,12 @@ Department mavjud va tegishli huquq bor
 
 ```json
 {
-  "full_name": "Axborot texnologiyalari departamenti (Updated)",
-  "short_name": "AT-Dept",
+  "fullName": "Axborot texnologiyalari departamenti (Updated)",
+  "shortName": "AT-Dept",
   "address": "Toshkent sh., Yashnobod tumani, yangi ofis",
   "phone": "+998712391242",
   "email": "it-dept@company.uz",
-  "additional_details": "IT, dasturiy ta'minot va kiberbezopaslik"
+  "additionalDetails": "IT, dasturiy ta'minot va kiberbezopaslik"
 }
 ```
 
@@ -984,9 +977,9 @@ Department mavjud va tegishli huquq bor
     "department": {
       "id": 26,
       "organization_id": 2,
-      "full_name": "Axborot texnologiyalari departamenti (Updated)",
-      "short_name": "AT-Dept",
-      "updated_at": "2024-08-24T15:30:00Z"
+      "fullName": "Axborot texnologiyalari departamenti (Updated)",
+      "shortName": "AT-Dept",
+      "updatedAt": "2024-08-24T15:30:00Z"
     }
   }
 }
@@ -1068,40 +1061,40 @@ bor
   "data": {
     "department": {
       "id": 1,
-      "full_name": "Iqtisodiyot va moliya departamenti",
-      "short_name": "IMD",
-      "organization_name": "VzM"
+      "fullName": "Iqtisodiyot va moliya departamenti",
+      "shortName": "IMD",
+      "organizationName": "VzM"
     },
     "sub_departments": [
       {
         "id": 1,
-        "full_name": "Byudjet bo'limi",
-        "short_name": "BB",
+        "fullName": "Byudjet bo'limi",
+        "shortName": "BB",
         "address": "1-bino, 2-qavat",
         "phone": "+998712391250",
         "email": "budget@gov.uz",
-        "additional_details": "Byudjet rejalashtirish",
-        "is_active": true,
+        "additionalDetails": "Byudjet rejalashtirish",
+        "isActive": true,
         "employees_count": 12,
         "policy_id": 1,
-        "policy_name": "Standard Monitoring",
-        "created_at": "2024-02-01T09:00:00Z",
-        "updated_at": "2024-03-20T14:00:00Z"
+        "policyName": "Standard Monitoring",
+        "createdAt": "2024-02-01T09:00:00Z",
+        "updatedAt": "2024-03-20T14:00:00Z"
       },
       {
         "id": 2,
-        "full_name": "Moliyaviy tahlil bo'limi",
-        "short_name": "MTB",
+        "fullName": "Moliyaviy tahlil bo'limi",
+        "shortName": "MTB",
         "address": "1-bino, 3-qavat",
         "phone": "+998712391251",
         "email": "analysis@gov.uz",
-        "additional_details": "Moliyaviy hisobotlar tahlili",
-        "is_active": true,
+        "additionalDetails": "Moliyaviy hisobotlar tahlili",
+        "isActive": true,
         "employees_count": 8,
         "policy_id": 2,
-        "policy_name": "High Security Monitoring",
-        "created_at": "2024-02-15T10:00:00Z",
-        "updated_at": "2024-04-01T16:00:00Z"
+        "policyName": "High Security Monitoring",
+        "createdAt": "2024-02-15T10:00:00Z",
+        "updatedAt": "2024-04-01T16:00:00Z"
       }
     ],
     "total_sub_departments": 5,
@@ -1166,7 +1159,7 @@ bor
 **Query Parameters**:
 
 ```
-?organization_id=1&department_id=2&sub_department_id=3&search=John&is_active=true&sort=name&order=asc&page=1&limit=10
+?organization_id=1&department_id=2&sub_department_id=3&search=John&isActive=true&sort=name&order=asc&page=1&limit=10
 ```
 
 **Success Response (Admin - Full access)**:
@@ -1185,43 +1178,40 @@ bor
         "phone": "+998901234567",
         "email": "vali.aliyev@company.uz",
         "photo": "/uploads/photos/employee_1.jpg",
-        "additional_details": "Senior Developer",
-        "is_active": true,
+        "additionalDetails": "Senior Developer",
+        "isActive": true,
         "organization": {
           "id": 1,
-          "full_name": "Tech Company LLC",
-          "short_name": "TechCorp"
+          "fullName": "Tech Company LLC",
+          "shortName": "TechCorp"
         },
         "department": {
           "id": 1,
-          "full_name": "IT Department",
-          "short_name": "IT"
+          "fullName": "IT Department",
+          "shortName": "IT"
         },
         "sub_department": {
           "id": 1,
-          "full_name": "Software Development",
-          "short_name": "Dev"
+          "fullName": "Software Development",
+          "shortName": "Dev"
         },
         "cards_count": 2,
         "cars_count": 1,
         "computer_users_count": 3,
-        "created_at": "2024-01-15T09:00:00Z",
-        "updated_at": "2024-03-20T14:30:00Z"
+        "createdAt": "2024-01-15T09:00:00Z",
+        "updatedAt": "2024-03-20T14:30:00Z"
       }
     ],
-    "pagination": {
-      "current_page": 1,
-      "total_pages": 15,
-      "total_records": 145,
-      "limit": 10
-    },
+    "page": 1,
+    "total": 145,
+    "limit": 10,
     "user_permissions": {
       "can_create": true,
       "can_edit": true,
       "can_delete": true,
       "can_view_sensitive_data": true,
-      "can_assign_cards": true,
-      "can_assign_cars": true,
+      "canAssign_cards": true,
+      "canAssign_cars": true,
       "can_link_computer_users": true
     }
   }
@@ -1257,7 +1247,7 @@ bor
   "phone": "+998901111222",
   "email": "bobur.karimov@company.uz",
   "photo": "base64_encoded_photo_string",
-  "additional_details": "Junior Frontend Developer"
+  "additionalDetails": "Junior Frontend Developer"
 }
 ```
 
@@ -1277,9 +1267,9 @@ bor
       "phone": "+998901111222",
       "email": "bobur.karimov@company.uz",
       "photo": "/uploads/photos/employee_146.jpg",
-      "additional_details": "Junior Frontend Developer",
-      "is_active": true,
-      "created_at": "2024-08-24T16:00:00Z"
+      "additionalDetails": "Junior Frontend Developer",
+      "isActive": true,
+      "createdAt": "2024-08-24T16:00:00Z"
     }
   }
 }
@@ -1306,7 +1296,7 @@ bor
   "address": "Toshkent sh., Yashnobod tumani, 22-uy",
   "phone": "+998901111333",
   "email": "bobur.karimov.new@company.uz",
-  "additional_details": "Middle Frontend Developer"
+  "additionalDetails": "Middle Frontend Developer"
 }
 ```
 
@@ -1325,7 +1315,7 @@ bor
       "address": "Toshkent sh., Yashnobod tumani, 22-uy",
       "phone": "+998901111333",
       "email": "bobur.karimov.new@company.uz",
-      "updated_at": "2024-08-24T16:30:00Z"
+      "updatedAt": "2024-08-24T16:30:00Z"
     }
   }
 }
@@ -1412,10 +1402,10 @@ Lead/Guard
           "action_result": "card_12345",
           "device": {
             "name": "Main Entrance",
-            "ip_address": "192.168.1.100"
+            "ipAddress": "192.168.1.100"
           }
         },
-        "created_at": "2024-08-24T09:15:05Z"
+        "createdAt": "2024-08-24T09:15:05Z"
       },
       {
         "id": 2,
@@ -1429,19 +1419,16 @@ Lead/Guard
           "action_result": "card_12345",
           "device": {
             "name": "Main Entrance",
-            "ip_address": "192.168.1.100"
+            "ipAddress": "192.168.1.100"
           }
         },
-        "created_at": "2024-08-24T18:30:02Z"
+        "createdAt": "2024-08-24T18:30:02Z"
       }
     ],
-    "pagination": {
-      "current_page": 1,
-      "total_pages": 5,
-      "total_records": 245
+    "page": 1,
+      "total": 245
     },
-    "summary": {
-      "total_entries": 123,
+,      "total_entries": 123,
       "total_exits": 122,
       "avg_work_hours": "8.5"
     }
@@ -1489,15 +1476,15 @@ Lead
       "total_screenshots": 1850,
       "avg_daily_screenshots": 84
     },
-    "most_used_applications": [
+    "most_usedApplications": [
       {
-        "process_name": "Code.exe",
+        "processName": "Code.exe",
         "total_time": 145800,
         "usage_count": 342,
         "percentage": 45.2
       },
       {
-        "process_name": "chrome.exe",
+        "processName": "chrome.exe",
         "total_time": 89400,
         "usage_count": 156,
         "percentage": 27.8
@@ -1517,7 +1504,7 @@ Lead
         "category": "development"
       }
     ],
-    "productivity_analysis": {
+    "productivityAnalysis": {
       "productive_time": 198000,
       "neutral_time": 86400,
       "unproductive_time": 21600,
@@ -1563,17 +1550,17 @@ Lead
         "name": "Vali Aliyev",
         "domain": "COMPANY",
         "username": "v.aliyev",
-        "is_admin": false,
+        "isAdmin": false,
         "is_in_domain": true,
-        "is_active": true,
+        "isActive": true,
         "computer": {
           "id": 5,
           "computer_id": 12345,
           "os": "Windows 11 Pro",
-          "ip_address": "192.168.1.150",
-          "mac_address": "00:1B:44:11:3A:B7"
+          "ipAddress": "192.168.1.150",
+          "macAddress": "00:1B:44:11:3A:B7"
         },
-        "created_at": "2024-07-15T10:00:00Z"
+        "createdAt": "2024-07-15T10:00:00Z"
       }
     ],
     "summary": {
@@ -1596,11 +1583,11 @@ Lead
 ```json
 {
   "card_number": "0012345678",
-  "additional_details": "Asosiy kirish kartasi"
+  "additionalDetails": "Asosiy kirish kartasi"
 }
 ```
 
-CARD_ALREADY_EXISTS
+CARDALREADY_EXISTS
 
 **Success Response (201)**:
 
@@ -1613,9 +1600,9 @@ CARD_ALREADY_EXISTS
       "id": 25,
       "employee_id": 1,
       "number": "0012345678",
-      "additional_details": "Asosiy kirish kartasi",
-      "is_active": true,
-      "created_at": "2024-08-24T17:00:00Z"
+      "additionalDetails": "Asosiy kirish kartasi",
+      "isActive": true,
+      "createdAt": "2024-08-24T17:00:00Z"
     }
   }
 }
@@ -1631,7 +1618,7 @@ CARD_ALREADY_EXISTS
 {
   "car_number": "01A123BC",
   "model": "Toyota Camry 2022",
-  "additional_details": "Xizmat avtomobili"
+  "additionalDetails": "Xizmat avtomobili"
 }
 ```
 
@@ -1647,9 +1634,9 @@ CARD_ALREADY_EXISTS
       "employee_id": 1,
       "number": "01A123BC",
       "model": "Toyota Camry 2022",
-      "additional_details": "Xizmat avtomobili",
-      "is_active": true,
-      "created_at": "2024-08-24T17:15:00Z"
+      "additionalDetails": "Xizmat avtomobili",
+      "isActive": true,
+      "createdAt": "2024-08-24T17:15:00Z"
     }
   }
 }
@@ -1703,7 +1690,7 @@ CARD_ALREADY_EXISTS
     "unlinked": {
       "employee_id": 1,
       "computer_user_id": 15,
-      "unlinked_at": "2024-08-24T17:45:00Z"
+      "unlinkedAt": "2024-08-24T17:45:00Z"
     }
   }
 }
@@ -1817,20 +1804,17 @@ public class UserInfo
           "device": {
             "id": 1,
             "name": "Main Entrance",
-            "ip_address": "192.168.1.100",
+            "ipAddress": "192.168.1.100",
             "entry_type": "both"
           }
         },
-        "created_at": "2024-08-24T09:15:05Z"
+        "createdAt": "2024-08-24T09:15:05Z"
       }
     ],
-    "pagination": {
-      "current_page": 1,
-      "total_pages": 25,
-      "total_records": 1250,
+    "page": 1,
+      "total": 1250,
       "limit": 50
-    },
-    "filters": {
+,    "filters": {
       "applied": {
         "start_date": "2024-08-01",
         "end_date": "2024-08-31"
@@ -1901,12 +1885,12 @@ public class UserInfo
       "total_entries": 245,
       "total_exits": 178,
       "current_occupancy": 67,
-      "late_arrivals": 12,
+      "lateArrivals": 12,
       "early_departures": 8,
-      "avg_arrival_time": "08:45",
+      "avgArrival_time": "08:45",
       "avg_departure_time": "17:30"
     },
-    "recent_activities": [
+    "recentActivities": [
       {
         "id": 1501,
         "employee": {
@@ -1935,9 +1919,9 @@ public class UserInfo
     ],
     "device_status": [
       {
-        "device_name": "Main Entrance",
+        "deviceName": "Main Entrance",
         "status": "online",
-        "last_activity": "2024-08-24T09:15:00Z",
+        "lastActivity": "2024-08-24T09:15:00Z",
         "today_events": 89
       }
     ]
@@ -1989,22 +1973,22 @@ public class UserInfo
       },
       "summary": {
         "total_employees": 245,
-        "avg_attendance_rate": 94.5,
+        "avgAttendance_rate": 94.5,
         "total_entries": 5390,
         "total_exits": 5385,
         "avg_work_hours": 8.2
       },
-      "department_analysis": [
+      "departmentAnalysis": [
         {
           "department": "IT Department",
           "employees_count": 25,
           "attendance_rate": 96.8,
           "avg_work_hours": 8.5,
-          "late_arrivals": 15,
+          "lateArrivals": 15,
           "early_departures": 8
         }
       ],
-      "employee_details": [
+      "employeeDetails": [
         {
           "employee_id": 1,
           "name": "Aliyev Vali Akramovich",
@@ -2013,14 +1997,14 @@ public class UserInfo
           "present_days": 21,
           "absent_days": 1,
           "late_days": 2,
-          "avg_arrival": "08:45",
+          "avgArrival": "08:45",
           "avg_departure": "17:35",
           "avg_work_hours": 8.8,
           "overtime_hours": 12.5
         }
       ],
       "charts": {
-        "daily_attendance": [...],
+        "dailyAttendance": [...],
         "department_comparison": [...],
         "work_hours_distribution": [...]
       }
@@ -2030,8 +2014,8 @@ public class UserInfo
       "excel": "/api/reports/download/RPT-20240824-001.xlsx",
       "csv": "/api/reports/download/RPT-20240824-001.csv"
     },
-    "generated_at": "2024-08-24T15:30:00Z",
-    "expires_at": "2024-08-31T15:30:00Z"
+    "generatedAt": "2024-08-24T15:30:00Z",
+    "expiresAt": "2024-08-31T15:30:00Z"
   }
 }
 ```
@@ -2058,7 +2042,7 @@ Lead/Guard
 **Query Parameters**:
 
 ```
-?start_date=2024-08-01&end_date=2024-08-31&include_patterns=true&include_analytics=true
+?start_date=2024-08-01&end_date=2024-08-31&include_patterns=true&includeAnalytics=true
 ```
 
 **Success Response**:
@@ -2085,9 +2069,9 @@ Lead/Guard
       "total_work_days": 22,
       "present_days": 21,
       "absent_days": 1,
-      "late_arrivals": 3,
+      "lateArrivals": 3,
       "early_departures": 2,
-      "avg_arrival_time": "08:52",
+      "avgArrival_time": "08:52",
       "avg_departure_time": "18:15",
       "total_work_hours": 184.5,
       "avg_daily_hours": 8.4
@@ -2117,7 +2101,7 @@ Lead/Guard
       }
     ],
     "patterns": {
-      "most_common_arrival_time": "08:45-09:00",
+      "most_commonArrival_time": "08:45-09:00",
       "most_common_departure_time": "18:00-18:30",
       "preferred_entrance": "Main Entrance",
       "attendance_trend": "consistent",
@@ -2134,7 +2118,7 @@ Lead/Guard
       "weekly_patterns": [
         {
           "day": "monday",
-          "avg_arrival": "08:50",
+          "avgArrival": "08:50",
           "avg_departure": "18:10",
           "attendance_rate": 100
         }
