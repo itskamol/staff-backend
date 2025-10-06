@@ -50,16 +50,6 @@ enum SessionType {
   LOGOUT
 }
 
-enum OptionType {
-  WEBSITE
-  ACTIVE_WINDOW
-}
-
-enum ResourceType {
-  WEBSITE
-  APPLICATION
-}
-
 enum VisitorCodeType {
   ONETIME
   MULTIPLE

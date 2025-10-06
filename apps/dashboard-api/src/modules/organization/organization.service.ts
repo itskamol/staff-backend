@@ -3,7 +3,7 @@ import { OrganizationRepository } from './organization.repository';
 import { Organization, Prisma } from '@prisma/client';
 import { DataScope } from '@app/shared/auth';
 import { QueryDto } from '../../shared/dto/query.dto';
-import { CreateOrganizationDto, UpdateOrganizationDto } from '../../shared/dto';
+import { CreateOrganizationDto, UpdateOrganizationDto } from './dto';
 
 @Injectable()
 export class OrganizationService {

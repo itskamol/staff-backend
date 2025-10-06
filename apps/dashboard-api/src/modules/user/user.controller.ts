@@ -13,14 +13,14 @@ import { ApiBearerAuth, ApiExtraModels, ApiParam, ApiTags } from '@nestjs/swagge
 import { UserService } from './user.service';
 import { User as UserModel } from '@prisma/client';
 import { NoScoping, Role, Roles, User } from '@app/shared/auth';
+import { ApiSuccessResponse } from '../../shared/dto';
 import {
-    ApiSuccessResponse,
     AssignUserToDepartmentDto,
     CreateUserDto,
     UpdateCurrentUserDto,
     UpdateUserDto,
     UserResponseDto,
-} from '../../shared/dto';
+} from './dto';
 import { ApiCrudOperation } from '../../shared/utils';
 import { UserContext } from '../../shared/interfaces';
 import { QueryDto } from '@app/shared/utils';

@@ -1,8 +1,7 @@
 import { Injectable, NotFoundException, BadRequestException } from '@nestjs/common';
 import { PrismaService } from '@app/shared/database';
 import { DataScope } from '@app/shared/auth';
-import { QueryDto } from '@app/shared/utils';
-import { CreateResourceDto, UpdateResourceDto } from '../dto/resource.dto';
+import { CreateResourceDto, ResourceQueryDto, UpdateResourceDto } from '../dto/resource.dto';
 import { ResourceType } from '@prisma/client';
 import { UserContext } from '../../../shared/interfaces';
 import { ResourceRepository } from '../repositories/resource.repository';
@@ -12,10 +11,11 @@ import { Prisma } from '@prisma/client';
 export class ResourceService {
     constructor(
         private readonly prisma: PrismaService,
-        private readonly resourceRepository: ResourceRepository
+        private readonly resourceRepository: ResourceRepository,
+        private readonly primsa: PrismaService
     ) {}
 
-    async findAll(query: QueryDto & { type?: string }, scope: DataScope, user: UserContext) {
+    async findAll(query: ResourceQueryDto, scope: DataScope, user: UserContext) {
         const { page, limit, sort = 'createdAt', order = 'desc', search, type } = query;
         const where: Prisma.ResourceWhereInput = {};
 
@@ -24,19 +24,13 @@ export class ResourceService {
         }
 
         if (type) {
-            where.type = type as ResourceType;
+            where.type = type;
         }
 
         return this.resourceRepository.findManyWithPagination(
             where,
             { [sort]: order },
-            {
-                _count: {
-                    select: {
-                        resourceGroups: true
-                    }
-                }
-            },
+            {},
             { page, limit },
             scope
         );
@@ -50,16 +44,11 @@ export class ResourceService {
                         select: {
                             id: true,
                             name: true,
-                            type: true
-                        }
-                    }
-                }
+                            type: true,
+                        },
+                    },
+                },
             },
-            _count: {
-                select: {
-                    resourceGroups: true
-                }
-            }
         });
 
         if (!resource) {
@@ -70,13 +59,32 @@ export class ResourceService {
     }
 
     async create(createResourceDto: CreateResourceDto, scope: DataScope) {
-        // Check if resource with same value already exists
-        const existing = await this.resourceRepository.findByValue(createResourceDto.value);
-        if (existing) {
-            throw new BadRequestException('Resource with this value already exists');
+        if (!scope?.organizationId) {
+            throw new BadRequestException('Organization ID is required');
         }
 
-        return this.resourceRepository.create(createResourceDto, undefined, scope);
+        // Check if resource with same value and organizationId already exists
+        const existing = await this.resourceRepository.findFirst({
+            value: createResourceDto.value,
+            type: createResourceDto.type,
+            organizationId: scope.organizationId,
+        });
+
+        if (existing) {
+            throw new BadRequestException(
+                'Resource with this value already exists in your organization'
+            );
+        }
+
+        const input: Prisma.ResourceCreateInput = {
+            type: createResourceDto.type,
+            value: createResourceDto.value,
+            organization: {
+                connect: { id: scope.organizationId },
+            },
+        };
+
+        return this.resourceRepository.create(input, undefined, scope);
     }
 
     async update(id: number, updateResourceDto: UpdateResourceDto, user: UserContext) {
@@ -94,13 +102,17 @@ export class ResourceService {
     }
 
     async remove(id: number, scope: DataScope, user: UserContext) {
-        const resource = await this.resourceRepository.findById(id, {
-            _count: {
-                select: {
-                    resourceGroups: true
-                }
-            }
-        }, scope);
+        const resource = await this.resourceRepository.findById(
+            id,
+            {
+                _count: {
+                    select: {
+                        resourceGroups: true,
+                    },
+                },
+            },
+            scope
+        );
 
         if (!resource) {
             throw new NotFoundException('Resource not found');
@@ -119,15 +131,15 @@ export class ResourceService {
 
     async bulkCreate(resources: CreateResourceDto[], scope: DataScope) {
         // Filter out duplicates
-        const uniqueResources = resources.filter((resource, index, self) => 
-            index === self.findIndex(r => r.value === resource.value)
+        const uniqueResources = resources.filter(
+            (resource, index, self) => index === self.findIndex(r => r.value === resource.value)
         );
 
         // Check for existing resources
         const existingResources = await this.prisma.resource.findMany({
             where: {
-                value: { in: uniqueResources.map(r => r.value) }
-            }
+                value: { in: uniqueResources.map(r => r.value) },
+            },
         });
 
         const existingValues = existingResources.map(r => r.value);
@@ -137,7 +149,19 @@ export class ResourceService {
             throw new BadRequestException('All resources already exist');
         }
 
-        const result = await this.resourceRepository.bulkCreate(newResources);
+        if (!scope?.organizationId) {
+            throw new BadRequestException('Organization ID is required');
+        }
+
+        // Bulk create resources with organizationId
+        const result = await this.prisma.resource.createMany({
+            data: newResources.map(r => ({
+                type: r.type,
+                value: r.value,
+                organizationId: scope.organizationId!,
+            })),
+            skipDuplicates: true,
+        });
         return { created: result.count, skipped: resources.length - result.count };
     }
 }

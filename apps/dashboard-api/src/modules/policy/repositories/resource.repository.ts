@@ -32,7 +32,7 @@ export class ResourceRepository extends BaseRepository<
         return this.findFirst({ value });
     }
 
-    async bulkCreate(resources: Prisma.ResourceCreateInput[]) {
+    async bulkCreate(resources: Prisma.ResourceCreateManyInput[]) {
         return this.prisma.resource.createMany({
             data: resources,
             skipDuplicates: true

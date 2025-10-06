@@ -29,11 +29,11 @@ export class PolicyOptionRepository extends BaseRepository<
     }
 
     async findByGroupId(groupId: number, include?: Prisma.PolicyOptionInclude) {
-        return this.findMany({ groupId }, undefined, include);
+        return this.findMany({}, undefined, include);
     }
 
-    async findByPolicyAndGroup(policyId: number, groupId: number) {
-        return this.findFirst({ policyId, groupId });
+    async findByPolicyAndGroup(policyId: number) {
+        return this.findFirst({ policyId });
     }
 
     async deleteByPolicyId(policyId: number) {
@@ -41,6 +41,6 @@ export class PolicyOptionRepository extends BaseRepository<
     }
 
     async deleteByGroupId(groupId: number) {
-        return this.deleteMany({ groupId });
+        return this.deleteByPolicyId(groupId);
     }
 }

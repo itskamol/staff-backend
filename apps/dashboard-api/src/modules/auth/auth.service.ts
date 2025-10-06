@@ -3,7 +3,7 @@ import { UserRepository } from '../user/user.repository';
 import { CustomJwtService, JwtPayload } from './jwt.service';
 import { User } from '@prisma/client';
 import { PasswordUtil } from '../../shared/utils';
-import { LoginDto, LoginResponseDto, RefreshTokenDto, RefreshTokenResponseDto } from '../../shared/dto';
+import { LoginDto, LoginResponseDto, RefreshTokenDto, RefreshTokenResponseDto } from './dto';
 import { Role } from '@app/shared/auth';
 
 @Injectable()

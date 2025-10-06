@@ -4,14 +4,29 @@ import {
     ApiBody,
     ApiExtraModels,
     ApiOperation,
+    ApiProperty,
     ApiResponse,
     ApiTags,
 } from '@nestjs/swagger';
 import { AuthService } from './auth.service';
-import { ApiSuccessResponse, LoginDto, LoginResponseDto, LogoutDto, RefreshTokenDto, RefreshTokenResponseDto, ValidateTokenResponseDto } from '../../shared/dto';
+import { ApiSuccessResponse } from '../../shared/dto';
+import { LoginDto, LoginResponseDto, LogoutDto, RefreshTokenDto, RefreshTokenResponseDto } from './dto';
 import { Public, User } from '@app/shared/auth';
 import { ApiErrorResponses, ApiOkResponseData } from '../../shared/utils';
 import { UserContext } from '../../shared/interfaces';
+
+export class ValidateTokenResponseDto {
+    @ApiProperty({ description: 'Whether the token is valid', example: true })
+    valid: boolean;
+    
+    @ApiProperty({ description: 'User information from token', required: false })
+    user?: {
+        sub: string;
+        username: string;
+        role: string;
+        organizationId?: number;
+    };
+}
 
 @ApiTags('Authentication')
 @Controller('auth')
@@ -70,9 +85,10 @@ export class AuthController {
         const data: ValidateTokenResponseDto = {
             valid: true,
             user: {
-                id: +user.sub,
+                sub: user.sub,
                 username: user.username,
                 role: user.role,
+                organizationId: user.organizationId,
             },
         };
 

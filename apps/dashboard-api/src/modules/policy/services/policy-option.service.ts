@@ -22,10 +22,6 @@ export class PolicyOptionService {
             where.policyId = parseInt(policyId as string);
         }
 
-        if (groupId) {
-            where.groupId = parseInt(groupId as string);
-        }
-
         return this.policyOptionRepository.findManyWithPagination(
             where,
             { [sort]: order },
@@ -34,13 +30,6 @@ export class PolicyOptionService {
                     select: {
                         id: true,
                         title: true
-                    }
-                },
-                group: {
-                    select: {
-                        id: true,
-                        name: true,
-                        type: true
                     }
                 }
             },
@@ -58,13 +47,6 @@ export class PolicyOptionService {
                     organizationId: true
                 }
             },
-            group: {
-                select: {
-                    id: true,
-                    name: true,
-                    type: true
-                }
-            }
         });
 
         if (!policyOption) {
@@ -78,7 +60,6 @@ export class PolicyOptionService {
         // Check if policy-group combination already exists
         const existing = await this.policyOptionRepository.findByPolicyAndGroup(
             createPolicyOptionDto.policyId,
-            createPolicyOptionDto.groupId
         );
 
         if (existing) {
@@ -88,7 +69,7 @@ export class PolicyOptionService {
         // Verify policy and group exist
         const [policy, group] = await Promise.all([
             this.prisma.policy.findUnique({ where: { id: createPolicyOptionDto.policyId } }),
-            this.prisma.group.findUnique({ where: { id: createPolicyOptionDto.groupId } })
+            this.prisma.resourceGroup.findUnique({ where: { id: createPolicyOptionDto.groupId } })
         ]);
 
         if (!policy) {
@@ -101,7 +82,6 @@ export class PolicyOptionService {
 
         return this.policyOptionRepository.create({
             policy: { connect: { id: createPolicyOptionDto.policyId } },
-            group: { connect: { id: createPolicyOptionDto.groupId } },
             type: createPolicyOptionDto.type,
             isActive: createPolicyOptionDto.isActive
         }, undefined, scope);
@@ -114,9 +94,8 @@ export class PolicyOptionService {
         if (updatePolicyOptionDto.policyId || updatePolicyOptionDto.groupId) {
             const current = await this.policyOptionRepository.findById(id);
             const policyId = updatePolicyOptionDto.policyId || current.policyId;
-            const groupId = updatePolicyOptionDto.groupId || current.groupId;
 
-            const existing = await this.policyOptionRepository.findByPolicyAndGroup(policyId, groupId);
+            const existing = await this.policyOptionRepository.findByPolicyAndGroup(policyId);
             if (existing && existing.id !== id) {
                 throw new BadRequestException('Policy-group combination already exists');
             }
@@ -137,13 +116,7 @@ export class PolicyOptionService {
 
     async findByPolicyId(policyId: number) {
         return this.policyOptionRepository.findByPolicyId(policyId, {
-            group: {
-                select: {
-                    id: true,
-                    name: true,
-                    type: true
-                }
-            }
+            rules: true
         });
     }
 
@@ -168,7 +141,7 @@ export class PolicyOptionService {
         }
 
         // Verify all groups exist
-        const groups = await this.prisma.group.findMany({
+        const groups = await this.prisma.resourceGroup.findMany({
             where: { id: { in: groupIds } }
         });
 
@@ -179,29 +152,29 @@ export class PolicyOptionService {
         // Check for existing combinations
         const existing = await this.policyOptionRepository.findMany({
             policyId,
-            groupId: { in: groupIds }
+            // groupId: { in: groupIds }
         });
 
-        const existingGroupIds = existing.map(po => po.groupId);
-        const newGroupIds = groupIds.filter(id => !existingGroupIds.includes(id));
+        // const existingGroupIds = existing.map(po => po.groupId);
+        // const newGroupIds = groupIds.filter(id => !existingGroupIds.includes(id));
 
-        if (newGroupIds.length === 0) {
-            throw new BadRequestException('All policy-group combinations already exist');
-        }
+        // if (newGroupIds.length === 0) {
+        //     throw new BadRequestException('All policy-group combinations already exist');
+        // }
 
-        // Create new policy options
-        await this.prisma.policyOption.createMany({
-            data: newGroupIds.map(groupId => ({
-                policyId,
-                groupId,
-                type: type as any
-            }))
-        });
+        // // Create new policy options
+        // await this.prisma.policyOption.createMany({
+        //     data: newGroupIds.map(groupId => ({
+        //         policyId,
+        //         groupId,
+        //         type: type as any
+        //     }))
+        // });
 
-        return { 
-            created: newGroupIds.length, 
-            skipped: existingGroupIds.length 
-        };
+        // return { 
+        //     created: newGroupIds.length, 
+        //     skipped: existingGroupIds.length 
+        // };
     }
 
     async removeByPolicyId(policyId: number, scope: DataScope) {

@@ -11,13 +11,12 @@ export class CreateEmployeeDto {
     departmentId: number;
 
     @ApiProperty({
-        description: 'The ID of the policy assigned to the employee.',
+        description: 'The ID of the employee group.',
         example: 1,
-        required: false,
     })
-    @IsOptional()
     @IsNumber()
-    policyId?: number;
+    @IsNotEmpty()
+    groupId: number;
 
     @ApiProperty({
         description: "The employee's full name.",
@@ -94,13 +93,13 @@ export class UpdateEmployeeDto {
     departmentId?: number;
 
     @ApiProperty({
-        description: 'The ID of the policy assigned to the employee.',
+        description: 'The ID of the employee group.',
         example: 1,
         required: false,
     })
     @IsOptional()
     @IsNumber()
-    policyId?: number;
+    groupId?: number;
 
     @ApiProperty({
         description: "The employee's full name.",
@@ -182,11 +181,10 @@ export class EmployeeResponseDto {
     departmentId: number;
 
     @ApiProperty({
-        description: 'The ID of the policy assigned to the employee.',
+        description: 'The ID of the employee group.',
         example: 1,
-        required: false,
     })
-    policyId?: number;
+    groupId: number;
 
     @ApiProperty({
         description: "The employee's full name.",
@@ -254,15 +252,17 @@ export class EmployeeResponseDto {
         id: number;
         fullName: string;
         shortName: string;
+        organizationId: number;
     };
 
     @ApiProperty({
-        description: 'Policy information',
+        description: 'Employee group information',
         required: false,
     })
-    policy?: {
+    group?: {
         id: number;
-        title: string;
+        name: string;
+        organizationId: number;
     };
 }
 

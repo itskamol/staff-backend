@@ -1,64 +1,78 @@
 model Employee {
-    id                Int     @id @default(autoincrement())
-    departmentId      Int     @map("department_id")
-    organizationId    Int     @map("organization_id")
-    groupId           Int     @map("group_id")
-    name              String
-    address           String?
-    phone             String?
-    email             String?
-    photo             String?
-    additionalDetails String? @map("additional_details")
+  id                Int     @id @default(autoincrement())
+  departmentId      Int     @map("department_id")
+  organizationId    Int     @map("organization_id")
+  groupId           Int     @map("group_id")
+  name              String
+  address           String?
+  phone             String?
+  email             String?
+  photo             String?
+  additionalDetails String? @map("additional_details")
 
-    // --- Standard Fields ---
-    isActive  Boolean  @default(true) @map("is_active")
-    createdAt DateTime @default(now()) @map("created_at")
-    updatedAt DateTime @updatedAt @map("updated_at")
+  // --- Standard Fields ---
+  isActive  Boolean  @default(true) @map("is_active")
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
 
-    department    Department     @relation(fields: [departmentId], references: [id])
-    group         EmployeeGroup  @relation(fields: [groupId], references: [id])
-    credentials   Credential[]
-    computerUsers ComputerUser[]
-    actions       Action[]
-    organization  Organization   @relation(fields: [organizationId], references: [id])
+  department    Department     @relation(fields: [departmentId], references: [id])
+  group         EmployeeGroup  @relation(fields: [groupId], references: [id])
+  credentials   Credential[]
+  computerUsers ComputerUser[]
+  actions       Action[]
+  organization  Organization   @relation(fields: [organizationId], references: [id], onDelete: Cascade)
 
-    @@map("employees")
+  @@index([organizationId])
+  @@index([organizationId, departmentId])
+  @@index([organizationId, groupId])
+  @@index([organizationId, isActive])
+  @@index([email])
+  @@map("employees")
 }
 
 model EmployeeGroup {
-    id             Int     @id @default(autoincrement())
-    organizationId Int     @map("organization_id")
-    name           String
-    description    String?
-    isDefault      Boolean @default(false) @map("is_default")
+  id             Int     @id @default(autoincrement())
+  organizationId Int     @map("organization_id")
+  name           String
+  description    String?
+  isDefault      Boolean @default(false) @map("is_default")
 
-    // --- Standard Fields ---
-    isActive  Boolean  @default(true) @map("is_active")
-    createdAt DateTime @default(now()) @map("created_at")
-    updatedAt DateTime @updatedAt @map("updated_at")
+  // --- Standard Fields ---
+  isActive  Boolean  @default(true) @map("is_active")
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
 
-    organization Organization @relation(fields: [organizationId], references: [id])
+  organization Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
 
-    employees Employee[]
-    Policy    Policy?    @relation(fields: [policyId], references: [id])
-    policyId  Int?
+  employees Employee[]
+  Policy    Policy?    @relation(fields: [policyId], references: [id])
+  policyId  Int?
 
-    @@map("employee_groups")
+  @@unique([organizationId, name], name: "org_empgroup_name_unique")
+  @@index([organizationId])
+  @@index([organizationId, isActive])
+  @@index([organizationId, isDefault])
+  @@index([policyId])
+  @@map("employee_groups")
 }
 
 model Credential {
-    id                Int        @id @default(autoincrement())
-    employeeId        Int        @map("employee_id")
-    code              String
-    type              ActionType
-    additionalDetails String?    @map("additional_details")
+  id                Int        @id @default(autoincrement())
+  employeeId        Int        @map("employee_id")
+  code              String
+  type              ActionType
+  additionalDetails String?    @map("additional_details")
 
-    // --- Standard Fields ---
-    isActive  Boolean  @default(true) @map("is_active")
-    createdAt DateTime @default(now()) @map("created_at")
-    updatedAt DateTime @updatedAt @map("updated_at")
+  // --- Standard Fields ---
+  isActive  Boolean  @default(true) @map("is_active")
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
 
-    employee Employee @relation(fields: [employeeId], references: [id])
+  employee Employee @relation(fields: [employeeId], references: [id], onDelete: Cascade)
 
-    @@map("credentials")
+  @@unique([employeeId, code, type], name: "emp_credential_unique")
+  @@index([employeeId])
+  @@index([code])
+  @@index([type])
+  @@map("credentials")
 }

@@ -22,10 +22,10 @@ import { PolicyOptionRepository } from './repositories/policy-option.repository'
 @Module({
     imports: [SharedDatabaseModule],
     controllers: [
-        PolicyController,
         GroupController,
         ResourceController,
-        PolicyOptionController
+        // PolicyOptionController,
+        PolicyController,
     ],
     providers: [
         PolicyService,

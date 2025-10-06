@@ -12,10 +12,10 @@ import {
 import { ApiBearerAuth, ApiExtraModels, ApiTags } from '@nestjs/swagger';
 import { DepartmentService } from './department.service';
 import { DataScope, Role, Roles } from '@app/shared/auth';
-import { ApiSuccessResponse, CreateDepartmentDto, DepartmentResponseDto, UpdateDepartmentDto } from '../../shared/dto';
-import { ApiCrudOperation, ApiErrorResponses, ApiOkResponseData } from '../../shared/utils';
+import { ApiSuccessResponse } from '../../shared/dto';
+import { CreateDepartmentDto, DepartmentQueryDto, DepartmentResponseDto, UpdateDepartmentDto } from './dto';
+import { ApiCrudOperation, ApiOkResponseData } from '../../shared/utils';
 import { Scope } from '../../shared/decorators';
-import { QueryDto } from '@app/shared/utils';
 
 @ApiTags('Departments')
 @ApiBearerAuth()
@@ -41,10 +41,10 @@ export class DepartmentController {
             pagination: true,
             search: true,
             sort: true,
-            filters: { isActive: Boolean },
+            filters: { isActive: Boolean, organizationId: Number },
         },
     })
-    async getAllDepartments(@Query() query: QueryDto, @Scope() scope: DataScope) {
+    async getAllDepartments(@Query() query: DepartmentQueryDto, @Scope() scope: DataScope) {
         return this.departmentService.getDepartments(query, scope);
     }
 

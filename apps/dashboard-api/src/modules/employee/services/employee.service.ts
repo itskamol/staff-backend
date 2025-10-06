@@ -2,7 +2,7 @@ import { Injectable, NotFoundException } from '@nestjs/common';
 import { EmployeeRepository } from '../employee.repository';
 import { DataScope, UserContext } from '@app/shared/auth';
 // import { UserContext } from '../../../shared/interfaces';
-import { CreateEmployeeDto, UpdateEmployeeDto } from '../../../shared/dto';
+import { CreateEmployeeDto, UpdateEmployeeDto } from '../dto';
 import { DepartmentService } from '../../department/department.service';
 import { QueryDto } from '@app/shared/utils';
 
@@ -68,13 +68,9 @@ export class EmployeeService {
             department: {
                 connect: { id: dto.departmentId },
             },
-            ...(dto.policyId
-                ? {
-                      policy: {
-                          connect: { id: dto.policyId },
-                      },
-                  }
-                : {}),
+            ...(dto.groupId && {
+                group: { connect: { id: dto.groupId } },
+            }),
             organization: {
                 connect: { id: department.organizationId },
             },
@@ -102,9 +98,9 @@ export class EmployeeService {
             };
         }
 
-        if (dto.policyId) {
-            updateData.policy = {
-                connect: { id: dto.policyId },
+        if (dto.groupId) {
+            updateData.group = {
+                connect: { id: dto.groupId },
             };
         }
 

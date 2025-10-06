@@ -2,7 +2,7 @@ import { ConflictException, Injectable, NotFoundException } from '@nestjs/common
 import { Prisma, Role, User } from '@prisma/client';
 import { UserRepository } from './user.repository';
 import { LoggerService } from '../../core/logger';
-import { CreateUserDto, UpdateCurrentUserDto, UpdateUserDto } from '../../shared/dto';
+import { CreateUserDto, UpdateCurrentUserDto, UpdateUserDto } from './dto';
 import { PasswordUtil } from '../../shared/utils';
 import { QueryDto } from '../../shared/dto/query.dto';
 import { PrismaService } from '@app/shared/database';

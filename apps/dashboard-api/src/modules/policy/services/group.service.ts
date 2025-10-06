@@ -1,12 +1,10 @@
 import { Injectable, NotFoundException, BadRequestException } from '@nestjs/common';
 import { PrismaService } from '@app/shared/database';
 import { DataScope } from '@app/shared/auth';
-import { QueryDto } from '@app/shared/utils';
-import { CreateGroupDto, UpdateGroupDto } from '../dto/group.dto';
-import { ResourceType } from '@prisma/client';
+import { CreateGroupDto, GroupQueryDto, UpdateGroupDto } from '../dto/group.dto';
+import { ResourceType, Prisma } from '@prisma/client';
 import { UserContext } from '../../../shared/interfaces';
 import { GroupRepository } from '../repositories/group.repository';
-import { Prisma } from '@prisma/client';
 
 @Injectable()
 export class GroupService {
@@ -15,9 +13,9 @@ export class GroupService {
         private readonly groupRepository: GroupRepository
     ) {}
 
-    async findAll(query: QueryDto & { type: ResourceType }, scope: DataScope, user: UserContext) {
+    async findAll(query: GroupQueryDto, scope: DataScope, user: UserContext) {
         const { page, limit, sort = 'createdAt', order = 'desc', search, type } = query;
-        const where: Prisma.GroupWhereInput = {};
+        const where: Prisma.ResourceGroupWhereInput = {};
 
         if (search) {
             where.name = { contains: search, mode: 'insensitive' };
@@ -34,38 +32,27 @@ export class GroupService {
                 _count: {
                     select: {
                         resourceGroups: true,
-                        options: true
-                    }
-                }
+                    },
+                },
             },
             { page, limit },
-            scope
+            undefined
         );
     }
 
     async findOne(id: number, user: UserContext) {
         const group = await this.groupRepository.findById(id, {
             resourceGroups: {
-                include: {
-                    resource: true
-                }
-            },
-            options: {
-                include: {
-                    policy: {
+                select: {
+                    resource: {
                         select: {
                             id: true,
-                            title: true
-                        }
-                    }
-                }
+                            type: true,
+                            value: true,
+                        },
+                    },
+                },
             },
-            _count: {
-                select: {
-                    resourceGroups: true,
-                    options: true
-                }
-            }
         });
 
         if (!group) {
@@ -76,7 +63,46 @@ export class GroupService {
     }
 
     async create(createGroupDto: CreateGroupDto, scope: DataScope) {
-        return this.groupRepository.create(createGroupDto, undefined, scope);
+        const { resources, resourceIds, organizationId = scope?.organizationId } = createGroupDto;
+
+        if (!organizationId) throw new BadRequestException('Organization ID is required');
+
+        const input: Prisma.ResourceGroupCreateInput = {
+            name: createGroupDto.name,
+            type: createGroupDto.type,
+            isActive: createGroupDto.isActive,
+            organization: {
+                connect: { id: organizationId },
+            },
+        };
+
+        if (resourceIds && resourceIds.length > 0) {
+            input.resourceGroups = {
+                createMany: {
+                    data: [...resourceIds.map(resourceId => ({ resourceId }))],
+                },
+            };
+        }
+
+        if (resources && resources.length > 0) {
+            input.resourceGroups = {
+                create: [
+                    ...resources.map(resource => ({
+                        resource: {
+                            create: {
+                                type: createGroupDto.type,
+                                value: resource,
+                                organization: {
+                                    connect: { id: organizationId! },
+                                },
+                            },
+                        },
+                    })),
+                ],
+            };
+        }
+
+        return this.groupRepository.create(input, undefined, scope);
     }
 
     async update(id: number, updateGroupDto: UpdateGroupDto, user: UserContext) {
@@ -86,13 +112,7 @@ export class GroupService {
     }
 
     async remove(id: number, scope: DataScope, user: UserContext) {
-        const group = await this.groupRepository.findById(id, {
-            _count: {
-                select: {
-                    options: true
-                }
-            }
-        }, scope);
+        const group = await this.groupRepository.findById(id, undefined, scope);
 
         if (!group) {
             throw new NotFoundException('Group not found');
@@ -111,8 +131,8 @@ export class GroupService {
         const existingConnections = await this.prisma.resourceGroups.findMany({
             where: {
                 groupId,
-                resourceId: { in: resourceIds }
-            }
+                resourceId: { in: resourceIds },
+            },
         });
 
         const existingResourceIds = existingConnections.map(conn => conn.resourceId);
@@ -125,8 +145,8 @@ export class GroupService {
         await this.prisma.resourceGroups.createMany({
             data: newResourceIds.map(resourceId => ({
                 groupId,
-                resourceId
-            }))
+                resourceId,
+            })),
         });
 
         return { added: newResourceIds.length };
@@ -136,7 +156,7 @@ export class GroupService {
         await this.findOne(groupId, user);
 
         const connection = await this.prisma.resourceGroups.findFirst({
-            where: { groupId, resourceId }
+            where: { groupId, resourceId },
         });
 
         if (!connection) {
@@ -144,7 +164,7 @@ export class GroupService {
         }
 
         await this.prisma.resourceGroups.delete({
-            where: { id: connection.id }
+            where: { id: connection.id },
         });
 
         return { message: 'Resource removed from group' };

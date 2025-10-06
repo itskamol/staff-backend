@@ -1,16 +1,17 @@
 import { Controller, Get, Post, Put, Delete, Body, Param, Query } from '@nestjs/common';
-import { ApiTags, ApiBearerAuth } from '@nestjs/swagger';
+import { ApiTags, ApiBearerAuth, ApiExtraModels } from '@nestjs/swagger';
 import { Roles, Role, User as CurrentUser, DataScope } from '@app/shared/auth';
 import { QueryDto } from '@app/shared/utils';
 import { PolicyService } from '../services/policy.service';
 import { UserContext } from 'apps/dashboard-api/src/shared/interfaces';
-import { CreatePolicyDto, PolicyDto, UpdatePolicyDto } from '../dto/policy.dto';
+import { CreatePolicyDto, PolicyDto, PolicyQueryDto, UpdatePolicyDto } from '../dto/policy.dto';
 import { ApiCrudOperation } from 'apps/dashboard-api/src/shared/utils';
 import { Scope } from 'apps/dashboard-api/src/shared/decorators';
 
 @ApiTags('Policies')
 @Controller('policies')
 @ApiBearerAuth()
+@ApiExtraModels(PolicyDto)
 @Roles(Role.ADMIN, Role.HR)
 export class PolicyController {
     constructor(private readonly policyService: PolicyService) {}
@@ -23,7 +24,6 @@ export class PolicyController {
             search: true,
             sort: true,
             filters: {
-                title: String,
                 isActiveWindowEnabled: Boolean,
                 isScreenshotEnabled: Boolean,
                 isVisitedSitesEnabled: Boolean,
@@ -31,7 +31,7 @@ export class PolicyController {
         },
     })
     async findAll(
-        @Query() query: QueryDto,
+        @Query() query: PolicyQueryDto,
         @CurrentUser() user: UserContext,
         @Scope() scope: DataScope
     ) {

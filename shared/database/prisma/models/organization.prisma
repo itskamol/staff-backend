@@ -1,48 +1,54 @@
 model Organization {
-    id                Int     @id @default(autoincrement())
-    fullName          String  @map("full_name")
-    shortName         String  @unique @map("short_name")
-    address           String?
-    phone             String?
-    email             String?
-    logo              String?
-    additionalDetails String? @map("additional_details")
+  id                Int     @id @default(autoincrement())
+  fullName          String  @map("full_name")
+  shortName         String  @unique @map("short_name")
+  address           String?
+  phone             String?
+  email             String?
+  logo              String?
+  additionalDetails String? @map("additional_details")
 
-    // --- Standard Fields ---
-    isActive  Boolean  @default(true) @map("is_active")
-    createdAt DateTime @default(now()) @map("created_at")
-    updatedAt DateTime @updatedAt @map("updated_at")
+  // --- Standard Fields ---
+  isActive  Boolean  @default(true) @map("is_active")
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
 
-    policies    Policy[]
-    users       User[]
-    departments Department[]
-    employees   Employee[]
-    groups      EmployeeGroup[]
+  policies       Policy[]
+  users          User[]
+  departments    Department[]
+  employees      Employee[]
+  groups         EmployeeGroup[]
+  resourceGroups ResourceGroup[]
+  resources      Resource[]
 
-    @@map("organizations")
+  @@map("organizations")
 }
 
 model Department {
-    id                Int     @id @default(autoincrement())
-    organizationId    Int     @map("organization_id")
-    parentId          Int?    @map("parent_id")
-    fullName          String  @map("full_name")
-    shortName         String  @map("short_name")
-    address           String?
-    phone             String?
-    email             String?
-    additionalDetails String? @map("additional_details")
+  id                Int     @id @default(autoincrement())
+  organizationId    Int     @map("organization_id")
+  parentId          Int?    @map("parent_id")
+  fullName          String  @map("full_name")
+  shortName         String  @map("short_name")
+  address           String?
+  phone             String?
+  email             String?
+  additionalDetails String? @map("additional_details")
 
-    // --- Standard Fields ---
-    isActive  Boolean  @default(true) @map("is_active")
-    createdAt DateTime @default(now()) @map("created_at")
-    updatedAt DateTime @updatedAt @map("updated_at")
+  // --- Standard Fields ---
+  isActive  Boolean  @default(true) @map("is_active")
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
 
-    organization    Organization     @relation(fields: [organizationId], references: [id])
-    parent          Department?      @relation("DepartmentHierarchy", fields: [parentId], references: [id])
-    children        Department[]     @relation("DepartmentHierarchy")
-    employees       Employee[]
-    departmentUsers DepartmentUser[]
+  organization    Organization     @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  parent          Department?      @relation("DepartmentHierarchy", fields: [parentId], references: [id])
+  children        Department[]     @relation("DepartmentHierarchy")
+  employees       Employee[]
+  departmentUsers DepartmentUser[]
 
-    @@map("departments")
+  @@unique([organizationId, fullName], name: "org_dept_fullname_unique")
+  @@index([organizationId])
+  @@index([organizationId, parentId])
+  @@index([organizationId, isActive])
+  @@map("departments")
 }

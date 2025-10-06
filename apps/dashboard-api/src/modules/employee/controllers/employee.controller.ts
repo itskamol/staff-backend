@@ -16,8 +16,17 @@ import {
     ApiTags,
 } from '@nestjs/swagger';
 import { EmployeeService } from '../services/employee.service';
-import { ActivityReportResponseDto, ApiSuccessResponse, AssignCardDto, AssignCarDto, ComputerUserResponseDto, CreateEmployeeDto, EmployeeResponseDto, EntryLogResponseDto, LinkComputerUserDto, UpdateEmployeeDto } from '../../../shared/dto';
+import { CreateEmployeeDto, EmployeeResponseDto, UpdateEmployeeDto } from '../dto';
+import { ApiSuccessResponse } from '../../../shared/dto';
 import { ApiCrudOperation, ApiErrorResponses, ApiOkResponseData } from '../../../shared/utils';
+
+// TODO: Move these DTOs to employee/dto/
+export class ActivityReportResponseDto {}
+export class AssignCardDto {}
+export class AssignCarDto {}
+export class ComputerUserResponseDto {}
+export class EntryLogResponseDto {}
+export class LinkComputerUserDto {}
 import { DataScope, Roles, User } from '@app/shared/auth';
 import { UserContext } from '../../../shared/interfaces';
 import { Scope } from '../../../shared/decorators';

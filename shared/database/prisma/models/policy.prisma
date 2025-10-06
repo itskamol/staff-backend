@@ -1,59 +1,107 @@
 model Policy {
-    id             Int    @id @default(autoincrement())
-    organizationId Int    @map("organization_id")
+    id             Int     @id @default(autoincrement())
+    organizationId Int     @map("organization_id")
     title          String
+    description    String?
 
     isActiveWindowEnabled Boolean @default(true) @map("active_window")
     isScreenshotEnabled   Boolean @default(true) @map("screenshot")
     isVisitedSitesEnabled Boolean @default(true) @map("visited_sites")
     isDefault             Boolean @default(false) @map("is_default")
 
-    // screenshot
-    screenshotInterval    Int?     @map("screenshot_interval") // in minutes
-    screenshotIsGrayscale Boolean? @map("screenshot_is_grayscale")
-    screenshotCaptureAll  Boolean? @map("screenshot_capture_all")
+    // Screenshot settings with defaults
+    screenshotInterval    Int     @default(5) @map("screenshot_interval")
+    screenshotIsGrayscale Boolean @default(false) @map("screenshot_is_grayscale")
+    screenshotCaptureAll  Boolean @default(false) @map("screenshot_capture_all")
 
-    // --- Standard Fields ---
-    isActive  Boolean  @default(true) @map("is_active")
-    createdAt DateTime @default(now()) @map("created_at")
-    updatedAt DateTime @updatedAt @map("updated_at")
+    // Audit fields
+    isActive    Boolean   @default(true) @map("is_active")
+    createdById Int?      @map("created_by_id")
+    updatedById Int?      @map("updated_by_id")
+    createdAt   DateTime  @default(now()) @map("created_at")
+    updatedAt   DateTime  @updatedAt @map("updated_at")
+    deletedAt   DateTime? @map("deleted_at")
 
-    organization Organization    @relation(fields: [organizationId], references: [id])
-    employees    EmployeeGroup[]
-    options      PolicyOption[]
+    organization   Organization    @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+    employeeGroups EmployeeGroup[]
+    options        PolicyOption[]
 
+    @@unique([organizationId, title], name: "org_policy_title_unique")
+    @@index([organizationId])
+    @@index([organizationId, isActive])
+    @@index([organizationId, isDefault])
+    @@index([organizationId, title])
+    @@index([createdAt])
     @@map("policies")
 }
 
 model PolicyOption {
     id       Int        @id @default(autoincrement())
     policyId Int        @map("policy_id")
-    groupId  Int        @map("group_id")
     type     OptionType
 
     isActive  Boolean  @default(true) @map("is_active")
     createdAt DateTime @default(now()) @map("created_at")
     updatedAt DateTime @updatedAt @map("updated_at")
 
-    policy Policy        @relation(fields: [policyId], references: [id], onDelete: Cascade)
+    policy Policy      @relation(fields: [policyId], references: [id], onDelete: Cascade)
+    rules  RuleGroup[]
+
+    @@unique([policyId, type], name: "policy_type_unique")
+    @@index([policyId, type])
+    @@index([policyId, isActive])
+    @@map("policy_options")
+}
+
+model RuleGroup {
+    id       Int      @id @default(autoincrement())
+    optionId Int      @map("option_id")
+    groupId  Int      @map("group_id")
+    type     RuleType
+
+    option PolicyOption  @relation(fields: [optionId], references: [id], onDelete: Cascade)
     group  ResourceGroup @relation(fields: [groupId], references: [id], onDelete: Cascade)
 
-    @@unique([policyId, groupId], name: "policy_group_unique")
-    @@map("policy_group_rules")
+    @@unique([optionId, groupId, type], name: "option_group_type_unique")
+    @@index([optionId])
+    @@index([groupId])
+    @@index([type])
+    @@map("rule_groups")
+}
+
+enum RuleType {
+    USEFUL
+    UNUSEFUL
+}
+
+enum ResourceType {
+    WEBSITE
+    APPLICATION
+}
+
+enum OptionType {
+    WEBSITE
+    ACTIVE_WINDOW
 }
 
 model ResourceGroup {
-    id   Int          @id @default(autoincrement())
-    name String
-    type ResourceType
+    id             Int          @id @default(autoincrement())
+    organizationId Int          @map("organization_id")
+    name           String
+    type           ResourceType
 
     isActive  Boolean  @default(true) @map("is_active")
     createdAt DateTime @default(now()) @map("created_at")
     updatedAt DateTime @updatedAt @map("updated_at")
 
-    options        PolicyOption[]
+    organization   Organization     @relation(fields: [organizationId], references: [id], onDelete: Cascade)
     resourceGroups ResourceGroups[]
+    rules          RuleGroup[]
 
+    @@unique([organizationId, name, type], name: "org_group_unique")
+    @@index([organizationId])
+    @@index([organizationId, type])
+    @@index([organizationId, isActive])
     @@map("resource_group")
 }
 
@@ -71,12 +119,17 @@ model ResourceGroups {
 }
 
 model Resource {
-    id    Int          @id @default(autoincrement())
-    value String
-    type  ResourceType
+    id             Int          @id @default(autoincrement())
+    organizationId Int          @map("organization_id")
+    value          String
+    type           ResourceType
 
     createdAt      DateTime         @default(now()) @map("created_at")
+    organization   Organization     @relation(fields: [organizationId], references: [id], onDelete: Cascade)
     resourceGroups ResourceGroups[]
 
+    @@unique([organizationId, value, type], name: "org_resource_unique")
+    @@index([organizationId])
+    @@index([organizationId, type])
     @@map("resources")
 }

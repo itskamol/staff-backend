@@ -1,39 +1,39 @@
 import { PrismaService } from '@app/shared/database';
 import { Injectable } from '@nestjs/common';
-import { Group, Prisma, ResourceType } from '@prisma/client';
+import { ResourceGroup, Prisma, ResourceType } from '@prisma/client';
 import { BaseRepository } from 'apps/dashboard-api/src/shared/repositories/base.repository';
 
 @Injectable()
 export class GroupRepository extends BaseRepository<
-    Group,
-    Prisma.GroupCreateInput,
-    Prisma.GroupUpdateInput,
-    Prisma.GroupWhereInput,
-    Prisma.GroupWhereUniqueInput,
-    Prisma.GroupOrderByWithRelationInput,
-    Prisma.GroupInclude,
-    Prisma.GroupSelect
+    ResourceGroup,
+    Prisma.ResourceGroupCreateInput,
+    Prisma.ResourceGroupUpdateInput,
+    Prisma.ResourceGroupWhereInput,
+    Prisma.ResourceGroupWhereUniqueInput,
+    Prisma.ResourceGroupOrderByWithRelationInput,
+    Prisma.ResourceGroupInclude,
+    Prisma.ResourceGroupSelect
 > {
     constructor(protected readonly prisma: PrismaService) {
         super(prisma);
     }
 
-    protected readonly modelName = Prisma.ModelName.Group;
+    protected readonly modelName = Prisma.ModelName.ResourceGroup;
 
     protected getDelegate() {
-        return this.prisma.group;
+        return this.prisma.resourceGroup;
     }
 
-    async findByType(type: ResourceType, include?: Prisma.GroupInclude) {
+    async findByType(type: ResourceType, include?: Prisma.ResourceGroupInclude) {
         return this.findMany({ type }, undefined, include);
     }
 
-    async findWithResourceCount(where?: Prisma.GroupWhereInput) {
+    async findWithResourceCount(where?: Prisma.ResourceGroupWhereInput) {
         return this.findMany(where, undefined, {
             _count: {
                 select: {
                     resourceGroups: true,
-                    options: true
+                    rules: true
                 }
             }
         });
