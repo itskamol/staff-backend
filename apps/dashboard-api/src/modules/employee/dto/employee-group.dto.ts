@@ -1,5 +1,13 @@
 import { ApiProperty, PartialType } from '@nestjs/swagger';
-import { IsBoolean, IsInt, IsNotEmpty, IsOptional, IsString, MaxLength } from 'class-validator';
+import {
+    IsArray,
+    IsBoolean,
+    IsInt,
+    IsNotEmpty,
+    IsOptional,
+    IsString,
+    MaxLength,
+} from 'class-validator';
 
 export class CreateEmployeeGroupDto {
     @ApiProperty({
@@ -29,6 +37,15 @@ export class CreateEmployeeGroupDto {
     @IsOptional()
     @IsInt()
     policyId?: number;
+
+    @ApiProperty({
+        example: [1, 2, 3],
+        description: 'List of employee IDs to include in this group',
+        required: false,
+    })
+    @IsArray()
+    @IsInt({ each: true })
+    employees?: number[];
 
     @ApiProperty({
         example: true,
@@ -101,7 +118,54 @@ export class EmployeeGroupDto extends CreateEmployeeGroupDto {
     employeeCount?: number;
 }
 
-export class EmployeeGroupWithRelationsDto extends EmployeeGroupDto {
+export class EmployeeGroupWithRelationsDto {
+    @ApiProperty({
+        example: 'Sales Team',
+        description: 'Employee group name',
+        maxLength: 255,
+    })
+    @IsString()
+    @IsNotEmpty()
+    @MaxLength(255)
+    name: string;
+
+    @ApiProperty({
+        example: 'Group for all sales department employees',
+        description: 'Detailed description of the employee group',
+        required: false,
+    })
+    @IsOptional()
+    @IsString()
+    description?: string;
+
+    @ApiProperty({
+        example: 1,
+        description: 'Policy ID to assign to this employee group',
+        required: false,
+    })
+    @IsOptional()
+    @IsInt()
+    policyId?: number;
+
+    @ApiProperty({
+        example: true,
+        description: 'Group active status',
+        required: false,
+        default: true,
+    })
+    @IsOptional()
+    @IsBoolean()
+    isActive?: boolean;
+
+    @ApiProperty({
+        example: 1,
+        description: 'Organization ID (auto-populated from user context)',
+        required: false,
+    })
+    @IsInt()
+    @IsOptional()
+    organizationId?: number;
+
     @ApiProperty({
         description: 'Organization details',
         required: false,

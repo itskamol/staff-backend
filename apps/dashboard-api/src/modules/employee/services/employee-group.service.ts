@@ -39,7 +39,7 @@ export class EmployeeGroupService {
                         employees: true,
                     },
                 },
-                Policy: {
+                policy: {
                     select: {
                         id: true,
                         title: true,
@@ -64,7 +64,7 @@ export class EmployeeGroupService {
                     },
                     take: 10, // Limit to avoid large response
                 },
-                Policy: {
+                policy: {
                     select: {
                         id: true,
                         title: true,
@@ -115,9 +115,15 @@ export class EmployeeGroupService {
             },
         };
 
+        if (createEmployeeGroupDto.employees && createEmployeeGroupDto.employees.length > 0) {
+            input.employees = {
+                connect: createEmployeeGroupDto.employees.map((empId) => ({ id: empId })),
+            };
+        }
+
         // Add policy if provided
         if (createEmployeeGroupDto.policyId) {
-            input.Policy = {
+            input.policy = {
                 connect: { id: createEmployeeGroupDto.policyId },
             };
         }
@@ -163,11 +169,11 @@ export class EmployeeGroupService {
         }
         if (updateEmployeeGroupDto.policyId !== undefined) {
             if (updateEmployeeGroupDto.policyId === null) {
-                updateData.Policy = {
+                updateData.policy = {
                     disconnect: true,
                 };
             } else {
-                updateData.Policy = {
+                updateData.policy = {
                     connect: { id: updateEmployeeGroupDto.policyId },
                 };
             }
