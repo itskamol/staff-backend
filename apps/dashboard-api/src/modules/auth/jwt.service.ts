@@ -9,6 +9,7 @@ export interface JwtPayload {
     username: string;
     role: Role;
     organizationId?: number;
+    departmentIds?: number[];
     departments?: number[];
     iat?: number;
     exp?: number;
@@ -37,6 +38,7 @@ export class CustomJwtService {
              const tokenPayload = {
                 ...payload,
                 ...(payload?.organizationId && { organizationId: payload.organizationId }),
+                ...(payload?.departmentIds?.length && { departmentIds: payload.departmentIds }),
                 ...(payload?.departments?.length && { departments: payload.departments })
             };
 

@@ -32,7 +32,7 @@ class RuleTypeDto {
     unuseful?: number[];
 }
 
-export class CreatePolicyOptionDto {
+export class CreatePolicyOptionDto extends RuleTypeDto {
     @ApiProperty({
         example: OptionType.ACTIVE_WINDOW,
         description: 'Option type',
@@ -40,14 +40,6 @@ export class CreatePolicyOptionDto {
     })
     @IsEnum(OptionType)
     type: OptionType;
-
-    @ApiProperty({
-        type: () => RuleTypeDto,
-        description: 'Array of useful and unuseful group IDs',
-    })
-    @IsInt()
-    @IsOptional()
-    groups?: RuleTypeDto;
 }
 
 export class CreatePolicyDto {

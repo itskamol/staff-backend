@@ -114,8 +114,8 @@ export class PolicyService {
             const rules = [];
 
             // Unuseful groups
-            if (option?.groups?.unuseful?.length) {
-                option.groups.unuseful.forEach(groupId => {
+            if (option?.unuseful?.length) {
+                option.unuseful.forEach(groupId => {
                     rules.push({
                         groupId,
                         type: RuleType.UNUSEFUL,
@@ -124,8 +124,8 @@ export class PolicyService {
             }
 
             // Useful groups
-            if (option?.groups?.useful?.length) {
-                option.groups.useful.forEach(groupId => {
+            if (option?.useful?.length) {
+                option.useful.forEach(groupId => {
                     rules.push({
                         groupId,
                         type: RuleType.USEFUL,
