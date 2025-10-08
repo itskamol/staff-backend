@@ -65,7 +65,27 @@ export class OrganizationService {
     }
 
     async createOrganization(data: CreateOrganizationDto): Promise<Organization> {
-        return this.organizationRepository.create(data);
+        const input : Prisma.OrganizationCreateInput = { ...data };
+
+        input.groups = { 
+            create: {
+                name: 'Default Group',
+                isDefault: true,
+                description: 'Default group created with organization',
+            }
+        }
+
+        input.policies = { 
+            create: {
+                title: 'Default Policy',
+                description: 'Default policy created with organization',
+                isDefault: true,
+            }
+        }
+
+        const organization = await this.organizationRepository.create(input);
+        
+        return organization;
     }
 
     async updateOrganization(id: number, data: UpdateOrganizationDto, scope?: DataScope) {

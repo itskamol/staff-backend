@@ -1,7 +1,7 @@
 import { Module } from '@nestjs/common';
 import { EmployeeController } from './controllers/employee.controller';
 import { EmployeeGroupController } from './controllers/employee-group.controller';
-import { EmployeeService } from './services/employee.service';
+import { EmployeeService } from './repositories/employee.service';
 import { EmployeeGroupService } from './services/employee-group.service';
 import { EmployeeRepository } from './employee.repository';
 import { EmployeeGroupRepository } from './repositories/employee-group.repository';

@@ -6,8 +6,11 @@ import {
 } from '@nestjs/common';
 import { PrismaService } from '@app/shared/database';
 import { DataScope } from '@app/shared/auth';
-import { QueryDto } from '@app/shared/utils';
-import { CreateEmployeeGroupDto, UpdateEmployeeGroupDto, EmployeeGroupDto } from '../dto';
+import {
+    CreateEmployeeGroupDto,
+    UpdateEmployeeGroupDto,
+    EmployeeGroupQueryDto,
+} from '../dto';
 import { UserContext } from '../../../shared/interfaces';
 import { EmployeeGroupRepository } from '../repositories/employee-group.repository';
 import { Prisma } from '@prisma/client';
@@ -19,15 +22,47 @@ export class EmployeeGroupService {
         private readonly employeeGroupRepository: EmployeeGroupRepository
     ) {}
 
-    async findAll(query: QueryDto, scope: DataScope, user: UserContext) {
-        const { page, limit, sort = 'createdAt', order = 'desc', search } = query;
+    async findAll(query: EmployeeGroupQueryDto, scope: DataScope, user: UserContext) {
+        const {
+            page,
+            limit,
+            sort = 'createdAt',
+            order = 'desc',
+            search,
+            organizationId,
+            startDate,
+            endDate,
+            isActive,
+            isDefault,
+            name,
+        } = query;
         const where: Prisma.EmployeeGroupWhereInput = {};
 
-        if (search) {
+        const searchTerm = (search || name)?.trim();
+        if (searchTerm) {
             where.OR = [
-                { name: { contains: search, mode: 'insensitive' } },
-                { description: { contains: search, mode: 'insensitive' } },
+                { name: { contains: searchTerm, mode: 'insensitive' } },
+                { description: { contains: searchTerm, mode: 'insensitive' } },
             ];
+        }
+
+        if (typeof isActive === 'boolean') {
+            where.isActive = isActive;
+        }
+
+        if (typeof isDefault === 'boolean') {
+            where.isDefault = isDefault;
+        }
+
+        if (organizationId) {
+            where.organizationId = organizationId;
+        }
+
+        if (startDate && endDate) {
+            where.createdAt = {
+                gte: new Date(startDate),
+                lte: new Date(endDate),
+            };
         }
 
         return this.employeeGroupRepository.findManyWithPagination(
@@ -90,13 +125,14 @@ export class EmployeeGroupService {
     }
 
     async create(createEmployeeGroupDto: CreateEmployeeGroupDto, scope: DataScope) {
-        if (!scope?.organizationId) {
+        const organizationId = scope?.organizationId || createEmployeeGroupDto?.organizationId;
+        if (!organizationId) {
             throw new BadRequestException('Organization ID is required');
         }
 
         // Check if group with same name already exists in organization
         const exists = await this.employeeGroupRepository.existsByName(
-            scope.organizationId,
+            organizationId,
             createEmployeeGroupDto.name
         );
 
@@ -111,13 +147,13 @@ export class EmployeeGroupService {
             description: createEmployeeGroupDto.description,
             isActive: createEmployeeGroupDto.isActive !== false,
             organization: {
-                connect: { id: scope.organizationId },
+                connect: { id: organizationId },
             },
         };
 
         if (createEmployeeGroupDto.employees && createEmployeeGroupDto.employees.length > 0) {
             input.employees = {
-                connect: createEmployeeGroupDto.employees.map((empId) => ({ id: empId })),
+                connect: createEmployeeGroupDto.employees.map(empId => ({ id: empId })),
             };
         }
 

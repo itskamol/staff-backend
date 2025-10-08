@@ -15,7 +15,7 @@ import {
     ApiParam,
     ApiTags,
 } from '@nestjs/swagger';
-import { EmployeeService } from '../services/employee.service';
+import { EmployeeService } from '../repositories/employee.service';
 import { CreateEmployeeDto, EmployeeResponseDto, UpdateEmployeeDto } from '../dto';
 import { ApiSuccessResponse } from '../../../shared/dto';
 import { ApiCrudOperation, ApiErrorResponses, ApiOkResponseData } from '../../../shared/utils';

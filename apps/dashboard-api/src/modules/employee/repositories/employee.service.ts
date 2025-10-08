@@ -1,16 +1,18 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
 import { EmployeeRepository } from '../employee.repository';
 import { DataScope, UserContext } from '@app/shared/auth';
-// import { UserContext } from '../../../shared/interfaces';
 import { CreateEmployeeDto, UpdateEmployeeDto } from '../dto';
 import { DepartmentService } from '../../department/department.service';
 import { QueryDto } from '@app/shared/utils';
+import { EmployeeGroupService } from '../services/employee-group.service';
+import { Prisma } from '@prisma/client';
 
 @Injectable()
 export class EmployeeService {
     constructor(
         private readonly employeeRepository: EmployeeRepository,
-        private readonly departmentService: DepartmentService
+        private readonly departmentService: DepartmentService,
+        private readonly employeeGroupService: EmployeeGroupService
     ) {}
 
     async getEmployees(query: QueryDto, scope: DataScope, user: UserContext) {
@@ -57,7 +59,20 @@ export class EmployeeService {
             throw new NotFoundException('Department not found or access denied');
         }
 
-        const createData = {
+        if (dto.groupId) {
+            const group = await this.employeeGroupService.findOne(dto.groupId, scope, user);
+            if (!group) {
+                throw new NotFoundException('Employee group not found or access denied');
+            }
+        } else {
+            const defaultGroup = await this.employeeGroupService.getDefaultGroup(
+                department.organizationId
+            );
+            dto.groupId = defaultGroup.id;
+            dto.policyId = defaultGroup.policyId;
+        }
+
+        const createData: Prisma.EmployeeCreateInput = {
             name: dto.name,
             address: dto.address,
             phone: dto.phone,
@@ -68,9 +83,7 @@ export class EmployeeService {
             department: {
                 connect: { id: dto.departmentId },
             },
-            ...(dto.groupId && {
-                group: { connect: { id: dto.groupId } },
-            }),
+            group: { connect: { id: dto.groupId } },
             organization: {
                 connect: { id: department.organizationId },
             },
@@ -80,17 +93,7 @@ export class EmployeeService {
     }
 
     async updateEmployee(id: number, dto: UpdateEmployeeDto, scope: DataScope, user: UserContext) {
-        const updateData: any = {
-            ...(dto.name && { name: dto.name }),
-            ...(dto.address !== undefined && { address: dto.address }),
-            ...(dto.phone !== undefined && { phone: dto.phone }),
-            ...(dto.email !== undefined && { email: dto.email }),
-            ...(dto.photo !== undefined && { photo: dto.photo }),
-            ...(dto.additionalDetails !== undefined && {
-                additionalDetails: dto.additionalDetails,
-            }),
-            ...(dto.isActive !== undefined && { isActive: dto.isActive }),
-        };
+        const updateData: Prisma.EmployeeUpdateInput = { ...dto };
 
         if (dto.departmentId) {
             updateData.department = {
@@ -108,7 +111,6 @@ export class EmployeeService {
     }
 
     async deleteEmployee(id: number, scope: DataScope, user: UserContext) {
-        // Verify access through repository
         const employee = await this.employeeRepository.findByIdWithRoleScope(
             id,
             undefined,

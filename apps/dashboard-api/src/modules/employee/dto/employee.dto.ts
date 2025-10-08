@@ -1,9 +1,19 @@
 import { ApiProperty } from '@nestjs/swagger';
-import { IsBoolean, IsEmail, IsNotEmpty, IsOptional, IsString, MaxLength, IsNumber, ValidateIf } from 'class-validator';
+import {
+    IsBoolean,
+    IsEmail,
+    IsNotEmpty,
+    IsOptional,
+    IsString,
+    MaxLength,
+    ValidateIf,
+    IsInt,
+} from 'class-validator';
 
 export class CreateEmployeeDto {
     @ApiProperty({
-        description: 'The ID of the organization (Required for ADMIN, auto-populated for HR from token)',
+        description:
+            'The ID of the organization (Required for ADMIN, auto-populated for HR from token)',
         example: 1,
         required: false,
     })
@@ -11,7 +21,7 @@ export class CreateEmployeeDto {
         const request = context?.['request'];
         return request?.user?.role === 'ADMIN';
     })
-    @IsNumber()
+    @IsInt()
     @IsNotEmpty({ message: 'Organization ID is required for ADMIN users' })
     @IsOptional()
     organizationId?: number;
@@ -20,7 +30,7 @@ export class CreateEmployeeDto {
         description: 'The ID of the department where the employee belongs.',
         example: 1,
     })
-    @IsNumber()
+    @IsInt()
     @IsNotEmpty()
     departmentId: number;
 
@@ -28,9 +38,17 @@ export class CreateEmployeeDto {
         description: 'The ID of the employee group.',
         example: 1,
     })
-    @IsNumber()
+    @IsInt()
     @IsOptional()
     groupId?: number;
+
+    @ApiProperty({
+        description: 'The ID of the policy.',
+        example: 1,
+    })
+    @IsInt()
+    @IsOptional()
+    policyId?: number;
 
     @ApiProperty({
         description: "The employee's full name.",
@@ -103,7 +121,7 @@ export class UpdateEmployeeDto {
         required: false,
     })
     @IsOptional()
-    @IsNumber()
+    @IsInt()
     departmentId?: number;
 
     @ApiProperty({
@@ -112,7 +130,7 @@ export class UpdateEmployeeDto {
         required: false,
     })
     @IsOptional()
-    @IsNumber()
+    @IsInt()
     groupId?: number;
 
     @ApiProperty({

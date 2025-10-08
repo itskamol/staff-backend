@@ -1,4 +1,6 @@
+import { QueryDto } from '@app/shared/utils';
 import { ApiProperty, PartialType } from '@nestjs/swagger';
+import { Transform } from 'class-transformer';
 import {
     IsArray,
     IsBoolean,
@@ -185,4 +187,35 @@ export class EmployeeGroupWithRelationsDto {
         name: string;
         email?: string;
     }>;
+}
+
+export class EmployeeGroupQueryDto extends QueryDto {
+    @ApiProperty({
+        example: 'Sales Team',
+        description: 'Filter by employee group name',
+        required: false,
+    })
+    @IsOptional()
+    @IsString()
+    name?: string;
+
+    @ApiProperty({
+        description: 'Filter by default group status',
+        required: false,
+        type: Boolean,
+    })
+    @IsOptional()
+    @IsBoolean()
+    isDefault?: boolean;
+
+    @ApiProperty({
+        example: 1,
+        description: 'Filter by organization ID',
+        type: Number,
+        required: false,
+    })
+    @Transform(({ value }) => parseInt(value, 10))
+    @IsOptional()
+    @IsInt()
+    organizationId?: number;
 }

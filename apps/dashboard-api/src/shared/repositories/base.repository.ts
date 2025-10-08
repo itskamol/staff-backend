@@ -93,7 +93,7 @@ export abstract class BaseRepository<
         include?: TInclude,
         scope?: DataScope,
         select?: TSelect
-    ): Promise<TEntity | null> {
+    ): Promise<TEntity | null | any> {
         this.logger.debug(`Finding ${this.modelName} by ID: ${id}`);
 
         const where: Record<string, unknown> = { id };

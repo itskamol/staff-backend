@@ -4,7 +4,7 @@ import { Roles, Role, DataScope } from '@app/shared/auth';
 import { QueryDto } from '@app/shared/utils';
 import { EmployeeGroupService } from '../services/employee-group.service';
 import { UserContext } from '../../../shared/interfaces';
-import { CreateEmployeeGroupDto, EmployeeGroupDto, UpdateEmployeeGroupDto } from '../dto';
+import { CreateEmployeeGroupDto, EmployeeGroupDto, EmployeeGroupQueryDto, UpdateEmployeeGroupDto } from '../dto';
 import { ApiCrudOperation } from '../../../shared/utils';
 import { Scope } from '../../../shared/decorators';
 import { User as CurrentUser } from '@app/shared/auth';
@@ -28,11 +28,12 @@ export class EmployeeGroupController {
                 name: String,
                 isDefault: Boolean,
                 isActive: Boolean,
+                organizationId: Number,
             },
         },
     })
     async findAll(
-        @Query() query: QueryDto,
+        @Query() query: EmployeeGroupQueryDto,
         @CurrentUser() user: UserContext,
         @Scope() scope: DataScope
     ) {

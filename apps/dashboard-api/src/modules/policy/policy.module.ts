@@ -11,16 +11,16 @@ import { PolicyOptionService } from './services/policy-option.service';
 import { PolicyController } from './controllers/policy.controller';
 import { GroupController } from './controllers/group.controller';
 import { ResourceController } from './controllers/resource.controller';
-import { PolicyOptionController } from './controllers/policy-option.controller';
 
 // Repositories
 import { PolicyRepository } from './repositories/policy.repository';
 import { GroupRepository } from './repositories/group.repository';
 import { ResourceRepository } from './repositories/resource.repository';
 import { PolicyOptionRepository } from './repositories/policy-option.repository';
+import { EmployeeModule } from '../employee/employee.module';
 
 @Module({
-    imports: [SharedDatabaseModule],
+    imports: [SharedDatabaseModule, EmployeeModule],
     controllers: [
         GroupController,
         ResourceController,

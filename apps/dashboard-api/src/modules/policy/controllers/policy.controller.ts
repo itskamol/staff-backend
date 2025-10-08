@@ -62,9 +62,9 @@ export class PolicyController {
     async update(
         @Param('id') id: number,
         @Body() updatePolicyDto: UpdatePolicyDto,
-        @CurrentUser() user: UserContext
+        @Scope() scope: DataScope
     ) {
-        return await this.policyService.update(id, updatePolicyDto, user);
+        return await this.policyService.update(id, updatePolicyDto, scope);
     }
 
     @Delete(':id')

@@ -37,7 +37,7 @@ export class CreateDepartmentDto {
         required: false,
     })
     @IsOptional()
-    @IsPhoneNumber('UZ')
+    @IsString()
     phone?: string;
 
     @ApiProperty({

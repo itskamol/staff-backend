@@ -23,4 +23,13 @@ export class PolicyRepository extends BaseRepository<
     protected getDelegate() {
         return this.prisma.policy;
     }
+
+    async getDefaultPolicy(organizationId: number): Promise<Policy | null> {
+        return this.prisma.policy.findFirst({
+            where: {
+                organizationId,
+                isDefault: true,
+            },
+        });
+    }
 }

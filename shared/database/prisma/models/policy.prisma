@@ -4,9 +4,9 @@ model Policy {
     title          String
     description    String?
 
-    isActiveWindowEnabled Boolean @default(true) @map("active_window")
-    isScreenshotEnabled   Boolean @default(true) @map("screenshot")
-    isVisitedSitesEnabled Boolean @default(true) @map("visited_sites")
+    isActiveWindowEnabled Boolean @default(false) @map("active_window")
+    isScreenshotEnabled   Boolean @default(false) @map("screenshot")
+    isVisitedSitesEnabled Boolean @default(false) @map("visited_sites")
     isDefault             Boolean @default(false) @map("is_default")
 
     // Screenshot settings with defaults
@@ -16,11 +16,8 @@ model Policy {
 
     // Audit fields
     isActive    Boolean   @default(true) @map("is_active")
-    createdById Int?      @map("created_by_id")
-    updatedById Int?      @map("updated_by_id")
     createdAt   DateTime  @default(now()) @map("created_at")
     updatedAt   DateTime  @updatedAt @map("updated_at")
-    deletedAt   DateTime? @map("deleted_at")
 
     organization   Organization    @relation(fields: [organizationId], references: [id], onDelete: Cascade)
     employeeGroups EmployeeGroup[]
