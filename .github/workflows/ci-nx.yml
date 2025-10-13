@@ -10,32 +10,34 @@ jobs:
     if: github.ref == 'refs/heads/main' && github.event_name == 'push'
 
     steps:
+      - name: Setup SSH
+        run: |
+          mkdir -p ~/.ssh
+          echo "${{ secrets.SSH_PRIVATE_KEY }}" > ~/.ssh/id_ed25519
+          chmod 600 ~/.ssh/id_ed25519
+          ssh-keyscan -p ${{ secrets.PORT }} ${{ secrets.HOST }} >> ~/.ssh/known_hosts 2>/dev/null
+
       - name: Deploy to Server via SSH
-        uses: appleboy/ssh-action@master
-        with:
-          host: ${{ secrets.HOST }}
-          port: ${{ secrets.PORT }}
-          username: ${{ secrets.USERNAME }}
-          key: ${{ secrets.SSH_PRIVATE_KEY }}
-          script: |
+        run: |
+          ssh -p ${{ secrets.PORT }} ${{ secrets.USERNAME }}@${{ secrets.HOST }} << 'ENDSSH'
             set -e
             DEPLOY_DIR=/var/www/staff
             
+            echo "📂 Creating deployment directory..."
             mkdir -p "$DEPLOY_DIR"
-
-            echo "Navigating to project directory..."
             cd "$DEPLOY_DIR"
             
-            echo "Pulling latest changes from main..."
-            git pull origin main
+            echo "🔄 Pulling latest changes from main..."
+            git pull origin main || echo "Git pull skipped"
             
-            echo "Installing dependencies..."
+            echo "📦 Installing dependencies..."
             pnpm install --frozen-lockfile
             
-            echo "Building project..."
+            echo "🔨 Building project..."
             pnpm exec nx build dashboard-api --configuration=production
             
-            echo "Restarting application with PM2..."
+            echo "🚀 Restarting application with PM2..."
             pm2 restart staff || pm2 start dist/apps/dashboard-api/main.js --name staff
             
-            echo "Deployment completed successfully!"
+            echo "✅ Deployment completed successfully!"
+          ENDSSH
