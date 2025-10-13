@@ -51,12 +51,23 @@ jobs:
       - name: Build affected projects
         run: pnpm exec nx affected --target=build --configuration=production --base=origin/main --head=HEAD --parallel
 
+      - name: Check if build output exists
+        id: build_output
+        run: |
+          if [ -d "dist/" ]; then
+            echo "Build directory found. Setting has_build to true."
+            echo "has_build=true" >> $GITHUB_OUTPUT
+          else
+            echo "Build directory not found. Setting has_build to false."
+            echo "has_build=false" >> $GITHUB_OUTPUT
+          fi
+
       - name: Upload build artifacts
         if: steps.build_output.outputs.has_build == 'true'
         uses: actions/upload-artifact@v4
         with:
           name: production-files
-          path: dist/apps/dashboard-api/
+          path: dist/
 
   deploy:
     needs: build
@@ -67,7 +78,7 @@ jobs:
         uses: actions/download-artifact@v4
         with:
           name: production-files
-          path: dist/apps/dashboard-api
+          path: dist/
 
       - name: Upload build to server
         uses: appleboy/scp-action@master
@@ -76,8 +87,8 @@ jobs:
           port: ${{ secrets.PORT }}
           username: ${{ secrets.USERNAME }}
           key: ${{ secrets.SSH_PRIVATE_KEY }}
-          source: "dist/apps/dashboard-api/"
-          target: "/tmp/staff-dashboard-api"
+          source: "dist/"
+          target: "/tmp/staff"
 
       - name: Deploy to Server via SSH
         uses: appleboy/ssh-action@master
@@ -88,7 +99,7 @@ jobs:
           script: |
             set -e
             DEPLOY_DIR=/var/www/staff
-            BUILD_DIR=/tmp/staff-dashboard-api
+            BUILD_DIR=/tmp/staff
 
             mkdir -p "$DEPLOY_DIR"
             rsync -av --delete --exclude='.git/' "$BUILD_DIR"/ "$DEPLOY_DIR"/
