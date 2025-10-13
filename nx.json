@@ -44,6 +44,5 @@
             "inputs": ["production", "^production"]
         }
     },
-    "tui": { "enabled": false },
-    "nxCloudId": "68ecc81b9ea75a3fdf687479"
+    "tui": { "enabled": false }
 }
