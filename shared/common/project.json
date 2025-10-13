@@ -13,7 +13,8 @@
         "tsConfig": "shared/common/tsconfig.lib.json",
         "packageJson": "shared/common/package.json",
         "main": "shared/common/src/index.ts",
-        "assets": ["shared/common/*.md"]
+        "assets": ["shared/common/*.md"],
+        "rootDir": "../.."
       }
     }
   }
