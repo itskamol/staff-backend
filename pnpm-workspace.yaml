@@ -1,2 +1,6 @@
+packages:
+	- apps/*
+	- shared/*
+
 autoInstallPeers: true
 strictPeerDependencies: false
