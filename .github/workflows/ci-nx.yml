@@ -1,0 +1,93 @@
+name: Nx CI/CD
+
+on:
+  push:
+    branches: ["main"]
+  pull_request:
+    branches: ["main"]
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    env:
+      NX_CLOUD_ACCESS_TOKEN: ${{ secrets.NX_CLOUD_ACCESS_TOKEN }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 9
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22.x'
+          cache: 'pnpm'
+
+      - name: Cache PNPM store and Nx cache
+        uses: actions/cache@v4
+        with:
+          path: |
+            ~/.pnpm-store
+            .nx/cache
+          key: ${{ runner.os }}-pnpm-${{ hashFiles('pnpm-lock.yaml') }}
+          restore-keys: |
+            ${{ runner.os }}-pnpm-
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Lint affected projects
+        run: npx nx affected --target=lint --base=origin/main --head=HEAD --parallel
+
+      - name: Test affected projects
+        run: npx nx affected --target=test --base=origin/main --head=HEAD --parallel
+
+      - name: Build affected projects
+        run: npx nx affected --target=build --configuration=production --base=origin/main --head=HEAD --parallel
+
+      - name: Upload build artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: production-files
+          path: dist/apps/dashboard-api/
+
+  deploy:
+    needs: build
+    runs-on: ubuntu-latest
+    
+    if: github.ref == 'refs/heads/main' && github.event_name == 'push'
+
+    steps:
+      - name: Download build artifacts
+        uses: actions/download-artifact@v4
+        with:
+          name: production-files
+          path: dist/apps/dashboard-api
+
+      - name: Upload build to server
+        uses: appleboy/scp-action@master
+        with:
+          host: ${{ secrets.HOST }}
+          port: ${{ secrets.PORT }}
+          username: ${{ secrets.USERNAME }}
+          key: ${{ secrets.SSH_PRIVATE_KEY }}
+          source: "dist/apps/dashboard-api/"
+          target: "/tmp/staff-dashboard-api"
+
+      - name: Deploy to Server via SSH
+        uses: appleboy/ssh-action@master
+        with:
+          host: ${{ secrets.HOST }}
+          username: ${{ secrets.USERNAME }}
+          key: ${{ secrets.SSH_PRIVATE_KEY }}
+          script: |
+            set -e
+            DEPLOY_DIR=/var/www/staff-backend
+            BUILD_DIR=/tmp/staff-dashboard-api
+
+            mkdir -p "$DEPLOY_DIR"
+            rsync -av --delete --exclude='.git/' "$BUILD_DIR"/ "$DEPLOY_DIR"/
+
+            echo "Deployment successful. Restarting application..."
+            pm2 restart staff || pm2 start "$DEPLOY_DIR/main.js" --name staff
