@@ -1,5 +1,4 @@
 import { Injectable, NotFoundException, BadRequestException } from '@nestjs/common';
-import { PrismaService } from '@app/shared/database';
 import { DataScope } from '@app/shared/auth';
 import { QueryDto } from '@app/shared/utils';
 import { CreateDeviceDto, UpdateDeviceDto } from '../dto/device.dto';
@@ -10,7 +9,6 @@ import { DeviceType, Prisma } from '@prisma/client';
 @Injectable()
 export class DeviceService {
     constructor(
-        private readonly prisma: PrismaService,
         private readonly deviceRepository: DeviceRepository
     ) {}
 
@@ -65,7 +63,7 @@ export class DeviceService {
 
     async create(createDeviceDto: CreateDeviceDto, scope: DataScope) {
         // Check if device with same IP already exists
-        const existing = await this.deviceRepository.findByIpAddress(createDeviceDto.ip_address);
+        const existing = await this.deviceRepository.findByIpAddress(createDeviceDto.ipAddress);
         if (existing) {
             throw new BadRequestException('Device with this IP address already exists');
         }
@@ -77,9 +75,9 @@ export class DeviceService {
         await this.findOne(id, user);
 
         // Check if updating to existing IP
-        if (updateDeviceDto.ip_address) {
+        if (updateDeviceDto.ipAddress) {
             const existing = await this.deviceRepository.findByIpAddress(
-                updateDeviceDto.ip_address
+                updateDeviceDto.ipAddress
             );
             if (existing && existing.id !== id) {
                 throw new BadRequestException('Device with this IP address already exists');

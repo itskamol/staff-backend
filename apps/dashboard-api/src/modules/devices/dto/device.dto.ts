@@ -12,7 +12,7 @@ export class CreateDeviceDto {
     name: string;
 
     @ApiProperty({ 
-        example: 'HIKVISION',
+        example: DeviceType.FACE,
         description: 'Device type',
         enum: DeviceType
     })
@@ -25,7 +25,7 @@ export class CreateDeviceDto {
     })
     @IsIP()
     @IsNotEmpty()
-    ip_address: string;
+    ipAddress: string;
 
     @ApiProperty({ 
         example: 8000,
@@ -59,7 +59,7 @@ export class CreateDeviceDto {
         enum: EntryType
     })
     @IsEnum(EntryType)
-    entry_type: EntryType;
+    entryType: EntryType;
 
     @ApiProperty({ 
         example: 'Main building entrance device',
@@ -68,7 +68,7 @@ export class CreateDeviceDto {
     })
     @IsOptional()
     @IsString()
-    additional_details?: string;
+    additionalDetails?: string;
 
     @ApiProperty({ 
         example: true,
@@ -78,7 +78,7 @@ export class CreateDeviceDto {
     })
     @IsOptional()
     @IsBoolean()
-    is_active?: boolean = true;
+    isActive?: boolean = true;
 }
 
 export class UpdateDeviceDto extends PartialType(CreateDeviceDto) {}
@@ -94,7 +94,7 @@ export class DeviceDto extends CreateDeviceDto {
 
     @ApiProperty({ example: '2023-10-01T12:00:00Z', description: 'Last ping timestamp' })
     @IsString()
-    last_ping: string;
+    lastPing: string;
 
     @ApiProperty({ example: '2023-10-01T12:00:00Z', description: 'Creation timestamp' })
     @IsString()

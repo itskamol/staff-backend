@@ -18,6 +18,7 @@ import { ReportsModule } from '../modules/reports/reports.module';
 import { PolicyModule } from '../modules/policy/policy.module';
 import { LoggerModule } from '../core/logger';
 import { MorganLoggerMiddleware } from '../shared/middleware';
+import { DeviceModule } from '../modules/devices/device.module';
 
 @Module({
     imports: [
@@ -35,6 +36,7 @@ import { MorganLoggerMiddleware } from '../shared/middleware';
         EmployeeModule,
         VisitorModule,
         // ReportsModule,
+        DeviceModule,
         PolicyModule,
         LoggerModule
     ],
