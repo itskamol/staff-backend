@@ -1,108 +1,39 @@
-name: Nx CI/CD
-
-defaults:
-  run:
-    shell: bash
-    working-directory: .
+name: Deploy to Server
 
 on:
   push:
     branches: ["main"]
-  pull_request:
-    branches: ["main"]
 
 jobs:
-  build:
-    runs-on: ubuntu-latest
-    outputs:
-      has_build: ${{ steps.build_output.outputs.has_build }}
-    steps:
-      - uses: actions/checkout@v4
-        with:
-          fetch-depth: 0
-
-      - uses: pnpm/action-setup@v4
-        with:
-          version: 9
-      - uses: actions/setup-node@v4
-        with:
-          node-version: '22.x'
-          cache: 'pnpm'
-
-      - name: Cache PNPM store and Nx cache
-        uses: actions/cache@v4
-        with:
-          path: |
-            ~/.pnpm-store
-            .nx/cache
-          key: ${{ runner.os }}-pnpm-${{ hashFiles('pnpm-lock.yaml') }}
-          restore-keys: |
-            ${{ runner.os }}-pnpm-
-
-      - name: Install dependencies
-        run: pnpm install --frozen-lockfile
-
-      - name: Lint affected projects
-        run: pnpm exec nx affected --target=lint --base=origin/main --head=HEAD --parallel
-
-      - name: Test affected projects
-        run: pnpm exec nx affected --target=test --base=origin/main --head=HEAD --parallel
-
-      - name: Build affected projects
-        run: pnpm exec nx affected --target=build --configuration=production --base=origin/main --head=HEAD --parallel
-
-      - name: Check if build output exists
-        id: build_output
-        run: |
-          if [ -d "dist/" ]; then
-            echo "Build directory found. Setting has_build to true."
-            echo "has_build=true" >> $GITHUB_OUTPUT
-          else
-            echo "Build directory not found. Setting has_build to false."
-            echo "has_build=false" >> $GITHUB_OUTPUT
-          fi
-
-      - name: Upload build artifacts
-        if: steps.build_output.outputs.has_build == 'true'
-        uses: actions/upload-artifact@v4
-        with:
-          name: production-files
-          path: dist/
-
   deploy:
-    needs: build
     runs-on: ubuntu-latest
+    if: github.ref == 'refs/heads/main' && github.event_name == 'push'
 
     steps:
-      - name: Download build artifacts
-        uses: actions/download-artifact@v4
-        with:
-          name: production-files
-          path: dist/
-
-      - name: Upload build to server
-        uses: appleboy/scp-action@master
+      - name: Deploy to Server via SSH
+        uses: appleboy/ssh-action@master
         with:
           host: ${{ secrets.HOST }}
           port: ${{ secrets.PORT }}
           username: ${{ secrets.USERNAME }}
           key: ${{ secrets.SSH_PRIVATE_KEY }}
-          source: "dist/"
-          target: "/tmp/staff"
-
-      - name: Deploy to Server via SSH
-        uses: appleboy/ssh-action@master
-        with:
-          host: ${{ secrets.HOST }}
-          username: ${{ secrets.USERNAME }}
-          key: ${{ secrets.SSH_PRIVATE_KEY }}
           script: |
             set -e
             DEPLOY_DIR=/var/www/staff
-            BUILD_DIR=/tmp/staff
-
-            mkdir -p "$DEPLOY_DIR"
-            rsync -av --delete --exclude='.git/' "$BUILD_DIR"/ "$DEPLOY_DIR"/
-
-            echo "Deployment successful. Restarting application..."
-            pm2 restart staff || pm2 start "$DEPLOY_DIR/main.js" --name staff
+            
+            echo "Navigating to project directory..."
+            cd "$DEPLOY_DIR"
+            
+            echo "Pulling latest changes from main..."
+            git pull origin main
+            
+            echo "Installing dependencies..."
+            pnpm install --frozen-lockfile
+            
+            echo "Building project..."
+            pnpm exec nx build dashboard-api --configuration=production
+            
+            echo "Restarting application with PM2..."
+            pm2 restart staff || pm2 start dist/apps/dashboard-api/main.js --name staff
+            
+            echo "Deployment completed successfully!"
