@@ -51,15 +51,6 @@ jobs:
       - name: Build affected projects
         run: pnpm exec nx affected --target=build --configuration=production --base=origin/main --head=HEAD --parallel
 
-      - name: Detect build output
-        id: build_output
-        run: |
-          if [ -d "dist/apps/dashboard-api" ] && compgen -G "dist/apps/dashboard-api/**/*" > /dev/null; then
-            echo "has_build=true" >> "$GITHUB_OUTPUT"
-          else
-            echo "has_build=false" >> "$GITHUB_OUTPUT"
-          fi
-
       - name: Upload build artifacts
         if: steps.build_output.outputs.has_build == 'true'
         uses: actions/upload-artifact@v4
@@ -70,8 +61,6 @@ jobs:
   deploy:
     needs: build
     runs-on: ubuntu-latest
-    
-    if: needs.build.outputs.has_build == 'true' && github.ref == 'refs/heads/main' && github.event_name == 'push'
 
     steps:
       - name: Download build artifacts
