@@ -173,13 +173,17 @@ export class EmployeeGroupService {
         scope: DataScope,
         user: UserContext
     ) {
+        const organizationId = scope?.organizationId || updateEmployeeGroupDto?.organizationId;
+        if (!organizationId) {
+            throw new BadRequestException('Organization ID is required');
+        }
         // Verify group exists and user has access
         await this.findOne(id, scope, user);
 
         // Check name conflict if name is being updated
         if (updateEmployeeGroupDto.name) {
             const exists = await this.employeeGroupRepository.existsByName(
-                scope.organizationId!,
+                organizationId,
                 updateEmployeeGroupDto.name,
                 id
             );
@@ -203,6 +207,11 @@ export class EmployeeGroupService {
         if (updateEmployeeGroupDto.isActive !== undefined) {
             updateData.isActive = updateEmployeeGroupDto.isActive;
         }
+        
+        updateData.organization = {
+            connect: { id: updateEmployeeGroupDto.organizationId },
+        };
+        
         if (updateEmployeeGroupDto.policyId !== undefined) {
             if (updateEmployeeGroupDto.policyId === null) {
                 updateData.policy = {
