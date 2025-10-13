@@ -21,6 +21,8 @@ jobs:
             set -e
             DEPLOY_DIR=/var/www/staff
             
+            mkdir -p "$DEPLOY_DIR"
+
             echo "Navigating to project directory..."
             cd "$DEPLOY_DIR"
             
