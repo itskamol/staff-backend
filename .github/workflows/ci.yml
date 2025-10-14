@@ -50,16 +50,33 @@ jobs:
             nx-cache-${{ runner.os }}-
 
       - name: Build agent-api
-        run: pnpm exec nx run agent-api:build
+        run: pnpm exec nx run agent-api:build --with-deps
 
       - name: Build dashboard-api
-        run: pnpm exec nx run dashboard-api:build
+        run: pnpm exec nx run dashboard-api:build --with-deps
 
       - name: Include deployment scripts
         run: |
           mkdir -p dist/scripts
           cp scripts/restart.sh dist/scripts/restart.sh
           chmod +x dist/scripts/restart.sh
+
+      - name: Copy Prisma schema and migrations
+        run: |
+          mkdir -p dist/shared/database/prisma
+          cp -r shared/database/prisma/schema.prisma dist/shared/database/prisma/
+          cp -r shared/database/prisma/migrations dist/shared/database/prisma/
+
+      - name: Copy package.json files for dependency installation
+        run: |
+          # Root package.json for pnpm workspace
+          cp package.json dist/package.json
+          cp pnpm-lock.yaml dist/pnpm-lock.yaml
+          cp pnpm-workspace.yaml dist/pnpm-workspace.yaml
+          
+          # App package.json files
+          cp apps/agent-api/package.json dist/apps/agent-api/package.json
+          cp apps/dashboard-api/package.json dist/apps/dashboard-api/package.json
 
       - name: Upload dist artifact
         if: github.event_name == 'push' && github.ref == 'refs/heads/main'
@@ -68,7 +85,7 @@ jobs:
           name: dist
           path: |
             dist/**
-          if-no-files-found: ignore
+          if-no-files-found: error
 
   deploy:
     name: Deploy to Server

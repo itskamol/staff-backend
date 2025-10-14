@@ -20,14 +20,13 @@ install_dependencies() {
     return
   fi
 
-  for dir in "${APP_BUILD_DIRS[@]}"; do
-    if [ -f "$ROOT_DIR/$dir/package.json" ]; then
-      log "Installing production dependencies in $dir"
-      (cd "$ROOT_DIR/$dir" && pnpm install --frozen-lockfile --prod) || log "Failed to install dependencies in $dir"
-    else
-      log "Skipping $dir (no package.json)"
-    fi
-  done
+  log "Installing production dependencies for workspace"
+  (cd "$ROOT_DIR" && pnpm install --frozen-lockfile --prod) || log "Failed to install workspace dependencies"
+
+  if [ -f "$ROOT_DIR/shared/database/prisma/schema.prisma" ]; then
+    log "Generating Prisma client"
+    (cd "$ROOT_DIR/shared/database" && pnpm exec prisma generate) || log "Failed to generate Prisma client"
+  fi
 }
 
 restart_systemd_services() {
