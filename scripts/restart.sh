@@ -4,9 +4,9 @@ set -euo pipefail
 # Lightweight deployment helper invoked from CI after rsync completes.
 # Customize service names and dependency installation to match the target host.
 
-ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
+ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/" && pwd)"
 APP_BUILD_DIRS=(
-  "apps/agent-api"
+  # "apps/agent-api"
   "apps/dashboard-api"
 )
 
@@ -21,9 +21,9 @@ install_dependencies() {
   fi
 
   log "Installing production dependencies for workspace"
-  (cd "$ROOT_DIR" && pnpm install --frozen-lockfile --prod) || log "Failed to install workspace dependencies"
+  (cd "$ROOT_DIR" && pnpm install --no-frozen-lockfile --prod) || log "Failed to install workspace dependencies"
 
-  if [ -f "$ROOT_DIR/shared/database/prisma/schema.prisma" ]; then
+  if [ -f "$ROOT_DIR/shared/database/prisma/models" ]; then
     log "Generating Prisma client"
     (cd "$ROOT_DIR/shared/database" && pnpm exec prisma generate) || log "Failed to generate Prisma client"
   fi
@@ -80,7 +80,7 @@ main() {
   install_dependencies
 
   IFS=' ' read -r -a systemd_services <<< "${SYSTEMD_SERVICES:-}"
-  IFS=' ' read -r -a pm2_processes <<< "${PM2_PROCESSES:-agent-api dashboard-api}"
+  IFS=' ' read -r -a pm2_processes <<< "${PM2_PROCESSES:-dashboard-api}"
 
   restart_systemd_services "${systemd_services[@]}"
   restart_pm2_processes "${pm2_processes[@]}"
