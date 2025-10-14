@@ -1,4 +1,4 @@
-import { ApiProperty } from '@nestjs/swagger';
+import { ApiProperty, PartialType } from '@nestjs/swagger';
 import {
     IsBoolean,
     IsEmail,
@@ -214,7 +214,7 @@ export class BulkUpdateEmployees {
         type: UpdateEmployeeDto,
     })
     @IsNotEmpty()
-    updateData: UpdateEmployeeDto;
+    updateData: Partial<UpdateEmployeeDto>;
 }
 
 export class EmployeeResponseDto {
