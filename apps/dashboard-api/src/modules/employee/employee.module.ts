@@ -1,9 +1,11 @@
 import { Module } from '@nestjs/common';
 import { EmployeeController } from './controllers/employee.controller';
-import { EmployeeService } from './repositories/employee.service';
-import { EmployeeRepository } from './employee.repository';
+import { EmployeeService } from './services/employee.service';
 import { DepartmentService } from '../department/department.service';
+import { PolicyService } from '../policy/services/policy.service';
+import { EmployeeRepository } from './repositories/employee.repository';
 import { DepartmentRepository } from '../department/department.repository';
+import { PolicyRepository } from '../policy/repositories/policy.repository';
 
 @Module({
     imports: [],
@@ -12,7 +14,9 @@ import { DepartmentRepository } from '../department/department.repository';
         EmployeeService,
         DepartmentService,
         EmployeeRepository,
-        DepartmentRepository
+        DepartmentRepository,
+        PolicyService,
+        PolicyRepository
     ],
     exports: [EmployeeService, EmployeeRepository],
 })

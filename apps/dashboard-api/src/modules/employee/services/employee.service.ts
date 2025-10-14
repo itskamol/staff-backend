@@ -1,18 +1,18 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
-import { EmployeeRepository } from '../employee.repository';
 import { DataScope, UserContext } from '@app/shared/auth';
-import { CreateEmployeeDto, UpdateEmployeeDto } from '../dto';
+import { BulkUpdateEmployees, CreateEmployeeDto, UpdateEmployeeDto } from '../dto';
 import { DepartmentService } from '../../department/department.service';
 import { QueryDto } from '@app/shared/utils';
 import { Prisma } from '@prisma/client';
 import { PolicyService } from '../../policy/services/policy.service';
+import { EmployeeRepository } from '../repositories/employee.repository';
 
 @Injectable()
 export class EmployeeService {
     constructor(
         private readonly employeeRepository: EmployeeRepository,
         private readonly departmentService: DepartmentService,
-        private readonly policyService: PolicyService, 
+        private readonly policyService: PolicyService
     ) {}
 
     async getEmployees(query: QueryDto, scope: DataScope, user: UserContext) {
@@ -65,7 +65,9 @@ export class EmployeeService {
                 throw new NotFoundException('Employee group not found or access denied');
             }
         } else {
-            const defaultGroup = await this.policyService.getDefaultPolicy(department.organizationId);
+            const defaultGroup = await this.policyService.getDefaultPolicy(
+                department.organizationId
+            );
             dto.policyId = defaultGroup.id;
         }
 
@@ -105,6 +107,27 @@ export class EmployeeService {
         }
 
         return await this.employeeRepository.updateWithValidation(id, updateData, scope, user.role);
+    }
+
+    async bulkUpdateEmployees(
+        dto: BulkUpdateEmployees,
+        scope: DataScope,
+        user: UserContext
+    ) {
+        const updateData: Prisma.EmployeeUpdateInput = { ...dto.updateData };
+
+        if (dto.updateData.policyId) {
+            updateData.policy = {
+                connect: { id: dto.updateData.policyId },
+            };
+        }
+
+        return await this.employeeRepository.bulkUpdateWithValidation(
+            { id: { in: dto.employeeIds } },
+            updateData,
+            scope,
+            user.role
+        );
     }
 
     async deleteEmployee(id: number, scope: DataScope, user: UserContext) {

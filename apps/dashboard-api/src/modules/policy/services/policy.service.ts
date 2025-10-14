@@ -1,5 +1,4 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
-import { PrismaService } from '@app/shared/database';
 import { DataScope } from '@app/shared/auth';
 import {
     CreatePolicyDto,
@@ -10,12 +9,10 @@ import {
 import { UserContext } from '../../../shared/interfaces';
 import { PolicyRepository } from '../repositories/policy.repository';
 import { Policy, Prisma, RuleType } from '@prisma/client';
-import { EmployeeService } from '../../employee/repositories/employee.service';
 
 @Injectable()
 export class PolicyService {
     constructor(
-        private readonly employeeService: EmployeeService,
         private readonly policyRepository: PolicyRepository
     ) {}
 

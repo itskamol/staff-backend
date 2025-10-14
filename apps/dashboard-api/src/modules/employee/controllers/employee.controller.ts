@@ -15,8 +15,8 @@ import {
     ApiParam,
     ApiTags,
 } from '@nestjs/swagger';
-import { EmployeeService } from '../repositories/employee.service';
-import { CreateEmployeeDto, EmployeeResponseDto, UpdateEmployeeDto } from '../dto';
+import { EmployeeService } from '../services/employee.service';
+import { BulkUpdateEmployees, CreateEmployeeDto, EmployeeResponseDto, UpdateEmployeeDto } from '../dto';
 import { ApiSuccessResponse } from '../../../shared/dto';
 import { ApiCrudOperation, ApiErrorResponses, ApiOkResponseData } from '../../../shared/utils';
 
@@ -105,6 +105,20 @@ export class EmployeeController {
         @User() user: UserContext
     ) {
         return this.employeeService.updateEmployee(id, dto, scope, user);
+    }
+
+    @Put('bulk')
+    @Roles(Role.ADMIN, Role.HR)
+    @ApiCrudOperation(EmployeeResponseDto, 'update', {
+        body: BulkUpdateEmployees,
+        summary: 'Bulk update employees'
+    })
+    async bulkUpdateEmployees(
+        @Body() dtos: BulkUpdateEmployees,
+        @Scope() scope: DataScope,
+        @User() user: UserContext
+    ) {
+        return this.employeeService.bulkUpdateEmployees(dtos, scope, user);
     }
 
     @Delete(':id')

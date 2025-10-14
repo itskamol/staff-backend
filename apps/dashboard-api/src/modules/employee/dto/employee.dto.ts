@@ -198,6 +198,25 @@ export class UpdateEmployeeDto {
     isActive?: boolean;
 }
 
+export class BulkUpdateEmployees {
+    @ApiProperty({
+        description: 'Array of employee IDs to be updated.',
+        example: [1, 2, 3],
+        type: [Number],
+    })
+    @IsNotEmpty()
+    @IsInt({ each: true })
+    employeeIds: number[];
+
+
+    @ApiProperty({
+        description: 'Data to update for the specified employees.',
+        type: UpdateEmployeeDto,
+    })
+    @IsNotEmpty()
+    updateData: UpdateEmployeeDto;
+}
+
 export class EmployeeResponseDto {
     @ApiProperty({
         description: 'The unique identifier for the employee.',
@@ -221,7 +240,7 @@ export class EmployeeResponseDto {
         description: 'The ID of the employee group.',
         example: 1,
     })
-    groupId: number;
+    policyId: number;
 
     @ApiProperty({
         description: "The employee's full name.",

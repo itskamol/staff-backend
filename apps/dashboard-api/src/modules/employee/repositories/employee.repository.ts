@@ -1,8 +1,8 @@
 import { Injectable } from '@nestjs/common';
 import { Employee, Prisma, Role } from '@prisma/client';
-import { BaseRepository } from '../../shared/repositories/base.repository';
 import { PrismaService } from '@app/shared/database';
 import { DataScope } from '@app/shared/auth';
+import { BaseRepository } from 'apps/dashboard-api/src/shared/repositories/base.repository';
 
 export type EmployeeWithRelations = Employee & {
     department?: {
@@ -210,6 +210,37 @@ export class EmployeeRepository extends BaseRepository<
         }
 
         return await this.update(id, data, this.getDefaultInclude());
+    }
+
+    async bulkUpdateWithValidation(
+        where: Prisma.EmployeeWhereInput,
+        data: Prisma.EmployeeUpdateInput,
+        scope?: DataScope,
+        userRole?: Role
+    ): Promise<Prisma.BatchPayload> {
+        // Apply role-based scoping to the where clause
+        const scopedWhere = this.applyDataScope(where, scope, userRole) as Prisma.EmployeeWhereInput;
+
+        // For HR role, prevent department changes to unauthorized departments
+        if (userRole === Role.HR && scope?.organizationId && data.department && typeof data.department === 'object' && 'connect' in data.department) {
+            const departmentId = (data.department.connect as { id: number }).id;
+            
+            const department = await this.prisma.department.findFirst({
+                where: {
+                    id: departmentId,
+                    organizationId: scope.organizationId,
+                },
+            });
+
+            if (!department) {
+                throw new Error('Cannot move employees to this department');
+            }
+        }
+
+        return await this.getDelegate().updateMany({
+            where: scopedWhere,
+            data,
+        });
     }
 
     /**
