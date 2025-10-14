@@ -237,10 +237,28 @@ export class EmployeeRepository extends BaseRepository<
             }
         }
 
-        return await this.getDelegate().updateMany({
-            where: scopedWhere,
-            data,
+        const updatedCount = await this.prisma.$transaction(async (tx) => {
+            // Prisma updateMany cannot modify relations, so update affected employees one by one.
+            const employees = await tx.employee.findMany({
+                where: scopedWhere,
+                select: { id: true },
+            });
+
+            if (employees.length === 0) {
+                return 0;
+            }
+
+            for (const { id: employeeId } of employees) {
+                await tx.employee.update({
+                    where: { id: employeeId },
+                    data,
+                });
+            }
+
+            return employees.length;
         });
+
+        return { count: updatedCount } as Prisma.BatchPayload;
     }
 
     /**

@@ -210,11 +210,10 @@ export class BulkUpdateEmployees {
 
 
     @ApiProperty({
-        description: 'Data to update for the specified employees.',
-        type: UpdateEmployeeDto,
+        description: 'Data to update for the specified employees.'
     })
     @IsNotEmpty()
-    updateData: Partial<UpdateEmployeeDto>;
+    policyId?: number;
 }
 
 export class EmployeeResponseDto {

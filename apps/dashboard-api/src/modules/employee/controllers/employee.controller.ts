@@ -107,7 +107,7 @@ export class EmployeeController {
         return this.employeeService.updateEmployee(id, dto, scope, user);
     }
 
-    @Put('bulk')
+    @Post('bulk')
     @Roles(Role.ADMIN, Role.HR)
     @ApiCrudOperation(EmployeeResponseDto, 'update', {
         body: BulkUpdateEmployees,

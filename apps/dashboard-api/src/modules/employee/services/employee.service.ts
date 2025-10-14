@@ -114,12 +114,15 @@ export class EmployeeService {
         scope: DataScope,
         user: UserContext
     ) {
-        const updateData: Prisma.EmployeeUpdateInput = { ...dto.updateData };
-
-        if (dto.updateData.policyId) {
+        const updateData: Prisma.EmployeeUpdateInput = {  };
+        if (dto.policyId) {
             updateData.policy = {
-                connect: { id: dto.updateData.policyId },
+                connect: { id: dto.policyId },
             };
+        }
+
+        if (!dto.policyId) {
+            throw new NotFoundException('No valid fields to update');
         }
 
         return await this.employeeRepository.bulkUpdateWithValidation(
