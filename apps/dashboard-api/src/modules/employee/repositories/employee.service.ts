@@ -4,15 +4,15 @@ import { DataScope, UserContext } from '@app/shared/auth';
 import { CreateEmployeeDto, UpdateEmployeeDto } from '../dto';
 import { DepartmentService } from '../../department/department.service';
 import { QueryDto } from '@app/shared/utils';
-import { EmployeeGroupService } from '../services/employee-group.service';
 import { Prisma } from '@prisma/client';
+import { PolicyService } from '../../policy/services/policy.service';
 
 @Injectable()
 export class EmployeeService {
     constructor(
         private readonly employeeRepository: EmployeeRepository,
         private readonly departmentService: DepartmentService,
-        private readonly employeeGroupService: EmployeeGroupService
+        private readonly policyService: PolicyService, 
     ) {}
 
     async getEmployees(query: QueryDto, scope: DataScope, user: UserContext) {
@@ -59,17 +59,14 @@ export class EmployeeService {
             throw new NotFoundException('Department not found or access denied');
         }
 
-        if (dto.groupId) {
-            const group = await this.employeeGroupService.findOne(dto.groupId, scope, user);
+        if (dto.policyId) {
+            const group = await this.policyService.findOne(dto.policyId, scope, user);
             if (!group) {
                 throw new NotFoundException('Employee group not found or access denied');
             }
         } else {
-            const defaultGroup = await this.employeeGroupService.getDefaultGroup(
-                department.organizationId
-            );
-            dto.groupId = defaultGroup.id;
-            dto.policyId = defaultGroup.policyId;
+            const defaultGroup = await this.policyService.getDefaultPolicy(department.organizationId);
+            dto.policyId = defaultGroup.id;
         }
 
         const createData: Prisma.EmployeeCreateInput = {
@@ -83,7 +80,7 @@ export class EmployeeService {
             department: {
                 connect: { id: dto.departmentId },
             },
-            group: { connect: { id: dto.groupId } },
+            policy: { connect: { id: dto.policyId } },
             organization: {
                 connect: { id: department.organizationId },
             },
@@ -101,9 +98,9 @@ export class EmployeeService {
             };
         }
 
-        if (dto.groupId) {
-            updateData.group = {
-                connect: { id: dto.groupId },
+        if (dto.policyId) {
+            updateData.policy = {
+                connect: { id: dto.policyId },
             };
         }
 

@@ -455,10 +455,10 @@ export class EmployeeRepository extends BaseRepository<
                     organizationId: true,
                 }
             },
-            group: {
+            policy: {
                 select: {
                     id: true,
-                    name: true,
+                    title: true,
                     organizationId: true,
                 }
             },

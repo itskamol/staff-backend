@@ -40,8 +40,12 @@ export class PolicyController {
 
     @Get(':id')
     @ApiCrudOperation(PolicyDto, 'get', { summary: 'Get policy by ID' })
-    async findOne(@Param('id') id: number, @CurrentUser() user: UserContext) {
-        return await this.policyService.findOne(id, user);
+    async findOne(
+        @Param('id') id: number,
+        @Scope() scope: DataScope,
+        @CurrentUser() user: UserContext
+    ) {
+        return await this.policyService.findOne(id, scope, user);
     }
 
     @Post()

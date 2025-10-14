@@ -17,7 +17,6 @@ model Organization {
   users          User[]
   departments    Department[]
   employees      Employee[]
-  groups         EmployeeGroup[]
   resourceGroups ResourceGroup[]
   resources      Resource[]
 

@@ -16,7 +16,8 @@ import { EmployeeService } from '../../employee/repositories/employee.service';
 export class PolicyService {
     constructor(
         private readonly employeeService: EmployeeService,
-        private readonly policyRepository: PolicyRepository) {}
+        private readonly policyRepository: PolicyRepository
+    ) {}
 
     async findAll(query: PolicyQueryDto, scope: DataScope, user: UserContext) {
         const {
@@ -56,7 +57,7 @@ export class PolicyService {
             where,
             { [sort]: order },
             {
-                _count: { select: { employeeGroups: true } },
+                _count: { select: { employees: true } },
                 options: {
                     select: {
                         type: true,
@@ -76,18 +77,13 @@ export class PolicyService {
         );
     }
 
-    async findOne(id: number, user: UserContext) {
+    async findOne(id: number, scope: DataScope, user: UserContext) {
         const policy = await this.policyRepository.findById(id, {
-            employeeGroups: {
+            employees: {
                 select: {
                     id: true,
                     name: true,
                     organizationId: true,
-                    _count: {
-                        select: {
-                            employees: true,
-                        },
-                    },
                 },
             },
             options: {
@@ -127,7 +123,7 @@ export class PolicyService {
     async update(id: number, updatePolicyDto: UpdatePolicyDto, scope: DataScope) {
         const policy = await this.policyRepository.findByIdOrThrow(
             id,
-            { employeeGroups: { include: { employees: { select: { id: true } } } } },
+            { employees: { select: { id: true } } },
             scope
         );
         const { options, ...policyData } = updatePolicyDto;
@@ -145,7 +141,7 @@ export class PolicyService {
     async remove(id: number, scope: DataScope, user: UserContext) {
         const policy: PolicyWithRelations = await this.policyRepository.findById(
             id,
-            { employeeGroups: { include: { employees: { select: { id: true } } } } },
+            { employees: { select: { id: true } } },
             scope
         );
 
@@ -156,8 +152,11 @@ export class PolicyService {
         const defaultPolicy = await this.policyRepository.getDefaultPolicy(scope.organizationId);
 
         if (employeeIds.length) {
-
         }
+    }
+
+    async getDefaultPolicy(organizationId: number) {
+        return this.policyRepository.getDefaultPolicy(organizationId);
     }
 
     private extractOptions(options: CreatePolicyOptionDto[]) {

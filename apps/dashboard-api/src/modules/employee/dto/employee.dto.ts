@@ -131,7 +131,7 @@ export class UpdateEmployeeDto {
     })
     @IsOptional()
     @IsInt()
-    groupId?: number;
+    policyId?: number;
 
     @ApiProperty({
         description: "The employee's full name.",
