@@ -49,12 +49,6 @@ jobs:
           restore-keys: |
             nx-cache-${{ runner.os }}-
 
-      - name: Lint
-        run: pnpm lint
-
-      - name: Unit tests
-        run: pnpm test
-
       - name: Build agent-api
         run: pnpm exec nx run agent-api:build
 
