@@ -73,10 +73,6 @@ jobs:
           cp package.json dist/package.json
           cp pnpm-lock.yaml dist/pnpm-lock.yaml
           cp pnpm-workspace.yaml dist/pnpm-workspace.yaml
-          
-          # App package.json files
-          cp apps/agent-api/package.json dist/apps/agent-api/package.json
-          cp apps/dashboard-api/package.json dist/apps/dashboard-api/package.json
 
       - name: Upload dist artifact
         if: github.event_name == 'push' && github.ref == 'refs/heads/main'
