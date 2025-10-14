@@ -12,9 +12,7 @@ import { Policy, Prisma, RuleType } from '@prisma/client';
 
 @Injectable()
 export class PolicyService {
-    constructor(
-        private readonly policyRepository: PolicyRepository
-    ) {}
+    constructor(private readonly policyRepository: PolicyRepository) {}
 
     async findAll(query: PolicyQueryDto, scope: DataScope, user: UserContext) {
         const {
@@ -77,16 +75,19 @@ export class PolicyService {
     async findOne(id: number, scope: DataScope, user: UserContext) {
         const policy = await this.policyRepository.findById(id, {
             employees: {
-                select: {
-                    id: true,
-                    name: true,
-                    organizationId: true,
-                },
+                select: { id: true },
             },
             options: {
                 select: {
                     id: true,
                     type: true,
+                    rules: {
+                        select: {
+                            type: true,
+                            id: true,
+                            group: { select: { id: true, name: true, type: true } },
+                        },
+                    },
                     isActive: true,
                     createdAt: true,
                     updatedAt: true,
