@@ -63,8 +63,8 @@ jobs:
 
       - name: Copy Prisma schema and migrations
         run: |
-          mkdir -p dist/shared/database/prisma
-          cp -r shared/database/prisma/schema.prisma dist/shared/database/prisma/
+          mkdir -p dist/shared/database/prisma/
+          cp -r shared/database/prisma/models dist/shared/database/prisma/
           cp -r shared/database/prisma/migrations dist/shared/database/prisma/
 
       - name: Copy package.json files for dependency installation
