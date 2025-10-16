@@ -1,0 +1,211 @@
+generator client {
+  provider      = "prisma-client-js"
+  binaryTargets = ["native", "linux-musl-openssl-3.0.x"]
+  output        = "../../../node_modules/.prisma/dual-client"
+}
+
+// Primary PostgreSQL datasource for transactional data
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// TimescaleDB datasource for time-series monitoring data
+datasource timescale {
+  provider = "postgresql"
+  url      = env("TIMESCALE_URL")
+}
+
+// Core application models (PostgreSQL)
+model Organization {
+  id          Int      @id @default(autoincrement())
+  name        String   @unique
+  slug        String   @unique
+  description String?
+  isActive    Boolean  @default(true)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  // Relations
+  users       User[]
+  agents      Agent[]
+  policies    Policy[]
+  apiKeys     ApiKey[]
+  
+  @@map("organizations")
+}
+
+model User {
+  id             Int      @id @default(autoincrement())
+  email          String   @unique
+  firstName      String
+  lastName       String
+  passwordHash   String
+  role           UserRole @default(USER)
+  isActive       Boolean  @default(true)
+  lastLoginAt    DateTime?
+  organizationId Int
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+
+  // Relations
+  organization Organization @relation(fields: [organizationId], references: [id])
+  
+  @@map("users")
+}
+
+model Agent {
+  id             String   @id @default(uuid()) @db.Uuid
+  name           String
+  computerUid    String   @map("computer_uid")
+  version        String
+  status         AgentStatus @default(OFFLINE)
+  lastHeartbeat  DateTime?
+  organizationId Int
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+
+  // Relations
+  organization Organization @relation(fields: [organizationId], references: [id])
+  
+  @@unique([computerUid, organizationId])
+  @@map("agents")
+}
+
+model Policy {
+  id             Int      @id @default(autoincrement())
+  name           String
+  version        String   @default("1.0.0")
+  content        Json
+  checksum       String
+  isActive       Boolean  @default(true)
+  requiresRestart Boolean @default(false)
+  organizationId Int
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+
+  // Relations
+  organization Organization @relation(fields: [organizationId], references: [id])
+  
+  @@unique([name, organizationId])
+  @@map("policies")
+}
+
+model ApiKey {
+  id             String   @id @default(uuid()) @db.Uuid
+  name           String
+  keyHash        String   @unique
+  permissions    Json
+  expiresAt      DateTime?
+  isActive       Boolean  @default(true)
+  lastUsedAt     DateTime?
+  organizationId Int
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+
+  // Relations
+  organization Organization @relation(fields: [organizationId], references: [id])
+  
+  @@map("api_keys")
+}
+
+// Time-series monitoring models (TimescaleDB)
+model ActiveWindow {
+  id              String   @id @default(uuid()) @db.Uuid
+  agentId         String   @map("agent_id") @db.Uuid
+  computerUid     String   @map("computer_uid")
+  userSid         String   @map("user_sid")
+  windowTitle     String?  @map("window_title")
+  processName     String?  @map("process_name")
+  url             String?
+  datetime        DateTime @db.Timestamptz
+  durationSeconds Int?     @map("duration_seconds")
+  organizationId  Int      @map("organization_id")
+  createdAt       DateTime @default(now()) @map("created_at") @db.Timestamptz
+
+  @@id([id, datetime])
+  @@index([agentId, datetime(sort: Desc)])
+  @@index([organizationId, datetime(sort: Desc)])
+  @@index([processName, datetime(sort: Desc)])
+  @@map("active_windows")
+  @@schema("monitoring")
+}
+
+model VisitedSite {
+  id              String   @id @default(uuid()) @db.Uuid
+  agentId         String   @map("agent_id") @db.Uuid
+  computerUid     String   @map("computer_uid")
+  userSid         String   @map("user_sid")
+  url             String
+  title           String?
+  datetime        DateTime @db.Timestamptz
+  durationSeconds Int?     @map("duration_seconds")
+  organizationId  Int      @map("organization_id")
+  createdAt       DateTime @default(now()) @map("created_at") @db.Timestamptz
+
+  @@id([id, datetime])
+  @@index([agentId, datetime(sort: Desc)])
+  @@index([organizationId, datetime(sort: Desc)])
+  @@map("visited_sites")
+  @@schema("monitoring")
+}
+
+model Screenshot {
+  id             String   @id @default(uuid()) @db.Uuid
+  agentId        String   @map("agent_id") @db.Uuid
+  computerUid    String   @map("computer_uid")
+  userSid        String   @map("user_sid")
+  filePath       String   @map("file_path")
+  fileSize       BigInt?  @map("file_size")
+  datetime       DateTime @db.Timestamptz
+  organizationId Int      @map("organization_id")
+  createdAt      DateTime @default(now()) @map("created_at") @db.Timestamptz
+
+  @@id([id, datetime])
+  @@index([agentId, datetime(sort: Desc)])
+  @@index([organizationId, datetime(sort: Desc)])
+  @@map("screenshots")
+  @@schema("monitoring")
+}
+
+model UserSession {
+  id             String      @id @default(uuid()) @db.Uuid
+  agentId        String      @map("agent_id") @db.Uuid
+  computerUid    String      @map("computer_uid")
+  userSid        String      @map("user_sid")
+  sessionType    SessionType @map("session_type")
+  datetime       DateTime    @db.Timestamptz
+  organizationId Int         @map("organization_id")
+  metadata       Json?
+  createdAt      DateTime    @default(now()) @map("created_at") @db.Timestamptz
+
+  @@id([id, datetime])
+  @@index([agentId, datetime(sort: Desc)])
+  @@index([organizationId, datetime(sort: Desc)])
+  @@index([sessionType, datetime(sort: Desc)])
+  @@map("user_sessions")
+  @@schema("monitoring")
+}
+
+// Enums
+enum UserRole {
+  ADMIN
+  MANAGER
+  USER
+}
+
+enum AgentStatus {
+  ONLINE
+  OFFLINE
+  ERROR
+  UPDATING
+}
+
+enum SessionType {
+  LOGIN
+  LOGOUT
+  LOCK
+  UNLOCK
+  IDLE
+  ACTIVE
+}
