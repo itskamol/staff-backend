@@ -1,6 +1,7 @@
 import { Injectable } from '@nestjs/common';
 import { ConfigService as NestConfigService } from '@nestjs/config';
 import * as os from 'os';
+import * as path from 'node:path';
 
 @Injectable()
 export class ConfigService {
@@ -14,8 +15,23 @@ export class ConfigService {
         return this.configService.get<number>('PORT', 3000);
     }
 
-    get uploadDir(): string {
-        return this.configService.get<string>('UPLOAD_DIR', './uploads')
+    get storageDriver(): string {
+        return this.configService.get<string>('STORAGE_DRIVER', 'local');
+    }
+
+    get storageBasePath(): string {
+        return this.configService.get<string>(
+            'STORAGE_BASE_PATH',
+            path.resolve(process.cwd(), 'storage')
+        );
+    }
+
+    get storageBucket(): string | undefined {
+        return this.configService.get<string>('STORAGE_BUCKET');
+    }
+
+    get storageRetentionDays(): number {
+        return Number(this.configService.get<number>('STORAGE_RETENTION_DAYS', 30));
     }
 
     get databaseUrl(): string {
@@ -120,6 +136,18 @@ export class ConfigService {
             const refreshTokenSecret = this.refreshTokenSecret; // This will throw if too short
             void jwtSecret;
             void refreshTokenSecret;
+
+            const storageDriver = this.storageDriver;
+            if (!['local', 's3', 'minio'].includes(storageDriver)) {
+                throw new Error(
+                    `Unsupported STORAGE_DRIVER "${storageDriver}". Allowed values: local, s3, minio.`
+                );
+            }
+
+            const retention = this.storageRetentionDays;
+            if (Number.isNaN(retention) || retention < 0) {
+                throw new Error('STORAGE_RETENTION_DAYS must be a non-negative number');
+            }
         } catch (error) {
             throw new Error(`Configuration validation failed: ${error.message}`);
         }

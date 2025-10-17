@@ -1,4 +1,5 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
+import { Inject, Injectable, NotFoundException } from '@nestjs/common';
+import { FILE_STORAGE_SERVICE, IFileStorageService } from '@app/shared/common';
 import { DataScope, UserContext } from '@app/shared/auth';
 import { BulkUpdateEmployees, CreateEmployeeDto, UpdateEmployeeDto } from '../dto';
 import { DepartmentService } from '../../department/department.service';
@@ -12,7 +13,9 @@ export class EmployeeService {
     constructor(
         private readonly employeeRepository: EmployeeRepository,
         private readonly departmentService: DepartmentService,
-        private readonly policyService: PolicyService
+        private readonly policyService: PolicyService,
+        @Inject(FILE_STORAGE_SERVICE)
+        private readonly fileStorage: IFileStorageService
     ) {}
 
     async getEmployees(query: QueryDto, scope: DataScope, user: UserContext) {
@@ -71,12 +74,13 @@ export class EmployeeService {
             dto.policyId = defaultGroup.id;
         }
 
+        const photoKey = await this.normalizeStorageKey(dto.photo);
+
         const createData: Prisma.EmployeeCreateInput = {
             name: dto.name,
             address: dto.address,
             phone: dto.phone,
             email: dto.email,
-            photo: dto.photo,
             additionalDetails: dto.additionalDetails,
             isActive: dto.isActive,
             department: {
@@ -88,11 +92,19 @@ export class EmployeeService {
             },
         };
 
+        if (photoKey) {
+            createData.photo = photoKey;
+        }
+
         return await this.employeeRepository.createWithValidation(createData, undefined, user.role);
     }
 
     async updateEmployee(id: number, dto: UpdateEmployeeDto, scope: DataScope, user: UserContext) {
         const updateData: Prisma.EmployeeUpdateInput = { ...dto };
+
+        if (dto.photo !== undefined) {
+            updateData.photo = await this.normalizeStorageKey(dto.photo);
+        }
 
         if (dto.departmentId) {
             updateData.department = {
@@ -319,5 +331,23 @@ export class EmployeeService {
             computerUserId,
             message: 'Computer user unlinked successfully',
         };
+    }
+
+    private async normalizeStorageKey(key?: string | null): Promise<string | null> {
+        if (!key) {
+            return null;
+        }
+
+        const sanitized = key.replace(/^\/*/, '').trim();
+        if (!sanitized) {
+            return null;
+        }
+
+        const exists = await this.fileStorage.exists(sanitized);
+        if (!exists) {
+            throw new NotFoundException('Referenced file not found in storage');
+        }
+
+        return sanitized;
     }
 }

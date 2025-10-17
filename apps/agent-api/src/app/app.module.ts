@@ -11,6 +11,7 @@ import { AgentModule } from '../modules/agent/agent.module';
 import { HIKVisionModule } from '../modules/hikvision/hikvision.module';
 import { DataProcessingModule } from '../modules/data-processing/data-processing.module';
 import { SecurityModule } from '../modules/security/security.module';
+import { GatewayModule } from '../modules/gateway/gateway.module';
 
 @Module({
     imports: [
@@ -21,6 +22,7 @@ import { SecurityModule } from '../modules/security/security.module';
         SharedDatabaseModule,
         SharedUtilsModule,
         SecurityModule,
+        GatewayModule,
         AgentModule,
         HIKVisionModule,
         DataProcessingModule,

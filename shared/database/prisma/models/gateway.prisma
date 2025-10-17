@@ -1,0 +1,29 @@
+enum GatewayCommandStatus {
+  PENDING
+  SENT
+  ACKNOWLEDGED
+  FAILED
+}
+
+enum GatewayCommandAckStatus {
+  ACCEPTED
+  REJECTED
+}
+
+model GatewayCommand {
+  id           String                     @id @default(uuid())
+  gatewayId    String                     @map("gateway_id")
+  type         String
+  payload      Json
+  requiresAck  Boolean                    @default(true) @map("requires_ack")
+  status       GatewayCommandStatus       @default(PENDING)
+  createdAt    DateTime                   @default(now()) @map("created_at")
+  sentAt       DateTime?                  @map("sent_at")
+  ackAt        DateTime?                  @map("ack_at")
+  ackStatus    GatewayCommandAckStatus?   @map("ack_status")
+  ackError     String?                    @map("ack_error")
+
+  @@index([gatewayId, status])
+  @@index([createdAt])
+  @@map("gateway_commands")
+}

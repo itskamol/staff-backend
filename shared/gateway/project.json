@@ -1,0 +1,21 @@
+{
+  "name": "shared-gateway",
+  "$schema": "../../node_modules/nx/schemas/project-schema.json",
+  "sourceRoot": "shared/gateway/src",
+  "projectType": "library",
+  "tags": [],
+  "targets": {
+    "build": {
+      "executor": "@nx/js:tsc",
+      "outputs": ["{options.outputPath}"],
+      "options": {
+        "outputPath": "dist/shared/gateway",
+        "tsConfig": "shared/gateway/tsconfig.lib.json",
+        "packageJson": "shared/gateway/package.json",
+        "main": "shared/gateway/src/index.ts",
+        "assets": ["shared/gateway/*.md"],
+        "rootDir": "../.."
+      }
+    }
+  }
+}

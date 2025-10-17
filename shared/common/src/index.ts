@@ -9,3 +9,7 @@ export * from './lib/services/pagination.service';
 
 // Middleware
 export * from './lib/middleware/morgan-logger.middleware';
+
+// Storage
+export * from './lib/storage/file-storage.interface';
+export * from './lib/storage/local-file-storage.service';
