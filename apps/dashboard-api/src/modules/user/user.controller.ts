@@ -21,9 +21,8 @@ import {
     UpdateUserDto,
     UserResponseDto,
 } from './dto';
-import { ApiCrudOperation } from '../../shared/utils';
 import { UserContext } from '../../shared/interfaces';
-import { QueryDto } from '@app/shared/utils';
+import { QueryDto, ApiCrudOperation } from '@app/shared/utils';
 
 @ApiTags('Users')
 @ApiBearerAuth()

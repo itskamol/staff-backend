@@ -1,30 +1,30 @@
 import { Logger } from '@nestjs/common';
 import { NestFactory } from '@nestjs/core';
 import { WsAdapter } from '@nestjs/platform-ws';
-import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger';
 import { AppModule } from './app/app.module';
 import { NestExpressApplication } from '@nestjs/platform-express';
+import { setupSwagger, TenantContextInterceptor } from '@app/shared/common';
+import { PrismaService } from '@app/shared/database';
 
 async function bootstrap() {
     const app = await NestFactory.create<NestExpressApplication>(AppModule);
     app.useWebSocketAdapter(new WsAdapter(app));
+
+    // Setup RLS Tenant Context Interceptor
+    const prismaService = app.get(PrismaService);
+    app.useGlobalInterceptors(new TenantContextInterceptor(prismaService));
+
     const globalPrefix = 'api';
     app.setGlobalPrefix(globalPrefix);
 
-    const config = new DocumentBuilder()
-        .setTitle('Staff Control System - Agent API')
-        .setDescription('Data collection API for computer monitoring and access control systems')
-        .setVersion('1.0')
-        .addApiKey({ type: 'apiKey', name: 'X-API-Key', in: 'header' }, 'api-key')
-        .addBearerAuth()
-        .addTag('Agent', 'Computer monitoring data collection')
-        .addTag('HIKVision', 'HIKVision access control integration')
-        .addTag('Data Processing', 'Asynchronous data processing')
-        .addTag('Security', 'API security management')
-        .build();
-
-    const document = SwaggerModule.createDocument(app, config);
-    SwaggerModule.setup('api/docs', app, document);
+    setupSwagger(app, 'agent/docs', {
+        title: 'Staff Control System - Agent API',
+        description: 'Data collection API for computer monitoring and access control systems',
+        version: '1.0',
+        useApiKeyAuth: true,
+        useBearerAuth: true,
+        tags: ['Agent', 'HIKVision', 'Data Processing', 'Security'],
+    });
 
     const port = process.env.AGENT_API_PORT || 3001;
     await app.listen(port);

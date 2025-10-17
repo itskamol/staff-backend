@@ -13,7 +13,7 @@ import {
     ApiErrorResponse,
     ApiPaginatedResponse,
     ApiSuccessResponse,
-} from '../dto/api-response.dto';
+} from './dto/api-response.dto';
 
 export const ApiOkResponseData = <DataDto extends Type<unknown>>(
     dataDto: DataDto,

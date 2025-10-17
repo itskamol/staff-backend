@@ -1,14 +1,19 @@
 import { NestFactory } from '@nestjs/core';
 import { ValidationPipe } from '@nestjs/common';
 import { AppModule } from './app/app.module';
-import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger';
 import { ConfigService } from './core/config/config.service';
 import { CustomValidationException } from './shared/exceptions/validation.exception';
 import { LoggerService } from './core/logger';
 import { ApiErrorResponse, ApiPaginatedResponse, ApiSuccessResponse } from './shared/dto';
+import { setupSwagger, TenantContextInterceptor } from '@app/shared/common';
+import { PrismaService } from '@app/shared/database';
 
 async function bootstrap() {
     const app = await NestFactory.create(AppModule);
+
+    // Setup RLS Tenant Context Interceptor
+    const prismaService = app.get(PrismaService);
+    app.useGlobalInterceptors(new TenantContextInterceptor(prismaService));
 
     const logger = app.get(LoggerService);
     app.useLogger(logger);
@@ -27,27 +32,21 @@ async function bootstrap() {
 
     app.setGlobalPrefix('api/v1');
 
-    const config = new DocumentBuilder()
-        .setTitle('Staff Control System - Dashboard API')
-        .setDescription('Comprehensive API for staff management, monitoring, and reporting')
-        .setVersion('1.0')
-        .addBearerAuth()
-        .addTag('Authentication', 'User authentication and authorization')
-        .addTag('Users', 'User management operations')
-        .addTag('Organizations', 'Organization management')
-        .addTag('Departments', 'Department management')
-        .addTag('Employees', 'Employee management')
-        .addTag('Visitors', 'Visitor management and access control')
-        // .addTag('Reports', 'Analytics and reporting')
-        .addTag('Policies', 'Security and monitoring policies')
-        .build();
-    const document = SwaggerModule.createDocument(app, config, {
+    setupSwagger(app, 'dashboard/docs', {
+        title: 'Staff Control System - Dashboard API',
+        description: 'Comprehensive API for staff management, monitoring, and reporting',
+        version: '1.0',
+        useBearerAuth: true,
+        tags: [
+            'Authentication',
+            'Users',
+            'Organizations',
+            'Departments',
+            'Employees',
+            'Visitors',
+            'Policies',
+        ],
         extraModels: [ApiSuccessResponse, ApiErrorResponse, ApiPaginatedResponse],
-    });
-
-    SwaggerModule.setup('api/docs', app, document, {
-        jsonDocumentUrl: 'api/docs-json',
-        customSiteTitle: 'Sector Staff API Docs',
     });
 
     app.enableCors();
