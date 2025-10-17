@@ -1,0 +1,220 @@
+// This is your Prisma schema file for Staff Control System
+// Learn more: https://pris.ly/d/prisma-schema
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+generator client {
+  provider = "prisma-client-js"
+  output   = "../src/generated/client"
+}
+
+// ============================================
+// Core Models
+// ============================================
+
+model Organization {
+  id        Int      @id @default(autoincrement())
+  name      String
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  
+  departments Department[]
+  employees   Employee[]
+  devices     Device[]
+  policies    Policy[]
+  apiKeys     ApiKey[]
+  certificates Certificate[]
+  
+  @@map("organizations")
+}
+
+model Department {
+  id             Int      @id @default(autoincrement())
+  organizationId Int
+  name           String
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+  
+  organization Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  employees    Employee[]
+  
+  @@map("departments")
+}
+
+model Employee {
+  id             Int      @id @default(autoincrement())
+  organizationId Int
+  departmentId   Int?
+  firstName      String
+  lastName       String
+  email          String?
+  position       String?
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+  
+  organization Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  department   Department?  @relation(fields: [departmentId], references: [id], onDelete: SetNull)
+  
+  @@map("employees")
+}
+
+model User {
+  id             Int      @id @default(autoincrement())
+  organizationId Int?
+  email          String   @unique
+  password       String
+  role           String   // 'ADMIN', 'HR', 'DEPARTMENT_LEAD', 'USER'
+  isActive       Boolean  @default(true)
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+  
+  @@map("users")
+}
+
+// ============================================
+// Security Models
+// ============================================
+
+model ApiKey {
+  id             String   @id @default(uuid())
+  keyId          String   @unique
+  hashedKey      String
+  organizationId Int
+  permissions    String   // JSON string array
+  expiresAt      DateTime
+  isActive       Boolean  @default(true)
+  createdAt      DateTime @default(now())
+  lastUsedAt     DateTime?
+  
+  organization Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  
+  @@map("api_keys")
+}
+
+model Certificate {
+  id              String   @id @default(uuid())
+  serialNumber    String   @unique
+  commonName      String
+  organizationId  Int?
+  certificatePem  String   @db.Text
+  privateKeyPem   String   @db.Text
+  publicKeyPem    String   @db.Text
+  issuerDn        String
+  subjectDn       String
+  validFrom       DateTime
+  validTo         DateTime
+  isActive        Boolean  @default(true)
+  isRevoked       Boolean  @default(false)
+  createdAt       DateTime @default(now())
+  
+  organization     Organization? @relation(fields: [organizationId], references: [id], onDelete: SetNull)
+  distributions    CertificateDistribution[]
+  auditLogs        CertificateAuditLog[]
+  
+  @@map("certificates")
+}
+
+model CertificateDistribution {
+  id            String   @id @default(uuid())
+  certificateId String
+  gatewayId     String
+  distributedAt DateTime
+  status        String   @default("PENDING") // 'PENDING', 'DISTRIBUTED', 'FAILED'
+  errorMessage  String?
+  createdAt     DateTime @default(now())
+  
+  certificate Certificate @relation(fields: [certificateId], references: [id], onDelete: Cascade)
+  
+  @@map("certificate_distributions")
+}
+
+model CertificateAuditLog {
+  id             String   @id @default(uuid())
+  action         String
+  certificateId  String
+  organizationId Int?
+  metadata       String   @default("{}") @db.Text
+  timestamp      DateTime @default(now())
+  
+  certificate Certificate @relation(fields: [certificateId], references: [id], onDelete: Cascade)
+  
+  @@map("certificate_audit_logs")
+}
+
+model RlsAuditLog {
+  id             String   @id @default(uuid())
+  action         String
+  userId         Int?
+  organizationId Int?
+  resource       String
+  policyName     String
+  accessGranted  Boolean
+  reason         String?
+  requestId      String?
+  timestamp      DateTime @default(now())
+  
+  @@index([timestamp])
+  @@index([organizationId])
+  @@index([userId])
+  @@index([accessGranted])
+  @@index([resource])
+  @@index([requestId])
+  @@map("rls_audit_logs")
+}
+
+// ============================================
+// Device & Gateway Models
+// ============================================
+
+model Device {
+  id             Int      @id @default(autoincrement())
+  organizationId Int
+  name           String
+  type           String   // 'hikvision', 'zkteco', etc.
+  ipAddress      String?
+  status         String   @default("offline") // 'online', 'offline', 'error'
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+  
+  organization Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  
+  @@map("devices")
+}
+
+model Policy {
+  id             Int      @id @default(autoincrement())
+  organizationId Int
+  name           String
+  description    String?
+  isActive       Boolean  @default(true)
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+  
+  organization Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  
+  @@map("policies")
+}
+
+// ============================================
+// Performance & Metrics Models
+// ============================================
+
+model PerformanceBaseline {
+  id                  String   @id @default(uuid())
+  metricName          String
+  metricValue         Float
+  metricUnit          String
+  environment         String   // 'development', 'staging', 'production'
+  version             String
+  capturedAt          DateTime @default(now())
+  capturedBy          String?
+  metadata            String   @default("{}") @db.Text
+  
+  @@index([metricName])
+  @@index([environment])
+  @@index([capturedAt])
+  @@map("performance_baseline")
+}

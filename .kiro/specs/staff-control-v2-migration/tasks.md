@@ -71,7 +71,7 @@ This implementation plan converts the migration design into actionable coding ta
   - Create load tests for concurrent file operations and large file transfers
   - _Requirements: 12.2_
 
-- [ ] 3. TimescaleDB Integration with Fallback Mechanisms
+- [x] 3. TimescaleDB Integration with Fallback Mechanisms
   - Implement TimescaleDB integration with comprehensive fallback, recovery, and data integrity systems
   - _Requirements: 4.1, 4.2, 4.3, 4.4, 4.5, 4.6, 4.7, 4.8, 4.9_
 
@@ -106,7 +106,7 @@ This implementation plan converts the migration design into actionable coding ta
   - Create load tests for 1000 msg/s ingestion rate and concurrent query performance
   - _Requirements: 12.3, 12.9_
 
-- [ ] 4. Agent Gateway MVP with Buffer Management
+- [x] 4. Agent Gateway MVP with Buffer Management
   - Develop Agent Gateway microservice with comprehensive buffer management and communication systems
   - _Requirements: 2.1, 2.2, 2.3, 2.4, 2.5, 2.6, 2.7, 2.8, 2.9_
 
@@ -176,24 +176,24 @@ This implementation plan converts the migration design into actionable coding ta
   - Create load tests for policy distribution under high load and concurrent updates
   - _Requirements: 12.2_
 
-- [ ] 6. Device Adapter Platform with Failure Isolation
+- [ ] 6. Device Adapter Platform with Failure Isolation _(in progress; 6.1 – 6.3 complete)_
   - Develop pluggable device adapter system with comprehensive failure isolation and health monitoring
   - _Requirements: 6.1, 6.2, 6.3, 6.4, 6.5, 6.6, 6.7, 6.8, 6.9, 6.10_
 
-- [ ] 6.1 Adapter Interface and Registry
+- [x] 6.1 Adapter Interface and Registry
   - Create IDeviceAdapter interface with connect, status, command, fetchLogs, and subscribe methods
   - Implement adapter registry with dynamic loading, configuration management, and version tracking
   - Build adapter configuration system with schema validation, environment-specific settings, and hot reload
   - _Requirements: 6.1, 6.2, 6.3_
 
-- [ ] 6.2 Hikvision Adapter Implementation
+- [x] 6.2 Hikvision Adapter Implementation
   - Implement Hikvision adapter with ISAPI protocol integration, authentication, and command execution
   - Create device discovery service with network scanning, capability detection, and configuration automation
   - Build command execution with door control, status queries, and event subscription
   - Develop error handling with connection retry, timeout management, and failure isolation
   - _Requirements: 6.4, 6.6_
 
-- [ ] 6.3 ZKTeco Adapter Implementation
+- [x] 6.3 ZKTeco Adapter Implementation
   - Implement ZKTeco adapter with vendor SDK integration, device communication, and data synchronization
   - Create user management with CRUD operations, biometric data handling, and access control
   - Build event processing with real-time event capture, data transformation, and upstream forwarding
