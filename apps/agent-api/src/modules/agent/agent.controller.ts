@@ -1,7 +1,5 @@
 import { Controller, Post, Body, HttpCode, HttpStatus, Headers, UseGuards } from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiResponse, ApiHeader, ApiBearerAuth } from '@nestjs/swagger';
-import { Public } from '@app/shared/auth';
-import { ApiResponseDto } from '@app/shared/utils';
 import { ApiKeyGuard, ApiKeyTypes } from '../security/guards/api-key.guard';
 import { ApiKeyType } from '../security/dto/security.dto';
 import { AgentService } from './agent.service';
@@ -22,7 +20,6 @@ import {
 export class AgentController {
     constructor(private readonly agentService: AgentService) {}
 
-    @Post('register-computer')
     @HttpCode(HttpStatus.OK)
     @ApiOperation({ summary: 'Register computer' })
     @ApiHeader({ name: 'x-api-key', description: 'Agent API Key' })
@@ -31,9 +28,9 @@ export class AgentController {
     async registerComputer(
         @Body() registerComputerDto: RegisterComputerDto,
         @Headers('x-api-key') apiKey: string
-    ): Promise<ApiResponseDto> {
+    ) {
         const result = await this.agentService.registerComputer(registerComputerDto, apiKey);
-        return ApiResponseDto.success(result, 'Computer registered successfully');
+        return result
     }
 
     @Post('register-computer-user')
@@ -45,12 +42,12 @@ export class AgentController {
     async registerComputerUser(
         @Body() registerComputerUserDto: RegisterComputerUserDto,
         @Headers('x-api-key') apiKey: string
-    ): Promise<ApiResponseDto> {
+    ) {
         const result = await this.agentService.registerComputerUser(
             registerComputerUserDto,
             apiKey
         );
-        return ApiResponseDto.success(result, 'Computer user registered successfully');
+        return result
     }
 
     @Post('active-windows')
@@ -63,9 +60,8 @@ export class AgentController {
     async submitActiveWindows(
         @Body() activeWindowDto: ActiveWindowDto,
         @Headers('x-api-key') apiKey: string
-    ): Promise<ApiResponseDto> {
-        await this.agentService.processActiveWindows(activeWindowDto, apiKey);
-        return ApiResponseDto.success(null, 'Active windows data received successfully');
+    ) {
+        return await this.agentService.processActiveWindows(activeWindowDto, apiKey);
     }
 
     @Post('visited-sites')
@@ -78,9 +74,8 @@ export class AgentController {
     async submitVisitedSites(
         @Body() visitedSiteDto: VisitedSiteDto,
         @Headers('x-api-key') apiKey: string
-    ): Promise<ApiResponseDto> {
-        await this.agentService.processVisitedSites(visitedSiteDto, apiKey);
-        return ApiResponseDto.success(null, 'Visited sites data received successfully');
+    ) {
+        return await this.agentService.processVisitedSites(visitedSiteDto, apiKey);
     }
 
     @Post('screenshots')
@@ -93,9 +88,9 @@ export class AgentController {
     async submitScreenshots(
         @Body() screenshotDto: ScreenshotDto,
         @Headers('x-api-key') apiKey: string
-    ): Promise<ApiResponseDto> {
-        await this.agentService.processScreenshots(screenshotDto, apiKey);
-        return ApiResponseDto.success(null, 'Screenshot data received successfully');
+    ) {
+    
+        return await this.agentService.processScreenshots(screenshotDto, apiKey);
     }
 
     @Post('user-sessions')
@@ -108,8 +103,7 @@ export class AgentController {
     async submitUserSessions(
         @Body() userSessionDto: UserSessionDto,
         @Headers('x-api-key') apiKey: string
-    ): Promise<ApiResponseDto> {
-        await this.agentService.processUserSessions(userSessionDto, apiKey);
-        return ApiResponseDto.success(null, 'User session data received successfully');
+    ) {
+        return await this.agentService.processUserSessions(userSessionDto, apiKey);
     }
 }

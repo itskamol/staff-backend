@@ -6,19 +6,19 @@ export class ApiMetaDto {
         description: 'The number of items on the current page.',
         example: 10,
     })
-    page: number;
+    page!: number;
 
     @ApiProperty({
         description: 'The total number of items available.',
         example: 100,
     })
-    total: number;
+    total!: number;
 
     @ApiProperty({
         description: 'The number of items per page.',
         example: 10,
     })
-    limit: number;
+    limit!: number;
 }
 
 export class ApiSuccessResponse<T> {
@@ -58,13 +58,13 @@ export class ApiErrorDto {
         description: 'A unique, machine-readable error code.',
         example: 'VALIDATION_ERROR',
     })
-    code: string;
+    code!: string;
 
     @ApiProperty({
         description: 'A human-readable message providing details about the error.',
         example: 'Input validation failed',
     })
-    message: string;
+    message!: string;
 
     @ApiProperty({
         description: 'An array of detailed error messages, often used for validation errors.',
