@@ -1,0 +1,107 @@
+import { Controller, Get, Post, Put, Delete, Body, Param, Query } from '@nestjs/common';
+import { ApiTags, ApiBearerAuth, ApiExtraModels } from '@nestjs/swagger';
+import { Roles, Role, User as CurrentUser, DataScope } from '@app/shared/auth';
+import { QueryDto } from '@app/shared/utils';
+import { GateService } from '../services/gate.service';
+import { UserContext } from 'apps/dashboard-api/src/shared/interfaces';
+import { CreateGateDto, GateDto, UpdateGateDto } from '../dto/gate.dto';
+import { ApiCrudOperation } from 'apps/dashboard-api/src/shared/utils';
+import { Scope } from 'apps/dashboard-api/src/shared/decorators';
+
+@ApiTags('Gates')
+@Controller('gates')
+@ApiExtraModels(GateDto)
+@ApiBearerAuth()
+export class GateController {
+    constructor(private readonly gateService: GateService) {}
+
+    @Get()
+    @Roles(Role.ADMIN, Role.GUARD)
+    @ApiCrudOperation(GateDto, 'list', {
+        summary: 'Get all gates with pagination',
+        includeQueries: {
+            pagination: true,
+            search: true,
+            sort: true,
+        },
+    })
+    async findAll(
+        @Query() query: QueryDto,
+        @CurrentUser() user: UserContext,
+        @Scope() scope: DataScope
+    ) {
+        return await this.gateService.findAll(query, scope, user);
+    }
+
+    @Get(':id')
+    @Roles(Role.ADMIN, Role.GUARD)
+    @ApiCrudOperation(GateDto, 'get', { summary: 'Get gate by ID' })
+    async findOne(@Param('id') id: number, @CurrentUser() user: UserContext) {
+        return await this.gateService.findOne(id, user);
+    }
+
+    @Get(':id/statistics')
+    @Roles(Role.ADMIN, Role.GUARD)
+    @ApiCrudOperation(null, 'get', { 
+        summary: 'Get gate statistics',
+        errorResponses: { notFound: true },
+    })
+    async getStatistics(
+        @Param('id') id: number,
+        @CurrentUser() user: UserContext
+    ) {
+        return await this.gateService.getGateStatistics(id, user);
+    }
+
+    @Get(':id/devices')
+    @Roles(Role.ADMIN, Role.GUARD)
+    @ApiCrudOperation(null, 'get', { 
+        summary: 'Get gate with active devices',
+        errorResponses: { notFound: true },
+    })
+    async getWithDevices(
+        @Param('id') id: number,
+        @CurrentUser() user: UserContext
+    ) {
+        return await this.gateService.getGateWithDevices(id, user);
+    }
+
+    @Post()
+    @Roles(Role.ADMIN)
+    @ApiCrudOperation(GateDto, 'create', {
+        body: CreateGateDto,
+        summary: 'Create new gate',
+    })
+    async create(@Body() createGateDto: CreateGateDto, @Scope() scope: DataScope) {
+        return await this.gateService.create(createGateDto, scope);
+    }
+
+    @Put(':id')
+    @Roles(Role.ADMIN)
+    @ApiCrudOperation(GateDto, 'update', {
+        body: UpdateGateDto,
+        summary: 'Update existing gate',
+        errorResponses: { notFound: true, forbidden: true },
+    })
+    async update(
+        @Param('id') id: number,
+        @Body() updateGateDto: UpdateGateDto,
+        @CurrentUser() user: UserContext
+    ) {
+        return await this.gateService.update(id, updateGateDto, user);
+    }
+
+    @Delete(':id')
+    @Roles(Role.ADMIN)
+    @ApiCrudOperation(null, 'delete', {
+        summary: 'Delete gate by ID',
+        errorResponses: { notFound: true, forbidden: true },
+    })
+    async remove(
+        @Param('id') id: number,
+        @Scope() scope: DataScope,
+        @CurrentUser() user: UserContext
+    ) {
+        await this.gateService.remove(id, scope, user);
+    }
+}

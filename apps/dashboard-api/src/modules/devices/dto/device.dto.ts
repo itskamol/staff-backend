@@ -1,84 +1,87 @@
 import { IsString, IsNotEmpty, IsOptional, IsBoolean, IsInt, IsEnum, IsIP } from 'class-validator';
 import { ApiProperty, PartialType } from '@nestjs/swagger';
-import { DeviceType, EntryType } from '@prisma/client';
+import { DeviceType, EntryType, WelcomePhoto, WelcomeText } from '@prisma/client';
 
 export class CreateDeviceDto {
-    @ApiProperty({ 
-        example: 'Main Entrance',
-        description: 'Device name'
-    })
+    @ApiProperty({ example: 'Main Entrance', description: 'Device name', required: false })
+    @IsOptional()
     @IsString()
-    @IsNotEmpty()
-    name: string;
+    name?: string;
 
-    @ApiProperty({ 
-        example: DeviceType.FACE,
-        description: 'Device type',
-        enum: DeviceType
-    })
-    @IsEnum(DeviceType)
-    type: DeviceType;
-
-    @ApiProperty({ 
-        example: '192.168.1.100',
-        description: 'Device IP address'
-    })
-    @IsIP()
-    @IsNotEmpty()
-    ipAddress: string;
-
-    @ApiProperty({ 
-        example: 8000,
-        description: 'Device port',
-        required: false,
-        default: 8000
-    })
+    @ApiProperty({ example: 1, description: 'Gate ID', required: false })
     @IsOptional()
     @IsInt()
-    port?: number = 8000;
+    gateId?: number;
 
-    @ApiProperty({ 
-        example: 'admin',
-        description: 'Device username'
-    })
-    @IsString()
-    @IsNotEmpty()
-    username: string;
+    @ApiProperty({ example: DeviceType.FACE, description: 'Device type', enum: DeviceType, required: false })
+    @IsOptional()
+    @IsEnum(DeviceType)
+    type?: DeviceType;
 
-    @ApiProperty({ 
-        example: 'password123',
-        description: 'Device password'
-    })
-    @IsString()
-    @IsNotEmpty()
-    password: string;
+    @ApiProperty({ example: '192.168.1.100', description: 'Device IP address', required: false })
+    @IsOptional()
+    @IsIP()
+    ipAddress?: string;
 
-    @ApiProperty({ 
-        example: 'both',
-        description: 'Entry type',
-        enum: EntryType
-    })
-    @IsEnum(EntryType)
-    entryType: EntryType;
-
-    @ApiProperty({ 
-        example: 'Main building entrance device',
-        description: 'Additional details',
-        required: false
-    })
+    @ApiProperty({ example: 'password123', description: 'Device password', required: false })
     @IsOptional()
     @IsString()
-    additionalDetails?: string;
+    password?: string;
 
-    @ApiProperty({ 
-        example: true,
-        description: 'Device active status',
-        required: false,
-        default: true
-    })
+    @ApiProperty({ example: EntryType.BOTH, description: 'Entry type', enum: EntryType, required: false })
+    @IsOptional()
+    @IsEnum(EntryType)
+    entryType?: EntryType;
+
+    // @ApiProperty({ example: true, description: 'Device active status', required: false, default: true })
     @IsOptional()
     @IsBoolean()
     isActive?: boolean = true;
+
+    // @ApiProperty({ example: 'ACME Corp', description: 'Device manufacturer', required: false })
+    @IsOptional()
+    @IsString()
+    manufacturer?: string;
+
+    // @ApiProperty({ example: 'Model X', description: 'Device model', required: false })
+    @IsOptional()
+    @IsString()
+    model?: string;
+
+    // @ApiProperty({ example: '1.0.0', description: 'Device firmware version', required: false })
+    @IsOptional()
+    @IsString()
+    firmware?: string;
+
+    // @ApiProperty({ example: 'SN123456', description: 'Serial number', required: false })
+    @IsOptional()
+    @IsString()
+    serialNumber?: string;
+
+    @ApiProperty({ example: 'admin', description: 'Login', required: false })
+    @IsOptional()
+    @IsString()
+    login?: string;
+
+    @ApiProperty({ example: 'Welcome!', description: 'Welcome text', required: false })
+    @IsOptional()
+    @IsString()
+    welcomeText?: string;
+
+    @ApiProperty({ example: WelcomeText.CUSTOM_TEXT, description: 'Welcome text type', enum: WelcomeText, required: false })
+    @IsOptional()
+    @IsEnum(WelcomeText)
+    welcomeTextType?: WelcomeText;
+
+    @ApiProperty({ example: '/images/welcome.png', description: 'Welcome photo URL', required: false })
+    @IsOptional()
+    @IsString()
+    welcomePhoto?: string;
+
+    @ApiProperty({ example: WelcomePhoto.CUSTOM_PHOTO, description: 'Welcome photo type', enum: WelcomePhoto, required: false })
+    @IsOptional()
+    @IsEnum(WelcomePhoto)
+    welcomePhotoType?: WelcomePhoto;
 }
 
 export class UpdateDeviceDto extends PartialType(CreateDeviceDto) {}
@@ -106,6 +109,12 @@ export class DeviceDto extends CreateDeviceDto {
 
     @ApiProperty({ example: 150, description: 'Total actions count', required: false })
     actionsCount?: number;
+
+    @ApiProperty({ description: 'Gate information', required: false })
+    gate?: {
+        id: number;
+        name: string;
+    };
 }
 
 export class TestConnectionDto {

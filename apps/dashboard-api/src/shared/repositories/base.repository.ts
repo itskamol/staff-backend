@@ -9,7 +9,7 @@ import { PaginationDto, PaginationResponseDto } from '../dto';
  */
 @Injectable()
 export abstract class BaseRepository<
-    TEntity extends { id: number; createdAt?: Date; isActive?: boolean },
+    TEntity extends { id: number; createdAt?: Date; isActive?: boolean},
     TCreateInput extends Record<string, unknown>,
     TUpdateInput extends Record<string, unknown>,
     TWhereInput extends Record<string, unknown> = Record<string, unknown>,
@@ -290,6 +290,7 @@ export abstract class BaseRepository<
         });
 
         this.logger.debug(`Deleted ${this.modelName} with ID: ${id}`);
+        console.log('++++++++++++++++++++++++++++++++++\n',result, '\n++++++++++++++++++++++++++++++++++');
         return result;
     }
 

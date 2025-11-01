@@ -1,6 +1,6 @@
 import { Controller, Get, Post, Put, Delete, Body, Param, Query } from '@nestjs/common';
-import { ApiTags, ApiBearerAuth } from '@nestjs/swagger';
-import { Roles, Role, User as CurrentUser, DataScope } from '@app/shared/auth';
+import { ApiTags, ApiBearerAuth, ApiExtraModels } from '@nestjs/swagger';
+import { Roles, Role, User as CurrentUser, DataScope, Public } from '@app/shared/auth';
 import { QueryDto } from '@app/shared/utils';
 import { DeviceService } from '../services/device.service';
 import { UserContext } from 'apps/dashboard-api/src/shared/interfaces';
@@ -10,6 +10,7 @@ import { Scope } from 'apps/dashboard-api/src/shared/decorators';
 
 @ApiTags('Devices')
 @Controller('devices')
+@ApiExtraModels(DeviceDto)
 @ApiBearerAuth()
 export class DeviceController {
     constructor(private readonly deviceService: DeviceService) {}
@@ -26,6 +27,7 @@ export class DeviceController {
                 type: String,
                 status: String,
                 is_active: Boolean,
+                gateId: Number,
             },
         },
     })
@@ -80,7 +82,7 @@ export class DeviceController {
         @Scope() scope: DataScope,
         @CurrentUser() user: UserContext
     ) {
-        await this.deviceService.remove(id, scope, user);
+        return await  this.deviceService.remove(id, scope, user);
     }
 
     @Post(':id/test-connection')

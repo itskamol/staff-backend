@@ -1,7 +1,7 @@
 import { Controller, Get, Post, Body, Query, Param } from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiResponse, ApiBearerAuth } from '@nestjs/swagger';
 import { Roles, Role, User as CurrentUser } from '@app/shared/auth';
-import { ApiResponseDto, PaginationDto } from '@app/shared/utils';
+import { PaginationDto } from '@app/shared/utils';
 import { ReportsService } from './reports.service';
 import {
     GenerateReportDto,
@@ -29,9 +29,9 @@ export class ReportsController {
     async generateReport(
         @Body() generateReportDto: GenerateReportDto,
         @CurrentUser() user: UserContext
-    ): Promise<ApiResponseDto> {
+    ) {
         const report = await this.reportsService.generateReport(generateReportDto, user);
-        return ApiResponseDto.success(report, 'Report generated successfully');
+        return report
     }
 
     @Get('attendance')
@@ -44,12 +44,12 @@ export class ReportsController {
     async getAttendanceReport(
         @Query() attendanceReportDto: AttendanceReportDto,
         @CurrentUser() user: UserContext
-    ): Promise<ApiResponseDto> {
+    ) {
         const report = await this.reportsService.generateAttendanceReport(
             attendanceReportDto,
             user
         );
-        return ApiResponseDto.success(report, 'Attendance report retrieved successfully');
+        return report
     }
 
     @Get('productivity')
@@ -62,12 +62,12 @@ export class ReportsController {
     async getProductivityReport(
         @Query() productivityReportDto: ProductivityReportDto,
         @CurrentUser() user: UserContext
-    ): Promise<ApiResponseDto> {
+    ) {
         const report = await this.reportsService.generateProductivityReport(
             productivityReportDto,
             user
         );
-        return ApiResponseDto.success(report, 'Productivity report retrieved successfully');
+        return report
     }
 
     @Get('device-usage')
@@ -80,12 +80,12 @@ export class ReportsController {
     async getDeviceUsageReport(
         @Query() deviceUsageReportDto: DeviceUsageReportDto,
         @CurrentUser() user: UserContext
-    ): Promise<ApiResponseDto> {
+    ) {
         const report = await this.reportsService.generateDeviceUsageReport(
             deviceUsageReportDto,
             user
         );
-        return ApiResponseDto.success(report, 'Device usage report retrieved successfully');
+        return report
     }
 
     @Get('visitor-activity')
@@ -99,7 +99,7 @@ export class ReportsController {
         @Query('startDate') startDate?: string,
         @Query('endDate') endDate?: string,
         @CurrentUser() user?: any
-    ): Promise<ApiResponseDto> {
+    ) {
         const dateRange = {
             startDate: startDate
                 ? new Date(startDate)
@@ -108,7 +108,7 @@ export class ReportsController {
         };
 
         const report = await this.reportsService.generateVisitorActivityReport(dateRange, user);
-        return ApiResponseDto.success(report, 'Visitor activity report retrieved successfully');
+        return report
     }
 
     @Get('dashboard-summary')
@@ -118,7 +118,7 @@ export class ReportsController {
         status: 200,
         description: 'Dashboard summary retrieved successfully',
     })
-    async getDashboardSummary(@CurrentUser() user: UserContext): Promise<ApiResponseDto> {
+    async getDashboardSummary(@CurrentUser() user: UserContext) {
         const today = new Date();
         const startOfMonth = new Date(today.getFullYear(), today.getMonth(), 1);
 
@@ -171,7 +171,7 @@ export class ReportsController {
             },
         };
 
-        return ApiResponseDto.success(summary, 'Dashboard summary retrieved successfully');
+        return summary;
     }
 
     @Get('export/:reportId')
@@ -194,7 +194,7 @@ export class ReportsController {
         status: 200,
         description: 'Report templates retrieved successfully',
     })
-    async getReportTemplates(): Promise<ApiResponseDto> {
+    async getReportTemplates() {
         const templates = [
             {
                 id: 'attendance-monthly',
@@ -233,6 +233,6 @@ export class ReportsController {
             },
         ];
 
-        return ApiResponseDto.success(templates, 'Report templates retrieved successfully');
+        return templates;
     }
 }

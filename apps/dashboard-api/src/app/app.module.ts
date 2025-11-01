@@ -19,6 +19,9 @@ import { LoggerModule } from '../core/logger';
 import { MorganLoggerMiddleware } from '../shared/middleware';
 import { TenantContextInterceptor } from '../shared/interceptors';
 import { DeviceModule } from '../modules/devices/device.module';
+import { GateModule } from '../modules/gate/gate.module';
+import { CredentialModule } from '../modules/credential/credential.module';
+import { HikvisionModule } from '../modules/hikvision/hikvision.module';
 
 @Module({
     imports: [
@@ -37,7 +40,10 @@ import { DeviceModule } from '../modules/devices/device.module';
         VisitorModule,
         DeviceModule,
         PolicyModule,
-        LoggerModule
+        LoggerModule,
+        GateModule,
+        CredentialModule,
+        HikvisionModule
     ],
     controllers: [AppController],
     providers: [

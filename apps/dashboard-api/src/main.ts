@@ -7,9 +7,11 @@ import { LoggerService } from './core/logger';
 import { ApiErrorResponse, ApiPaginatedResponse, ApiSuccessResponse } from './shared/dto';
 import { setupSwagger, TenantContextInterceptor } from '@app/shared/common';
 import { PrismaService } from '@app/shared/database';
+import { NestExpressApplication } from '@nestjs/platform-express';
+import { join } from 'path';
 
 async function bootstrap() {
-    const app = await NestFactory.create(AppModule);
+    const app = await NestFactory.create<NestExpressApplication>(AppModule);
 
     // Setup RLS Tenant Context Interceptor
     const prismaService = app.get(PrismaService);
@@ -17,6 +19,10 @@ async function bootstrap() {
 
     const logger = app.get(LoggerService);
     app.useLogger(logger);
+
+    app.useStaticAssets(join(process.cwd(), 'storage'), { prefix: '/storage' });
+    // console.log(join(process.cwd(), 'storage'))
+
 
     const configService = app.get(ConfigService);
     const port = configService.port;
@@ -45,6 +51,10 @@ async function bootstrap() {
             'Employees',
             'Visitors',
             'Policies',
+            'Gates',
+            'Devices',
+            'Credentials',
+            'Hikvisions'
         ],
         extraModels: [ApiSuccessResponse, ApiErrorResponse, ApiPaginatedResponse],
     });

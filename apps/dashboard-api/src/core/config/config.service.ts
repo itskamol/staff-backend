@@ -2,6 +2,8 @@ import { Injectable } from '@nestjs/common';
 import { ConfigService as NestConfigService } from '@nestjs/config';
 import * as os from 'os';
 import * as path from 'node:path';
+import type { StringValue } from "ms";
+
 
 @Injectable()
 export class ConfigService {
@@ -55,8 +57,8 @@ export class ConfigService {
         return this.configService.get<string>('JWT_SECRET', 'default_jwt_secret');
     }
 
-    get jwtExpirationTime(): string {
-        return this.configService.get<string>('JWT_EXPIRATION', '15m');
+    get jwtExpirationTime(): number | StringValue {
+        return this.configService.get<number | StringValue>('JWT_EXPIRATION', '7d');
     }
 
     get refreshTokenSecret(): string {

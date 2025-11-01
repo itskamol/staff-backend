@@ -43,10 +43,7 @@ export class CustomJwtService {
             };
 
             const token = this.jwtService.sign(tokenPayload, {
-                secret: this.configService.jwtSecret,
-                expiresIn: Number.isFinite(+this.configService.jwtExpirationTime)
-                    ? +this.configService.jwtExpirationTime
-                    : this.configService.jwtExpirationTime,
+                secret: this.configService.jwtSecret, 
             });
             this.logger.log('Access token generated', {
                 userId: payload.sub,
@@ -75,7 +72,6 @@ export class CustomJwtService {
 
             const token = this.jwtService.sign(payload, {
                 secret: this.configService.refreshTokenSecret,
-                expiresIn: this.configService.refreshTokenExpirationTime,
             });
 
             this.logger.log('Refresh token generated', {

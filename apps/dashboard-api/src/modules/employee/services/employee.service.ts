@@ -16,7 +16,7 @@ export class EmployeeService {
         private readonly policyService: PolicyService,
         @Inject(FILE_STORAGE_SERVICE)
         private readonly fileStorage: IFileStorageService
-    ) {}
+    ) { }
 
     async getEmployees(query: QueryDto, scope: DataScope, user: UserContext) {
         const { page = 1, limit = 10, search, sort, order, ...filters } = query;
@@ -53,6 +53,9 @@ export class EmployeeService {
 
     async getEmployeeById(id: number, scope: DataScope, user: UserContext) {
         return this.employeeRepository.findByIdWithRoleScope(id, undefined, scope, user.role);
+    }
+    async getEmployee(id: number) {
+        return this.employeeRepository.findById(id);
     }
 
     async createEmployee(dto: CreateEmployeeDto, scope: DataScope, user: UserContext) {
@@ -100,10 +103,25 @@ export class EmployeeService {
     }
 
     async updateEmployee(id: number, dto: UpdateEmployeeDto, scope: DataScope, user: UserContext) {
+
+        const existingEmployee = await this.employeeRepository.findByIdWithRoleScope(id, undefined, scope, user.role);
+        if (!existingEmployee) {
+            throw new NotFoundException('Employee not found or access denied');
+        }
+
         const updateData: Prisma.EmployeeUpdateInput = { ...dto };
 
         if (dto.photo !== undefined) {
-            updateData.photo = await this.normalizeStorageKey(dto.photo);
+            const newPhotoKey = await this.normalizeStorageKey(dto.photo);
+
+            if (existingEmployee.photo && existingEmployee.photo !== newPhotoKey) {
+                const exists = await this.fileStorage.exists(existingEmployee.photo);
+                if (exists) {
+                    await this.fileStorage.deleteObject(existingEmployee.photo);
+                }
+            }
+
+            updateData.photo = newPhotoKey;
         }
 
         if (dto.departmentId) {
@@ -126,7 +144,7 @@ export class EmployeeService {
         scope: DataScope,
         user: UserContext
     ) {
-        const updateData: Prisma.EmployeeUpdateInput = {  };
+        const updateData: Prisma.EmployeeUpdateInput = {};
         if (dto.policyId) {
             updateData.policy = {
                 connect: { id: dto.policyId },
@@ -156,6 +174,12 @@ export class EmployeeService {
             throw new NotFoundException('Employee not found or access denied');
         }
 
+        if (employee.photo) {
+            const exists = await this.fileStorage.exists(employee.photo);
+            if (exists) {
+                await this.fileStorage.deleteObject(employee.photo);
+            }
+        }
         return await this.employeeRepository.delete(id);
     }
 
@@ -208,9 +232,9 @@ export class EmployeeService {
         const dateRange =
             query.startDate && query.endDate
                 ? {
-                      startDate: new Date(query.startDate),
-                      endDate: new Date(query.endDate),
-                  }
+                    startDate: new Date(query.startDate),
+                    endDate: new Date(query.endDate),
+                }
                 : undefined;
 
         return await this.employeeRepository.getEmployeeActivityStats(id, dateRange);

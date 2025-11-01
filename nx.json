@@ -52,7 +52,7 @@
       "inputs": ["production", "^production"]
     }
   },
-  "tui": {
+  "tui": { 
     "enabled": false
   }
 }
