@@ -23,6 +23,7 @@ import {
 import { HikvisionService } from './hikvision.service';
 import { CreateHikvisionUserDto, HikvisionConfig } from './dto/create-hikvision-user.dto';
 import { DeleteUserDto } from './dto/delete-user.dto';
+import { config } from 'process';
 
 @ApiTags('Hikvisions')
 @ApiBearerAuth()
@@ -47,22 +48,28 @@ export class HikvisionController {
   // ✅ User yaratish
   @Post('user')
   @ApiOperation({ summary: 'Hikvision qurilmasida user yaratish' })
-  async createUser(@Body() dto: CreateHikvisionUserDto) {
-    return this.hikvisionService.createUser(dto);
+  async createUser(@Body() dto: CreateHikvisionUserDto , @Body() config:HikvisionConfig) {
+    return this.hikvisionService.createUser(dto, config);
+  }
+
+   @Post('capabilities')
+  @ApiOperation({ summary: 'Hikvision qurilmasida user yaratish' })
+  async getDeviceCapabilities(@Body() dto: HikvisionConfig) {
+    return this.hikvisionService.getDeviceCapabilities(dto);
   }
 
   // ✅ Userni olish
-  @Get('user/:employeeNo')
+  @Post('user/:employeeNo')
   @ApiOperation({ summary: 'User maʼlumotlarini olish' })
-  async getUser(@Param('employeeNo') employeeNo: string) {
-    return this.hikvisionService.getUser(employeeNo);
+  async getUser(@Param('employeeNo') employeeNo: string, @Body() config: HikvisionConfig) {
+    return this.hikvisionService.getUser(employeeNo, config);
   }
 
   // ✅ Barcha userlarni olish
-  @Get('users')
+  @Post('users')
   @ApiOperation({ summary: 'Barcha foydalanuvchilarni olish' })
-  async getAllUsers() {
-    return this.hikvisionService.getAllUsers();
+  async getAllUsers(@Body() config: HikvisionConfig) {
+    return this.hikvisionService.getAllUsers(config);
   }
 
   // ✅ Userni o‘chirish
@@ -90,8 +97,9 @@ export class HikvisionController {
   async addFaceToUser(
     @Param('employeeNo') employeeNo: string,
     @Body('faceURL') faceURL: string,
+    @Body() config:HikvisionConfig
   ) {
-    return this.hikvisionService.addFaceToUserViaURL(employeeNo, faceURL);
+    return this.hikvisionService.addFaceToUserViaURL(employeeNo, faceURL,config);
   }
 
   // ✅ Access loglarni olish
@@ -107,9 +115,9 @@ export class HikvisionController {
   }
 
   // ✅ Qurilmadan foydalanuvchilarni sinxronlash
-  @Post('users/sync')
-  @ApiOperation({ summary: 'Qurilmadan barcha userlarni sinxronlash' })
-  async syncUsersFromDevice() {
-    return this.hikvisionService.syncUsersFromDevice();
-  }
+  // @Post('users/sync')
+  // @ApiOperation({ summary: 'Qurilmadan barcha userlarni sinxronlash' })
+  // async syncUsersFromDevice() {
+  //   return this.hikvisionService.syncUsersFromDevice();
+  // }
 }

@@ -21,6 +21,7 @@ model Employee {
   computerUsers ComputerUser[]
   actions       Action[]
   organization  Organization   @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  EmployeeSync  EmployeeSync[]
 
   @@index([organizationId])
   @@index([organizationId, departmentId])
@@ -49,4 +50,26 @@ model Credential {
   @@index([code])
   @@index([type])
   @@map("credentials")
+}
+
+enum StatusEnum {
+  INP
+  PROGRESS
+  DONE
+  ERROR
+}
+
+model EmployeeSync {
+  id         Int      @id @default(autoincrement())
+  employee   Employee @relation(fields: [employeeId], references: [id])
+  employeeId Int
+
+  device    Device     @relation(fields: [deviceId], references: [id])
+  deviceId  Int
+  gate      Gate       @relation(fields: [gateId], references: [id])
+  gateId    Int
+  status    StatusEnum @default(INP)
+  message   String?
+  createdAt DateTime   @default(now())
+  updatedAt DateTime   @updatedAt
 }

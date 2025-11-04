@@ -79,6 +79,9 @@ export class CredentialService {
   }
 
 
+  // async getEmployeePhotoCredential(employeeId:number){
+  //   return this.credentialRepository.getCredentialsByEmployeeId(employeeId, )
+  // }
 
     async getCredentialById(
         id: number,

@@ -1,4 +1,4 @@
-import { IsString, IsNotEmpty, IsOptional, IsBoolean, IsInt, IsEnum, IsIP } from 'class-validator';
+import { IsString, IsNotEmpty, IsOptional, IsBoolean, IsInt, IsEnum, IsIP, IsArray, ArrayNotEmpty } from 'class-validator';
 import { ApiProperty, PartialType } from '@nestjs/swagger';
 import { DeviceType, EntryType, WelcomePhoto, WelcomeText } from '@prisma/client';
 
@@ -127,4 +127,26 @@ export class TestConnectionDto {
     @IsOptional()
     @IsInt()
     timeout?: number = 5;
+}
+
+export class AssignEmployeesToGatesDto {
+  @ApiProperty({
+    example: [1, 2, 3],
+    description: 'Gate IDlar ro‘yxati',
+    type: [Number],
+  })
+  @IsArray()
+  @ArrayNotEmpty()
+  @IsInt({ each: true })
+  gateIds: number[];
+
+  @ApiProperty({
+    example: [5, 6, 7],
+    description: 'Employee IDlar ro‘yxati',
+    type: [Number],
+  })
+  @IsArray()
+  @ArrayNotEmpty()
+  @IsInt({ each: true })
+  employeeIds: number[];
 }

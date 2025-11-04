@@ -1,4 +1,4 @@
-import { IsString, IsArray, IsISO8601, IsNumber, IsInt } from 'class-validator';
+import { IsString, IsArray, IsISO8601, IsNumber, IsInt, IsOptional } from 'class-validator';
 import { ApiProperty } from '@nestjs/swagger';
 
 export class RightPlanDto {
@@ -24,6 +24,20 @@ export class CreateHikvisionUserDto {
   })
   @IsString()
   employeeId: string;
+
+  @ApiProperty({example: 'normal', description: 'Foydalanuvchi turi'})
+  @IsString()
+  userType: string;
+
+  @ApiProperty({example: '2025-11-03T00:00:00', description: 'Foydalanuvchi amal qilish boshlanish vaqti'})
+  @IsString()
+  @IsOptional()
+  beginTime: string;
+
+  @ApiProperty({example: '2035-12-31T23:59:59', description: 'Foydalanuvchi amal qilish tugash vaqti'})
+  @IsString()
+  @IsOptional()
+  endTime: string;
 }
 
 

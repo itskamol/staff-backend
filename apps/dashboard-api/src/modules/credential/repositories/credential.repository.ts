@@ -49,7 +49,7 @@ export class CredentialRepository extends BaseRepository<
             this.getDefaultInclude()
         );
     }
-    
+
 
     async findByCodeAndType(code: string, type: string): Promise<CredentialWithRelations | null> {
         return await this.getDelegate().findFirst({

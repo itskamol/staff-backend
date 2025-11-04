@@ -1,21 +1,33 @@
 import { Injectable, NotFoundException, BadRequestException } from '@nestjs/common';
 import { DataScope } from '@app/shared/auth';
 import { QueryDto } from '@app/shared/utils';
-import { CreateDeviceDto, UpdateDeviceDto } from '../dto/device.dto';
+import { AssignEmployeesToGatesDto, CreateDeviceDto, UpdateDeviceDto } from '../dto/device.dto';
 import { UserContext } from '../../../shared/interfaces';
 import { DeviceRepository } from '../repositories/device.repository';
 import { DeviceType, EntryType, Prisma, WelcomeText } from '@prisma/client';
 import { GateRepository } from '../../gate/repositories/gate.repository';
 import { HikvisionService } from '../../hikvision/hikvision.service';
 import { HikvisionConfig } from '../../hikvision/dto/create-hikvision-user.dto';
+import { PrismaService } from '@app/shared/database';
+import { Server } from 'socket.io';
+import { StatusEnum } from '@prisma/client';
+import { EventsGateway } from '../../websocket/events.gateway';
+import { EmployeeRepository } from '../../employee/repositories/employee.repository';
+
 
 @Injectable()
 export class DeviceService {
+    private socket: Server
     constructor(
         private readonly deviceRepository: DeviceRepository,
         private readonly gateRepository: GateRepository,
         private hikvisionService: HikvisionService,
-    ) { }
+        private readonly prisma: PrismaService,
+        private readonly gateway: EventsGateway,
+         private readonly employeeSyncRepository: EmployeeRepository
+    ) {
+        this.socket = this.gateway.server;
+    }
 
     async findAll(query: QueryDto & { type?: DeviceType; gateId?: number }, scope: DataScope, user: UserContext) {
         const { page, limit, sort = 'createdAt', order = 'desc', search, type, gateId } = query;
@@ -109,6 +121,26 @@ export class DeviceService {
             );
         }
 
+        const capResponse = await this.hikvisionService.getDeviceCapabilities(hikvisionConfig);
+        if (!capResponse) {
+            throw new BadRequestException('Qurilma capabilities ni olishda xatolik');
+        }
+
+        // 3. FACE QO‘LLAB-QUVVATLANADIMI?
+        const rawCap = capResponse; // Bu JSON yoki XML parsed object
+        const isSupportFace = Boolean(
+            rawCap?.DeviceCap?.isSupportFace ||                    // Umumiy cap
+            rawCap?.CapAccessControl?.isSupportFace ||             // Access Control cap
+            rawCap?.FaceLibCap?.maxFDNum > 0 ||                    // Face library bor
+            rawCap?.DeviceCap?.isSupportAlgorithmsInfo === true   // Algoritm bor
+        );
+
+        // 4. JSONB uchun tayyor object
+        const capabilities = {
+            isSupportFace
+        };
+
+        console.log('FACE SUPPORT:', isSupportFace ? 'YES ✅' : 'NO ❌');
         const deviceInfo = deviceInfoResult.data;
 
         if (gateId) {
@@ -134,6 +166,7 @@ export class DeviceService {
             welcomePhoto: dtoData.welcomePhoto || null,
             welcomePhotoType: dtoData.welcomePhotoType || null,
             isActive: dtoData.isActive !== undefined ? dtoData.isActive : true,
+            capabilities
         }
 
 
@@ -222,7 +255,7 @@ export class DeviceService {
         }
 
         const result = await this.deviceRepository.delete(id, scope);
-        return { message: 'Device deleted successfully', ...result  };
+        return { message: 'Device deleted successfully', ...result };
     }
 
     async testConnection(id: number, timeout: number = 5) {
@@ -288,4 +321,176 @@ export class DeviceService {
             }
         );
     }
+
+
+    setSocketServer(socket: Server) {
+        this.socket = socket;
+    }
+
+    async assignEmployeesToGates(dto: AssignEmployeesToGatesDto) {
+        const { gateIds, employeeIds } = dto;
+        const result = {
+            total: 0,
+            success: 0
+        };
+
+        // 1. Gates
+        const gates = await this.prisma.gate.findMany({
+            where: { id: { in: gateIds } },
+            include: { devices: true },
+        });
+        if (!gates.length) throw new Error('Gate topilmadi');
+
+        // 2. Credentials
+        const credentials = await this.prisma.credential.findMany({
+            where: { employeeId: { in: employeeIds }, type: 'PHOTO', isActive: true },
+            select: { employeeId: true },
+        });
+        const credMap = new Map(credentials.map(c => [c.employeeId, true]));
+
+        // 3. MAIN LOOP
+        for (const gate of gates) {
+            if (!gate.devices?.length) {
+                this.gateway.server.emit('sync', {
+                    syncId: null,
+                    employee: null,
+                    gate: { id: gate.id, name: gate.name },
+                    device: null,
+                    status: 'ERROR',
+                    message: 'Ushbu gate uchun device topilmadi',
+                    step: 'DEVICE_CHECK',
+                    timestamp: new Date().toISOString(),
+                });
+                continue;
+            }
+
+            for (const device of gate.devices) {
+                const caps = (device.capabilities as any) || {};
+
+                if (!caps.isSupportFace) {
+                    this.gateway.server.emit('sync', {
+                        syncId: null,
+                        employee: null,
+                        gate: { id: gate.id, name: gate.name },
+                        device: { id: device.id, name: device.name || device.ipAddress, ip: device.ipAddress },
+                        status: 'SKIPPED',
+                        message: 'Face qo‘llab-quvvatlanmaydi',
+                        step: 'DEVICE_CHECK',
+                        timestamp: new Date().toISOString(),
+                    });
+                    continue;
+                }
+
+                for (const empId of employeeIds) {
+                    const employee = await this.prisma.employee.findUnique({
+                        where: { id: empId },
+                        select: { photo: true, name: true },
+                    });
+
+                    const sync = await this.prisma.employeeSync.create({
+                        data: {
+                            employeeId: empId,
+                            deviceId: device.id,
+                            gateId: gate.id,
+                            status: 'INP',
+                        },
+                    });
+
+
+                    const emitBase = {
+                        syncId: sync.id,
+                        employee: { id: empId, name: employee?.name || 'Noma’lum' },
+                        gate: { id: gate.id, name: gate.name },
+                        device: { id: device.id, name: device.name || device.ipAddress, ip: device.ipAddress },
+                        timestamp: new Date().toISOString(),
+                    };
+
+                    this.gateway.server.emit('sync', { ...emitBase, status: 'IN_PROGRESS', message: 'Boshlandi', step: 'VALIDATION' });
+
+                    try {
+                        if (!credMap.has(empId)) {
+                            throw new Error('Photo credential topilmadi');
+                        }
+
+                        await this.hikvisionService.createUser(
+                            {
+                                employeeId: empId.toString(),
+                                userType: 'normal',
+                                beginTime: '2025-01-01T00:00:00',
+                                endTime: '2035-12-31T23:59:59',
+                            },
+                            {
+                                host: device.ipAddress,
+                                port: 80,
+                                protocol: 'http',
+                                username: device.login,
+                                password: device.password,
+                            },
+                        );
+                        await this.updateSync(sync.id, 'PROGRESS', 'User yaratildi');
+                        this.gateway.server.emit('sync', { ...emitBase, status: 'IN_PROGRESS', message: 'User yaratildi', step: 'USER_CREATION' });
+
+                        if (!employee?.photo) throw new Error('Foto topilmadi');
+
+                        const photoUrl = `http://192.168.100.82:3001/storage/${employee.photo}`;
+                        await this.hikvisionService.addFaceToUserViaURL(
+                            empId.toString(),
+                            photoUrl,
+                            {
+                                host: device.ipAddress,
+                                port: 80,
+                                protocol: 'http',
+                                username: device.login,
+                                password: device.password,
+                            },
+                        );
+
+                        await this.updateSync(sync.id, 'DONE', 'Muvaffaqiyatli!');
+                        result.success++;
+                        this.gateway.server.emit('sync', { ...emitBase, status: 'DONE', message: 'Face muvaffaqiyatli qo‘shildi', step: 'ADD_FACE' });
+
+                    } catch (err: any) {
+                        const msg = err?.message || 'Noma’lum xato';
+                        await this.updateSync(sync.id, 'ERROR', msg);
+                        this.gateway.server.emit('sync', { ...emitBase, status: 'ERROR', message: msg, step: 'VALIDATION', error: msg });
+                    }
+                }
+            }
+        }
+
+        result.total = result.success;
+        return { success: true };
+
+    }
+
+
+    private async updateSync(id: number, status: StatusEnum, message?: string) {
+        const updated = await this.prisma.employeeSync.update({
+            where: { id },
+            data: { status, message, updatedAt: new Date() },
+        });
+
+        this.gateway.server.emit('sync', {
+            syncId: id,
+            status,
+            message: message || status,
+            updatedAt: updated.updatedAt,
+        });
+    }
+
+
+    testSocket() {
+        this.gateway.server.emit('sync', {
+            syncId: 999,
+            status: 'DONE',
+            message: 'BACKEND TEST — SOCKET 100% ISHLAYDI! 🚀 yessss',
+            gateId: 1,
+            deviceId: 1,
+            employeeId: 999,
+            updatedAt: new Date().toISOString()
+        });
+
+        return { success: true, message: 'Test emit yuborildi!' };
+    }
+
 }

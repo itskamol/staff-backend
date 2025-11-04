@@ -14,7 +14,7 @@ import { PrismaService } from '@app/shared/database';
 
 @Injectable()
 export class HikvisionService {
-   private readonly logger = new Logger(HikvisionService.name);
+  private readonly logger = new Logger(HikvisionService.name);
   private httpClient: AxiosInstance;
   private config: HikvisionConfig;
   private Prisma: PrismaService
@@ -87,10 +87,8 @@ export class HikvisionService {
     data?: any,
     isFormData = false,
   ): Promise<any> {
-    console.log(data, url);
     try {
       const isXml = typeof data === 'string' && data.trim().startsWith('<');
-
       const firstResponse = await this.httpClient.request({
         method: method as Method,
         url,
@@ -106,6 +104,7 @@ export class HikvisionService {
           },
         validateStatus: () => true,
       });
+
 
       if (
         firstResponse.status === 401 &&
@@ -145,95 +144,113 @@ export class HikvisionService {
     }
   }
 
-async getDeviceInfo(config: HikvisionConfig): Promise<any> {
-  try {
-    // Avvalo configni o‘rnatamiz
+  async getDeviceInfo(config: HikvisionConfig): Promise<any> {
+    try {
+      // Avvalo configni o‘rnatamiz
+      this.setConfig(config);
+
+      const response = await this.makeAuthenticatedRequest(
+        'GET',
+        '/ISAPI/System/deviceInfo?format=json',
+      );
+
+      if (response.status !== 200) {
+        this.logger.warn(`Device info: status ${response.status}`);
+        return {
+          success: false,
+          message: `Kutilmagan status kodi: ${response.status}`,
+        };
+      }
+
+      const rawData = response.data;
+      const parser = new XMLParser({ ignoreAttributes: false });
+      const parsed = typeof rawData === 'string' ? parser.parse(rawData) : rawData;
+      const deviceInfo = parsed?.DeviceInfo || null;
+
+      if (!deviceInfo) {
+        return {
+          success: false,
+          message: 'Qurilma maʼlumotlari topilmadi',
+        };
+      }
+
+      this.logger.log(
+        `Hikvision qurilma maʼlumotlari: ${JSON.stringify(deviceInfo, null, 2)}`,
+      );
+
+      return {
+        success: true,
+        message: 'Qurilma maʼlumotlari muvaffaqiyatli olindi',
+        data: deviceInfo,
+      };
+    } catch (error) {
+      this.logger.error(`Device info olishda xatolik: ${error.message}`);
+      return {
+        success: false,
+        message: `Device info olishda xatolik: ${error.message}`,
+      };
+    }
+  }
+
+  async getDeviceCapabilities(config: HikvisionConfig): Promise<any> {
     this.setConfig(config);
 
     const response = await this.makeAuthenticatedRequest(
       'GET',
-      '/ISAPI/System/deviceInfo?format=json',
+      '/ISAPI/System/capabilities',
     );
 
     if (response.status !== 200) {
-      this.logger.warn(`Device info: status ${response.status}`);
-      return {
-        success: false,
-        message: `Kutilmagan status kodi: ${response.status}`,
-      };
+      this.logger.error(`Capabilities olishda xato: ${response.status}`);
+      return null;
     }
 
-    const rawData = response.data;
-    const parser = new XMLParser({ ignoreAttributes: false });
-    const parsed = typeof rawData === 'string' ? parser.parse(rawData) : rawData;
-    const deviceInfo = parsed?.DeviceInfo || null;
-
-    if (!deviceInfo) {
-      return {
-        success: false,
-        message: 'Qurilma maʼlumotlari topilmadi',
-      };
-    }
-
-    this.logger.log(
-      `Hikvision qurilma maʼlumotlari: ${JSON.stringify(deviceInfo, null, 2)}`,
-    );
-
-    return {
-      success: true,
-      message: 'Qurilma maʼlumotlari muvaffaqiyatli olindi',
-      data: deviceInfo,
-    };
-  } catch (error) {
-    this.logger.error(`Device info olishda xatolik: ${error.message}`);
-    return {
-      success: false,
-      message: `Device info olishda xatolik: ${error.message}`,
-    };
+    // XML → JSON
+    const parser = new XMLParser();
+    const json = parser.parse(response.data);
+    return json;
   }
-}
 
-async testConnection(config: HikvisionConfig): Promise<{ success: boolean; message: string }> {
-  try {
-    const result = await this.getDeviceInfo(config);
+  async testConnection(config: HikvisionConfig): Promise<{ success: boolean; message: string }> {
+    try {
+      const result = await this.getDeviceInfo(config);
 
-    if (result.success) {
-      return {
-        success: true,
-        message: `✅ Hikvision qurilmasiga (${config.host}) ulanish muvaffaqiyatli`,
-      };
-    } else {
+      if (result.success) {
+        return {
+          success: true,
+          message: `✅ Hikvision qurilmasiga (${config.host}) ulanish muvaffaqiyatli`,
+        };
+      } else {
+        return {
+          success: false,
+          message: `❌ Hikvision qurilmasi (${config.host}) bilan ulanishda xatolik`,
+        };
+      }
+    } catch (error) {
+      this.logger.error('Hikvision connection failed:', error.message);
       return {
         success: false,
-        message: `❌ Hikvision qurilmasi (${config.host}) bilan ulanishda xatolik`,
+        message: `Hikvision bilan ulanishda xatolik: ${error.message}`,
       };
     }
-  } catch (error) {
-    this.logger.error('Hikvision connection failed:', error.message);
-    return {
-      success: false,
-      message: `Hikvision bilan ulanishda xatolik: ${error.message}`,
-    };
   }
-}
 
-  async createUser(dto: CreateHikvisionUserDto): Promise<boolean> {
+  async createUser(dto: CreateHikvisionUserDto, config: HikvisionConfig): Promise<boolean> {
     try {
 
-      this.setConfig({host: '192.168.100.139', port: 80, protocol: 'http', username: 'admin', password:"!@#Mudofaa@"});
+      this.setConfig(config);
+      // this.setConfig({ host: '192.168.100.139', port: 80, protocol: 'http', username: 'admin', password: "!@#Mudofaa@" });
 
       const userId = dto.employeeId;
-      const checkExisting = await this.getUser(userId);
+      const checkExisting = await this.getUser(userId, this.config);
       if (checkExisting) {
         this.logger.log(`User ${userId} already exists in Hikvision`);
         return true;
       }
 
-      console.log('Creating user with ID:', userId);
 
       const user = await this.employeeService.getEmployee(Number(userId));
 
-      console.log('Employee found:', user);
       if (!user) {
         throw new BadRequestException(`Employee with ID ${userId} not found`);
       }
@@ -243,10 +260,13 @@ async testConnection(config: HikvisionConfig): Promise<{ success: boolean; messa
           employeeNo: user.id.toString(),
           name: user.name,
           userType: 'normal',
+          doorRight: '1',
+          RightPlan: [{ doorNo: 1, planTemplateNo: '1' }],
           Valid: {
             enable: true,
-            beginTime: '2023-01-01T00:00:00',
-            endTime: '2030-12-31T23:59:59'
+            timeType: 'local',                   // <— majburiy!
+            beginTime: "2025-11-03T00:00:00",
+            endTime: "2035-12-31T23:59:59"     // 2030-12-31T23:59:59
           },
         },
       };
@@ -274,29 +294,16 @@ async testConnection(config: HikvisionConfig): Promise<{ success: boolean; messa
     }
   }
 
-  async getUser(employeeNo: string): Promise<HikvisionUser | null> {
-    try {
-      const response = await this.makeAuthenticatedRequest(
-        'GET',
-        `/ISAPI/AccessControl/UserInfo/Record?format=json&employeeNo=${employeeNo}`,
-      );
-
-      if (response.status === 200 && response.data.UserInfo) {
-        return response.data.UserInfo;
-      }
-
-      return null;
-    } catch (error) {
-      this.logger.error(
-        `Failed to get user ${employeeNo} from Hikvision:`,
-        error.message,
-      );
-      return null;
-    }
+  async getUser(employeeNo: string, config: HikvisionConfig): Promise<HikvisionUser | null> {
+    const users = await this.getAllUsers(config);
+    const user = users.find(u => u.employeeNo === employeeNo);
+    return user || null;
   }
 
-  async getAllUsers(): Promise<HikvisionUser[]> {
+  async getAllUsers(config: HikvisionConfig): Promise<HikvisionUser[]> {
     try {
+      this.setConfig(config);
+
       const body = {
         UserInfoSearchCond: {
           searchID: '1',
@@ -330,6 +337,8 @@ async testConnection(config: HikvisionConfig): Promise<{ success: boolean; messa
   }
 
   async deleteUser(employeeNo: string): Promise<boolean> {
+    this.setConfig({ host: '192.168.100.139', port: 80, protocol: 'http', username: 'admin', password: "!@#Mudofaa@" });
+
     const reqBody = {
       UserInfoDelCond: {
         EmployeeNoList: [
@@ -404,11 +413,15 @@ async testConnection(config: HikvisionConfig): Promise<{ success: boolean; messa
       );
     }
   }
+
   async addFaceToUserViaURL(
     employeeNo: string,
     faceURL: string,
-  ): Promise<{ message: string; success: boolean }> {
+    config: HikvisionConfig
+  ): Promise<boolean> {
     try {
+      this.setConfig(config);
+      // this.setConfig({ host: '192.168.100.139', port: 80, protocol: 'http', username: 'admin', password: "!@#Mudofaa@" });
       const formData = new FormData();
       formData.append(
         'FaceDataRecord',
@@ -419,12 +432,8 @@ async testConnection(config: HikvisionConfig): Promise<{ success: boolean; messa
           faceURL,
         }),
       );
-      console.log({
-        faceLibType: 'blackFD',
-        FDID: '1',
-        FPID: employeeNo,
-        faceURL,
-      });
+  
+
       const response = await this.makeAuthenticatedRequest(
         'PUT',
         '/ISAPI/Intelligent/FDLib/FDSetUp?format=json',
@@ -436,11 +445,11 @@ async testConnection(config: HikvisionConfig): Promise<{ success: boolean; messa
         this.logger.log(
           `Face URL successfully added to user ${employeeNo} in Hikvision`,
         );
-        return {message: 'Yuz maʼlumotlari muvaffaqiyatli qoʻshildi', success: true  };
+        return true;
       }
 
       this.logger.warn(`Unexpected status from Hikvision: ${response.status}`);
-      return { message: 'Yuz qo\'shishda xatolik', success: false };
+      return false;
     } catch (error) {
       if (error.response?.data) {
         console.error('Hikvision response error:', error.response.data);
@@ -462,13 +471,14 @@ async testConnection(config: HikvisionConfig): Promise<{ success: boolean; messa
         AcsEventCond: {
           searchID: '1',
           searchResultPosition: 0,
-          maxResults: 100,
-          major: 5,
-          minor: 75,
-          startTime: startTime,
-          endTime: endTime,
+          maxResults: 200,
+          major: 0,
+          minor: 0,
+          startTime: '2025-11-04T00:00:00+05:00',
+          endTime: '2025-11-04T11:05:22+05:00',
         },
       };
+    this.setConfig({ host: '192.168.100.139', port: 80, protocol: 'http', username: 'admin', password: "!@#Mudofaa@" });
       const response = await this.makeAuthenticatedRequest(
         'POST',
         '/ISAPI/AccessControl/AcsEvent?format=json',
@@ -492,31 +502,37 @@ async testConnection(config: HikvisionConfig): Promise<{ success: boolean; messa
     }
   }
 
-  async syncUsersFromDevice(): Promise<{ synced: number; errors: string[] }> {
-    try {
-      const hikvisionUsers = await this.getAllUsers();
-      let synced = 0;
-      const errors: string[] = [];
-
-      for (const hikvisionUser of hikvisionUsers) {
-        try {
-          // Convert Hikvision user to local format and save
-          // This would require integration with UsersService
-          synced++;
-        } catch (error) {
-          errors.push(
-            `Error syncing user ${hikvisionUser.employeeNo}: ${error.message}`,
-          );
-        }
-      }
-
-      this.logger.log(`Synced ${synced} users from Hikvision device`);
-      return { synced, errors };
-    } catch (error) {
-      this.logger.error('Failed to sync users from Hikvision:', error.message);
-      throw new BadRequestException(
-        `Hikvision dan userlarni sinxronlashda xatolik: ${error.message}`,
-      );
-    }
+  async toSimpleIso(dateStr: string): Promise<string> {
+    const date = new Date(dateStr);
+    const pad = (n: number) => n.toString().padStart(2, '0');
+    return `${date.getFullYear()}-${pad(date.getMonth() + 1)}-${pad(date.getDate())}T${pad(date.getHours())}:${pad(date.getMinutes())}:${pad(date.getSeconds())}`;
   }
+
+  // async syncUsersFromDevice(): Promise<{ synced: number; errors: string[] }> {
+  //   try {
+  //     // const hikvisionUsers = await this.getAllUsers();
+  //     let synced = 0;
+  //     const errors: string[] = [];
+
+  //     for (const hikvisionUser of hikvisionUsers) {
+  //       try {
+  //         // Convert Hikvision user to local format and save
+  //         // This would require integration with UsersService
+  //         synced++;
+  //       } catch (error) {
+  //         errors.push(
+  //           `Error syncing user ${hikvisionUser.employeeNo}: ${error.message}`,
+  //         );
+  //       }
+  //     }
+
+  //     this.logger.log(`Synced ${synced} users from Hikvision device`);
+  //     return { synced, errors };
+  //   } catch (error) {
+  //     this.logger.error('Failed to sync users from Hikvision:', error.message);
+  //     throw new BadRequestException(
+  //       `Hikvision dan userlarni sinxronlashda xatolik: ${error.message}`,
+  //     );
+  //   }
+  // }
 }

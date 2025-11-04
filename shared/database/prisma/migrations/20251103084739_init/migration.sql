@@ -23,16 +23,25 @@ CREATE TYPE "public"."ActionMode" AS ENUM ('ONLINE', 'OFFLINE');
 CREATE TYPE "public"."SessionType" AS ENUM ('UNLOCKED', 'LOCKED', 'LOGIN', 'LOGOUT');
 
 -- CreateEnum
-CREATE TYPE "public"."OptionType" AS ENUM ('WEBSITE', 'ACTIVE_WINDOW');
+CREATE TYPE "public"."VisitorCodeType" AS ENUM ('ONETIME', 'MULTIPLE');
+
+-- CreateEnum
+CREATE TYPE "public"."DeviceType" AS ENUM ('FACE', 'CARD', 'CAR', 'QR', 'ACCESS_CONTROL', 'BIOMETRIC', 'OTHER');
+
+-- CreateEnum
+CREATE TYPE "public"."GatewayCommandStatus" AS ENUM ('PENDING', 'SENT', 'ACKNOWLEDGED', 'FAILED');
+
+-- CreateEnum
+CREATE TYPE "public"."GatewayCommandAckStatus" AS ENUM ('ACCEPTED', 'REJECTED');
+
+-- CreateEnum
+CREATE TYPE "public"."RuleType" AS ENUM ('USEFUL', 'UNUSEFUL');
 
 -- CreateEnum
 CREATE TYPE "public"."ResourceType" AS ENUM ('WEBSITE', 'APPLICATION');
 
 -- CreateEnum
-CREATE TYPE "public"."VisitorCodeType" AS ENUM ('ONETIME', 'MULTIPLE');
-
--- CreateEnum
-CREATE TYPE "public"."DeviceType" AS ENUM ('FACE', 'CARD', 'CAR', 'QR', 'ACCESS_CONTROL', 'BIOMETRIC', 'OTHER');
+CREATE TYPE "public"."OptionType" AS ENUM ('WEBSITE', 'ACTIVE_WINDOW');
 
 -- CreateTable
 CREATE TABLE "public"."computer_users" (
@@ -117,6 +126,7 @@ CREATE TABLE "public"."devices" (
     "ip_address" TEXT,
     "login" TEXT,
     "password" TEXT,
+    "capabilities" JSONB,
     "welcome_text" TEXT,
     "welcome_text_type" "public"."WelcomeText",
     "welcome_photo" TEXT,
@@ -133,7 +143,7 @@ CREATE TABLE "public"."employees" (
     "id" SERIAL NOT NULL,
     "department_id" INTEGER NOT NULL,
     "organization_id" INTEGER NOT NULL,
-    "group_id" INTEGER NOT NULL,
+    "policy_id" INTEGER NOT NULL,
     "name" TEXT NOT NULL,
     "address" TEXT,
     "phone" TEXT,
@@ -148,21 +158,6 @@ CREATE TABLE "public"."employees" (
 );
 
 -- CreateTable
-CREATE TABLE "public"."employee_groups" (
-    "id" SERIAL NOT NULL,
-    "organization_id" INTEGER NOT NULL,
-    "name" TEXT NOT NULL,
-    "description" TEXT,
-    "is_default" BOOLEAN NOT NULL DEFAULT false,
-    "is_active" BOOLEAN NOT NULL DEFAULT true,
-    "created_at" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    "updated_at" TIMESTAMP(3) NOT NULL,
-    "policyId" INTEGER,
-
-    CONSTRAINT "employee_groups_pkey" PRIMARY KEY ("id")
-);
-
--- CreateTable
 CREATE TABLE "public"."credentials" (
     "id" SERIAL NOT NULL,
     "employee_id" INTEGER NOT NULL,
@@ -174,6 +169,23 @@ CREATE TABLE "public"."credentials" (
     "updated_at" TIMESTAMP(3) NOT NULL,
 
     CONSTRAINT "credentials_pkey" PRIMARY KEY ("id")
+);
+
+-- CreateTable
+CREATE TABLE "public"."gateway_commands" (
+    "id" TEXT NOT NULL,
+    "gateway_id" TEXT NOT NULL,
+    "type" TEXT NOT NULL,
+    "payload" JSONB NOT NULL,
+    "requires_ack" BOOLEAN NOT NULL DEFAULT true,
+    "status" "public"."GatewayCommandStatus" NOT NULL DEFAULT 'PENDING',
+    "created_at" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    "sent_at" TIMESTAMP(3),
+    "ack_at" TIMESTAMP(3),
+    "ack_status" "public"."GatewayCommandAckStatus",
+    "ack_error" TEXT,
+
+    CONSTRAINT "gateway_commands_pkey" PRIMARY KEY ("id")
 );
 
 -- CreateTable
@@ -283,13 +295,14 @@ CREATE TABLE "public"."policies" (
     "id" SERIAL NOT NULL,
     "organization_id" INTEGER NOT NULL,
     "title" TEXT NOT NULL,
-    "active_window" BOOLEAN NOT NULL DEFAULT true,
-    "screenshot" BOOLEAN NOT NULL DEFAULT true,
-    "visited_sites" BOOLEAN NOT NULL DEFAULT true,
+    "description" TEXT,
+    "active_window" BOOLEAN NOT NULL DEFAULT false,
+    "screenshot" BOOLEAN NOT NULL DEFAULT false,
+    "visited_sites" BOOLEAN NOT NULL DEFAULT false,
     "is_default" BOOLEAN NOT NULL DEFAULT false,
-    "screenshot_interval" INTEGER,
-    "screenshot_is_grayscale" BOOLEAN,
-    "screenshot_capture_all" BOOLEAN,
+    "screenshot_interval" INTEGER NOT NULL DEFAULT 5,
+    "screenshot_is_grayscale" BOOLEAN NOT NULL DEFAULT false,
+    "screenshot_capture_all" BOOLEAN NOT NULL DEFAULT false,
     "is_active" BOOLEAN NOT NULL DEFAULT true,
     "created_at" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
     "updated_at" TIMESTAMP(3) NOT NULL,
@@ -298,16 +311,25 @@ CREATE TABLE "public"."policies" (
 );
 
 -- CreateTable
-CREATE TABLE "public"."policy_group_rules" (
+CREATE TABLE "public"."policy_options" (
     "id" SERIAL NOT NULL,
     "policy_id" INTEGER NOT NULL,
-    "group_id" INTEGER NOT NULL,
     "type" "public"."OptionType" NOT NULL,
     "is_active" BOOLEAN NOT NULL DEFAULT true,
     "created_at" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
     "updated_at" TIMESTAMP(3) NOT NULL,
 
-    CONSTRAINT "policy_group_rules_pkey" PRIMARY KEY ("id")
+    CONSTRAINT "policy_options_pkey" PRIMARY KEY ("id")
+);
+
+-- CreateTable
+CREATE TABLE "public"."rule_groups" (
+    "id" SERIAL NOT NULL,
+    "option_id" INTEGER NOT NULL,
+    "group_id" INTEGER NOT NULL,
+    "type" "public"."RuleType" NOT NULL,
+
+    CONSTRAINT "rule_groups_pkey" PRIMARY KEY ("id")
 );
 
 -- CreateTable
@@ -486,28 +508,13 @@ CREATE INDEX "employees_organization_id_idx" ON "public"."employees"("organizati
 CREATE INDEX "employees_organization_id_department_id_idx" ON "public"."employees"("organization_id", "department_id");
 
 -- CreateIndex
-CREATE INDEX "employees_organization_id_group_id_idx" ON "public"."employees"("organization_id", "group_id");
+CREATE INDEX "employees_organization_id_policy_id_idx" ON "public"."employees"("organization_id", "policy_id");
 
 -- CreateIndex
 CREATE INDEX "employees_organization_id_is_active_idx" ON "public"."employees"("organization_id", "is_active");
 
 -- CreateIndex
 CREATE INDEX "employees_email_idx" ON "public"."employees"("email");
-
--- CreateIndex
-CREATE INDEX "employee_groups_organization_id_idx" ON "public"."employee_groups"("organization_id");
-
--- CreateIndex
-CREATE INDEX "employee_groups_organization_id_is_active_idx" ON "public"."employee_groups"("organization_id", "is_active");
-
--- CreateIndex
-CREATE INDEX "employee_groups_organization_id_is_default_idx" ON "public"."employee_groups"("organization_id", "is_default");
-
--- CreateIndex
-CREATE INDEX "employee_groups_policyId_idx" ON "public"."employee_groups"("policyId");
-
--- CreateIndex
-CREATE UNIQUE INDEX "employee_groups_organization_id_name_key" ON "public"."employee_groups"("organization_id", "name");
 
 -- CreateIndex
 CREATE INDEX "credentials_employee_id_idx" ON "public"."credentials"("employee_id");
@@ -520,6 +527,12 @@ CREATE INDEX "credentials_type_idx" ON "public"."credentials"("type");
 
 -- CreateIndex
 CREATE UNIQUE INDEX "credentials_employee_id_code_type_key" ON "public"."credentials"("employee_id", "code", "type");
+
+-- CreateIndex
+CREATE INDEX "gateway_commands_gateway_id_status_idx" ON "public"."gateway_commands"("gateway_id", "status");
+
+-- CreateIndex
+CREATE INDEX "gateway_commands_created_at_idx" ON "public"."gateway_commands"("created_at");
 
 -- CreateIndex
 CREATE INDEX "change_histories_user_id_idx" ON "public"."change_histories"("user_id");
@@ -612,10 +625,34 @@ CREATE INDEX "policies_organization_id_is_active_idx" ON "public"."policies"("or
 CREATE INDEX "policies_organization_id_is_default_idx" ON "public"."policies"("organization_id", "is_default");
 
 -- CreateIndex
+CREATE INDEX "policies_organization_id_title_idx" ON "public"."policies"("organization_id", "title");
+
+-- CreateIndex
+CREATE INDEX "policies_created_at_idx" ON "public"."policies"("created_at");
+
+-- CreateIndex
 CREATE UNIQUE INDEX "policies_organization_id_title_key" ON "public"."policies"("organization_id", "title");
 
 -- CreateIndex
-CREATE UNIQUE INDEX "policy_group_rules_policy_id_group_id_key" ON "public"."policy_group_rules"("policy_id", "group_id");
+CREATE INDEX "policy_options_policy_id_type_idx" ON "public"."policy_options"("policy_id", "type");
+
+-- CreateIndex
+CREATE INDEX "policy_options_policy_id_is_active_idx" ON "public"."policy_options"("policy_id", "is_active");
+
+-- CreateIndex
+CREATE UNIQUE INDEX "policy_options_policy_id_type_key" ON "public"."policy_options"("policy_id", "type");
+
+-- CreateIndex
+CREATE INDEX "rule_groups_option_id_idx" ON "public"."rule_groups"("option_id");
+
+-- CreateIndex
+CREATE INDEX "rule_groups_group_id_idx" ON "public"."rule_groups"("group_id");
+
+-- CreateIndex
+CREATE INDEX "rule_groups_type_idx" ON "public"."rule_groups"("type");
+
+-- CreateIndex
+CREATE UNIQUE INDEX "rule_groups_option_id_group_id_type_key" ON "public"."rule_groups"("option_id", "group_id", "type");
 
 -- CreateIndex
 CREATE INDEX "resource_group_organization_id_idx" ON "public"."resource_group"("organization_id");
@@ -720,16 +757,10 @@ ALTER TABLE "public"."devices" ADD CONSTRAINT "devices_gate_id_fkey" FOREIGN KEY
 ALTER TABLE "public"."employees" ADD CONSTRAINT "employees_department_id_fkey" FOREIGN KEY ("department_id") REFERENCES "public"."departments"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
 
 -- AddForeignKey
-ALTER TABLE "public"."employees" ADD CONSTRAINT "employees_group_id_fkey" FOREIGN KEY ("group_id") REFERENCES "public"."employee_groups"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
+ALTER TABLE "public"."employees" ADD CONSTRAINT "employees_policy_id_fkey" FOREIGN KEY ("policy_id") REFERENCES "public"."policies"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
 
 -- AddForeignKey
 ALTER TABLE "public"."employees" ADD CONSTRAINT "employees_organization_id_fkey" FOREIGN KEY ("organization_id") REFERENCES "public"."organizations"("id") ON DELETE CASCADE ON UPDATE CASCADE;
-
--- AddForeignKey
-ALTER TABLE "public"."employee_groups" ADD CONSTRAINT "employee_groups_organization_id_fkey" FOREIGN KEY ("organization_id") REFERENCES "public"."organizations"("id") ON DELETE CASCADE ON UPDATE CASCADE;
-
--- AddForeignKey
-ALTER TABLE "public"."employee_groups" ADD CONSTRAINT "employee_groups_policyId_fkey" FOREIGN KEY ("policyId") REFERENCES "public"."policies"("id") ON DELETE SET NULL ON UPDATE CASCADE;
 
 -- AddForeignKey
 ALTER TABLE "public"."credentials" ADD CONSTRAINT "credentials_employee_id_fkey" FOREIGN KEY ("employee_id") REFERENCES "public"."employees"("id") ON DELETE CASCADE ON UPDATE CASCADE;
@@ -759,10 +790,13 @@ ALTER TABLE "public"."departments" ADD CONSTRAINT "departments_parent_id_fkey" F
 ALTER TABLE "public"."policies" ADD CONSTRAINT "policies_organization_id_fkey" FOREIGN KEY ("organization_id") REFERENCES "public"."organizations"("id") ON DELETE CASCADE ON UPDATE CASCADE;
 
 -- AddForeignKey
-ALTER TABLE "public"."policy_group_rules" ADD CONSTRAINT "policy_group_rules_policy_id_fkey" FOREIGN KEY ("policy_id") REFERENCES "public"."policies"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+ALTER TABLE "public"."policy_options" ADD CONSTRAINT "policy_options_policy_id_fkey" FOREIGN KEY ("policy_id") REFERENCES "public"."policies"("id") ON DELETE CASCADE ON UPDATE CASCADE;
 
 -- AddForeignKey
-ALTER TABLE "public"."policy_group_rules" ADD CONSTRAINT "policy_group_rules_group_id_fkey" FOREIGN KEY ("group_id") REFERENCES "public"."resource_group"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+ALTER TABLE "public"."rule_groups" ADD CONSTRAINT "rule_groups_option_id_fkey" FOREIGN KEY ("option_id") REFERENCES "public"."policy_options"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE "public"."rule_groups" ADD CONSTRAINT "rule_groups_group_id_fkey" FOREIGN KEY ("group_id") REFERENCES "public"."resource_group"("id") ON DELETE CASCADE ON UPDATE CASCADE;
 
 -- AddForeignKey
 ALTER TABLE "public"."resource_group" ADD CONSTRAINT "resource_group_organization_id_fkey" FOREIGN KEY ("organization_id") REFERENCES "public"."organizations"("id") ON DELETE CASCADE ON UPDATE CASCADE;

@@ -35,7 +35,7 @@ model Gate {
 
   devices Device[]
   actions Action[]
-
+  EmployeeSync  EmployeeSync[]
   @@index([name])
   @@map("gates")
 }
@@ -53,6 +53,7 @@ model Device {
   ipAddress        String?       @map("ip_address")
   login            String?
   password         String?
+  capabilities     Json?
   welcomeText      String?       @map("welcome_text")
   welcomeTextType  WelcomeText?  @map("welcome_text_type")
   welcomePhoto     String?       @map("welcome_photo")
@@ -65,6 +66,7 @@ model Device {
 
   gate    Gate?    @relation(fields: [gateId], references: [id], onDelete: SetNull)
   actions Action[]
+  EmployeeSync  EmployeeSync[]
 
   @@index([gateId])
   @@index([ipAddress])
