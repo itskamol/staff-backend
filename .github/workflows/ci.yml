@@ -73,6 +73,7 @@ jobs:
           cp package.json dist/package.json
           cp pnpm-lock.yaml dist/pnpm-lock.yaml
           cp pnpm-workspace.yaml dist/pnpm-workspace.yaml
+          cp -r .config dist/
 
       - name: Upload dist artifact
         if: github.event_name == 'push' && github.ref == 'refs/heads/main'
