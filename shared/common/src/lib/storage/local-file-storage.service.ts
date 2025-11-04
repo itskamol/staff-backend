@@ -2,7 +2,7 @@ import { Injectable, Logger } from '@nestjs/common';
 import { createReadStream, createWriteStream } from 'node:fs';
 import { mkdir, stat, unlink, writeFile } from 'node:fs/promises';
 import { Readable } from 'node:stream';
-import * as path from 'node:path';
+import path from 'path';
 import { pipeline } from 'node:stream/promises';
 import { IFileStorageService, PutObjectOptions, PutObjectResult } from './file-storage.interface';
 
