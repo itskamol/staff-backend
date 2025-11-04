@@ -49,8 +49,8 @@ jobs:
           restore-keys: |
             nx-cache-${{ runner.os }}-
 
-      # - name: Build agent-api
-      #   run: pnpm exec nx run agent-api:build
+      - name: Build runner
+        run: pnpm exec prisma generate
 
       - name: Build dashboard-api
         run: pnpm exec nx run dashboard-api:build
@@ -61,11 +61,18 @@ jobs:
           cp scripts/restart.sh dist/scripts/restart.sh
           chmod +x dist/scripts/restart.sh
 
-      - name: Copy Prisma schema and migrations
+      - name: Generate Prisma Client
+        run: |
+          cp -r .config dist/
+          pnpm exec prisma generate
+
+      - name: Copy Prisma files
         run: |
           mkdir -p dist/shared/database/prisma/
-          cp -r shared/database/prisma/models dist/shared/database/prisma/
-          cp -r shared/database/prisma/migrations dist/shared/database/prisma/
+          mkdir -p dist/shared/database/prisma/
+          cp -r shared/database/prisma/* dist/shared/database/prisma/
+          cp tsconfig.base.json dist/
+          cp -r .config dist/
 
       - name: Copy package.json files for dependency installation
         run: |
@@ -73,7 +80,6 @@ jobs:
           cp package.json dist/package.json
           cp pnpm-lock.yaml dist/pnpm-lock.yaml
           cp pnpm-workspace.yaml dist/pnpm-workspace.yaml
-          cp -r .config dist/
 
       - name: Upload dist artifact
         if: github.event_name == 'push' && github.ref == 'refs/heads/main'

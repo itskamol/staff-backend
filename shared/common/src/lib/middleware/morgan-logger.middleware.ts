@@ -8,7 +8,11 @@ export class MorganLoggerMiddleware implements NestMiddleware {
     private readonly logger = new Logger(MorganLoggerMiddleware.name);
 
     constructor() {
-        const formatter: FormatFn<Request, Response> = (tokens: TokenIndexer<Request, Response>, req, res) => {
+        const formatter: FormatFn<Request, Response> = (
+            tokens: TokenIndexer<Request, Response>,
+            req: Request,
+            res: Response
+        ) => {
             const statusToken = tokens['status'];
             const status = parseInt(statusToken ? statusToken(req, res) || '500' : '500');
 
