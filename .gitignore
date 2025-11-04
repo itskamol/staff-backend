@@ -107,4 +107,4 @@ backups/
 /prisma/migrations/dev.db*
 
 # Uploads
-uploads/
+/storage
