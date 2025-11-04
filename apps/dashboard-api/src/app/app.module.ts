@@ -22,6 +22,7 @@ import { DeviceModule } from '../modules/devices/device.module';
 import { GateModule } from '../modules/gate/gate.module';
 import { CredentialModule } from '../modules/credential/credential.module';
 import { HikvisionModule } from '../modules/hikvision/hikvision.module';
+import { EmployeeSyncModule } from '../modules/employeeSync/employee-sync.module';
 
 @Module({
     imports: [
@@ -43,7 +44,8 @@ import { HikvisionModule } from '../modules/hikvision/hikvision.module';
         LoggerModule,
         GateModule,
         CredentialModule,
-        HikvisionModule
+        HikvisionModule,
+        EmployeeSyncModule
     ],
     controllers: [AppController],
     providers: [

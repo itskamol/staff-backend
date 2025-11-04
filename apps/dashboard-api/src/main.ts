@@ -54,7 +54,8 @@ async function bootstrap() {
             'Gates',
             'Devices',
             'Credentials',
-            'Hikvisions'
+            'Hikvisions',
+            'Employee-sync'
         ],
         extraModels: [ApiSuccessResponse, ApiErrorResponse, ApiPaginatedResponse],
     });
