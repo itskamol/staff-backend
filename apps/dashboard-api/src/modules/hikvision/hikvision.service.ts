@@ -4,7 +4,7 @@ import axios, { Method, type AxiosInstance } from 'axios';
 import * as crypto from 'crypto';
 import { CreateHikvisionUserDto, HikvisionConfig, HikvisionUser } from './dto/create-hikvision-user.dto';
 import { XMLParser } from 'fast-xml-parser';
-const FormData = require('form-data');
+import FormData from 'form-data'
 import * as xml2js from 'xml2js';
 import { EmployeeService } from '../employee/services/employee.service';
 import { PrismaService } from '@app/shared/database';
@@ -432,7 +432,7 @@ export class HikvisionService {
           faceURL,
         }),
       );
-  
+
 
       const response = await this.makeAuthenticatedRequest(
         'PUT',
@@ -478,7 +478,7 @@ export class HikvisionService {
           endTime: '2025-11-04T11:05:22+05:00',
         },
       };
-    this.setConfig({ host: '192.168.100.139', port: 80, protocol: 'http', username: 'admin', password: "!@#Mudofaa@" });
+      this.setConfig({ host: '192.168.100.139', port: 80, protocol: 'http', username: 'admin', password: "!@#Mudofaa@" });
       const response = await this.makeAuthenticatedRequest(
         'POST',
         '/ISAPI/AccessControl/AcsEvent?format=json',
