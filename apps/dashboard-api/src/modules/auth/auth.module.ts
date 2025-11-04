@@ -18,8 +18,8 @@ import { ConfigModule } from '../../core/config/config.module';
             useFactory: (configService: ConfigService) => ({
                 secret: configService.jwtSecret,
                 signOptions: {
-                    expiresIn: configService.jwtExpirationTime,
-                },
+                    expiresIn: configService.jwtExpirationTime
+                }
             }),
             inject: [ConfigService],
         }),

@@ -7,7 +7,7 @@ import {
     Logger,
 } from '@nestjs/common';
 import type { Response } from 'express';
-import { ApiResponseDto } from '../dto/api-response.dto';
+import { ApiErrorResponse, ApiErrorDto } from '../dto/api-response.dto';
 
 @Catch()
 export class GlobalExceptionFilter implements ExceptionFilter {
@@ -46,7 +46,8 @@ export class GlobalExceptionFilter implements ExceptionFilter {
         );
 
         // Send error response
-        const errorResponse = ApiResponseDto.error(code, message, details);
+        const errorDto: ApiErrorDto = { code, message, details };
+        const errorResponse = new ApiErrorResponse(errorDto);
         response.status(status).json(errorResponse);
     }
 }

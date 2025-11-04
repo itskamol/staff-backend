@@ -18,6 +18,7 @@
       "@app/shared/auth": ["shared/auth/src/index.ts"],
       "@app/shared/common": ["shared/common/src/index.ts"],
       "@app/shared/database": ["shared/database/src/index.ts"],
+      "@app/shared/gateway": ["shared/gateway/src/index.ts"],
       "@app/shared/repository": ["shared/repository/src/index.ts"],
       "@app/shared/utils": ["shared/utils/src/index.ts"]
     }

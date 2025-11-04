@@ -1,4 +1,5 @@
 import { Module } from '@nestjs/common';
+import { SharedCommonModule } from '@app/shared/common';
 import { EmployeeController } from './controllers/employee.controller';
 import { EmployeeService } from './services/employee.service';
 import { DepartmentService } from '../department/department.service';
@@ -8,7 +9,7 @@ import { DepartmentRepository } from '../department/department.repository';
 import { PolicyRepository } from '../policy/repositories/policy.repository';
 
 @Module({
-    imports: [],
+    imports: [SharedCommonModule],
     controllers: [EmployeeController],
     providers: [
         EmployeeService,

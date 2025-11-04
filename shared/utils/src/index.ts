@@ -17,5 +17,8 @@ export * from './lib/dto/base.dto';
 export * from './lib/interceptors/response.interceptor';
 export * from './lib/filters/global-exception.filter';
 
+// Swagger
+export * from './lib/swagger.util';
+
 // Backward compatibility aliases
 export { EncryptionUtil as PasswordUtil } from './lib/encryption/encryption.util';

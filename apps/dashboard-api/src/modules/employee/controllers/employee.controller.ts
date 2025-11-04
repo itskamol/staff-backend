@@ -1,16 +1,23 @@
 import {
+    BadRequestException,
     Body,
     Controller,
     Delete,
     Get,
+    Inject,
     NotFoundException,
     Param,
     Post,
     Put,
     Query,
+    UploadedFile,
+    UseInterceptors,
 } from '@nestjs/common';
+import { FileInterceptor } from '@nestjs/platform-express';
 import {
     ApiBearerAuth,
+    ApiBody,
+    ApiConsumes,
     ApiExtraModels,
     ApiParam,
     ApiTags,
@@ -21,31 +28,35 @@ import { ApiSuccessResponse } from '../../../shared/dto';
 import { ApiCrudOperation, ApiErrorResponses, ApiOkResponseData } from '../../../shared/utils';
 
 // TODO: Move these DTOs to employee/dto/
-export class ActivityReportResponseDto {}
-export class AssignCardDto {}
-export class AssignCarDto {}
-export class ComputerUserResponseDto {}
-export class EntryLogResponseDto {}
-export class LinkComputerUserDto {}
+export class ActivityReportResponseDto { }
+export class AssignCardDto { }
+export class AssignCarDto { }
+export class ComputerUserResponseDto { }
+export class EntryLogResponseDto { }
+export class LinkComputerUserDto { }
 import { DataScope, Roles, User } from '@app/shared/auth';
 import { UserContext } from '../../../shared/interfaces';
 import { Scope } from '../../../shared/decorators';
 import { QueryDto } from '@app/shared/utils';
 import { Role } from '@prisma/client';
+import { FILE_STORAGE_SERVICE, IFileStorageService } from '@app/shared/common'; 
 
 @ApiTags('Employees')
 @ApiBearerAuth()
 @Controller('employees')
 @ApiExtraModels(ApiSuccessResponse, EmployeeResponseDto)
 export class EmployeeController {
-    constructor(private readonly employeeService: EmployeeService) {}
+    constructor(private readonly employeeService: EmployeeService,
+        @Inject(FILE_STORAGE_SERVICE) // Fayl omborini kontrollerga inyeksiya qilamiz
+        private readonly fileStorage: IFileStorageService,
+    ) { }
 
     @Get()
     @Roles(Role.ADMIN, Role.HR, Role.DEPARTMENT_LEAD, Role.GUARD)
     @ApiCrudOperation(EmployeeResponseDto, 'list', {
         summary: 'Get all employees',
-        includeQueries: { 
-            pagination: true, 
+        includeQueries: {
+            pagination: true,
             search: true,
             sort: true,
             filters: { isActive: Boolean, departmentId: Number },
@@ -72,6 +83,39 @@ export class EmployeeController {
     ) {
         return this.employeeService.createEmployee(dto, scope, user);
     }
+
+
+    @Post('upload-photo')
+    @UseInterceptors(FileInterceptor('file')) // Fayl maydoni 'file' deb ataladi
+    @ApiConsumes('multipart/form-data')
+    @ApiBody({
+        schema: {
+            type: 'object',
+            properties: {
+                file: {
+                    type: 'string',
+                    format: 'binary',
+                    description: 'Xodimning rasmi',
+                },
+            },
+        },
+    })
+    async uploadPhoto(@UploadedFile() file: any): Promise<{ key: string }> {
+        if (!file) {
+            throw new BadRequestException("Yuklanadigan 'file' maydoni topilmadi.");
+        }
+
+        const key = file.filename || Date.now().toString() + '-' + file.originalname;
+
+        const result = await this.fileStorage.putObject({
+            key: key,
+            body: file.buffer,
+            contentType: file.mimetype,
+        });
+
+        return { key: result.key };
+    }
+
 
     @Get(':id')
     @Roles(Role.ADMIN, Role.HR, Role.DEPARTMENT_LEAD, Role.GUARD)

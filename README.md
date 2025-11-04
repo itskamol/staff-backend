@@ -67,6 +67,24 @@ cp .env.example .env
 # .env faylida ma'lumotlar bazasi ulanishini sozlang
 ```
 
+Asosiy fayl saqlash sozlamalari:
+
+- `STORAGE_DRIVER` – `local` (standart) yoki kelajakdagi MinIO/S3 drayverlari
+- `STORAGE_BASE_PATH` – lokal saqlash katalogi (`./storage` bo'yicha)
+- `STORAGE_BUCKET` – obyekt saqlash bucket nomi (S3/MinIO uchun)
+- `STORAGE_RETENTION_DAYS` – issiq saqlashda qolish muddati (kunlarda)
+
+Agent Gateway uchun asosiy sozlamalar:
+
+- `GATEWAY_ID` – gateway identifikatori (standart bo'lib `hostname` olinadi)
+- `SERVER_URL` – Agent API bazaviy URL manzili (`https://agent-api.example.com`)
+- `CONTROL_URL` – WebSocket boshqaruv kanali (`wss://agent-api.example.com/ws`)
+- `API_KEY` – Gateway ↔ Agent API autentifikatsiya kaliti
+- `LOCAL_BUFFER_PATH` – offline navbat fayli saqlanadigan katalog
+- `FLUSH_INTERVAL_MS` / `BATCH_SIZE` – uplink yuborish intervali va batch hajmi
+- `HEARTBEAT_INTERVAL_MS` / `CONTROL_RECONNECT_BACKOFF_MS` – boshqaruv kanaliga tegishli interval sozlamalari
+- `GATEWAY_API_KEYS` – Agent API tomonida ruxsat etilgan gateway API kalitlari (vergul bilan ajratiladi)
+
 4. **Ma'lumotlar bazasini sozlash**:
 
 ```bash
@@ -86,6 +104,12 @@ npx prisma db seed
 npx nx serve dashboard-api
 
 # Agent API (port 3001)
+npx nx serve agent-api
+
+# Agent Gateway (port 4100)
+npx nx serve agent-gateway
+
+# Control/WebSocket imitatsiyasi uchun Agent API (port 3001)
 npx nx serve agent-api
 ```
 
@@ -134,7 +158,17 @@ staff/
 │   │   │   │   ├── data-processing/ # Ma'lumotlarni qayta ishlash
 │   │   │   │   ├── hikvision/  # Hikvision integratsiyasi
 │   │   │   │   └── security/   # Xavfsizlik
+│   │   │   │   └── gateway/    # Agent Gateway ingest & boshqaruv endpointlari
 │   │   │   └── ...
+│   ├── agent-gateway/          # LAN ichidagi Gateway xizmati (port 4100)
+│   │   ├── src/
+│   │   │   ├── modules/
+│   │   │   │   ├── buffer/     # Offline navbat va disk perzistentsiya
+│   │   │   │   ├── collector/  # Lokal agent/device ma'lumotlarini qabul qilish
+│   │   │   │   ├── control/    # WebSocket boshqaruv kanali
+│   │   │   │   ├── health/     # Health va observability endpointi
+│   │   │   │   └── uplink/     # Batch uplink scheduleri
+│   │   │   └── config/         # Gateway konfiguratsiya servisi
 │   ├── dashboard-api-e2e/      # E2E testlar
 │   └── agent-api-e2e/          # E2E testlar
 ├── shared/
@@ -189,6 +223,8 @@ staff/
 - `POST /data-processing/job` - Ma'lumotlarni qayta ishlash
 - `GET /data-processing/queue` - Navbat holati
 - `POST /hikvision/events` - Hikvision hodisalari
+- `POST /gateway/{gatewayId}/commands` – Gateway uchun boshqaruv komandasi yaratish
+- `GET /gateway/{gatewayId}/commands` – Gateway bo'yicha jo'natilgan komandalar tarixini olish
 
 ## 🧪 Test qilish
 

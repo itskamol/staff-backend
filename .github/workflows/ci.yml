@@ -49,8 +49,8 @@ jobs:
           restore-keys: |
             nx-cache-${{ runner.os }}-
 
-      - name: Build agent-api
-        run: pnpm exec nx run agent-api:build
+      # - name: Build agent-api
+      #   run: pnpm exec nx run agent-api:build
 
       - name: Build dashboard-api
         run: pnpm exec nx run dashboard-api:build

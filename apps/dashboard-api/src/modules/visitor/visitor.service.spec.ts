@@ -4,10 +4,12 @@ import { VisitorService } from './visitor.service';
 import { PrismaService } from '@app/shared/database';
 import { Role } from '@app/shared/auth';
 import { VisitorCodeType } from '@prisma/client';
+import { VisitorRepository } from './visitor.repository';
 
 describe('VisitorService', () => {
     let service: VisitorService;
     let prismaService: PrismaService;
+    let visitorRepository: VisitorRepository;
 
     const mockPrismaService = {
         visitor: {
@@ -30,6 +32,10 @@ describe('VisitorService', () => {
         },
     };
 
+    const mockVisitorRepository = {
+        findManyWithPagination: jest.fn(),
+    };
+
     beforeEach(async () => {
         const module: TestingModule = await Test.createTestingModule({
             providers: [
@@ -37,6 +43,10 @@ describe('VisitorService', () => {
                 {
                     provide: PrismaService,
                     useValue: mockPrismaService,
+                },
+                {
+                    provide: VisitorRepository,
+                    useValue: mockVisitorRepository,
                 },
             ],
         }).compile();
@@ -58,7 +68,7 @@ describe('VisitorService', () => {
                 workPlace: 'Test Company',
             };
 
-            const user = { id: 1, role: Role.HR, organizationId: 1 };
+            const user = { sub: '1', username: 'test-user', role: Role.HR, organizationId: 1 };
 
             const expectedResult = {
                 id: 1,
@@ -75,9 +85,8 @@ describe('VisitorService', () => {
             expect(mockPrismaService.visitor.create).toHaveBeenCalledWith({
                 data: {
                     ...createVisitorDto,
-                    creatorId: user.id,
+                    creator: { connect: { id: +user.sub } },
                 },
-                select: expect.any(Object),
             });
         });
     });
@@ -92,7 +101,7 @@ describe('VisitorService', () => {
                 additionalDetails: 'Test visit',
             };
 
-            const user = { id: 1, role: Role.HR, organizationId: 1 };
+            const user = { sub: '1', username: 'test-user', role: Role.HR, organizationId: 1 };
 
             const mockVisitor = {
                 id: 1,

@@ -1,18 +1,24 @@
-import { Controller, Get, Post, Put, Delete, Body, Param, Query } from '@nestjs/common';
-import { ApiTags, ApiBearerAuth } from '@nestjs/swagger';
-import { Roles, Role, User as CurrentUser, DataScope } from '@app/shared/auth';
+import { Controller, Get, Post, Put, Delete, Body, Param, Query, Res } from '@nestjs/common';
+import { ApiTags, ApiBearerAuth, ApiExtraModels, ApiResponse } from '@nestjs/swagger';
+import { Roles, Role, User as CurrentUser, DataScope, Public } from '@app/shared/auth';
 import { QueryDto } from '@app/shared/utils';
 import { DeviceService } from '../services/device.service';
 import { UserContext } from 'apps/dashboard-api/src/shared/interfaces';
-import { CreateDeviceDto, DeviceDto, UpdateDeviceDto, TestConnectionDto } from '../dto/device.dto';
+import { CreateDeviceDto, DeviceDto, UpdateDeviceDto, TestConnectionDto, AssignEmployeesToGatesDto } from '../dto/device.dto';
 import { ApiCrudOperation } from 'apps/dashboard-api/src/shared/utils';
 import { Scope } from 'apps/dashboard-api/src/shared/decorators';
 
 @ApiTags('Devices')
 @Controller('devices')
+@ApiExtraModels(DeviceDto)
 @ApiBearerAuth()
 export class DeviceController {
-    constructor(private readonly deviceService: DeviceService) {}
+    constructor(private readonly deviceService: DeviceService) { }
+
+    // @Get('test-socket')
+    // testSocket() {
+    //     return this.deviceService.testSocket();
+    // }
 
     @Get()
     @Roles(Role.ADMIN, Role.GUARD)
@@ -26,6 +32,7 @@ export class DeviceController {
                 type: String,
                 status: String,
                 is_active: Boolean,
+                gateId: Number,
             },
         },
     })
@@ -80,7 +87,7 @@ export class DeviceController {
         @Scope() scope: DataScope,
         @CurrentUser() user: UserContext
     ) {
-        await this.deviceService.remove(id, scope, user);
+        return await this.deviceService.remove(id, scope, user);
     }
 
     @Post(':id/test-connection')
@@ -96,4 +103,35 @@ export class DeviceController {
     ) {
         return await this.deviceService.testConnection(id, testConnectionDto.timeout);
     }
+
+
+    @Post('assign-employees')
+    @ApiCrudOperation(DeviceDto, 'create', {
+        summary: 'Assign employees to gate devices for facial access',
+    })
+    @ApiResponse({
+        status: 200,
+        description: 'Biriktirish natijasi',
+        schema: {
+            example: {
+                total: 10,
+                success: 8,
+                errors: ['Gate 2, Device 5: Credential topilmadi'],
+                details: [
+                    {
+                        gateId: 1,
+                        deviceId: 3,
+                        employeeId: 5,
+                        status: 'ok',
+                    },
+                ],
+            },
+        },
+    })
+    async assignEmployeesToGates(@Body() dto: AssignEmployeesToGatesDto) {
+        return await this.deviceService.assignEmployeesToGates(dto);
+    }
+
+
+
 }

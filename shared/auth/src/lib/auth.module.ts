@@ -12,7 +12,7 @@ import { DataScopeGuard } from './guards/data-scope.guard';
         PassportModule,
         JwtModule.register({
             secret: process.env['JWT_SECRET'] || 'your-super-secret-jwt-key-here-32-chars',
-            signOptions: { expiresIn: '15m' },
+            signOptions: { expiresIn: '24h' },
         }),
     ],
     providers: [JwtService, JwtStrategy, JwtAuthGuard, RolesGuard, DataScopeGuard],

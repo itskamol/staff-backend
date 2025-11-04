@@ -5,10 +5,29 @@ import {
     IsEnum,
     IsNotEmpty,
     MaxLength,
-    IsPhoneNumber,
 } from 'class-validator';
 import { ApiProperty, ApiPropertyOptional, PartialType } from '@nestjs/swagger';
 import { VisitorCodeType } from '@prisma/client';
+
+// ✅ Swagger Response uchun umumiy DTO
+export class ApiResponseDto<T = any> {
+    @ApiProperty({ description: 'HTTP status code', example: 200 })
+    statusCode: number;
+
+    @ApiProperty({ description: 'Response message', example: 'Success' })
+    message: string;
+
+    @ApiPropertyOptional({ description: 'Response data' })
+    data?: T;
+
+    static success<T>(data: T, message = 'Success'): ApiResponseDto<T> {
+        const response = new ApiResponseDto<T>();
+        response.statusCode = 200;
+        response.message = message;
+        response.data = data;
+        return response;
+    }
+}
 
 export class CreateVisitorDto {
     @ApiProperty({ description: 'First name of the visitor' })

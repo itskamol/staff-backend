@@ -28,6 +28,11 @@ export class DeviceRepository extends BaseRepository<
         return this.findFirst({ ipAddress });
     }
 
+    async findOneByGateAndIp(gateId: number, ipAddress: string): Promise<Device | null> {
+    return this.prisma.device.findFirst({where: {gateId: gateId,ipAddress: ipAddress,},
+    });
+  }
+
     async findByType(type: DeviceType, include?: Prisma.DeviceInclude) {
         return this.findMany({ type }, undefined, include);
     }

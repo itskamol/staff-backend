@@ -67,21 +67,21 @@ export class EmployeeRepository extends BaseRepository<
                 // Department leads can only see employees in their department
                 scopedWhere.id = { in: scope.departments };
                 break;
-            
+
             case Role.HR:
                 // HR can see employees from their organization's departments
                 scopedWhere.department = {
                     organizationId: scope.organizationId
                 };
                 break;
-            
+
             case Role.GUARD:
                 // Guards have basic read access, apply organization scope
                 scopedWhere.department = {
                     organizationId: scope.organizationId
                 };
                 break;
-            
+
             case Role.ADMIN:
                 // Admins can see all employees - no additional scoping
                 break;
@@ -162,7 +162,7 @@ export class EmployeeRepository extends BaseRepository<
         // For HR role, validate that department belongs to their organization
         if (userRole === Role.HR && scope?.organizationId && typeof data.department === 'object' && 'connect' in data.department) {
             const departmentId = (data.department.connect as { id: number }).id;
-            
+
             const department = await this.prisma.department.findFirst({
                 where: {
                     id: departmentId,
@@ -196,7 +196,7 @@ export class EmployeeRepository extends BaseRepository<
         // For HR role, validate department change if applicable
         if (userRole === Role.HR && scope?.organizationId && data.department && typeof data.department === 'object' && 'connect' in data.department) {
             const departmentId = (data.department.connect as { id: number }).id;
-            
+
             const department = await this.prisma.department.findFirst({
                 where: {
                     id: departmentId,
@@ -224,7 +224,7 @@ export class EmployeeRepository extends BaseRepository<
         // For HR role, prevent department changes to unauthorized departments
         if (userRole === Role.HR && scope?.organizationId && data.department && typeof data.department === 'object' && 'connect' in data.department) {
             const departmentId = (data.department.connect as { id: number }).id;
-            
+
             const department = await this.prisma.department.findFirst({
                 where: {
                     id: departmentId,
