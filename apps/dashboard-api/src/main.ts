@@ -9,6 +9,8 @@ import { setupSwagger, TenantContextInterceptor } from '@app/shared/common';
 import { PrismaService } from '@app/shared/database';
 import { NestExpressApplication } from '@nestjs/platform-express';
 import { join } from 'path';
+import * as bodyParser from 'body-parser';
+import { rawBodyMiddleware } from './modules/hikvision/middleware';
 
 async function bootstrap() {
     const app = await NestFactory.create<NestExpressApplication>(AppModule);
@@ -23,6 +25,11 @@ async function bootstrap() {
     app.useStaticAssets(join(process.cwd(), 'storage'), { prefix: '/storage' });
     // console.log(join(process.cwd(), 'storage'))
 
+    app.use(
+        bodyParser.raw({ type: ['application/xml', 'text/xml'], limit: '1mb' })
+    );
+
+    app.use('/api/v1/hikvision/event', rawBodyMiddleware);
 
     const configService = app.get(ConfigService);
     const port = configService.port;
@@ -55,7 +62,9 @@ async function bootstrap() {
             'Devices',
             'Credentials',
             'Hikvisions',
-            'Employee-sync'
+            'Employee-sync',
+            'Attendance',
+            'Schedule'
         ],
         extraModels: [ApiSuccessResponse, ApiErrorResponse, ApiPaginatedResponse],
     });

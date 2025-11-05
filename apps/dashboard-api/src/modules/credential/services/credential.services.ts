@@ -125,7 +125,11 @@ export class CredentialService {
         scope: DataScope,
         user: UserContext,
     ): Promise<CredentialWithRelations> {
-        // 1. Xodimga kirish huquqini tekshirish
+      
+        let organizationId = user?.organizationId 
+        if(!organizationId && user.role != "ADMIN"){
+          throw new NotFoundException('User organizationId not found!')
+        }
         const employee = await this.employeeService.getEmployeeById(dto.employeeId, scope, user);
 
         if (!employee) {
@@ -143,6 +147,7 @@ export class CredentialService {
             additionalDetails: dto.additionalDetails,
             isActive: dto.isActive,
             employee: { connect: { id: dto.employeeId } },
+            organization: {connect: {id: organizationId}}
         };
 
         return this.credentialRepository.create(data, this.credentialRepository.getDefaultInclude());
