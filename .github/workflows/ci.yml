@@ -74,6 +74,9 @@ jobs:
           cp pnpm-lock.yaml dist/pnpm-lock.yaml
           cp pnpm-workspace.yaml dist/pnpm-workspace.yaml
 
+      - name: Inspect dist contents
+        run: ls -a dist
+
       - name: Upload dist artifact
         if: github.event_name == 'push' && github.ref == 'refs/heads/main'
         uses: actions/upload-artifact@v4
