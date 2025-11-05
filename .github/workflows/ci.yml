@@ -103,6 +103,9 @@ jobs:
           name: dist
           path: dist
 
+      - name: Inspect dist contents
+        run: ls -a dist
+
       - name: Prepare SSH key
         run: |
           mkdir -p ~/.ssh
@@ -129,6 +132,14 @@ jobs:
           HOST: ${{ secrets.HOST }}
           PORT: ${{ secrets.PORT }}
           USERNAME: ${{ secrets.USERNAME }}
+      
+      - name: Inspect remote directory contents
+        run: |
+          ssh -i ~/.ssh/id_ed25519 -p "$PORT" "$USERNAME@$HOST" "ls -a $REMOTE_PATH"
+        env:
+          HOST: ${{ secrets.HOST }}
+          PORT: ${{ secrets.PORT }}
+          USERNAME: ${{ secrets.USERNAME }}
 
       - name: Restart application
         run: |
@@ -136,7 +147,7 @@ jobs:
             source ~/.bashrc
             source ~/.profile 2>/dev/null || true
             export PATH="$HOME/.local/share/pnpm:$PATH"
-            cd /var/www/staff-backend
+            cd $REMOTE_PATH
             chmod +x ./scripts/restart.sh
             ./scripts/restart.sh
           EOF
