@@ -85,6 +85,7 @@ jobs:
           path: |
             dist
             dist/.config
+          include-hidden-files: true
           if-no-files-found: error
 
   deploy:
