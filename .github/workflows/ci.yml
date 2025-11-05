@@ -143,11 +143,7 @@ jobs:
 
       - name: Restart application
         run: |
-          ssh -i ~/.ssh/id_ed25519 -p "$PORT" "$USERNAME@$HOST" <<'EOF'
-            cd "$REMOTE_PATH"
-            chmod +x ./scripts/restart.sh
-            ./scripts/restart.sh
-          EOF
+          ssh -i ~/.ssh/id_ed25519 -p "$PORT" "$USERNAME@$HOST" "cd $REMOTE_PATH && pwd && ls && bash ./scripts/restart.sh"
         env:
           HOST: ${{ secrets.HOST }}
           PORT: ${{ secrets.PORT }}
