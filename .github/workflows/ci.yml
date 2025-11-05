@@ -101,7 +101,7 @@ jobs:
         uses: actions/download-artifact@v4
         with:
           name: dist
-          path: dist
+          path: .
 
       - name: Inspect dist contents
         run: ls -a dist
@@ -144,7 +144,7 @@ jobs:
       - name: Restart application
         run: |
           ssh -i ~/.ssh/id_ed25519 -p "$PORT" "$USERNAME@$HOST" <<'EOF'
-            cd $REMOTE_PATH
+            cd "$REMOTE_PATH"
             chmod +x ./scripts/restart.sh
             ./scripts/restart.sh
           EOF
