@@ -1,14 +1,8 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-# Lightweight deployment helper invoked from CI after rsync completes.
-# Customize service names and dependency installation to match the target host.
-
 ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/" && pwd)"
-APP_BUILD_DIRS=(
-  # "apps/agent-api"
-  "apps/dashboard-api"
-)
+PRISMA_DIR="$ROOT_DIR/shared/database/prisma"
 
 log() {
   printf '[%s] %s\n' "$(date '+%Y-%m-%dT%H:%M:%S%z')" "$*"
@@ -16,17 +10,60 @@ log() {
 
 install_dependencies() {
   if ! command -v pnpm >/dev/null 2>&1; then
-    log "pnpm not found; skipping dependency install"
+    log "pnpm not found; installing dependencies skipped"
     return
   fi
 
   log "Installing production dependencies for workspace"
   (cd "$ROOT_DIR" && pnpm install --no-frozen-lockfile --prod) || log "Failed to install workspace dependencies"
 
-  if [ -f "$ROOT_DIR/shared/database/prisma/models" ]; then
+  if [ -f "$PRISMA_DIR/models/schema.prisma" ]; then
     log "Generating Prisma client"
-    (cd "$ROOT_DIR/shared/database" && pnpm exec prisma generate) || log "Failed to generate Prisma client"
+    (cd "$PRISMA_DIR" && pnpm exec prisma generate) || log "Failed to generate Prisma client"
+  else
+    log "Prisma schema not found, 'prisma generate' skipped."
   fi
+}
+
+handle_database_migration() {
+  local strategy="${DB_MIGRATE_STRATEGY:-none}"
+  
+  if [ ! -f "$PRISMA_DIR/models/schema.prisma" ]; then
+    log "Prisma schema not found, database operations skipped."
+    return
+  fi
+
+  log "Determining database strategy: '$strategy'"
+
+  case "$strategy" in
+    deploy)
+      log "Applying production migrations (prisma migrate deploy)..."
+      (cd "$PRISMA_DIR" && pnpm exec prisma migrate deploy) || {
+        log "ERROR: 'prisma migrate deploy' failed!"
+        return 1
+      }
+      log "Migrations applied successfully."
+      ;;
+      
+    reset)
+      log "WARNING: Resetting database completely (prisma migrate reset --force)..."
+      (cd "$PRISMA_DIR" && pnpm exec prisma migrate reset --force) || {
+        log "ERROR: 'prisma migrate reset' failed!"
+        return 1
+      }
+      
+      log "Database reset. Running 'db:seed'..."
+      (cd "$PRISMA_DIR" && pnpm exec prisma db seed) || {
+        log "ERROR: 'prisma db seed' failed!"
+        return 1
+      }
+      log "Database seeded successfully."
+      ;;
+      
+    none | *)
+      log "DB_MIGRATE_STRATEGY is 'none' or unset. Migration skipped."
+      ;;
+  esac
 }
 
 restart_systemd_services() {
@@ -36,16 +73,16 @@ restart_systemd_services() {
   fi
 
   if ! command -v systemctl >/dev/null 2>&1; then
-    log "systemctl not available; skipping systemd restarts"
+    log "systemctl not found; systemd restarts skipped"
     return
   fi
 
   for service in "${services[@]}"; do
-    log "Restarting systemd service $service"
+    log "Restarting systemd service: $service"
     if systemctl restart "$service"; then
-      log "systemd service $service restarted successfully"
+      log "Systemd service $service restarted successfully"
     else
-      log "systemd restart failed for $service"
+      log "Error restarting systemd service $service"
     fi
   done
 }
@@ -57,16 +94,16 @@ restart_pm2_processes() {
   fi
 
   if ! command -v pm2 >/dev/null 2>&1; then
-    log "pm2 not available; skipping PM2 reloads"
+    log "pm2 not found; PM2 reloads skipped"
     return
   fi
 
   for process in "${processes[@]}"; do
-    log "Reloading PM2 process $process"
+    log "Reloading PM2 process: $process"
     if pm2 reload "$process"; then
       log "PM2 process $process reloaded"
     else
-      log "PM2 reload failed for $process; attempting restart"
+      log "pm2 reload failed for $process; trying restart"
       if pm2 restart "$process"; then
         log "PM2 process $process restarted"
       else
@@ -79,6 +116,8 @@ restart_pm2_processes() {
 main() {
   install_dependencies
 
+  handle_database_migration
+
   IFS=' ' read -r -a systemd_services <<< "${SYSTEMD_SERVICES:-}"
   IFS=' ' read -r -a pm2_processes <<< "${PM2_PROCESSES:-dashboard-api}"
 
@@ -89,6 +128,8 @@ main() {
     log "No services specified to restart"
     return 1
   fi
+
+  log "Deploy completed successfully."
 }
 
 main "$@"
