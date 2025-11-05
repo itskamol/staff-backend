@@ -23,6 +23,8 @@ import { GateModule } from '../modules/gate/gate.module';
 import { CredentialModule } from '../modules/credential/credential.module';
 import { HikvisionModule } from '../modules/hikvision/hikvision.module';
 import { EmployeeSyncModule } from '../modules/employeeSync/employee-sync.module';
+import { ActionModule } from '../modules/action/action.module';
+import { EmployeePlanModule } from '../modules/employeePlan/employee-plan.module';
 
 @Module({
     imports: [
@@ -45,7 +47,9 @@ import { EmployeeSyncModule } from '../modules/employeeSync/employee-sync.module
         GateModule,
         CredentialModule,
         HikvisionModule,
-        EmployeeSyncModule
+        EmployeeSyncModule,
+        ActionModule,
+        EmployeePlanModule
     ],
     controllers: [AppController],
     providers: [

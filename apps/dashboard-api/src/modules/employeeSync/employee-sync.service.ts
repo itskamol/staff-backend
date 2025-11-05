@@ -1,12 +1,19 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, NotFoundException } from '@nestjs/common';
 import { PrismaClient, Prisma } from '@prisma/client';
 import { GetEmployeeSyncDto } from './get-employee-sync.dto';
+import { DataScope, UserContext } from '@app/shared/auth';
 
 @Injectable()
 export class EmployeeSyncService {
   private prisma = new PrismaClient();
 
-  async findAll(query: GetEmployeeSyncDto) {
+  async findAll(query: GetEmployeeSyncDto, scope: DataScope, user: UserContext) {
+
+    let organizationId = user?.organizationId
+    if (!organizationId && user.role != "ADMIN") {
+      throw new NotFoundException('User organizationId not found!')
+    }
+
     const { page = 1, limit = 10, status, gateId, sortBy = 'createdAt', order = 'desc' } = query;
 
     const skip = (page - 1) * limit;
@@ -14,6 +21,7 @@ export class EmployeeSyncService {
     const where: any = {
       ...(status && { status }),
       ...(gateId && { gateId }),
+      ...(organizationId && {organizationId})
     };
 
     const orderBy: Prisma.EmployeeSyncOrderByWithRelationInput = {
@@ -35,11 +43,9 @@ export class EmployeeSyncService {
 
     return {
       data,
-      meta: {
-        total,
-        page,
-        lastPage: Math.ceil(total / limit),
-      },
+      total,
+      page,
+      limit
     };
   }
 }

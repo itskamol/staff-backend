@@ -24,7 +24,7 @@ export class DeviceService {
         private hikvisionService: HikvisionService,
         private readonly prisma: PrismaService,
         private readonly gateway: EventsGateway,
-         private readonly employeeSyncRepository: EmployeeRepository
+        private readonly employeeSyncRepository: EmployeeRepository
     ) {
         this.socket = this.gateway.server;
     }
@@ -170,7 +170,7 @@ export class DeviceService {
         }
 
 
-        return this.deviceRepository.create(
+        const newDevice = await this.deviceRepository.create(
             {
                 ...device,
                 ...(gateId && {
@@ -189,6 +189,10 @@ export class DeviceService {
             },
             scope
         );
+
+        await this.hikvisionService.configureEventListeningHost(hikvisionConfig, newDevice.id)
+
+        return newDevice
     }
 
 
@@ -327,12 +331,20 @@ export class DeviceService {
         this.socket = socket;
     }
 
-    async assignEmployeesToGates(dto: AssignEmployeesToGatesDto) {
+    async assignEmployeesToGates(
+        dto: AssignEmployeesToGatesDto,
+        scope: DataScope,
+        user: UserContext) {
         const { gateIds, employeeIds } = dto;
         const result = {
             total: 0,
             success: 0
         };
+
+        let organizationId = user?.organizationId 
+        if(!organizationId && user.role != "ADMIN"){
+          throw new NotFoundException('User organizationId not found!')
+        }
 
         // 1. Gates
         const gates = await this.prisma.gate.findMany({
@@ -392,6 +404,7 @@ export class DeviceService {
                             employeeId: empId,
                             deviceId: device.id,
                             gateId: gate.id,
+                            organizationId,
                             status: 'INP',
                         },
                     });

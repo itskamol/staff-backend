@@ -18,7 +18,7 @@ export class CredentialController {
     @ApiResponse({ status: 201, type: CredentialResponseDto })
     async create(
         @Body() dto: CreateCredentialDto,
-        @User() user,
+        @User() user: UserContext,
         @Scope() scope: DataScope,
     ) {
         return this.credentialService.createCredential(dto, scope, user);

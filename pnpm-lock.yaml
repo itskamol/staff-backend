@@ -50,12 +50,18 @@ importers:
       bcrypt:
         specifier: ^6.0.0
         version: 6.0.0
+      body-parser:
+        specifier: ^2.2.0
+        version: 2.2.0
       class-transformer:
         specifier: ^0.5.1
         version: 0.5.1
       class-validator:
         specifier: ^0.14.2
         version: 0.14.2
+      express:
+        specifier: ^5.1.0
+        version: 5.1.0
       fast-xml-parser:
         specifier: ^5.3.0
         version: 5.3.1
@@ -160,7 +166,7 @@ importers:
         specifier: ^6.0.0
         version: 6.0.0
       '@types/express':
-        specifier: ^5.0.3
+        specifier: ^5.0.5
         version: 5.0.5
       '@types/jest':
         specifier: ^30.0.0

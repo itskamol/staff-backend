@@ -1,6 +1,6 @@
 import { Controller, Get, Post, Put, Delete, Body, Param, Query, Res } from '@nestjs/common';
 import { ApiTags, ApiBearerAuth, ApiExtraModels, ApiResponse } from '@nestjs/swagger';
-import { Roles, Role, User as CurrentUser, DataScope, Public } from '@app/shared/auth';
+import { Roles, Role, DataScope, Public, User } from '@app/shared/auth';
 import { QueryDto } from '@app/shared/utils';
 import { DeviceService } from '../services/device.service';
 import { UserContext } from 'apps/dashboard-api/src/shared/interfaces';
@@ -38,7 +38,7 @@ export class DeviceController {
     })
     async findAll(
         @Query() query: QueryDto,
-        @CurrentUser() user: UserContext,
+        @User() user: UserContext,
         @Scope() scope: DataScope
     ) {
         return await this.deviceService.findAll(query, scope, user);
@@ -47,7 +47,7 @@ export class DeviceController {
     @Get(':id')
     @Roles(Role.ADMIN, Role.GUARD)
     @ApiCrudOperation(DeviceDto, 'get', { summary: 'Get device by ID' })
-    async findOne(@Param('id') id: number, @CurrentUser() user: UserContext) {
+    async findOne(@Param('id') id: number, @User() user: UserContext) {
         return await this.deviceService.findOne(id, user);
     }
 
@@ -71,7 +71,7 @@ export class DeviceController {
     async update(
         @Param('id') id: number,
         @Body() updateDeviceDto: UpdateDeviceDto,
-        @CurrentUser() user: UserContext
+        @User() user: UserContext
     ) {
         return await this.deviceService.update(id, updateDeviceDto, user);
     }
@@ -85,7 +85,7 @@ export class DeviceController {
     async remove(
         @Param('id') id: number,
         @Scope() scope: DataScope,
-        @CurrentUser() user: UserContext
+        @User() user: UserContext
     ) {
         return await this.deviceService.remove(id, scope, user);
     }
@@ -106,6 +106,7 @@ export class DeviceController {
 
 
     @Post('assign-employees')
+    @Roles(Role.ADMIN, Role.HR)
     @ApiCrudOperation(DeviceDto, 'create', {
         summary: 'Assign employees to gate devices for facial access',
     })
@@ -128,8 +129,12 @@ export class DeviceController {
             },
         },
     })
-    async assignEmployeesToGates(@Body() dto: AssignEmployeesToGatesDto) {
-        return await this.deviceService.assignEmployeesToGates(dto);
+    async assignEmployeesToGates(
+        @Body() dto: AssignEmployeesToGatesDto,
+        @User() user: UserContext,
+        @Scope() scope: DataScope,
+    ) {
+        return await this.deviceService.assignEmployeesToGates(dto, scope, user);
     }
 
 

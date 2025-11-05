@@ -1,20 +1,23 @@
 model Action {
-  id           Int         @id @default(autoincrement())
-  deviceId     Int?        @map("device_id")
-  gateId       Int?        @map("gate_id")
-  actionTime   DateTime    @map("action_time")
-  employeeId   Int?        @map("employee_id")
-  visitorId    Int?        @map("visitor_id")
-  visitorType  VisitorType
-  entryType    EntryType
-  actionType   ActionType
-  actionResult String?     @map("action_result")
-  actionMode   ActionMode
+  id             Int           @id @default(autoincrement())
+  deviceId       Int?          @map("device_id")
+  gateId         Int?          @map("gate_id")
+  actionTime     DateTime      @map("action_time")
+  employeeId     Int?          @map("employee_id")
+  visitorId      Int?          @map("visitor_id")
+  visitorType    VisitorType
+  entryType      EntryType
+  actionType     ActionType
+  actionResult   String?       @map("action_result")
+  actionMode     ActionMode
+  status         ActionStatus?
+  organizationId Int?          @map("organization_id")
 
-  device   Device?   @relation(fields: [deviceId], references: [id], onDelete: SetNull)
-  gate     Gate?     @relation(fields: [gateId], references: [id], onDelete: SetNull)
-  employee Employee? @relation(fields: [employeeId], references: [id], onDelete: SetNull)
-  visitor  Visitor?  @relation(fields: [visitorId], references: [id], onDelete: SetNull)
+  organization Organization? @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  device       Device?       @relation(fields: [deviceId], references: [id], onDelete: SetNull)
+  gate         Gate?         @relation(fields: [gateId], references: [id], onDelete: SetNull)
+  employee     Employee?     @relation(fields: [employeeId], references: [id], onDelete: SetNull)
+  visitor      Visitor?      @relation(fields: [visitorId], references: [id], onDelete: SetNull)
 
   @@index([deviceId])
   @@index([gateId])
@@ -29,13 +32,16 @@ model Action {
 }
 
 model Gate {
-  id        Int      @id @default(autoincrement())
-  name      String
-  createdAt DateTime @default(now()) @map("created_at")
+  id             Int    @id @default(autoincrement())
+  name           String
+  organizationId Int?   @map("organization_id")
+  createdAt    DateTime      @default(now()) @map("created_at")
 
-  devices Device[]
-  actions Action[]
-  EmployeeSync  EmployeeSync[]
+  organization Organization? @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  devices      Device[]
+  actions      Action[]
+  EmployeeSync EmployeeSync[]
+
   @@index([name])
   @@map("gates")
 }
@@ -64,9 +70,9 @@ model Device {
   createdAt DateTime @default(now()) @map("created_at")
   updatedAt DateTime @updatedAt @map("updated_at")
 
-  gate    Gate?    @relation(fields: [gateId], references: [id], onDelete: SetNull)
-  actions Action[]
-  EmployeeSync  EmployeeSync[]
+  gate         Gate?          @relation(fields: [gateId], references: [id], onDelete: SetNull)
+  actions      Action[]
+  EmployeeSync EmployeeSync[]
 
   @@index([gateId])
   @@index([ipAddress])

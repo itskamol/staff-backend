@@ -174,10 +174,6 @@ export class HikvisionService {
         };
       }
 
-      this.logger.log(
-        `Hikvision qurilma maʼlumotlari: ${JSON.stringify(deviceInfo, null, 2)}`,
-      );
-
       return {
         success: true,
         message: 'Qurilma maʼlumotlari muvaffaqiyatli olindi',
@@ -295,14 +291,15 @@ export class HikvisionService {
   }
 
   async getUser(employeeNo: string, config: HikvisionConfig): Promise<HikvisionUser | null> {
-    const users = await this.getAllUsers(config);
+    const users = await this.getAllUsers();
     const user = users.find(u => u.employeeNo === employeeNo);
     return user || null;
   }
 
-  async getAllUsers(config: HikvisionConfig): Promise<HikvisionUser[]> {
+  async getAllUsers(): Promise<HikvisionUser[]> {
     try {
-      this.setConfig(config);
+      // this.setConfig(config);
+      this.setConfig({ host: '192.168.100.139', port: 80, protocol: 'http', username: 'admin', password: "!@#Mudofaa@" });
 
       const body = {
         UserInfoSearchCond: {
@@ -508,6 +505,85 @@ export class HikvisionService {
     return `${date.getFullYear()}-${pad(date.getMonth() + 1)}-${pad(date.getDate())}T${pad(date.getHours())}:${pad(date.getMinutes())}:${pad(date.getSeconds())}`;
   }
 
+
+
+  async configureEventListeningHost(config: HikvisionConfig, deviceId: number): Promise<{
+    success: boolean;
+    message: string;
+    data?: any;
+  }> {
+    try {
+      this.setConfig(config);
+      // this.setConfig({ host: '192.168.100.139', port: 80, protocol: 'http', username: 'admin', password: "!@#Mudofaa@" });
+
+
+      // ──────── DEFAULT HOST & PORT ────────
+      const DEFAULT_HOST = '192.168.100.82'; // O‘zingizning server IP
+      const DEFAULT_PORT = '3001';            // NestJS ishlayotgan port
+
+      const serverHost = DEFAULT_HOST;
+      // this.configService.get<string>('SERVER_HOST')?.trim() ||
+
+      const serverPort = DEFAULT_PORT;
+        // this.configService.get<string>('SERVER_PORT')?.trim() ||
+
+      this.logger.log(
+        `Event URL: http://${serverHost}:${serverPort}/api/v1/hikvision/event/${deviceId}`,
+      );
+
+      const xmlBody = `
+<?xml version="1.0" encoding="UTF-8"?>
+<HttpHostNotification xmlns="http://www.isapi.org/ver20/XMLSchema" version="2.0">
+  <id>1</id>
+  <url>http://${serverHost}:${serverPort}/api/v1/hikvision/event/${deviceId}</url>
+  <protocolType>HTTP</protocolType>
+  <parameterFormatType>JSON</parameterFormatType>
+  <addressingFormatType>ipaddress</addressingFormatType>
+  <host>${serverHost}</host>
+  <portNo>${serverPort}</portNo>
+  <ipAddress>${DEFAULT_HOST}</ipAddress>
+  <httpAuthenticationMethod>none</httpAuthenticationMethod>
+  <eventTypeList>
+    <eventType>FaceSnapshotEvent</eventType>
+    <eventType>FaceRecognitionEvent</eventType>
+  </eventTypeList>
+</HttpHostNotification>`.trim();
+
+      const response = await this.makeAuthenticatedRequest(
+        'PUT',
+        '/ISAPI/Event/notification/httpHosts/1',
+        xmlBody,
+      );
+
+      if (response.status === 200) {
+        const parser = new XMLParser();
+        const result = parser.parse(response.data);
+
+        this.logger.log(
+          '✅ Hikvision event listening host muvaffaqiyatli sozlandi',
+        );
+        return {
+          success: true,
+          message: `Event host http://${serverHost}:${serverPort}/api/v1/hikvision/event/${deviceId} ga yo‘naltirildi`,
+          data: result,
+        };
+      }
+
+      const err = response.data || 'Nomaʼlum xatolik';
+      this.logger.warn(`⚠️ Event host sozlashda xato: ${response.status} → ${err}`);
+
+      return {
+        success: false,
+        message: `Xato: ${response.status}. Javob: ${err}`,
+      };
+    } catch (error) {
+      this.logger.error('❌ configureEventListeningHost:', error.message);
+      return {
+        success: false,
+        message: `Event host sozlashda xatolik: ${error.message}`,
+      };
+    }
+  }
   // async syncUsersFromDevice(): Promise<{ synced: number; errors: string[] }> {
   //   try {
   //     // const hikvisionUsers = await this.getAllUsers();

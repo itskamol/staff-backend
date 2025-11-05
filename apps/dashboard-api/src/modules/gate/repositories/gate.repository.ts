@@ -74,11 +74,25 @@ export class GateRepository extends BaseRepository<
             },
         });
 
+        const totalEmployee = await this.prisma.action.groupBy({
+            by: ['employeeId'],
+            where: {
+                gateId: id,
+                employeeId: {
+                    not: null,
+                },
+            },
+            _count: {
+                employeeId: true,
+            },
+        });
+
         return {
             totalDevices: (gate as any)._count.devices,
             activeDevices,
             totalActions: (gate as any)._count.actions,
             todayActions,
+            totalEmployee: totalEmployee.length
         };
     }
 }
