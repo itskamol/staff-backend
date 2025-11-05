@@ -1,8 +1,11 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/" && pwd)"
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+ROOT_DIR="$(cd "$SCRIPT_DIR/.." && pwd)"
 PRISMA_DIR="$ROOT_DIR/shared/database/prisma"
+PRISMA_SCHEMA="$PRISMA_DIR/models/schema.prisma"
+PNPM_HOME_DIR="${PNPM_HOME:-$ROOT_DIR/.pnpm-home}"
 
 log() {
   printf '[%s] %s\n' "$(date '+%Y-%m-%dT%H:%M:%S%z')" "$*"
@@ -14,12 +17,15 @@ install_dependencies() {
     return
   fi
 
-  log "Installing production dependencies for workspace"
-  (cd "$ROOT_DIR" && pnpm install --no-frozen-lockfile --prod) || log "Failed to install workspace dependencies"
+  mkdir -p "$PNPM_HOME_DIR"
+  export PNPM_HOME="$PNPM_HOME_DIR"
 
-  if [ -f "$PRISMA_DIR/models/schema.prisma" ]; then
+  log "Installing production dependencies for workspace"
+  (cd "$ROOT_DIR" && CI=1 pnpm install --no-frozen-lockfile --prod) || log "Failed to install workspace dependencies"
+
+  if [ -f "$PRISMA_SCHEMA" ]; then
     log "Generating Prisma client"
-    (cd "$PRISMA_DIR" && pnpm exec prisma generate) || log "Failed to generate Prisma client"
+    (cd "$PRISMA_DIR" && CI=1 pnpm exec prisma generate) || log "Failed to generate Prisma client"
   else
     log "Prisma schema not found, 'prisma generate' skipped."
   fi
@@ -28,7 +34,7 @@ install_dependencies() {
 handle_database_migration() {
   local strategy="${DB_MIGRATE_STRATEGY:-none}"
   
-  if [ ! -f "$PRISMA_DIR/models/schema.prisma" ]; then
+  if [ ! -f "$PRISMA_SCHEMA" ]; then
     log "Prisma schema not found, database operations skipped."
     return
   fi
@@ -38,7 +44,7 @@ handle_database_migration() {
   case "$strategy" in
     deploy)
       log "Applying production migrations (prisma migrate deploy)..."
-      (cd "$PRISMA_DIR" && pnpm exec prisma migrate deploy) || {
+      (cd "$PRISMA_DIR" && CI=1 pnpm exec prisma migrate deploy) || {
         log "ERROR: 'prisma migrate deploy' failed!"
         return 1
       }
@@ -47,13 +53,13 @@ handle_database_migration() {
       
     reset)
       log "WARNING: Resetting database completely (prisma migrate reset --force)..."
-      (cd "$PRISMA_DIR" && pnpm exec prisma migrate reset --force) || {
+      (cd "$PRISMA_DIR" && CI=1 pnpm exec prisma migrate reset --force) || {
         log "ERROR: 'prisma migrate reset' failed!"
         return 1
       }
       
       log "Database reset. Running 'db:seed'..."
-      (cd "$PRISMA_DIR" && pnpm exec prisma db seed) || {
+      (cd "$PRISMA_DIR" && CI=1 pnpm exec prisma db seed) || {
         log "ERROR: 'prisma db seed' failed!"
         return 1
       }
