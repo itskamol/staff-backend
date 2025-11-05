@@ -130,7 +130,7 @@ jobs:
 
       - name: Sync build to server
         run: |
-          rsync -az --delete --exclude '.env' -e "ssh -i ~/.ssh/id_ed25519 -p $PORT" dist/ "$USERNAME@$HOST:$REMOTE_PATH/"
+          rsync -az --delete --exclude={'.env','node_modules'} -e "ssh -i ~/.ssh/id_ed25519 -p $PORT" dist/ "$USERNAME@$HOST:$REMOTE_PATH/"
         env:
           HOST: ${{ secrets.HOST }}
           PORT: ${{ secrets.PORT }}
@@ -146,7 +146,7 @@ jobs:
 
       - name: Restart application
         run: |
-          ssh -i ~/.ssh/id_ed25519 -p "$PORT" "$USERNAME@$HOST" "cd $REMOTE_PATH && pwd && ls && bash ./scripts/restart.sh"
+          ssh -i ~/.ssh/id_ed25519 -p "$PORT" "$USERNAME@$HOST" "cd $REMOTE_PATH && pwd && ls && export DB_MIGRATE_STRATEGY="reset" export PM2_PROCESSES="dashboard-api" && bash ./scripts/restart.sh"
         env:
           HOST: ${{ secrets.HOST }}
           PORT: ${{ secrets.PORT }}
