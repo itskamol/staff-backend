@@ -144,9 +144,6 @@ jobs:
       - name: Restart application
         run: |
           ssh -i ~/.ssh/id_ed25519 -p "$PORT" "$USERNAME@$HOST" <<'EOF'
-            source ~/.bashrc
-            source ~/.profile 2>/dev/null || true
-            export PATH="$HOME/.local/share/pnpm:$PATH"
             cd $REMOTE_PATH
             chmod +x ./scripts/restart.sh
             ./scripts/restart.sh
