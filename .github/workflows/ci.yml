@@ -49,7 +49,7 @@ jobs:
           restore-keys: |
             nx-cache-${{ runner.os }}-
 
-      - name: Build runner
+      - name: Generate Prisma Client
         run: pnpm exec prisma generate
 
       - name: Build dashboard-api
@@ -61,22 +61,15 @@ jobs:
           cp scripts/restart.sh dist/scripts/restart.sh
           chmod +x dist/scripts/restart.sh
 
-      - name: Generate Prisma Client
-        run: |
-          cp -r .config dist/
-          pnpm exec prisma generate
-
       - name: Copy Prisma files
         run: |
           mkdir -p dist/shared/database/prisma/
           mkdir -p dist/shared/database/prisma/
           cp -r shared/database/prisma/* dist/shared/database/prisma/
-          cp tsconfig.base.json dist/
           cp -r .config dist/
 
       - name: Copy package.json files for dependency installation
         run: |
-          # Root package.json for pnpm workspace
           cp package.json dist/package.json
           cp pnpm-lock.yaml dist/pnpm-lock.yaml
           cp pnpm-workspace.yaml dist/pnpm-workspace.yaml
@@ -86,8 +79,7 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: dist
-          path: |
-            dist/**
+          path: dist
           if-no-files-found: error
 
   deploy:
@@ -129,7 +121,7 @@ jobs:
 
       - name: Sync build to server
         run: |
-          rsync -az --delete -e "ssh -i ~/.ssh/id_ed25519 -p $PORT" dist/ "$USERNAME@$HOST:$REMOTE_PATH/"
+          rsync -az --delete --exclude '.env' -e "ssh -i ~/.ssh/id_ed25519 -p $PORT" dist/ "$USERNAME@$HOST:$REMOTE_PATH/"
         env:
           HOST: ${{ secrets.HOST }}
           PORT: ${{ secrets.PORT }}
