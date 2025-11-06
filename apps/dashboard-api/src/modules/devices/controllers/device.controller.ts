@@ -15,10 +15,10 @@ import { Scope } from 'apps/dashboard-api/src/shared/decorators';
 export class DeviceController {
     constructor(private readonly deviceService: DeviceService) { }
 
-    // @Get('test-socket')
-    // testSocket() {
-    //     return this.deviceService.testSocket();
-    // }
+    @Get('test-config')
+    testSocket() {
+        return this.deviceService.configCheck();
+    }
 
     @Get()
     @Roles(Role.ADMIN, Role.GUARD)

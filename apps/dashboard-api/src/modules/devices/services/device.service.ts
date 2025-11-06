@@ -12,8 +12,8 @@ import { PrismaService } from '@app/shared/database';
 import { Server } from 'socket.io';
 import { StatusEnum } from '@prisma/client';
 import { EventsGateway } from '../../websocket/events.gateway';
-import { EmployeeRepository } from '../../employee/repositories/employee.repository';
-import { OrganizationService } from '../../organization/organization.service';
+import { ConfigService } from 'apps/dashboard-api/src/core/config/config.service'; 
+
 
 
 @Injectable()
@@ -25,9 +25,16 @@ export class DeviceService {
         private hikvisionService: HikvisionService,
         private readonly prisma: PrismaService,
         private readonly gateway: EventsGateway,
-        private readonly organization: OrganizationService
+        private readonly configService: ConfigService
     ) {
         this.socket = this.gateway.server;
+    }
+
+    async configCheck(){
+        const  port =  this.configService.port
+        const ip = this.configService.hostIp
+        console.log({port, ip})
+        return {port,ip}
     }
 
     async findAll(query: QueryDto & { type?: DeviceType; gateId?: number }, scope: DataScope, user: UserContext) {
@@ -344,6 +351,8 @@ export class DeviceService {
 
         const organizationId = dto.organizationId ? dto.organizationId : scope.organizationId
 
+        const  port =  this.configService.port
+        const ip = this.configService.hostIp
 
         // 1. Gates
         const gates = await this.prisma.gate.findMany({
@@ -444,7 +453,8 @@ export class DeviceService {
 
                         if (!employee?.photo) throw new Error('Foto topilmadi');
 
-                        const photoUrl = `http://192.168.100.82:3001/storage/${employee.photo}`;
+                        
+                        const photoUrl = `http://${ip}:${port}/storage/${employee.photo}`;
                         await this.hikvisionService.addFaceToUserViaURL(
                             empId.toString(),
                             photoUrl,

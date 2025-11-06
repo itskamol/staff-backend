@@ -5,7 +5,6 @@ import { EmployeeService } from '../../employee/services/employee.service';
 import { CredentialRepository, CredentialWithRelations } from '../repositories/credential.repository';
 import { CreateCredentialDto, CredentialQueryDto, UpdateCredentialDto } from '../dto/credential.dto';
 import { PrismaService } from '@app/shared/database';
-import { OrganizationService } from '../../organization/organization.service';
 
 @Injectable()
 export class CredentialService {
@@ -13,7 +12,6 @@ export class CredentialService {
         private readonly credentialRepository: CredentialRepository,
         private readonly employeeService: EmployeeService,
         private readonly prisma: PrismaService,
-        private readonly organization: OrganizationService
     ) { }
 
 

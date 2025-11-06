@@ -3,13 +3,11 @@ import { EmployeePlanRepository } from './employee-plan.repository';
 import { AssignEmployeesDto, CreateEmployeePlanDto, EmployeePlanQueryDto, UpdateEmployeePlanDto } from './employee-plan.dto';
 import { PrismaService } from '@app/shared/database';
 import { DataScope, UserContext } from '@app/shared/auth';
-import { OrganizationService } from '../organization/organization.service';
 
 @Injectable()
 export class EmployeePlanService {
     constructor(private readonly repo: EmployeePlanRepository,
         private readonly prisma: PrismaService,
-        private readonly organization: OrganizationService
     ) { }
 
     async create(

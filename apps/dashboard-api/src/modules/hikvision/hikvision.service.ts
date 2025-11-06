@@ -1,5 +1,4 @@
 import { Injectable, Logger, BadRequestException } from '@nestjs/common';
-import { ConfigService } from '@nestjs/config';
 import axios, { Method, type AxiosInstance } from 'axios';
 import * as crypto from 'crypto';
 import { CreateHikvisionUserDto, HikvisionConfig, HikvisionUser } from './dto/create-hikvision-user.dto';
@@ -7,17 +6,13 @@ import { XMLParser } from 'fast-xml-parser';
 import FormData from 'form-data'
 import * as xml2js from 'xml2js';
 import { EmployeeService } from '../employee/services/employee.service';
-import { PrismaService } from '@app/shared/database';
-
-
-
+import { ConfigService } from '../../core/config/config.service';
 
 @Injectable()
 export class HikvisionService {
   private readonly logger = new Logger(HikvisionService.name);
   private httpClient: AxiosInstance;
   private config: HikvisionConfig;
-  private Prisma: PrismaService
   private parser: xml2js.Parser;
 
   constructor(
@@ -28,7 +23,6 @@ export class HikvisionService {
     this.logger.log(`HikvisionService initialized`);
   }
 
-  // --- Dinamik config qo'yish ---
   setConfig(config: HikvisionConfig) {
     this.config = config;
     this.httpClient = axios.create({
@@ -235,7 +229,6 @@ export class HikvisionService {
     try {
 
       this.setConfig(config);
-      // this.setConfig({ host: '192.168.100.139', port: 80, protocol: 'http', username: 'admin', password: "!@#Mudofaa@" });
 
       const userId = dto.employeeId;
       const checkExisting = await this.getUser(userId, this.config);
@@ -418,7 +411,6 @@ export class HikvisionService {
   ): Promise<boolean> {
     try {
       this.setConfig(config);
-      // this.setConfig({ host: '192.168.100.139', port: 80, protocol: 'http', username: 'admin', password: "!@#Mudofaa@" });
       const formData = new FormData();
       formData.append(
         'FaceDataRecord',
@@ -514,18 +506,9 @@ export class HikvisionService {
   }> {
     try {
       this.setConfig(config);
-      // this.setConfig({ host: '192.168.100.139', port: 80, protocol: 'http', username: 'admin', password: "!@#Mudofaa@" });
 
-
-      // ──────── DEFAULT HOST & PORT ────────
-      const DEFAULT_HOST = '192.168.100.82'; // O‘zingizning server IP
-      const DEFAULT_PORT = '3001';            // NestJS ishlayotgan port
-
-      const serverHost = DEFAULT_HOST;
-      // this.configService.get<string>('SERVER_HOST')?.trim() ||
-
-      const serverPort = DEFAULT_PORT;
-        // this.configService.get<string>('SERVER_PORT')?.trim() ||
+      const serverHost = this.configService.hostIp;
+      const serverPort = this.configService.port;
 
       this.logger.log(
         `Event URL: http://${serverHost}:${serverPort}/api/v1/hikvision/event/${deviceId}`,
@@ -541,7 +524,7 @@ export class HikvisionService {
   <addressingFormatType>ipaddress</addressingFormatType>
   <host>${serverHost}</host>
   <portNo>${serverPort}</portNo>
-  <ipAddress>${DEFAULT_HOST}</ipAddress>
+  <ipAddress>${serverHost}</ipAddress>
   <httpAuthenticationMethod>none</httpAuthenticationMethod>
   <eventTypeList>
     <eventType>FaceSnapshotEvent</eventType>
