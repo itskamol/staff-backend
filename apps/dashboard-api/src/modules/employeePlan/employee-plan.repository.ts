@@ -84,6 +84,11 @@ export class EmployeePlanRepository {
                             photo: true,
                         },
                     },
+                    organization: {
+                        select: {
+                            fullName: true
+                        }
+                    }
                 },
             }
         );

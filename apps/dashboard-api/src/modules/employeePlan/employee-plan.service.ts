@@ -16,12 +16,10 @@ export class EmployeePlanService {
         scope: DataScope) {
 
         try {
-            console.log(dto)
             const organizationId = dto.organizationId ? dto.organizationId : scope.organizationId
 
             return this.repo.create({ ...dto, organizationId });
         } catch (error) {
-            console.log(error)
             throw new BadRequestException({ message: error.message })
         }
     }
@@ -29,6 +27,15 @@ export class EmployeePlanService {
     async findAll(query: EmployeePlanQueryDto) {
         const where: any = {};
         if (query.isActive !== undefined) where.isActive = query.isActive;
+
+        let search = query.search
+
+        if (search) {
+            where.OR = [
+                { name: { contains: search, mode: 'insensitive' } },
+                { addadditionalDetails: { contains: search, mode: 'insensitive' } },
+            ];
+        }
 
         const orderBy: any = {};
         if (query.sortBy) {

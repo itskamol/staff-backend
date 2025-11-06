@@ -76,6 +76,8 @@ model EmployeeSync {
 
 model EmployeePlan {
   id             Int     @id @default(autoincrement())
+  name String?
+  addadditionalDetails String?
   startTime      String
   endTime        String
   extraTime      String
