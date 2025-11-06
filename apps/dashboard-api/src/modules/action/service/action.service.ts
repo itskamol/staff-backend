@@ -14,21 +14,27 @@ export class ActionService {
   async create(eventData: any, deviceId: number) {
     const acEvent = eventData.AccessControllerEvent || {};
     const employeeId = acEvent.employeeNoString ? parseInt(acEvent.employeeNoString) : undefined;
-
     const actionTime = new Date(eventData.dateTime);
 
     const device = await this.prisma.device.findFirst({ where: { id: deviceId } });
+    if (!device) throw new Error(`Device ${deviceId} topilmadi`);
+
     const gate = await this.prisma.gate.findFirst({ where: { id: device.gateId } });
+    if (!gate) throw new Error(`Gate ${device.gateId} topilmadi`);
+
     const employee = await this.prisma.employee.findFirst({ where: { id: employeeId } });
-    const plan = await this.prisma.employeePlan.findFirst({ where: { id: employee.employeePlanId } });
+    if (!employee) throw new Error(`Employee ${employeeId} topilmadi`);
 
-    if (!plan) throw new Error('Employee plan not found');
+    if (!employee.employeePlanId) {
+      throw new Error(`Employee ${employeeId} uchun reja (employeePlanId) mavjud emas`);
+    }
 
-    const { status } = await this.getActionStatus(
-      actionTime,
-      plan.startTime,
-      plan.extraTime
-    );
+    const plan = await this.prisma.employeePlan.findFirst({
+      where: { id: employee.employeePlanId },
+    });
+    if (!plan) throw new Error(`Employee plan ${employee.employeePlanId} topilmadi`);
+
+    const { status } = await this.getActionStatus(actionTime, plan.startTime, plan.extraTime);
 
     const dto: CreateActionDto = {
       deviceId,
@@ -36,17 +42,20 @@ export class ActionService {
       actionTime: eventData.dateTime,
       employeeId,
       visitorId: undefined,
-      visitorType: acEvent.userType === 'normal' ? VisitorType.EMPLOYEE : VisitorType.VISITOR,
+      visitorType:
+        acEvent.userType === 'normal' ? VisitorType.EMPLOYEE : VisitorType.VISITOR,
       entryType: device.entryType,
       actionType: ActionType.PHOTO,
       actionResult: null,
-      actionMode: eventData.eventState === 'active' ? ActionMode.ONLINE : ActionMode.OFFLINE,
+      actionMode:
+        eventData.eventState === 'active' ? ActionMode.ONLINE : ActionMode.OFFLINE,
       status,
       organizationId: gate.organizationId,
     };
 
     return this.prisma.action.create({ data: dto });
   }
+
 
   async findOne(id: number) {
     const action = await this.repo.findOne(id);
@@ -59,7 +68,7 @@ export class ActionService {
 
     if (query.deviceId) where.deviceId = Number(query.deviceId);
     if (query.employeeId) where.employeeId = Number(query.employeeId);
-    if(query.status) where.status = query.status
+    if (query.status) where.status = query.status
 
     const page = query.page ? Number(query.page) : 1;
     const limit = query.limit ? Number(query.limit) : 10;
@@ -93,7 +102,7 @@ export class ActionService {
   }
 
 
-  async getActionStatus(actionTime: Date, startTime: string, extraTime: string): Promise<{ status: ActionStatus}> {
+  async getActionStatus(actionTime: Date, startTime: string, extraTime: string): Promise<{ status: ActionStatus }> {
     const [startHour, startMinute] = startTime.split(':').map(Number);
     const [extraHour, extraMinute] = extraTime ? extraTime.split(':').map(Number) : [0, 0];
 
