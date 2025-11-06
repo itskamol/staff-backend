@@ -1,4 +1,4 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
+import { BadGatewayException, BadRequestException, Injectable, NotFoundException } from '@nestjs/common';
 import { EmployeePlanRepository } from './employee-plan.repository';
 import { AssignEmployeesDto, CreateEmployeePlanDto, EmployeePlanQueryDto, UpdateEmployeePlanDto } from './employee-plan.dto';
 import { PrismaService } from '@app/shared/database';
@@ -14,9 +14,16 @@ export class EmployeePlanService {
         dto: CreateEmployeePlanDto,
         user: UserContext,
         scope: DataScope) {
-        const organizationId = dto.organizationId ? dto.organizationId : scope.organizationId
 
-        return this.repo.create({ ...dto, organizationId });
+        try {
+            console.log(dto)
+            const organizationId = dto.organizationId ? dto.organizationId : scope.organizationId
+
+            return this.repo.create({ ...dto, organizationId });
+        } catch (error) {
+            console.log(error)
+            throw new BadRequestException({ message: error.message })
+        }
     }
 
     async findAll(query: EmployeePlanQueryDto) {
