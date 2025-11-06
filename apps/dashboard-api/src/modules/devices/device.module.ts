@@ -7,10 +7,10 @@ import { GateRepository } from '../gate/repositories/gate.repository';
 import { HikvisionModule } from '../hikvision/hikvision.module';
 import { EmployeeModule } from '../employee/employee.module';
 import { WebsocketModule } from '../websocket/websocket.module';
-import { OrganizationModule } from '../organization/organization.module';
+import { ConfigModule } from '../../core/config/config.module';
 
 @Module({
-    imports: [SharedDatabaseModule, HikvisionModule, EmployeeModule, DeviceModule, WebsocketModule, OrganizationModule],
+    imports: [SharedDatabaseModule, HikvisionModule, EmployeeModule, DeviceModule, WebsocketModule, ConfigModule],
     controllers: [DeviceController],
     providers: [DeviceService, DeviceRepository, GateRepository],
     exports: [DeviceService],
