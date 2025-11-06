@@ -4,7 +4,7 @@ import { QueryDto } from '@app/shared/utils';
 import { AssignEmployeesToGatesDto, CreateDeviceDto, UpdateDeviceDto } from '../dto/device.dto';
 import { UserContext } from '../../../shared/interfaces';
 import { DeviceRepository } from '../repositories/device.repository';
-import { DeviceType, EntryType, Prisma, WelcomeText } from '@prisma/client';
+import { DeviceType, EntryType, Prisma } from '@prisma/client';
 import { GateRepository } from '../../gate/repositories/gate.repository';
 import { HikvisionService } from '../../hikvision/hikvision.service';
 import { HikvisionConfig } from '../../hikvision/dto/create-hikvision-user.dto';
@@ -13,8 +13,6 @@ import { Server } from 'socket.io';
 import { StatusEnum } from '@prisma/client';
 import { EventsGateway } from '../../websocket/events.gateway';
 import { ConfigService } from 'apps/dashboard-api/src/core/config/config.service'; 
-
-
 
 @Injectable()
 export class DeviceService {

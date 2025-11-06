@@ -74,17 +74,6 @@ Asosiy fayl saqlash sozlamalari:
 - `STORAGE_BUCKET` – obyekt saqlash bucket nomi (S3/MinIO uchun)
 - `STORAGE_RETENTION_DAYS` – issiq saqlashda qolish muddati (kunlarda)
 
-Agent Gateway uchun asosiy sozlamalar:
-
-- `GATEWAY_ID` – gateway identifikatori (standart bo'lib `hostname` olinadi)
-- `SERVER_URL` – Agent API bazaviy URL manzili (`https://agent-api.example.com`)
-- `CONTROL_URL` – WebSocket boshqaruv kanali (`wss://agent-api.example.com/ws`)
-- `API_KEY` – Gateway ↔ Agent API autentifikatsiya kaliti
-- `LOCAL_BUFFER_PATH` – offline navbat fayli saqlanadigan katalog
-- `FLUSH_INTERVAL_MS` / `BATCH_SIZE` – uplink yuborish intervali va batch hajmi
-- `HEARTBEAT_INTERVAL_MS` / `CONTROL_RECONNECT_BACKOFF_MS` – boshqaruv kanaliga tegishli interval sozlamalari
-- `GATEWAY_API_KEYS` – Agent API tomonida ruxsat etilgan gateway API kalitlari (vergul bilan ajratiladi)
-
 4. **Ma'lumotlar bazasini sozlash**:
 
 ```bash
@@ -155,7 +144,6 @@ staff/
 │   │   │   │   ├── data-processing/ # Ma'lumotlarni qayta ishlash
 │   │   │   │   ├── hikvision/  # Hikvision integratsiyasi
 │   │   │   │   └── security/   # Xavfsizlik
-│   │   │   │   └── gateway/    # Agent Gateway ingest & boshqaruv endpointlari
 │   │   │   └── ...
 │   ├── dashboard-api-e2e/      # E2E testlar
 │   └── agent-api-e2e/          # E2E testlar
@@ -211,8 +199,6 @@ staff/
 - `POST /data-processing/job` - Ma'lumotlarni qayta ishlash
 - `GET /data-processing/queue` - Navbat holati
 - `POST /hikvision/events` - Hikvision hodisalari
-- `POST /gateway/{gatewayId}/commands` – Gateway uchun boshqaruv komandasi yaratish
-- `GET /gateway/{gatewayId}/commands` – Gateway bo'yicha jo'natilgan komandalar tarixini olish
 
 ## 🧪 Test qilish
 

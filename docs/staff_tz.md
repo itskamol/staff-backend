@@ -4,25 +4,65 @@
 
 ### 1.1 Loyiha maqsadi
 
-Tashkilot hodimlarining:
+Tashkilot hodimlarining ishini kompleks monitoring va tahlil qilish uchun korporativ tizim yaratish:
 
-- Ishga kelish/ketish vaqtlarini HIKVision qurilmalari orqali nazorat qilish
-- Kun davomida kompyuterlardagi faoliyatlarini agent dastur orqali monitoring
-  qilish
-- Tashrif buyuruvchilarni ro'yxatga olish va nazorat qilish
-- Hodimlar mehnatini samaradorligini tahlil qilish
+- **Kirish-chiqish nazorati**: HIKVision qurilmalari orqali hodimlarning ishga kelish/ketish vaqtlarini avtomatik monitoring qilish
+- **Kompyuter faoliyati monitoring**: C# agent dasturi orqali hodimlarning kompyuterdagi real-time faoliyatini kuzatish (aktiv oynalar, tashrif buyurilgan saytlar, screenshot)
+- **Tashrif buyuruvchilar boshqaruvi**: Tashqi mehmonlarni ro'yxatga olish va nazorat qilish tizimi
+- **Samaradorlik tahlili**: Hodimlar mehnat unumdorligini tahlil qilish va hisobotlar yaratish
+- **RBAC asosida huquqlar**: Role-Based Access Control orqali xavfsiz va ierarxik boshqaruv
 
-### 1.2 Texnologiyalar
+### 1.2 Loyiha qamrovi
 
-- **Backend**: NestJS v10+ (NX Monorepo)
-- **Frontend**: React.js
-- **Ma'lumotlar bazasi**: PostgreSQL 15+ + Prisma ORM v5+
-- **Cache**: Redis 7+
-- **Queue**: BullMQ
-- **Agent dastur**: C# (Windows Service)
-- **HIKVision integratsiya**: SDK/API
-- **Monorepo Tool**: NX
-- **Package Manager**: pnpm
+**Qamrovdagi funksionallik:**
+- Multi-organization, multi-department arxitektura
+- HIKVision qurilmalari integratsiyasi (Access Control)
+- C# Windows Agent (Active Directory Support)
+- Real-time monitoring va analytics
+- Comprehensive reporting system
+- Visitor Management System
+- Policy-based monitoring rules
+
+**Qamrovdan tashqari:**
+- Video surveillance va CCTV monitoring
+- Mobile application (Phase 2)
+- Biometric authentication (fingerprint/face recognition) - Phase 2
+- Payroll integration
+- Leave management system
+
+### 1.3 Texnologiyalar stack
+
+**Backend:**
+- NestJS v10+ (Node.js framework)
+- TypeScript 5+
+- NX Monorepo (workspace management)
+- Prisma ORM v5+ (PostgreSQL)
+- Redis (caching va sessions)
+- Socket.IO (real-time events)
+- JWT (authentication)
+- Winston (logging)
+
+**Frontend:** (Phase 2)
+- React 18+ / Next.js 14+
+- TypeScript
+- TailwindCSS / Ant Design
+- React Query (data fetching)
+- Socket.IO Client (real-time updates)
+
+**Database:**
+- PostgreSQL 15+ (main database)
+- Redis 7+ (cache, sessions, queues)
+
+**Infrastructure:**
+- Docker & Docker Compose
+- Nginx (reverse proxy)
+- PM2 (process manager)
+
+**Agent Application:**
+- C# .NET Framework / .NET 6+
+- Windows Service
+- Active Directory Integration
+- HTTP Client (API communication)
 
 ## 2. ROLE-BASED ACCESS CONTROL (RBAC)
 
@@ -92,40 +132,367 @@ Tashkilot hodimlarining:
 
 ## 3. TIZIM ARXITEKTURASI
 
+### 3.1 High-Level Architecture
+
 ```
-HIKVision Devices ←→ Agent API ←→ PostgreSQL + Prisma
-                         ↕
-C# Agent (Computers) ←→ Dashboard API ←→ Redis Cache
-                         ↕
-                    Web Interface
+┌─────────────────────────────────────────────────────────────────┐
+│                        External Systems                          │
+├─────────────────────────────────────────────────────────────────┤
+│  HIKVision Devices        C# Windows Agents (Multiple PCs)      │
+│  (Access Control)         (Active Directory Integrated)          │
+└──────────────┬─────────────────────────────┬────────────────────┘
+               │                             │
+               │ HTTP/TCP                    │ HTTPS/REST
+               ↓                             ↓
+┌─────────────────────────────────────────────────────────────────┐
+│                     NX Monorepo Backend                          │
+├──────────────────────────┬──────────────────────────────────────┤
+│   apps/agent-api         │      apps/dashboard-api              │
+│   (Port 3001)            │      (Port 3000)                     │
+│   ├─ HIKVision Module    │      ├─ Auth Module (JWT + RBAC)     │
+│   ├─ Agent Data Module   │      ├─ Organizations Module         │
+│   ├─ Data Processing     │      ├─ Departments Module           │
+│   └─ Events Handler      │      ├─ Employees Module             │
+│                          │      ├─ Monitoring Module            │
+│                          │      ├─ Reports Module               │
+│                          │      ├─ Visitors Module              │
+│                          │      ├─ Devices Module               │
+│                          │      ├─ Policies Module              │
+│                          │      └─ Users Module                 │
+├──────────────────────────┴──────────────────────────────────────┤
+│                    Shared Libraries (libs/)                      │
+│   ├─ @staff/database (Prisma + Models)                          │
+│   ├─ @staff/auth (Guards, Decorators, RBAC)                     │
+│   ├─ @staff/common (DTOs, Interfaces, Interceptors)             │
+│   ├─ @staff/utils (Helpers, Validators)                         │
+│   └─ @staff/repository (Data Access Layer)                      │
+└──────────────────────────┬──────────────────────────────────────┘
+                           │
+                           ↓
+┌─────────────────────────────────────────────────────────────────┐
+│                     Data & Cache Layer                           │
+├──────────────────────────┬──────────────────────────────────────┤
+│   PostgreSQL 15+         │      Redis 7+                        │
+│   ├─ Organizations       │      ├─ User Sessions                │
+│   ├─ Departments         │      ├─ JWT Blacklist                │
+│   ├─ Employees           │      ├─ Real-time Events Queue       │
+│   ├─ Entry Logs          │      └─ Cache (Reports, etc.)        │
+│   ├─ Monitoring Data     │                                      │
+│   ├─ Devices             │                                      │
+│   └─ Policies            │                                      │
+└─────────────────────────────────────────────────────────────────┘
+
+                           ↓
+┌─────────────────────────────────────────────────────────────────┐
+│                     Client Applications                          │
+│   ├─ Web Dashboard (Admin, HR, Lead, Guard)                     │
+│   ├─ Real-time Notifications (Socket.IO)                        │
+│   └─ Report Exports (PDF, Excel, CSV)                           │
+└─────────────────────────────────────────────────────────────────┘
+```
+
+### 3.2 Data Flow Architecture
+
+**1. HIKVision Device Flow:**
+```
+HIKVision Device → Agent API (/api/agent/hikvision/events) 
+→ Validate & Process → Save to DB (actions, entry_logs)
+→ Emit Socket.IO Event → Real-time Dashboard Update
+```
+
+**2. C# Agent Flow:**
+```
+C# Agent (PC) → Agent API (/api/agent/active-windows, /screenshots)
+→ Validate Computer User → Save Monitoring Data
+→ Process & Analyze → Analytics Dashboard
+```
+
+**3. Dashboard User Flow:**
+```
+User Login → JWT Auth → RBAC Check → Filtered Data
+→ Organization/Department Scope → Display Dashboard
+```
+
+### 3.3 Security Architecture
+
+**Authentication Flow:**
+```
+User → Login (POST /api/auth/login) → Validate Credentials
+→ Generate JWT (Access: 15min, Refresh: 7days)
+→ Store in Redis → Return Tokens → Client Storage
+```
+
+**Authorization Flow:**
+```
+API Request → JWT Validation → Extract User Role & Scope
+→ RBAC Guard Check → Permission Verification
+→ Data Filtering (Organization/Department) → Response
+```
+
+### 3.4 Deployment Architecture
+
+```
+┌─────────────────────────────────────────────────────────────────┐
+│                         Linux Server                             │
+├─────────────────────────────────────────────────────────────────┤
+│  Nginx (Reverse Proxy)                                          │
+│  ├─ / → Web Frontend (Static)                                   │
+│  ├─ /api → Backend (Load Balance)                               │
+│  └─ /socket.io → WebSocket Connection                           │
+├─────────────────────────────────────────────────────────────────┤
+│  Docker Containers                                              │
+│  ├─ agent-api (3 instances with PM2)                            │
+│  ├─ dashboard-api (3 instances with PM2)                        │
+│  ├─ postgresql-15                                               │
+│  ├─ redis-7                                                     │
+│  └─ nginx                                                       │
+└─────────────────────────────────────────────────────────────────┘
 ```
 
 ## 4. BACKEND TALABLARI (NestJS + NX Monorepo)
 
-### 4.1 Asosiy modullar
+### 4.1 NX Monorepo Structure
 
-#### Agent API (apps/agent-api):
+```
+/staff (root)
+├── apps/
+│   ├── agent-api/                    # External systems API
+│   │   ├── src/
+│   │   │   ├── main.ts
+│   │   │   ├── app/
+│   │   │   └── modules/
+│   │   │       ├── agent/            # C# Agent endpoints
+│   │   │       ├── hikvision/        # HIKVision integration
+│   │   │       ├── data-processing/  # Data validation & processing
+│   │   │       └── security/         # API Key validation
+│   │   ├── project.json
+│   │   └── webpack.config.js
+│   │
+│   ├── agent-api-e2e/                # E2E tests for agent-api
+│   │
+│   ├── dashboard-api/                # Main business logic API
+│   │   ├── src/
+│   │   │   ├── main.ts
+│   │   │   ├── app/
+│   │   │   ├── core/                 # Core functionality
+│   │   │   │   ├── config/
+│   │   │   │   ├── middleware/
+│   │   │   │   └── filters/
+│   │   │   ├── modules/
+│   │   │   │   ├── auth/             # JWT + RBAC
+│   │   │   │   ├── users/
+│   │   │   │   ├── organizations/
+│   │   │   │   ├── departments/
+│   │   │   │   ├── employees/
+│   │   │   │   ├── entry-logs/
+│   │   │   │   ├── monitoring/
+│   │   │   │   ├── devices/
+│   │   │   │   ├── visitors/
+│   │   │   │   ├── reports/
+│   │   │   │   └── policies/
+│   │   │   └── shared/               # Shared utilities
+│   │   ├── project.json
+│   │   └── webpack.config.js
+│   │
+│   └── dashboard-api-e2e/            # E2E tests for dashboard-api
+│
+├── shared/                            # Shared libraries
+│   ├── auth/                          # Authentication library
+│   │   ├── src/
+│   │   │   ├── guards/                # RBAC guards
+│   │   │   ├── decorators/            # Custom decorators
+│   │   │   ├── strategies/            # Passport strategies
+│   │   │   └── interfaces/
+│   │   └── package.json
+│   │
+│   ├── common/                        # Common utilities
+│   │   ├── src/
+│   │   │   ├── interceptors/          # Response interceptors
+│   │   │   ├── dto/                   # Base DTOs
+│   │   │   ├── interfaces/            # Common interfaces
+│   │   │   ├── swagger/               # Swagger config
+│   │   │   └── lib/
+│   │   └── package.json
+│   │
+│   ├── database/                      # Prisma & Database
+│   │   ├── prisma/
+│   │   │   ├── schema.prisma
+│   │   │   ├── seed.ts
+│   │   │   ├── migrations/
+│   │   │   └── models/                # Extended model types
+│   │   ├── src/
+│   │   │   ├── prisma.service.ts
+│   │   │   ├── prisma.module.ts
+│   │   │   └── lib/
+│   │   └── package.json
+│   │
+│   ├── repository/                    # Data access layer
+│   │   ├── src/
+│   │   │   ├── base/                  # Base repository
+│   │   │   └── lib/                   # Repository implementations
+│   │   └── package.json
+│   │
+│   └── utils/                         # Helper utilities
+│       ├── src/
+│       │   ├── validators/
+│       │   ├── formatters/
+│       │   ├── constants/
+│       │   └── lib/
+│       └── package.json
+│
+├── docs/                              # Documentation
+├── scripts/                           # Utility scripts
+├── nx.json                            # NX configuration
+├── package.json                       # Root package.json
+├── pnpm-workspace.yaml                # PNPM workspace
+├── tsconfig.base.json                 # Base TypeScript config
+└── README.md
+```
 
-- **Agent Data Controller** - C# agentlardan ma'lumot qabul qilish
-- **HIKVision Controller** - HIKVision qurilmalaridan ma'lumot
-- **Data Processing Service** - Ma'lumotlarni qayta ishlash
+### 4.2 Module Responsibilities
 
-#### Dashboard API (apps/dashboard-api):
+#### Agent API Modules
 
-- **Authentication/Authorization** - JWT token \+ **RBAC only**
-- **User Management** - Foydalanuvchilar boshqaruvi
-- **Organization Management** - Tashkilot strukturasi
-- **Device Management** - HIKVision qurilmalari boshqaruvi
-- **Monitoring** - Hodimlar faoliyati monitoring
-- **Reports** - Role-based hisobotlar yaratish
-- **Visitors Management** - Mehmonlar boshqaruvi
+**1. HIKVision Module** (`apps/agent-api/src/modules/hikvision/`)
+- HIKVision qurilmalardan event qabul qilish
+- Access control events (kirish/chiqish)
+- Device status monitoring
+- Event validation va processing
+- Real-time event emission
 
-#### Shared Libraries (libs/):
+**2. Agent Module** (`apps/agent-api/src/modules/agent/`)
+- C# agent registration va authentication
+- Active windows tracking
+- Visited sites logging
+- Screenshot upload va storage
+- User session management
 
-- **Prisma Database** - Database service va models
-- **Auth Guards** - NestJS guards with RBAC
-- **Common Types** - TypeScript interfaces
-- **Utils** - Yordamchi funksiyalar
+**3. Data Processing Module** (`apps/agent-api/src/modules/data-processing/`)
+- Ma'lumotlarni validate qilish
+- Data normalization
+- Batch processing
+- Error handling va retry logic
+
+**4. Security Module** (`apps/agent-api/src/modules/security/`)
+- API key validation
+- Device authentication
+- Agent authorization
+- Rate limiting
+
+#### Dashboard API Modules
+
+**1. Auth Module** (`apps/dashboard-api/src/modules/auth/`)
+- User authentication (JWT)
+- Token generation va validation
+- Refresh token mechanism
+- RBAC implementation
+- Password hashing (bcrypt)
+- Session management
+
+**2. Users Module** (`apps/dashboard-api/src/modules/users/`)
+- User CRUD operations (Admin only)
+- Role management
+- Organization/Department assignment
+- User permissions
+- Change password functionality
+
+**3. Organizations Module** (`apps/dashboard-api/src/modules/organizations/`)
+- Organizations CRUD (Admin, HR-own)
+- Multi-tenancy support
+- Organization settings
+- Soft delete mechanism
+
+**4. Departments Module** (`apps/dashboard-api/src/modules/departments/`)
+- Departments va Sub-departments CRUD
+- Hierarchical structure management
+- Organization-Department relationship
+- Policy assignment
+
+**5. Employees Module** (`apps/dashboard-api/src/modules/employees/`)
+- Employee CRUD (Role-based)
+- Card va Car assignment
+- Computer user linking
+- Photo upload
+- Employee filtering by organization/department
+
+**6. Entry-Logs Module** (`apps/dashboard-api/src/modules/entry-logs/`)
+- Entry/Exit logs retrieval (Role-based)
+- Today's logs dashboard
+- Employee-specific logs
+- Attendance reports
+- Work hours calculation
+- Late arrival detection
+
+**7. Monitoring Module** (`apps/dashboard-api/src/modules/monitoring/`)
+- Computer users management
+- Active windows logs
+- Visited sites logs
+- Screenshots retrieval
+- User sessions tracking
+- Employee activity reports
+- Productivity analysis
+
+**8. Devices Module** (`apps/dashboard-api/src/modules/devices/`)
+- HIKVision devices CRUD (Admin)
+- Device connection testing
+- Device status monitoring
+- Device configuration
+
+**9. Visitors Module** (`apps/dashboard-api/src/modules/visitors/`)
+- Visitors CRUD (Role-based)
+- QR code generation
+- Visitor entry/exit logs
+- Visitor reports
+
+**10. Reports Module** (`apps/dashboard-api/src/modules/reports/`)
+- Attendance reports
+- Productivity reports
+- Device usage reports
+- Visitor reports
+- Custom report generation
+- Export to PDF/Excel/CSV
+
+**11. Policies Module** (`apps/dashboard-api/src/modules/policies/`)
+- Monitoring policies CRUD
+- Website policy management
+- Department policy assignment
+- Policy rules definition
+
+#### Shared Libraries
+
+**1. @staff/auth** (`shared/auth/`)
+- `RolesGuard`: Role-based authorization
+- `JwtAuthGuard`: JWT token validation
+- `@Roles()`: Role decorator
+- `@CurrentUser()`: User extraction decorator
+- RBAC permission checker
+
+**2. @staff/common** (`shared/common/`)
+- `ResponseInterceptor`: Standardize responses
+- `ErrorFilter`: Global error handling
+- Base DTOs (PaginationDto, FilterDto)
+- Common interfaces (ApiResponse, PaginatedResponse)
+- Swagger configuration
+
+**3. @staff/database** (`shared/database/`)
+- `PrismaService`: Database connection
+- `PrismaModule`: Prisma configuration
+- Database models va types
+- Migration management
+- Seed data
+
+**4. @staff/repository** (`shared/repository/`)
+- `BaseRepository`: CRUD operations
+- Specific repositories per entity
+- Query builders
+- Transaction management
+
+**5. @staff/utils** (`shared/utils/`)
+- Date/Time utilities
+- Validation helpers
+- File upload utilities
+- Password generators
+- Constants va enums
 
 ### 4.3 API Endpointlari (NX Monorepo - Role-based)
 
@@ -268,18 +635,825 @@ POST   /api/users/:id/assign-organization   [Admin only]
 POST   /api/users/:id/assign-department     [Admin only]
 ```
 
-### 4.4 Database Connection
+### 4.4 Database Schema (Prisma)
 
-- **ORM**: Prisma ORM v5+
-- **Connection Pool**: Maksimal 20 connection
-- **Migrations**: Prisma migrate for database schema management
+**Core Entities:**
+```prisma
+// Organizations
+model Organization {
+  id                Int           @id @default(autoincrement())
+  fullName          String        @db.VarChar(255)
+  shortName         String        @unique @db.VarChar(50)
+  address           String?       @db.Text
+  phone             String?       @db.VarChar(20)
+  email             String?       @unique @db.VarChar(100)
+  additionalDetails String?       @db.Text
+  isActive          Boolean       @default(true)
+  createdAt         DateTime      @default(now())
+  updatedAt         DateTime      @updatedAt
+  
+  departments       Department[]
+  users             User[]
+}
 
-### 4.5 Real-time Features
+// Departments (Parent)
+model Department {
+  id                Int              @id @default(autoincrement())
+  organization_id   Int
+  fullName          String           @db.VarChar(255)
+  shortName         String           @db.VarChar(50)
+  address           String?          @db.Text
+  phone             String?          @db.VarChar(20)
+  email             String?          @db.VarChar(100)
+  additionalDetails String?          @db.Text
+  isActive          Boolean          @default(true)
+  createdAt         DateTime         @default(now())
+  updatedAt         DateTime         @updatedAt
+  
+  organization      Organization     @relation(fields: [organization_id], references: [id])
+  childrens         SubDepartment[]
+  employees         Employee[]       @relation("DepartmentEmployees")
+}
 
-- **Socket.IO** - Real-time entry/exit notifications
-- **Event-driven architecture** - Hodisa asosidagi arxitektura
+// Sub-Departments (Children)
+model SubDepartment {
+  id                Int          @id @default(autoincrement())
+  parent_id         Int
+  policy_id         Int?
+  fullName          String       @db.VarChar(255)
+  shortName         String       @db.VarChar(50)
+  address           String?      @db.Text
+  phone             String?      @db.VarChar(20)
+  email             String?      @db.VarChar(100)
+  additionalDetails String?      @db.Text
+  isActive          Boolean      @default(true)
+  createdAt         DateTime     @default(now())
+  updatedAt         DateTime     @updatedAt
+  
+  parent            Department   @relation(fields: [parent_id], references: [id])
+  policy            Policy?      @relation(fields: [policy_id], references: [id])
+  employees         Employee[]
+}
 
-## 8. USE CASE LAR
+// Employees
+model Employee {
+  id                Int              @id @default(autoincrement())
+  personal_id       String           @unique @db.VarChar(14)
+  sub_department_id Int
+  name              String           @db.VarChar(255)
+  address           String?          @db.Text
+  phone             String?          @db.VarChar(20)
+  email             String?          @unique @db.VarChar(100)
+  photo             String?          @db.Text
+  additionalDetails String?          @db.Text
+  isActive          Boolean          @default(true)
+  createdAt         DateTime         @default(now())
+  updatedAt         DateTime         @updatedAt
+  
+  sub_department    SubDepartment    @relation(fields: [sub_department_id], references: [id])
+  department        Department?      @relation("DepartmentEmployees", fields: [department_id], references: [id])
+  cards             Card[]
+  cars              Car[]
+  computer_users    ComputerUser[]
+  entry_logs        EntryLog[]
+  visitors          Visitor[]
+}
+
+// Computer & Monitoring
+model Computer {
+  id           Int            @id @default(autoincrement())
+  computer_id  Int            @unique
+  os           String         @db.VarChar(100)
+  ipAddress    String?        @db.VarChar(45)
+  macAddress   String?        @db.VarChar(17)
+  createdAt    DateTime       @default(now())
+  updatedAt    DateTime       @updatedAt
+  
+  computer_users ComputerUser[]
+}
+
+model ComputerUser {
+  id           Int                @id @default(autoincrement())
+  computer_id  Int
+  employee_id  Int?
+  sid_id       String             @unique @db.VarChar(255)
+  name         String?            @db.VarChar(255)
+  domain       String?            @db.VarChar(100)
+  username     String             @db.VarChar(100)
+  isAdmin      Boolean            @default(false)
+  is_in_domain Boolean            @default(false)
+  isActive     Boolean            @default(true)
+  createdAt    DateTime           @default(now())
+  updatedAt    DateTime           @updatedAt
+  
+  computer     Computer           @relation(fields: [computer_id], references: [id])
+  employee     Employee?          @relation(fields: [employee_id], references: [id])
+  active_windows ActiveWindow[]
+  visited_sites  VisitedSite[]
+  screenshots    Screenshot[]
+  user_sessions  UserSession[]
+}
+
+// Monitoring Data
+model ActiveWindow {
+  id                Int          @id @default(autoincrement())
+  computer_user_id  Int
+  processName       String       @db.VarChar(255)
+  windowTitle       String       @db.Text
+  startTime         DateTime
+  endTime           DateTime?
+  duration          Int?         // seconds
+  createdAt         DateTime     @default(now())
+  
+  computer_user     ComputerUser @relation(fields: [computer_user_id], references: [id])
+  
+  @@index([computer_user_id, startTime])
+}
+
+model VisitedSite {
+  id                Int          @id @default(autoincrement())
+  computer_user_id  Int
+  url               String       @db.Text
+  title             String?      @db.Text
+  visitTime         DateTime
+  duration          Int?         // seconds
+  createdAt         DateTime     @default(now())
+  
+  computer_user     ComputerUser @relation(fields: [computer_user_id], references: [id])
+  
+  @@index([computer_user_id, visitTime])
+}
+
+model Screenshot {
+  id                Int          @id @default(autoincrement())
+  computer_user_id  Int
+  filePath          String       @db.Text
+  capturedAt        DateTime
+  fileSize          Int?         // bytes
+  createdAt         DateTime     @default(now())
+  
+  computer_user     ComputerUser @relation(fields: [computer_user_id], references: [id])
+  
+  @@index([computer_user_id, capturedAt])
+}
+
+// HIKVision & Entry Logs
+model Device {
+  id           Int       @id @default(autoincrement())
+  name         String    @db.VarChar(255)
+  ipAddress    String    @unique @db.VarChar(45)
+  port         Int       @default(80)
+  username     String    @db.VarChar(100)
+  password     String    @db.VarChar(255)
+  entry_type   EntryType @default(both)
+  isActive     Boolean   @default(true)
+  createdAt    DateTime  @default(now())
+  updatedAt    DateTime  @updatedAt
+  
+  actions      Action[]
+}
+
+model Action {
+  id             Int        @id @default(autoincrement())
+  device_id      Int
+  action_time    DateTime
+  entry_type     EntryType
+  action_type    ActionType
+  action_result  String     @db.VarChar(255)
+  createdAt      DateTime   @default(now())
+  
+  device         Device     @relation(fields: [device_id], references: [id])
+  entry_log      EntryLog?
+  
+  @@index([device_id, action_time])
+}
+
+model EntryLog {
+  id          Int      @id @default(autoincrement())
+  employee_id Int?
+  visitor_id  Int?
+  action_id   Int      @unique
+  createdAt   DateTime @default(now())
+  
+  employee    Employee? @relation(fields: [employee_id], references: [id])
+  visitor     Visitor?  @relation(fields: [visitor_id], references: [id])
+  action      Action    @relation(fields: [action_id], references: [id])
+  
+  @@index([employee_id, createdAt])
+  @@index([visitor_id, createdAt])
+}
+
+// Users & Authentication
+model User {
+  id              Int           @id @default(autoincrement())
+  name            String        @db.VarChar(255)
+  login           String        @unique @db.VarChar(100)
+  password        String        @db.VarChar(255)
+  role            Role          @default(guard)
+  organization_id Int?
+  department_id   Int?
+  sub_department_id Int?
+  isActive        Boolean       @default(true)
+  createdAt       DateTime      @default(now())
+  updatedAt       DateTime      @updatedAt
+  
+  organization    Organization? @relation(fields: [organization_id], references: [id])
+  refresh_tokens  RefreshToken[]
+}
+
+model RefreshToken {
+  id          Int      @id @default(autoincrement())
+  user_id     Int
+  token       String   @unique @db.Text
+  expiresAt   DateTime
+  createdAt   DateTime @default(now())
+  
+  user        User     @relation(fields: [user_id], references: [id], onDelete: Cascade)
+  
+  @@index([user_id])
+}
+
+// Policies
+model Policy {
+  id                    Int              @id @default(autoincrement())
+  name                  String           @db.VarChar(255)
+  description           String?          @db.Text
+  screenshotInterval    Int              @default(300) // seconds
+  trackActiveWindows    Boolean          @default(true)
+  trackVisitedSites     Boolean          @default(true)
+  isActive              Boolean          @default(true)
+  createdAt             DateTime         @default(now())
+  updatedAt             DateTime         @updatedAt
+  
+  sub_departments       SubDepartment[]
+  website_policies      WebsitePolicy[]
+}
+
+model WebsitePolicy {
+  id          Int      @id @default(autoincrement())
+  policy_id   Int
+  url         String   @db.Text
+  action      WebsiteAction @default(warn)
+  createdAt   DateTime @default(now())
+  
+  policy      Policy   @relation(fields: [policy_id], references: [id], onDelete: Cascade)
+  
+  @@index([policy_id])
+}
+
+// Enums
+enum Role {
+  admin
+  hr
+  department_lead
+  guard
+}
+
+enum EntryType {
+  enter
+  exit
+  both
+}
+
+enum ActionType {
+  card
+  qr
+  face
+}
+
+enum WebsiteAction {
+  block
+  warn
+  allow
+}
+```
+
+### 4.5 Database Connection & Optimization
+
+**Connection Configuration:**
+```typescript
+// shared/database/src/lib/prisma.service.ts
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+  
+  // Connection Pool
+  connection_limit = 20
+  pool_timeout     = 20
+}
+
+// Logging
+log = ["query", "error", "warn"]
+
+// Extensions
+extensions = [postgis, uuid-ossp]
+```
+
+**Optimization Strategies:**
+- **Indexes**: Critical queries (employee_id, date ranges, etc.)
+- **Connection Pooling**: Max 20 connections per instance
+- **Query Optimization**: Use Prisma's select va include strategically
+- **Pagination**: All list endpoints must be paginated
+- **Caching**: Redis for frequent queries (users, organizations)
+- **Soft Deletes**: isActive flag instead of hard delete
+
+### 4.6 Caching Strategy (Redis)
+
+**Cache Keys Structure:**
+```
+user:session:{userId}              → User session data (TTL: 15 min)
+user:permissions:{userId}          → User permissions cache (TTL: 1 hour)
+org:departments:{orgId}            → Organization departments (TTL: 1 hour)
+report:cache:{reportId}            → Generated reports (TTL: 24 hours)
+jwt:blacklist:{token}              → Blacklisted tokens (TTL: token expiry)
+device:status:{deviceId}           → Device online status (TTL: 5 min)
+realtime:entries:today             → Today's entries cache (TTL: 5 min)
+```
+
+**Cache Invalidation:**
+- On entity update/delete → Clear related caches
+- On user role change → Clear permission cache
+- On policy update → Clear affected department caches
+
+### 4.7 Real-time Features (Socket.IO)
+
+**Events:**
+```typescript
+// Server → Client Events
+'entry:new'              → Yangi kirish/chiqish
+'entry:updated'          → Entry log yangilandi
+'device:status'          → Qurilma holati o'zgarishi
+'visitor:arrived'        → Mehmon keldi
+'alert:triggered'        → Policy buzilishi alerti
+
+// Client → Server Events
+'subscribe:organization' → Organization eventlariga obuna
+'subscribe:department'   → Department eventlariga obuna
+'unsubscribe'           → Obunani bekor qilish
+```
+
+**Room-based Broadcasting:**
+- `org:${organizationId}` → Organization-specific events
+- `dept:${departmentId}` → Department-specific events
+- `user:${userId}` → User-specific notifications
+- `guard` → All guards realtime dashboard
+
+## 5. NON-FUNCTIONAL REQUIREMENTS
+
+### 5.1 Performance Requirements
+
+**Response Time:**
+- API endpoints: < 200ms (95th percentile)
+- Complex reports: < 3 seconds
+- Real-time events: < 100ms latency
+- Database queries: < 100ms
+- File uploads (photos/screenshots): < 5 seconds
+
+**Throughput:**
+- Agent API: 1000+ requests/second
+- Dashboard API: 500+ concurrent users
+- WebSocket connections: 500+ simultaneous
+- HIKVision events: 100+ events/second processing
+
+**Scalability:**
+- Horizontal scaling capability
+- Stateless API design
+- Load balancing support
+- Auto-scaling based on CPU/Memory
+
+### 5.2 Security Requirements
+
+**Authentication:**
+- JWT-based authentication
+- Bcrypt password hashing (salt rounds: 10)
+- Refresh token rotation
+- Token blacklisting for logout
+- Session timeout: 15 minutes (access), 7 days (refresh)
+
+**Authorization:**
+- Role-Based Access Control (RBAC)
+- Organization/Department scope filtering
+- API endpoint protection
+- Resource-level permissions
+
+**Data Security:**
+- HTTPS/TLS encryption
+- SQL injection prevention (Prisma ORM)
+- XSS prevention
+- CSRF protection
+- Rate limiting (100 req/min per IP)
+- Input validation va sanitization
+- Sensitive data encryption (passwords, API keys)
+
+**Audit Trail:**
+- User action logging
+- Change history tracking
+- Login/logout logs
+- Failed authentication attempts
+
+### 5.3 Reliability & Availability
+
+**Uptime:**
+- Target: 99.5% availability
+- Planned maintenance windows
+- Graceful degradation
+
+**Backup:**
+- Database: Daily automated backups
+- Retention: 30 days
+- Point-in-time recovery capability
+- Screenshot/photo backups
+
+**Error Handling:**
+- Global exception filters
+- Structured error responses
+- Retry mechanisms for external systems
+- Circuit breaker pattern for HIKVision devices
+
+### 5.4 Maintainability
+
+**Code Quality:**
+- TypeScript strict mode
+- ESLint + Prettier configuration
+- Code review process
+- Unit test coverage: > 70%
+- E2E test coverage for critical paths
+
+**Documentation:**
+- Swagger/OpenAPI documentation
+- Code comments for complex logic
+- README files per module
+- Architecture decision records (ADR)
+
+**Monitoring:**
+- Application logs (Winston)
+- Performance monitoring
+- Error tracking
+- Health check endpoints
+
+### 5.5 Usability Requirements
+
+**API Design:**
+- RESTful conventions
+- Consistent response format
+- Clear error messages
+- Proper HTTP status codes
+- Pagination support
+- Filtering & sorting capabilities
+
+**Internationalization:**
+- Response messages in Uzbek/Russian
+- Date/time formatting
+- Time zone support
+
+### 5.6 Compatibility
+
+**Browser Support:** (Frontend - Phase 2)
+- Chrome 90+
+- Firefox 88+
+- Safari 14+
+- Edge 90+
+
+**Operating Systems:**
+- Backend: Linux (Ubuntu 20.04+)
+- C# Agent: Windows 10/11, Windows Server 2016+
+
+**Database:**
+- PostgreSQL 15+
+- Redis 7+
+
+### 5.7 Data Retention
+
+**Monitoring Data:**
+- Active windows: 90 days
+- Visited sites: 90 days
+- Screenshots: 30 days
+- User sessions: 30 days
+
+**Entry Logs:**
+- Permanent storage
+- Archival after 1 year
+
+**Reports:**
+- Generated reports: 7 days cache
+- Custom reports: On-demand generation
+
+## 6. API STANDARDS & CONVENTIONS
+
+### 6.1 Response Format
+
+**Success Response:**
+```json
+{
+  "success": true,
+  "data": {
+    // Response data
+  },
+  "message": "Optional success message"
+}
+```
+
+**Error Response:**
+```json
+{
+  "success": false,
+  "error": {
+    "code": "ERROR_CODE",
+    "message": "User-friendly error message",
+    "details": {} // Optional additional details
+  }
+}
+```
+
+**Paginated Response:**
+```json
+{
+  "success": true,
+  "data": {
+    "items": [],
+    "pagination": {
+      "page": 1,
+      "limit": 10,
+      "total": 100,
+      "totalPages": 10,
+      "hasNext": true,
+      "hasPrevious": false
+    }
+  }
+}
+```
+
+### 6.2 HTTP Status Codes
+
+- **200**: Success (GET, PUT)
+- **201**: Created (POST)
+- **204**: No Content (DELETE)
+- **400**: Bad Request (validation errors)
+- **401**: Unauthorized (authentication required)
+- **403**: Forbidden (insufficient permissions)
+- **404**: Not Found
+- **409**: Conflict (duplicate resource)
+- **422**: Unprocessable Entity
+- **429**: Too Many Requests (rate limit)
+- **500**: Internal Server Error
+- **503**: Service Unavailable
+
+### 6.3 Error Codes
+
+```typescript
+enum ErrorCodes {
+  // Authentication
+  INVALID_CREDENTIALS = 'INVALID_CREDENTIALS',
+  TOKEN_EXPIRED = 'TOKEN_EXPIRED',
+  INVALID_TOKEN = 'INVALID_TOKEN',
+  
+  // Authorization
+  INSUFFICIENT_PERMISSIONS = 'INSUFFICIENT_PERMISSIONS',
+  ACCESS_DENIED = 'ACCESS_DENIED',
+  
+  // Validation
+  VALIDATION_ERROR = 'VALIDATION_ERROR',
+  INVALID_INPUT = 'INVALID_INPUT',
+  
+  // Resource
+  NOT_FOUND = 'NOT_FOUND',
+  ALREADY_EXISTS = 'ALREADY_EXISTS',
+  CANNOT_DELETE = 'CANNOT_DELETE',
+  
+  // System
+  INTERNAL_ERROR = 'INTERNAL_ERROR',
+  DATABASE_ERROR = 'DATABASE_ERROR',
+  EXTERNAL_SERVICE_ERROR = 'EXTERNAL_SERVICE_ERROR',
+}
+```
+
+### 6.4 Naming Conventions
+
+**API Endpoints:**
+- Lowercase with hyphens: `/api/entry-logs`
+- Plural nouns: `/api/employees`
+- Resource hierarchy: `/api/organizations/:id/departments`
+
+**Query Parameters:**
+- snake_case: `?start_date=...&employee_id=...`
+- Boolean: `?isActive=true`
+- Arrays: `?roles[]=admin&roles[]=hr`
+
+**Request/Response Fields:**
+- snake_case for API: `employee_id`, `sub_department_id`
+- camelCase in TypeScript: `employeeId`, `subDepartmentId`
+
+### 6.5 Pagination
+
+**Query Parameters:**
+```
+?page=1&limit=10
+```
+
+**Default Values:**
+- page: 1
+- limit: 10
+- max limit: 100
+
+## 7. TESTING STRATEGY
+
+### 7.1 Unit Tests
+
+**Coverage:**
+- Services: Business logic tests
+- Guards: RBAC permission tests
+- Utilities: Helper function tests
+- Target: > 70% coverage
+
+**Tools:**
+- Jest
+- @nestjs/testing
+
+### 7.2 Integration Tests
+
+**Coverage:**
+- API endpoints
+- Database operations
+- External system integrations (HIKVision, C# Agent)
+
+**Tools:**
+- Jest
+- Supertest
+
+### 7.3 E2E Tests
+
+**Coverage:**
+- Critical user flows
+- Authentication/Authorization flows
+- CRUD operations
+- Role-based access scenarios
+
+**Tools:**
+- Jest
+- NX e2e test projects
+
+### 7.4 Performance Tests
+
+**Coverage:**
+- Load testing (concurrent users)
+- Stress testing (peak loads)
+- API response times
+- Database query performance
+
+**Tools:**
+- Artillery / K6
+- PostgreSQL EXPLAIN ANALYZE
+
+## 8. DEPLOYMENT & DEVOPS
+
+### 8.1 Environment Configuration
+
+**Environments:**
+- Development (local)
+- Staging (test server)
+- Production (live server)
+
+**Environment Variables:**
+```bash
+# Database
+DATABASE_URL="postgresql://user:pass@localhost:5432/staff_db"
+
+# Redis
+REDIS_HOST="localhost"
+REDIS_PORT=6379
+REDIS_PASSWORD=""
+
+# JWT
+JWT_SECRET="your-secret-key"
+JWT_ACCESS_EXPIRATION="15m"
+JWT_REFRESH_EXPIRATION="7d"
+
+# API Keys
+AGENT_API_KEY="agent-secret-key"
+HIKVISION_API_KEY="hikvision-secret-key"
+
+# File Upload
+UPLOAD_PATH="/uploads"
+MAX_FILE_SIZE=10485760 # 10MB
+
+# Server
+PORT=3000
+NODE_ENV="production"
+```
+
+### 8.2 Docker Configuration
+
+**docker-compose.yml:**
+```yaml
+version: '3.8'
+services:
+  postgres:
+    image: postgres:15-alpine
+    environment:
+      POSTGRES_DB: staff_db
+      POSTGRES_USER: staff_user
+      POSTGRES_PASSWORD: secure_password
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    ports:
+      - "5432:5432"
+  
+  redis:
+    image: redis:7-alpine
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis_data:/data
+  
+  agent-api:
+    build:
+      context: .
+      dockerfile: apps/agent-api/Dockerfile
+    environment:
+      - DATABASE_URL
+      - REDIS_HOST=redis
+    ports:
+      - "3001:3001"
+    depends_on:
+      - postgres
+      - redis
+  
+  dashboard-api:
+    build:
+      context: .
+      dockerfile: apps/dashboard-api/Dockerfile
+    environment:
+      - DATABASE_URL
+      - REDIS_HOST=redis
+    ports:
+      - "3000:3000"
+    depends_on:
+      - postgres
+      - redis
+  
+  nginx:
+    image: nginx:alpine
+    volumes:
+      - ./nginx.conf:/etc/nginx/nginx.conf
+    ports:
+      - "80:80"
+      - "443:443"
+    depends_on:
+      - agent-api
+      - dashboard-api
+
+volumes:
+  postgres_data:
+  redis_data:
+```
+
+### 8.3 CI/CD Pipeline
+
+**GitHub Actions / GitLab CI:**
+```yaml
+stages:
+  - lint
+  - test
+  - build
+  - deploy
+
+lint:
+  - npm run lint
+
+test:
+  - npm run test:cov
+  - Coverage report
+
+build:
+  - npm run build
+  - Docker image build
+
+deploy:
+  - Deploy to staging (auto)
+  - Deploy to production (manual approval)
+```
+
+### 8.4 Monitoring & Logging
+
+**Logging:**
+- Winston logger
+- Log levels: error, warn, info, debug
+- Log rotation (daily, 30 days retention)
+- Structured logging (JSON format)
+
+**Monitoring:**
+- PM2 monitoring
+- Health check endpoints: `/health`, `/ready`
+- Database connection status
+- Redis connection status
+- External service status (HIKVision)
+
+**Alerting:**
+- Critical errors → Email/Telegram notification
+- Service downtime → Immediate alert
+- High CPU/Memory usage → Warning
+
+## 9. USE CASE LAR
 
 ### UC-1: Tizimga Kirish (Login)
 
@@ -1668,6 +2842,19 @@ CARDALREADY_EXISTS
 }
 ```
 
+**Success Response (200):**
+```json
+{
+  "success": true,
+  "message": "Computer user muvaffaqiyatli bog'landi",
+  "data": {
+    "employee_id": 1,
+    "computer_user_id": 15,
+    "linkedAt": "2024-08-24T17:30:00Z"
+  }
+}
+```
+
 **UC-22: Computer User Bog'lanishini O'chirish**
 
 **API**: DELETE `/api/employees/:id/unlink-computer-user/:computer_user_id`
@@ -2127,3 +3314,446 @@ Lead/Guard
   }
 }
 ```
+
+## 10. IMPLEMENTATION ROADMAP
+
+### 10.1 Phase 1: Core Backend Setup (Weeks 1-2)
+
+**Week 1: Infrastructure & Setup**
+- [ ] NX Monorepo initialization
+- [ ] Project structure setup (apps, shared libs)
+- [ ] Database schema design (Prisma)
+- [ ] Environment configuration
+- [ ] Docker setup (PostgreSQL, Redis)
+- [ ] CI/CD pipeline basic setup
+
+**Week 2: Shared Libraries**
+- [ ] @staff/database - Prisma setup & migrations
+- [ ] @staff/auth - JWT guards, RBAC decorators
+- [ ] @staff/common - Base DTOs, interceptors, filters
+- [ ] @staff/utils - Helper functions
+- [ ] @staff/repository - Base repository pattern
+
+### 10.2 Phase 2: Dashboard API Core (Weeks 3-4)
+
+**Week 3: Authentication & User Management**
+- [ ] Auth Module (login, logout, refresh token)
+- [ ] Users Module (CRUD, role management)
+- [ ] RBAC implementation
+- [ ] Session management (Redis)
+- [ ] Swagger documentation setup
+
+**Week 4: Organizations & Structure**
+- [ ] Organizations Module (CRUD)
+- [ ] Departments Module (CRUD, hierarchical)
+- [ ] Sub-departments Module
+- [ ] Role-based filtering implementation
+- [ ] Unit tests (>70% coverage)
+
+### 10.3 Phase 3: Employees & Access Control (Weeks 5-6)
+
+**Week 5: Employee Management**
+- [ ] Employees Module (CRUD)
+- [ ] Card assignment
+- [ ] Car assignment
+- [ ] Photo upload functionality
+- [ ] Employee filtering (by org, dept)
+
+**Week 6: Devices & HIKVision Integration**
+- [ ] Devices Module (CRUD)
+- [ ] HIKVision SDK integration
+- [ ] Device connection testing
+- [ ] Event webhook handler
+- [ ] Real-time event processing
+
+### 10.4 Phase 4: Agent API (Weeks 7-8)
+
+**Week 7: Agent Infrastructure**
+- [ ] Agent API setup (separate app)
+- [ ] Agent authentication (API keys)
+- [ ] Computer registration endpoint
+- [ ] Computer User registration
+- [ ] Employee linking mechanism
+
+**Week 8: Monitoring Endpoints**
+- [ ] Active windows endpoint
+- [ ] Visited sites endpoint
+- [ ] Screenshot upload endpoint
+- [ ] User sessions endpoint
+- [ ] Data validation & processing
+
+### 10.5 Phase 5: Entry Logs & Monitoring (Weeks 9-10)
+
+**Week 9: Entry/Exit Logs**
+- [ ] Entry logs retrieval (role-based)
+- [ ] Today's logs dashboard
+- [ ] Employee-specific logs
+- [ ] Real-time notifications (Socket.IO)
+- [ ] Entry/exit analytics
+
+**Week 10: Computer Monitoring**
+- [ ] Computer users management
+- [ ] Active windows logs retrieval
+- [ ] Visited sites logs retrieval
+- [ ] Screenshots retrieval
+- [ ] Activity reports generation
+
+### 10.6 Phase 6: Reports & Analytics (Weeks 11-12)
+
+**Week 11: Reporting System**
+- [ ] Attendance reports
+- [ ] Productivity reports
+- [ ] Device usage reports
+- [ ] Custom report builder
+- [ ] Report caching (Redis)
+
+**Week 12: Export & Analytics**
+- [ ] PDF export functionality
+- [ ] Excel export functionality
+- [ ] CSV export functionality
+- [ ] Advanced analytics dashboard
+- [ ] Data visualization endpoints
+
+### 10.7 Phase 7: Additional Features (Weeks 13-14)
+
+**Week 13: Visitors & Policies**
+- [ ] Visitors Module (CRUD)
+- [ ] QR code generation
+- [ ] Visitor entry/exit logs
+- [ ] Policies Module (CRUD)
+- [ ] Website policies management
+
+**Week 14: Optimization & Polish**
+- [ ] Performance optimization
+- [ ] Caching implementation
+- [ ] Query optimization
+- [ ] Code refactoring
+- [ ] Documentation updates
+
+### 10.8 Phase 8: Testing & Deployment (Weeks 15-16)
+
+**Week 15: Comprehensive Testing**
+- [ ] Unit tests completion (>70%)
+- [ ] Integration tests
+- [ ] E2E tests for critical flows
+- [ ] Load testing
+- [ ] Security audit
+
+**Week 16: Production Deployment**
+- [ ] Staging environment setup
+- [ ] Production deployment
+- [ ] Monitoring setup
+- [ ] Backup configuration
+- [ ] Final documentation
+- [ ] Training materials
+
+## 11. C# WINDOWS AGENT REQUIREMENTS
+
+### 11.1 Agent Architecture
+
+```
+┌─────────────────────────────────────────────┐
+│         Windows Service (Background)        │
+├─────────────────────────────────────────────┤
+│  1. System Info Collector                   │
+│     ├─ PC Name, MAC, IP                     │
+│     ├─ OS Info                              │
+│     └─ User Info (SID, Username, Domain)    │
+│                                             │
+│  2. Active Directory Integration            │
+│     ├─ Domain User Detection                │
+│     ├─ User Name Resolution                 │
+│     └─ Domain Info                          │
+│                                             │
+│  3. Activity Monitor                        │
+│     ├─ Active Window Tracker                │
+│     ├─ Browser History Monitor              │
+│     └─ Idle Time Detection                  │
+│                                             │
+│  4. Screenshot Service                      │
+│     ├─ Configurable Interval                │
+│     ├─ Screen Capture                       │
+│     ├─ Image Compression                    │
+│     └─ Upload Queue                         │
+│                                             │
+│  5. API Communication                       │
+│     ├─ HTTP Client                          │
+│     ├─ Retry Logic                          │
+│     ├─ Queue Management                     │
+│     └─ Error Handling                       │
+│                                             │
+│  6. Local Storage                           │
+│     ├─ SQLite Cache                         │
+│     ├─ Failed Uploads Queue                 │
+│     └─ Configuration Storage                │
+└─────────────────────────────────────────────┘
+```
+
+### 11.2 Agent Data Models
+
+**C# Classes:**
+```csharp
+public class AgentConfig
+{
+    public string AgentId { get; set; }
+    public string ApiEndpoint { get; set; }
+    public string ApiKey { get; set; }
+    public int ScreenshotInterval { get; set; } // seconds
+    public bool TrackActiveWindows { get; set; }
+    public bool TrackVisitedSites { get; set; }
+    public bool CaptureScreenshots { get; set; }
+}
+
+public class PCInfo
+{
+    public string PCName { get; set; }
+    public string Hostname { get; set; }
+    public string Mac { get; set; }
+    public string IP { get; set; }
+    public string OSInfo { get; set; }
+    public string PCId { get; set; }
+    public string Version { get; set; }
+}
+
+public class PersonInfo
+{
+    public string Username { get; set; }
+    public string Sid { get; set; }
+    public string Givenname { get; set; }
+    public string Surname { get; set; }
+    public bool IsInDomain { get; set; }
+}
+
+public class UserInfo
+{
+    public PCInfo PC { get; set; }
+    public PersonInfo Person { get; set; }
+}
+
+public class ActiveWindowData
+{
+    public string AgentId { get; set; }
+    public string ProcessName { get; set; }
+    public string WindowTitle { get; set; }
+    public DateTime StartTime { get; set; }
+    public DateTime? EndTime { get; set; }
+    public int Duration { get; set; }
+}
+
+public class VisitedSiteData
+{
+    public string AgentId { get; set; }
+    public string Url { get; set; }
+    public string Title { get; set; }
+    public DateTime VisitTime { get; set; }
+    public int Duration { get; set; }
+}
+```
+
+### 11.3 Agent Security & Configuration
+
+**Installation Requirements:**
+- Admin rights for Windows Service installation
+- Firewall exceptions for API communication
+- SSL/TLS for all API calls
+- Unique API key per agent
+
+**Local Configuration (appsettings.json):**
+```json
+{
+  "ApiEndpoint": "https://api.company.com",
+  "AgentId": "generated-guid",
+  "ApiKey": "agent-secret-key",
+  "LogLevel": "Info",
+  "Monitoring": {
+    "ScreenshotInterval": 300,
+    "TrackActiveWindows": true,
+    "TrackVisitedSites": true,
+    "CaptureScreenshots": true,
+    "ExcludedProcesses": ["notepad.exe"],
+    "ExcludedUrls": ["localhost", "127.0.0.1"]
+  }
+}
+```
+
+## 12. BEST PRACTICES & CODE STANDARDS
+
+### 12.1 TypeScript/NestJS Standards
+
+**Dependency Injection:**
+```typescript
+@Injectable()
+export class EmployeeService {
+  constructor(
+    private readonly employeeRepository: EmployeeRepository,
+    private readonly logger: Logger,
+  ) {}
+}
+```
+
+**DTO Validation:**
+```typescript
+export class CreateEmployeeDto {
+  @IsString()
+  @IsNotEmpty()
+  @MinLength(3)
+  name: string;
+
+  @IsEmail()
+  @IsOptional()
+  email?: string;
+
+  @IsInt()
+  @IsPositive()
+  subDepartmentId: number;
+}
+```
+
+**RBAC Decorators:**
+```typescript
+@Controller('employees')
+@UseGuards(JwtAuthGuard, RolesGuard)
+export class EmployeeController {
+  @Get()
+  @Roles(Role.ADMIN, Role.HR)
+  async findAll(@CurrentUser() user: User) {
+    // Implementation
+  }
+}
+```
+
+### 12.2 Error Handling
+
+```typescript
+export class EmployeeNotFoundException extends HttpException {
+  constructor(id: number) {
+    super(
+      {
+        success: false,
+        error: {
+          code: 'EMPLOYEE_NOT_FOUND',
+          message: `Hodim topilmadi (ID: ${id})`,
+        },
+      },
+      HttpStatus.NOT_FOUND,
+    );
+  }
+}
+```
+
+### 12.3 Database Best Practices
+
+**Efficient Queries:**
+```typescript
+// Use include for relations
+const employees = await prisma.employee.findMany({
+  include: {
+    department: true,
+    sub_department: true,
+  },
+});
+
+// Pagination
+const employees = await prisma.employee.findMany({
+  skip: (page - 1) * limit,
+  take: limit,
+  orderBy: { createdAt: 'desc' },
+});
+
+// Transactions
+await prisma.$transaction(async (tx) => {
+  const employee = await tx.employee.create({ data: employeeData });
+  await tx.card.create({ data: cardData });
+});
+```
+
+### 12.4 Caching Strategy
+
+```typescript
+async getEmployee(id: number): Promise<Employee> {
+  const cacheKey = `employee:${id}`;
+  
+  const cached = await this.redis.get(cacheKey);
+  if (cached) return JSON.parse(cached);
+
+  const employee = await this.employeeRepository.findById(id);
+  await this.redis.setex(cacheKey, 3600, JSON.stringify(employee));
+  
+  return employee;
+}
+```
+
+## 13. GLOSSARY
+
+**Technical Terms:**
+- **RBAC**: Role-Based Access Control
+- **JWT**: JSON Web Token
+- **ORM**: Object-Relational Mapping
+- **DTO**: Data Transfer Object
+- **SID**: Security Identifier (Windows)
+- **MAC**: Media Access Control Address
+- **AD**: Active Directory
+
+**Business Terms:**
+- **Sub-department**: Department ichidagi bo'lim
+- **Entry Log**: Kirish/chiqish yozuvi
+- **Active Window**: Faol dastur oynasi
+- **Screenshot**: Ekran tasviri
+- **Productivity**: Ish samaradorligi
+- **Attendance**: Davomat
+
+## 14. APPENDIX
+
+### Appendix A: Environment Variables
+
+```bash
+# .env.example
+NODE_ENV=development
+PORT=3000
+
+DATABASE_URL="postgresql://user:pass@localhost:5432/staff_db"
+REDIS_HOST=localhost
+REDIS_PORT=6379
+
+JWT_SECRET=your-secret-key
+JWT_ACCESS_EXPIRATION=15m
+JWT_REFRESH_EXPIRATION=7d
+
+AGENT_API_KEY=agent-secret-key
+UPLOAD_PATH=./uploads
+MAX_FILE_SIZE=10485760
+```
+
+### Appendix B: Useful Commands
+
+```bash
+# NX Commands
+npm run start:agent-api
+npm run start:dashboard-api
+npm run build:all
+npm run test:all
+
+# Prisma Commands
+npx prisma migrate dev
+npx prisma generate
+npx prisma studio
+
+# Docker Commands
+docker-compose up -d
+docker-compose logs -f
+```
+
+---
+
+## DOCUMENT REVISION HISTORY
+
+| Version | Date       | Author     | Changes |
+|---------|------------|------------|---------|
+| 1.0     | 2024-08-24 | PM Team    | Initial specification |
+| 2.0     | 2025-11-06 | Senior PM  | Complete restructure with architecture, roadmap, security, C# agent specs, best practices |
+
+---
+
+**Document Status**: ✅ Approved for Development  
+**Next Review**: 2025-12-06  
+**Prepared by**: Senior Project Manager (10+ years experience)
