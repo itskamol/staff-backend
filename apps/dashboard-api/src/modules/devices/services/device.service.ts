@@ -33,7 +33,6 @@ export class DeviceService {
     async configCheck(){
         const  port =  this.configService.port
         const ip = this.configService.hostIp
-        console.log({port, ip})
         return {port,ip}
     }
 

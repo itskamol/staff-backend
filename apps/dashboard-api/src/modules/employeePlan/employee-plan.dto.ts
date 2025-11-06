@@ -3,6 +3,17 @@ import { Type } from 'class-transformer';
 import { IsBoolean, IsNotEmpty, IsOptional, IsString, IsInt, IsArray } from 'class-validator';
 
 export class CreateEmployeePlanDto {
+
+    @ApiProperty({ example: 'Schedule Name' })
+    @IsNotEmpty()
+    @IsString()
+    name: string;
+
+    @ApiProperty({ example: 'Schedule addadditionalDetails' })
+    @IsOptional()
+    @IsString()
+    addadditionalDetails?: string;
+
     @ApiProperty({ example: '09:00' })
     @IsNotEmpty()
     @IsString()
@@ -50,6 +61,11 @@ export class AssignEmployeesDto {
 }
 
 export class EmployeePlanQueryDto {
+    @ApiPropertyOptional()
+    @IsOptional()
+    @IsString()
+    search?: string;
+
     @ApiPropertyOptional()
     @IsOptional()
     @Type(() => Number)
