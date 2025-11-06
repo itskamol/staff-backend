@@ -34,48 +34,42 @@ export class HikvisionController {
 
   // ✅ Test connection
   @Post('test-connection')
-  @ApiOperation({ summary: 'Hikvision qurilmasi bilan ulanishni tekshirish' })
   async testConnection(@Body() config: HikvisionConfig) {
     return await this.hikvisionService.testConnection(config);
   }
 
   // ✅ Qurilma haqidagi maʼlumotlarni olish
   @Post('device-info')
-  @ApiOperation({ summary: 'Hikvision qurilmasi haqidagi barcha maʼlumotlarni olish' })
   async getDeviceInfo(@Body() config: HikvisionConfig) {
     return await this.hikvisionService.getDeviceInfo(config);
   }
 
   // ✅ User yaratish
   @Post('user')
-  @ApiOperation({ summary: 'Hikvision qurilmasida user yaratish' })
   async createUser(@Body() dto: CreateHikvisionUserDto, @Body() config: HikvisionConfig) {
     return this.hikvisionService.createUser(dto, config);
   }
 
   @Post('capabilities')
-  @ApiOperation({ summary: 'Hikvision qurilmasida user yaratish' })
+  @ApiOperation({ summary: 'Get hikvision capabilities' })
   async getDeviceCapabilities(@Body() dto: HikvisionConfig) {
     return this.hikvisionService.getDeviceCapabilities(dto);
   }
 
-  // ✅ Userni olish
   @Post('user/:employeeNo')
-  @ApiOperation({ summary: 'User maʼlumotlarini olish' })
+  @ApiOperation({ summary: 'Get user info' })
   async getUser(@Param('employeeNo') employeeNo: string, @Body() config: HikvisionConfig) {
     return this.hikvisionService.getUser(employeeNo, config);
   }
 
-  // ✅ Barcha userlarni olish
   @Get('users')
-  @ApiOperation({ summary: 'Barcha foydalanuvchilarni olish' })
+  @ApiOperation({ summary: 'Get all users' })
   async getAllUsers() {
     return this.hikvisionService.getAllUsers();
   }
 
-  // ✅ Userni o‘chirish
   @Delete('user/:employeeNo')
-  @ApiOperation({ summary: 'Userni o‘chirish' })
+  @ApiOperation({ summary: 'Delete User' })
   async deleteUser(@Param('employeeNo') employeeNo: string) {
     return this.hikvisionService.deleteUser(employeeNo);
   }
@@ -146,8 +140,6 @@ export class HikvisionController {
         eployeeID: eventData?.AccessControllerEvent?.employeeNoString
       };
       if (info.eployeeID) {
-        console.log('Event Info:', info);
-        console.log("event data", eventData);
         const acEvent = eventData.AccessControllerEvent || {};
 
         const actionData: CreateActionDto = {
@@ -162,14 +154,12 @@ export class HikvisionController {
           actionMode: eventData.eventState === 'active' ? ActionMode.ONLINE : ActionMode.OFFLINE,
         };
 
-        // --- Save action ---
         const newAction = await this.actionService.create(actionData);
         console.log('Action', newAction)
       }
     }
 
 
-    // Hikvision to‘g‘ri "OK" formatdagi javobni kutadi:
     res.setHeader('Content-Type', 'application/json');
     return res.status(200).send({ responseStatusStrg: 'OK' });
   }

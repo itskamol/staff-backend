@@ -4,57 +4,62 @@ import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import { ActionType } from '@prisma/client';
 
 export class CreateCredentialDto {
-    @ApiProperty({ description: 'The ID of the employee this credential belongs to' })
-    @Type(() => Number)
-    @IsInt()
-    employeeId: number;
+  @ApiProperty({ description: 'The ID of the employee this credential belongs to' })
+  @Type(() => Number)
+  @IsInt()
+  employeeId: number;
 
-    @ApiProperty({ description: 'The unique code associated with the credential (e.g., card number, license plate)', minLength: 1, maxLength: 50 })
-    @IsString()
-    @MinLength(1)
-    @MaxLength(50)
-    code: string;
+  @ApiProperty({ description: 'The unique code associated with the credential (e.g., card number, license plate)', minLength: 1, maxLength: 50 })
+  @IsString()
+  @MinLength(1)
+  @MaxLength(50)
+  code: string;
 
-    @ApiProperty({ enum: ActionType, description: 'The type of credential being created' })
-    @IsEnum(ActionType)
-    type: ActionType;
+  @ApiProperty({ enum: ActionType, description: 'The type of credential being created' })
+  @IsEnum(ActionType)
+  type: ActionType;
 
-    @ApiPropertyOptional({ description: 'Additional descriptive details about the credential', nullable: true })
-    @IsOptional()
-    @IsString()
-    @MaxLength(255)
-    additionalDetails?: string;
+  @ApiPropertyOptional({ description: 'Additional descriptive details about the credential', nullable: true })
+  @IsOptional()
+  @IsString()
+  @MaxLength(255)
+  additionalDetails?: string;
 
-    @ApiPropertyOptional({ description: 'Whether the credential is currently active', default: true })
-    @IsOptional()
-    @IsBoolean()
-    isActive?: boolean;
+  @ApiPropertyOptional({ description: 'Whether the credential is currently active', default: true })
+  @IsOptional()
+  @IsBoolean()
+  isActive?: boolean;
+
+  @ApiProperty({ example: 1 })
+  @IsOptional()
+  @IsInt()
+  organizationId?: number
 }
 
 export class UpdateCredentialDto extends CreateCredentialDto {
 }
 
 export class CredentialResponseDto {
-    @ApiProperty()
-    id: number;
-    
-    @ApiProperty()
-    code: string;
-    
-    @ApiProperty({ enum: ActionType })
-    type: ActionType;
+  @ApiProperty()
+  id: number;
 
-    @ApiProperty()
-    employeeId: number;
-    
-    @ApiProperty()
-    isActive: boolean;
-    
-    @ApiProperty()
-    createdAt: Date;
-    
-    @ApiProperty()
-    updatedAt: Date;
+  @ApiProperty()
+  code: string;
+
+  @ApiProperty({ enum: ActionType })
+  type: ActionType;
+
+  @ApiProperty()
+  employeeId: number;
+
+  @ApiProperty()
+  isActive: boolean;
+
+  @ApiProperty()
+  createdAt: Date;
+
+  @ApiProperty()
+  updatedAt: Date;
 }
 
 export class CredentialQueryDto {

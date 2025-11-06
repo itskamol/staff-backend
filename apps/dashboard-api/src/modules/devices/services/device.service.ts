@@ -13,6 +13,7 @@ import { Server } from 'socket.io';
 import { StatusEnum } from '@prisma/client';
 import { EventsGateway } from '../../websocket/events.gateway';
 import { EmployeeRepository } from '../../employee/repositories/employee.repository';
+import { OrganizationService } from '../../organization/organization.service';
 
 
 @Injectable()
@@ -24,7 +25,7 @@ export class DeviceService {
         private hikvisionService: HikvisionService,
         private readonly prisma: PrismaService,
         private readonly gateway: EventsGateway,
-        private readonly employeeSyncRepository: EmployeeRepository
+        private readonly organization: OrganizationService
     ) {
         this.socket = this.gateway.server;
     }
@@ -341,10 +342,8 @@ export class DeviceService {
             success: 0
         };
 
-        let organizationId = user?.organizationId 
-        if(!organizationId && user.role != "ADMIN"){
-          throw new NotFoundException('User organizationId not found!')
-        }
+        const organizationId = dto.organizationId ? dto.organizationId : scope.organizationId
+
 
         // 1. Gates
         const gates = await this.prisma.gate.findMany({
@@ -386,7 +385,7 @@ export class DeviceService {
                         gate: { id: gate.id, name: gate.name },
                         device: { id: device.id, name: device.name || device.ipAddress, ip: device.ipAddress },
                         status: 'SKIPPED',
-                        message: 'Face qo‘llab-quvvatlanmaydi',
+                        message: 'Face is not supported.',
                         step: 'DEVICE_CHECK',
                         timestamp: new Date().toISOString(),
                     });

@@ -4,11 +4,13 @@ import { CredentialController } from './controllers/credential.controller';
 import { CredentialRepository } from './repositories/credential.repository';
 import { CredentialService } from './services/credential.services';
 import { EmployeeModule } from '../employee/employee.module';
+import { OrganizationModule } from '../organization/organization.module';
 
 @Module({
     imports: [
         SharedCommonModule,
         EmployeeModule, 
+        OrganizationModule
     ],
     controllers: [CredentialController],
     providers: [

@@ -27,6 +27,12 @@ export class CreateEmployeePlanDto {
     @IsOptional()
     @IsBoolean()
     isActive?: boolean;
+
+    @ApiProperty({ example: 1 })
+    @IsOptional()
+    @IsInt()
+    organizationId?: number
+    
 }
 
 export class UpdateEmployeePlanDto extends CreateEmployeePlanDto { }

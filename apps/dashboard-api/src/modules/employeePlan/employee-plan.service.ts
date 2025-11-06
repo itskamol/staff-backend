@@ -1,27 +1,24 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
 import { EmployeePlanRepository } from './employee-plan.repository';
 import { AssignEmployeesDto, CreateEmployeePlanDto, EmployeePlanQueryDto, UpdateEmployeePlanDto } from './employee-plan.dto';
-import { Prisma } from '@prisma/client';
 import { PrismaService } from '@app/shared/database';
 import { DataScope, UserContext } from '@app/shared/auth';
+import { OrganizationService } from '../organization/organization.service';
 
 @Injectable()
 export class EmployeePlanService {
     constructor(private readonly repo: EmployeePlanRepository,
-        private readonly prisma: PrismaService
+        private readonly prisma: PrismaService,
+        private readonly organization: OrganizationService
     ) { }
 
     async create(
         dto: CreateEmployeePlanDto,
         user: UserContext,
         scope: DataScope) {
+        const organizationId = dto.organizationId ? dto.organizationId : scope.organizationId
 
-        let organizationId = user?.organizationId
-        if (!organizationId && user.role != "ADMIN") {
-            throw new NotFoundException('User organizationId not found!')
-        }
-
-        return this.repo.create(dto);
+        return this.repo.create({ ...dto, organizationId });
     }
 
     async findAll(query: EmployeePlanQueryDto) {
@@ -80,18 +77,13 @@ export class EmployeePlanService {
         const validIds = employees.map(e => e.id);
         const invalidIds = dto.employeeIds.filter(id => !validIds.includes(id));
 
-        const alreadyAssigned = employees.filter(e => e.employeePlanId === dto.employeePlanId);
+        await this.repo.assignEmployees(dto.employeePlanId, validIds);
 
-        const newEmployeeIds = validIds.filter(id => !alreadyAssigned.map(e => e.id).includes(id));
-
-        await this.repo.assignEmployees(dto.employeePlanId, newEmployeeIds);
-
-        const newlyAssigned = employees.filter(e => newEmployeeIds.includes(e.id));
+        const successfullyAssigned = employees.filter(e => validIds.includes(e.id));
 
         return {
-            message: `Assigned ${newlyAssigned.length} employees`,
-            newlyAssigned,
-            // alreadyAssigned,
+            message: `Assigned ${successfullyAssigned.length} employees`,
+            successfullyAssigned,
             invalidIds,
         };
     }

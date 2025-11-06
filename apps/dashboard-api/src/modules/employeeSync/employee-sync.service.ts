@@ -9,7 +9,7 @@ export class EmployeeSyncService {
 
   async findAll(query: GetEmployeeSyncDto, scope: DataScope, user: UserContext) {
 
-    let organizationId = user?.organizationId
+    let organizationId = scope?.organizationId
     if (!organizationId && user.role != "ADMIN") {
       throw new NotFoundException('User organizationId not found!')
     }
