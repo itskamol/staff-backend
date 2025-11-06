@@ -17,7 +17,6 @@ export class EmployeePlanService {
 
         try {
             const organizationId = dto.organizationId ? dto.organizationId : scope.organizationId
-
             return this.repo.create({ ...dto, organizationId });
         } catch (error) {
             throw new BadRequestException({ message: error.message })

@@ -8,7 +8,7 @@ export class EmployeePlanRepository {
     constructor(private readonly prisma: PrismaService) { }
 
     async create(data: CreateEmployeePlanDto) {
-        return this.prisma.employeePlan.create({ data });
+        return this.prisma.employeePlan.create({data });
     }
 
     async findAll() {

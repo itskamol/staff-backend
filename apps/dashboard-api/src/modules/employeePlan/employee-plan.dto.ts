@@ -1,5 +1,5 @@
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
-import { Type } from 'class-transformer';
+import { Transform, Type } from 'class-transformer';
 import { IsBoolean, IsNotEmpty, IsOptional, IsString, IsInt, IsArray } from 'class-validator';
 
 export class CreateEmployeePlanDto {
@@ -29,10 +29,11 @@ export class CreateEmployeePlanDto {
     @IsString()
     extraTime: string;
 
-    @ApiProperty({ example: 'Mon,Fri' })
+    @ApiProperty({ example: ['Mon', 'Fri'] })
     @IsNotEmpty()
-    @IsString()
-    weekdays: string;
+    @IsString({ each: true })
+    @Transform(({ value }) => Array.isArray(value) ? value.join(',') : value)
+    weekdays: string; // ← bazaga string sifatida ketadi
 
     @ApiProperty({ example: true })
     @IsOptional()
@@ -43,18 +44,18 @@ export class CreateEmployeePlanDto {
     @IsOptional()
     @IsInt()
     organizationId?: number
-    
+
 }
 
 export class UpdateEmployeePlanDto extends CreateEmployeePlanDto { }
 
 export class AssignEmployeesDto {
-    @ApiProperty({example: 1})
+    @ApiProperty({ example: 1 })
     @IsNotEmpty()
     @IsInt()
     employeePlanId: number;
 
-    @ApiProperty({example: [1,2,3]})
+    @ApiProperty({ example: [1, 2, 3] })
     @IsArray()
     @IsInt({ each: true })
     employeeIds: number[];

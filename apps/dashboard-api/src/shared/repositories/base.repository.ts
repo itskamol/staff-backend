@@ -290,7 +290,6 @@ export abstract class BaseRepository<
         });
 
         this.logger.debug(`Deleted ${this.modelName} with ID: ${id}`);
-        console.log('++++++++++++++++++++++++++++++++++\n',result, '\n++++++++++++++++++++++++++++++++++');
         return result;
     }
 
