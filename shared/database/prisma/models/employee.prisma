@@ -69,21 +69,21 @@ model EmployeeSync {
   organization Organization? @relation(fields: [organizationId], references: [id], onDelete: Cascade)
   gate         Gate          @relation(fields: [gateId], references: [id])
   device       Device        @relation(fields: [deviceId], references: [id])
-  employee     Employee      @relation(fields: [employeeId], references: [id])
+  employee     Employee      @relation(fields: [employeeId], references: [id], onDelete: Cascade)
   createdAt    DateTime      @default(now())
   updatedAt    DateTime      @updatedAt
 }
 
 model EmployeePlan {
-  id             Int     @id @default(autoincrement())
-  name String?
+  id                   Int     @id @default(autoincrement())
+  name                 String?
   addadditionalDetails String?
-  startTime      String
-  endTime        String
-  extraTime      String
-  weekdays       String
-  isActive       Boolean @default(true)
-  organizationId Int?    @map("organization_id")
+  startTime            String
+  endTime              String
+  extraTime            String
+  weekdays             String
+  isActive             Boolean @default(true)
+  organizationId       Int?    @map("organization_id")
 
   organization Organization? @relation(fields: [organizationId], references: [id], onDelete: Cascade)
   Employee     Employee[]
