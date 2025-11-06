@@ -384,12 +384,6 @@ Plus existing:
 - [ ] Update exports and imports
 - [ ] Write unit tests
 
-### Phase 2 (Week 2-3)
-- [ ] Add Swagger setup to agent-gateway main.ts
-- [ ] Create controller DTOs
-- [ ] Document all gateway endpoints
-- [ ] Test Swagger UI
-
 ### Phase 3 (Week 3-4)
 - [ ] Create Agent API DTOs
 - [ ] Document ingest endpoints

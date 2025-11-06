@@ -3,7 +3,7 @@
 **Timestamp:** 2025-10-17
 
 ## Phase 1: Analysis and Planning
-- Analyzed the project structure, identifying three main applications: `dashboard-api`, `agent-api`, and `agent-gateway`.
+- Analyzed the project structure, identifying three main applications: `dashboard-api`, `agent-api`.
 - Reviewed all `main.ts` files to understand existing Swagger implementations.
 - Studied `docs/00_START_HERE.md` to align with the project's existing refactoring plan.
 - Created a detailed, multi-step plan for centralizing the Swagger setup.
@@ -23,7 +23,7 @@
 - Successfully stabilized the unit test suite for `dashboard-api` and `agent-api`.
 
 ## Phase 4: Integration and Refactoring
-- Updated the `main.ts` file for `dashboard-api`, `agent-api`, and `agent-gateway` to use the new centralized `setupSwagger` function.
+- Updated the `main.ts` file for `dashboard-api`, `agent-api` to use the new centralized `setupSwagger` function.
 - Assigned unique documentation paths for each service: `/dashboard/docs`, `/agent/docs`, and `/gateway/docs`.
 
 ## Phase 5: Documentation Annotation (Automated Generation)

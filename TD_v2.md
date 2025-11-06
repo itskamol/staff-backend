@@ -260,11 +260,6 @@ graph TD
 - Metrics: queue backlog, offline duration, restart count, device connectivity.
 
 ## 8. Operatsion jihatlar
-### 8.1 Deploy pipeline
-- Nx tasks (`nx deploy agent-gateway`, `nx deploy agent-api`, ...).
-- Docker registries (arm64/amd64 multi-arch).
-- IaC (Terraform/Ansible) – DB, storage, observability.
-
 ### 8.2 Konfiguratsiya
 - Config service (Nest `@nestjs/config`).
 - Secrets: Vault yoki AWS Secrets Manager.
@@ -299,11 +294,6 @@ graph TD
    - `IFileStorageService` implementatsiyasi, kod refactoring.
    - Prisma service RLS interceptor.
    - `ADMIN` bypass tests.
-
-2. **Gateway MVP**
-   - Yangi `apps/agent-gateway`, basic ingestion, WebSocket heartbeat.
-   - Agent API endpointlarni gateway-only qilib cheklash.
-   - Provisioning flow (API key).
 
 3. **Policy & Command Queue**
    - Yangi jadval va service layer.
@@ -359,11 +349,6 @@ TIMESCALE_URL=postgresql://...
 CONTROL_CHANNEL_PORT=8081
 GATEWAY_API_KEYS=...
 
-# agent-gateway
-SERVER_URL=https://agent-api.example.com
-CONTROL_URL=wss://agent-api.example.com/ws
-LOCAL_BUFFER_PATH=/var/lib/staff-gateway/buffer.sqlite
-API_KEY=...
 ```
 
 ---

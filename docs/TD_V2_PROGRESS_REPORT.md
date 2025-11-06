@@ -74,53 +74,6 @@ export interface IFileStorageService {
 
 ---
 
-### 1.2 ✅ Agent Gateway MVP (85% Complete)
-
-#### ✅ Gateway Core Architecture
-- **Status:** MOSTLY COMPLETE ✅
-- **Komponentlar:**
-  - ✅ NestJS microservice structure (`apps/agent-gateway`)
-  - ✅ Module structure (adapters, buffer, collector, command, control, uplink, health)
-  - ✅ WebSocket client control channel
-  - ✅ RLS interceptor integrated
-  - ✅ Swagger documentation
-
-**Fayllar:**
-- `/apps/agent-gateway/src/main.ts`
-- `/apps/agent-gateway/src/modules/control/control.service.ts`
-- Gateway modules: `/apps/agent-gateway/src/modules/*`
-
-**WebSocket Control Channel:**
-```typescript
-// Gateway WebSocket client implementation
-this.socket = new WebSocket(url, { headers });
-// Heartbeat, command receiving, status reporting
-```
-
-#### 🟡 Gateway Command Queue System
-- **Status:** PARTIAL (Database schema ready, service layer incomplete)
-- **Schema:** ✅ `GatewayCommand` model created
-- **Needs:**
-  - Command execution service
-  - Retry logic
-  - ACK handling workflow
-
-**Database Model:**
-```prisma
-model GatewayCommand {
-  id           String                     @id @default(uuid())
-  gatewayId    String
-  type         String
-  payload      Json
-  requiresAck  Boolean                    @default(true)
-  status       GatewayCommandStatus       @default(PENDING)
-  ackStatus    GatewayCommandAckStatus?
-  ackError     String?
-}
-```
-
----
-
 ### 1.3 ✅ Swagger Documentation (100% Complete)
 
 - **Status:** FULLY IMPLEMENTED ✅
@@ -464,9 +417,6 @@ Tasks:
 ```bash
 # Database tables
 npx prisma db pull
-
-# Gateway modules
-ls -la apps/agent-gateway/src/modules/
 
 # Run tests
 npm test

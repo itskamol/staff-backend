@@ -78,27 +78,6 @@ SwaggerModule.setup('api/docs', app, document, {
 
 **Swagger URL:** `http://localhost:3000/api/docs`
 
----
-
-### 1.3 Agent Gateway
-
-**📍 Fayl:** `apps/agent-gateway/src/main.ts`
-
-```typescript
-async function bootstrap() {
-    const app = await NestFactory.create(AppModule, { bufferLogs: true });
-    app.setGlobalPrefix('v1');
-    app.useGlobalPipes(
-        new ValidationPipe({
-            whitelist: true,
-            transform: true,
-        })
-    );
-
-    const port = Number(process.env.PORT) || 4100;
-    await app.listen(port, '0.0.0.0');
-    Logger.log(`Agent Gateway listening on http://localhost:${port}/v1/health`, 'Bootstrap');
-}
 ```
 
 **Status:**
@@ -374,14 +353,6 @@ Controllers bu joyda hozirda qayq ko'rish kerak. Ular dokumentatsiyasiz bo'lishi
 
 ---
 
-### 3.3 Agent Gateway Controllers
-
-**📍 Location:** `apps/agent-gateway/src/modules/`
-
-Hozirda Swagger setup yo'q, shuning uchun controllers dokumentatsiyasiz.
-
----
-
 ## 4️⃣ DTO Pattern Analysis
 
 ### 4.1 Response DTO Pattern
@@ -501,8 +472,6 @@ import { ApiCrudOperation } from '@app/shared/utils';
 // apps/agent-api
 import { ApiCrudOperation } from '@app/shared/utils';
 
-// apps/agent-gateway
-import { ApiCrudOperation } from '@app/shared/utils';
 ```
 
 ---
@@ -707,10 +676,6 @@ apps/dashboard-api/src/
 
 apps/agent-api/src/
 ├── main.ts                      (add Swagger if missing)
-└── modules/**/*.controller.ts   (add docs)
-
-apps/agent-gateway/src/
-├── main.ts                      (ADD Swagger setup)
 └── modules/**/*.controller.ts   (add docs)
 
 shared/utils/src/

@@ -43,12 +43,6 @@ const config = new DocumentBuilder()
 
 **Status:** ✅ Kontiguratsiya, controllers da tag'lar ko'p joyda yo'q
 
-#### Agent Gateway (`apps/agent-gateway/src/main.ts`)
-```typescript
-// ❌ Swagger setup yo'q!
-app.setGlobalPrefix('v1');
-```
-
 **Status:** ❌ Swagger hech qanday joyda yo'q
 
 ---
@@ -154,11 +148,6 @@ export class ApiErrorResponse {
 - ✅ Controllers'da documentatsiya partial bor
 - 🎯 Barcha controllers'ni complete qilish
 
-**Agent Gateway (`apps/agent-gateway/`):**
-- ❌ Setup yo'q
-- 🎯 Main.ts'ga Swagger setup qo'shish
-- 🎯 Controllers'da full documentation
-
 ---
 
 ## 3️⃣ Refactoring Plan
@@ -188,96 +177,7 @@ export * from './swagger/index';
 export * from './dto/api-response.dto';
 export * from './dto/pagination.dto';
 ```
-
-#### Step 1.4 – Imports o'zgartirish
-```typescript
-// Qo'lli (manual) yoki Nx tooling orqali
-// dashboard-api imports → @app/shared/utils
-// agent-gateway imports → @app/shared/utils
-// agent-api imports → @app/shared/utils (if needed)
-```
-
 ---
-
-### 3.2 Phase 2: Agent Gateway Swagger Setup (Week 1-2)
-
-#### Step 2.1 – Main.ts'ni yangilash
-```typescript
-// apps/agent-gateway/src/main.ts
-import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger';
-
-async function bootstrap() {
-    const app = await NestFactory.create(AppModule);
-    app.setGlobalPrefix('v1');
-
-    // ✅ Swagger setup qo'shish
-    const config = new DocumentBuilder()
-        .setTitle('Staff Control System - Agent Gateway')
-        .setDescription('Gateway for secure agent data collection and device control')
-        .setVersion('1.0')
-        .addApiKey({ type: 'apiKey', name: 'X-API-Key', in: 'header' }, 'api-key')
-        .addBearerAuth()
-        .addTag('Health', 'System health endpoints')
-        .addTag('Collector', 'Data collection from agents')
-        .addTag('Uplink', 'Connection management to Agent API')
-        .addTag('Device', 'Device control and management')
-        .addTag('Buffer', 'Local queue and buffer status')
-        .build();
-
-    const document = SwaggerModule.createDocument(app, config, {
-        extraModels: [ApiSuccessResponse, ApiErrorResponse, ApiPaginatedResponse],
-    });
-
-    SwaggerModule.setup('v1/docs', app, document, {
-        customSiteTitle: 'Staff Gateway API Docs',
-        swaggerOptions: { defaultModelsExpandDepth: 1 },
-    });
-
-    const port = Number(process.env.PORT) || 4100;
-    await app.listen(port, '0.0.0.0');
-    Logger.log(`📄 Swagger docs available at: http://localhost:${port}/v1/docs`);
-}
-```
-
-#### Step 2.2 – Controllers'da documentation
-```typescript
-// apps/agent-gateway/src/modules/health/health.controller.ts
-import { Controller, Get } from '@nestjs/common';
-import { ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger';
-
-@ApiTags('Health')
-@Controller('health')
-export class HealthController {
-    @Get()
-    @ApiOperation({ summary: 'Gateway health check' })
-    @ApiResponse({ 
-        status: 200, 
-        description: 'Gateway is healthy',
-        schema: {
-            example: {
-                status: 'ok',
-                timestamp: new Date().toISOString(),
-                version: '1.0'
-            }
-        }
-    })
-    health() {
-        return { status: 'ok', timestamp: new Date(), version: '1.0' };
-    }
-}
-```
-
----
-
-### 3.3 Phase 3: Agent API Documentation (Week 2-3)
-
-#### Step 3.1 – DTOs fayl creation
-```
-apps/agent-api/src/modules/ingest/dto/
-├── logs-ingest.dto.ts
-├── screenshots-ingest.dto.ts
-└── device-events-ingest.dto.ts
-```
 
 #### Step 3.2 – Ingest Controller
 ```typescript
@@ -493,14 +393,6 @@ export const ApiPaginatedGet = <T extends Type<unknown>>(
 - [ ] Write unit tests
 - [ ] Update shared/utils README
 
-### ✅ Phase 2: Agent Gateway (Weeks 2-3)
-- [ ] Add Swagger setup to main.ts
-- [ ] Create controller DTOs
-- [ ] Document all endpoints
-- [ ] Add examples to Swagger
-- [ ] Test Swagger UI
-- [ ] Update agent-gateway README
-
 ### ✅ Phase 3: Agent API (Weeks 3-4)
 - [ ] Create ingest DTOs
 - [ ] Document ingest endpoints
@@ -563,42 +455,6 @@ shared/utils/src/lib/
 ```
 
 ---
-
-## 7️⃣ Code Examples – Target State
-
-### Example 1: Shared Swagger Usage (Agent Gateway)
-
-```typescript
-// apps/agent-gateway/src/modules/collector/collector.controller.ts
-import { Controller, Post, Body } from '@nestjs/common';
-import { 
-    ApiTags, 
-    ApiOperation,
-    ApiBearerAuth 
-} from '@nestjs/swagger';
-import { 
-    ApiCrudOperation,
-    ApiSecureOperation 
-} from '@app/shared/utils';
-import { CollectorService } from './collector.service';
-import { LogsIngestDto } from './dto/logs-ingest.dto';
-
-@ApiTags('Collector')
-@Controller('v1/agent')
-export class CollectorController {
-    constructor(private collectorService: CollectorService) {}
-
-    @Post('logs')
-    @ApiSecureOperation()  // 🆕 Uses shared decorator
-    @ApiCrudOperation(LogIngestResponseDto, 'create', {
-        body: LogsIngestDto,
-        summary: 'Collect logs from C# agent',
-    })
-    async ingestLogs(@Body() dto: LogsIngestDto) {
-        return this.collectorService.processLogs(dto);
-    }
-}
-```
 
 ### Example 2: File Upload Documentation
 

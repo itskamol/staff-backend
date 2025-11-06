@@ -45,21 +45,6 @@
       "skipFiles": ["<node_internals>/**"],
       "sourceMaps": true,
       "outFiles": ["${workspaceFolder}/dist/apps/agent-api/**/*.(m|c|)js", "!**/node_modules/**"]
-    },
-    {
-      "type": "node",
-      "request": "launch",
-      "name": "Debug agent-gateway with Nx",
-      "runtimeExecutable": "pnpm exec",
-      "runtimeArgs": ["nx", "serve", "agent-gateway"],
-      "env": {
-        "NODE_OPTIONS": "--inspect=9232"
-      },
-      "console": "integratedTerminal",
-      "internalConsoleOptions": "neverOpen",
-      "skipFiles": ["<node_internals>/**"],
-      "sourceMaps": true,
-      "outFiles": ["${workspaceFolder}/dist/apps/agent-gateway/**/*.(m|c|)js", "!**/node_modules/**"]
     }
   ]
 }

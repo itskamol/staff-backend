@@ -308,11 +308,6 @@ Admin → Dashboard API
 - Prisma service RLS interceptor
 - Admin bypass tests
 
-### 2️⃣ Gateway MVP
-- Yangi `apps/agent-gateway`
-- Basic ingestion + WebSocket heartbeat
-- Provisioning flow
-
 ### 3️⃣ Policy & Command Queue
 - Jadval yaratish
 - Service layer

@@ -40,8 +40,7 @@
       "exclude": [
         "apps/dashboard-api-e2e/**/*",
         "dashboard-api-e2e/**/*",
-        "agent-api-e2e/**/*",
-        "agent-gateway-e2e/**/*"
+        "agent-api-e2e/**/*"
       ]
     }
   ],

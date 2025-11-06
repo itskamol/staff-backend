@@ -106,9 +106,6 @@ npx nx serve dashboard-api
 # Agent API (port 3001)
 npx nx serve agent-api
 
-# Agent Gateway (port 4100)
-npx nx serve agent-gateway
-
 # Control/WebSocket imitatsiyasi uchun Agent API (port 3001)
 npx nx serve agent-api
 ```
@@ -160,15 +157,6 @@ staff/
 │   │   │   │   └── security/   # Xavfsizlik
 │   │   │   │   └── gateway/    # Agent Gateway ingest & boshqaruv endpointlari
 │   │   │   └── ...
-│   ├── agent-gateway/          # LAN ichidagi Gateway xizmati (port 4100)
-│   │   ├── src/
-│   │   │   ├── modules/
-│   │   │   │   ├── buffer/     # Offline navbat va disk perzistentsiya
-│   │   │   │   ├── collector/  # Lokal agent/device ma'lumotlarini qabul qilish
-│   │   │   │   ├── control/    # WebSocket boshqaruv kanali
-│   │   │   │   ├── health/     # Health va observability endpointi
-│   │   │   │   └── uplink/     # Batch uplink scheduleri
-│   │   │   └── config/         # Gateway konfiguratsiya servisi
 │   ├── dashboard-api-e2e/      # E2E testlar
 │   └── agent-api-e2e/          # E2E testlar
 ├── shared/
