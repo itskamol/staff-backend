@@ -9,6 +9,10 @@ export class CreateGateDto {
     @IsString()
     @IsNotEmpty()
     name: string;
+
+    @ApiProperty({example: 1, description: 'Organization Id'})
+    @IsInt()
+    organizationId: number
 }
 
 export class UpdateGateDto extends PartialType(CreateGateDto) {}

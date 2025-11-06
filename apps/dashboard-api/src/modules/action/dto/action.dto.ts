@@ -1,5 +1,5 @@
 import { ApiPropertyOptional } from "@nestjs/swagger";
-import { ActionMode, ActionType, EntryType, VisitorType } from "@prisma/client";
+import { ActionMode, ActionStatus, ActionType, EntryType, VisitorType } from "@prisma/client";
 import { IsDateString, IsEnum, IsInt, IsOptional, IsString } from "class-validator";
 
 export class CreateActionDto {
@@ -37,6 +37,12 @@ export class CreateActionDto {
 
     @IsEnum(ActionMode)
     actionMode: ActionMode;
+
+    @IsEnum(ActionStatus)
+    status: ActionStatus
+
+    @IsInt()
+    organizationId: number
 }
 
 export class UpdateActionDto extends CreateActionDto { }
@@ -68,4 +74,9 @@ export class ActionQueryDto {
     @IsOptional()
     @IsInt()
     employeeId?: number;
+
+    @ApiPropertyOptional({enum: ActionStatus})
+    @IsOptional()
+    @IsEnum(ActionStatus)
+    status?: ActionStatus
 }

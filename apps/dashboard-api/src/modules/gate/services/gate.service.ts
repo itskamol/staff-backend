@@ -32,6 +32,11 @@ export class GateService {
                         entryType: true,
                     },
                 },
+                organization: {
+                    select: {
+                        fullName: true
+                    }
+                },
                 _count: {
                     select: {
                         devices: true,
@@ -78,8 +83,11 @@ export class GateService {
 
     async create(createGateDto: CreateGateDto, scope: DataScope) {
 
+        const organizationId = createGateDto.organizationId ? createGateDto.organizationId : scope.organizationId
+
+        const dto = {...createGateDto, organizationId}
         return this.gateRepository.create(
-            { ...createGateDto },
+            { ...dto, },
             {
                 _count: {
                     select: {

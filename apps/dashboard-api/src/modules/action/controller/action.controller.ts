@@ -21,11 +21,6 @@ import { ApiBearerAuth, ApiTags } from '@nestjs/swagger';
 export class ActionController {
   constructor(private readonly service: ActionService) { }
 
-  @Post()
-  async create(@Body() dto: CreateActionDto) {
-    return this.service.create(dto);
-  }
-
   @Get()
   async findAll(
     @Query() dto?: ActionQueryDto

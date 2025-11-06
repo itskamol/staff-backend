@@ -67,7 +67,7 @@ export class GateController {
     }
 
     @Post()
-    @Roles(Role.ADMIN)
+    @Roles(Role.ADMIN, Role.DEPARTMENT_LEAD, Role.HR)
     @ApiCrudOperation(GateDto, 'create', {
         body: CreateGateDto,
         summary: 'Create new gate',

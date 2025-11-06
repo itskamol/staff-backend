@@ -4,7 +4,6 @@ import {
   Post,
   Body,
   Param,
-  Query,
   Delete,
   Req,
   Res
@@ -12,17 +11,14 @@ import {
 import {
   ApiTags,
   ApiOperation,
-  ApiQuery,
-  ApiBody,
   ApiBearerAuth,
+  ApiHideProperty,
 } from '@nestjs/swagger';
 import { HikvisionService } from './hikvision.service';
 import { CreateHikvisionUserDto, HikvisionConfig } from './dto/create-hikvision-user.dto';
 import { Public } from '@app/shared/auth';
 import { Request, Response } from 'express';
 import { ActionService } from '../action/service/action.service';
-import { CreateActionDto } from '../action/dto/action.dto';
-import { ActionMode, ActionType, EntryType, VisitorType } from '@prisma/client';
 
 @ApiTags('Hikvisions')
 @ApiBearerAuth()
@@ -131,34 +127,11 @@ export class HikvisionController {
       console.error('Event parse qilishda xatolik:', err.message);
     }
 
-    if (eventData) {
-      const info = {
-        employeeNo: eventData?.AccessControllerEvent?.verifyNo,
-        eventType: eventData?.eventType,
-        dateTime: eventData?.dateTime,
-        deviceId,
-        eployeeID: eventData?.AccessControllerEvent?.employeeNoString
-      };
-      if (info.eployeeID) {
-        const acEvent = eventData.AccessControllerEvent || {};
-
-        const actionData: CreateActionDto = {
-          deviceId: parseInt(deviceId),
-          actionTime: eventData.dateTime,
-          employeeId: acEvent.employeeNoString ? parseInt(acEvent.employeeNoString) : undefined,
-          visitorId: undefined,
-          visitorType: acEvent.userType === 'normal' ? VisitorType.EMPLOYEE : VisitorType.VISITOR,
-          entryType: EntryType.ENTER,
-          actionType: ActionType.PHOTO,
-          actionResult: acEvent.attendanceStatus || eventData.eventDescription || '',
-          actionMode: eventData.eventState === 'active' ? ActionMode.ONLINE : ActionMode.OFFLINE,
-        };
-
-        const newAction = await this.actionService.create(actionData);
+    const eployeeID = eventData?.AccessControllerEvent?.employeeNoString
+    if (eployeeID) {  
+        const newAction = await this.actionService.create(eventData, +deviceId);
         console.log('Action', newAction)
-      }
     }
-
 
     res.setHeader('Content-Type', 'application/json');
     return res.status(200).send({ responseStatusStrg: 'OK' });
