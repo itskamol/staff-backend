@@ -12,6 +12,6 @@ import { SharedDatabaseModule } from "@app/shared/database";
     ],
     controllers: [OrganizationController],
     providers: [OrganizationService, OrganizationRepository],
-    exports: [],
+    exports: [OrganizationService],
 })
 export class OrganizationModule {}

@@ -5,6 +5,7 @@ import { EmployeeService } from '../../employee/services/employee.service';
 import { CredentialRepository, CredentialWithRelations } from '../repositories/credential.repository';
 import { CreateCredentialDto, CredentialQueryDto, UpdateCredentialDto } from '../dto/credential.dto';
 import { PrismaService } from '@app/shared/database';
+import { OrganizationService } from '../../organization/organization.service';
 
 @Injectable()
 export class CredentialService {
@@ -12,76 +13,77 @@ export class CredentialService {
         private readonly credentialRepository: CredentialRepository,
         private readonly employeeService: EmployeeService,
         private readonly prisma: PrismaService,
+        private readonly organization: OrganizationService
     ) { }
 
 
     async getAllCredentials(
-    query: CredentialQueryDto,
-    scope: DataScope,
-    user: UserContext,
-  ) {
-    const {
-      page = 1,
-      limit = 10,
-      sortBy = 'createdAt',
-      sortOrder = 'desc',
-      search,
-      type,
-      employeeId,
-      departmentId,
-      organizationId,
-    } = query;
+        query: CredentialQueryDto,
+        scope: DataScope,
+        user: UserContext,
+    ) {
+        const {
+            page = 1,
+            limit = 10,
+            sortBy = 'createdAt',
+            sortOrder = 'desc',
+            search,
+            type,
+            employeeId,
+            departmentId,
+            organizationId,
+        } = query;
 
-    const where: Prisma.CredentialWhereInput = {
-      ...(type && { type }),
-      ...(employeeId && { employeeId }),
-      ...(departmentId && { employee: { departmentId } }),
-      ...(organizationId && { employee: { organizationId } }),
-    };
+        const where: Prisma.CredentialWhereInput = {
+            ...(type && { type }),
+            ...(employeeId && { employeeId }),
+            ...(departmentId && { employee: { departmentId } }),
+            ...(organizationId && { employee: { organizationId } }),
+        };
 
-    if (search) {
-      where.OR = [
-        { code: { contains: search, mode: 'insensitive' } },
-        { employee: { name: { contains: search, mode: 'insensitive' } } },
-      ];
+        if (search) {
+            where.OR = [
+                { code: { contains: search, mode: 'insensitive' } },
+                { employee: { name: { contains: search, mode: 'insensitive' } } },
+            ];
+        }
+
+        const [items, total] = await this.prisma.$transaction([
+            this.prisma.credential.findMany({
+                where,
+                include: this.getDefaultInclude(),
+                orderBy: { [sortBy]: sortOrder },
+                skip: (page - 1) * limit,
+                take: limit,
+            }),
+            this.prisma.credential.count({ where }),
+        ]);
+
+        return {
+            items,
+            total,
+            page,
+            limit,
+        };
     }
 
-    const [items, total] = await this.prisma.$transaction([
-      this.prisma.credential.findMany({
-        where,
-        include: this.getDefaultInclude(),
-        orderBy: { [sortBy]: sortOrder },
-        skip: (page - 1) * limit,
-        take: limit,
-      }),
-      this.prisma.credential.count({ where }),
-    ]);
-
-    return {
-      items,
-      total,
-      page,
-      limit,
-    };
-  }
-
-  private getDefaultInclude(): Prisma.CredentialInclude {
-    return {
-      employee: {
-        select: {
-          id: true,
-          name: true,
-          departmentId: true,
-          organizationId: true,
-        },
-      },
-    };
-  }
+    private getDefaultInclude(): Prisma.CredentialInclude {
+        return {
+            employee: {
+                select: {
+                    id: true,
+                    name: true,
+                    departmentId: true,
+                    organizationId: true,
+                },
+            },
+        };
+    }
 
 
-  // async getEmployeePhotoCredential(employeeId:number){
-  //   return this.credentialRepository.getCredentialsByEmployeeId(employeeId, )
-  // }
+    // async getEmployeePhotoCredential(employeeId:number){
+    //   return this.credentialRepository.getCredentialsByEmployeeId(employeeId, )
+    // }
 
     async getCredentialById(
         id: number,
@@ -125,11 +127,9 @@ export class CredentialService {
         scope: DataScope,
         user: UserContext,
     ): Promise<CredentialWithRelations> {
-      
-        let organizationId = user?.organizationId 
-        if(!organizationId && user.role != "ADMIN"){
-          throw new NotFoundException('User organizationId not found!')
-        }
+
+        const organizationId = dto.organizationId ? dto.organizationId : scope.organizationId
+
         const employee = await this.employeeService.getEmployeeById(dto.employeeId, scope, user);
 
         if (!employee) {
@@ -147,7 +147,7 @@ export class CredentialService {
             additionalDetails: dto.additionalDetails,
             isActive: dto.isActive,
             employee: { connect: { id: dto.employeeId } },
-            organization: {connect: {id: organizationId}}
+            organization: { connect: { id: organizationId } }
         };
 
         return this.credentialRepository.create(data, this.credentialRepository.getDefaultInclude());

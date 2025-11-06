@@ -37,7 +37,7 @@ export class EmployeePlanRepository {
     }
 
     async assignEmployees(employeePlanId: number, employeeIds: number[]) {
-        // har bir xodimni employeePlanId bilan update qilish
+
         return this.prisma.employee.updateMany({
             where: { id: { in: employeeIds } },
             data: { employeePlanId },
@@ -54,7 +54,6 @@ export class EmployeePlanRepository {
     }) {
         const { skip = 0, take = 50, where = {}, orderBy = { id: 'asc' }, select, include } = params;
 
-        // Prisma faqat bittasini qabul qiladi: select yoki include
         const args: any = { skip, take, where, orderBy };
         if (select) args.select = select;
         else if (include) args.include = include;

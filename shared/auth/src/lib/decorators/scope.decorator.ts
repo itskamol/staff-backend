@@ -7,7 +7,7 @@ import { DataScope } from '../interfaces/data-scope.interface';
 export const Scope = createParamDecorator(
     (data: keyof DataScope | undefined, ctx: ExecutionContext): DataScope | any => {
         const request = ctx.switchToHttp().getRequest();
-        const scope = request.scope as DataScope;
+        const scope = request.dataScope as DataScope;
 
         return data ? scope?.[data] : scope;
     }

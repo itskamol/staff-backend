@@ -23,7 +23,6 @@ async function bootstrap() {
     app.useLogger(logger);
 
     app.useStaticAssets(join(process.cwd(), 'storage'), { prefix: '/storage' });
-    // console.log(join(process.cwd(), 'storage'))
 
     app.use(
         bodyParser.raw({ type: ['application/xml', 'text/xml'], limit: '1mb' })
