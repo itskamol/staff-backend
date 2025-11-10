@@ -33,6 +33,7 @@ export class AttendanceRepository {
     data: {
       ...data,
       arrivalStatus: data.arrivalStatus as ActionStatus,
+      goneStatus: data.goneStatus as ActionStatus,
     } as Prisma.AttendanceUncheckedUpdateInput,
   });
 }

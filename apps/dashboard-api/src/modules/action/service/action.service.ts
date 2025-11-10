@@ -1,4 +1,3 @@
-// ...existing code...
 import { BadRequestException, Injectable, NotFoundException } from '@nestjs/common';
 import { ActionRepository } from '../repositories/action.repository';
 import { ActionQueryDto, CreateActionDto, UpdateActionDto } from '../dto/action.dto';
@@ -128,24 +127,18 @@ export class ActionService {
   startTime: string,
   extraTime: string
 ): Promise<{ status: ActionStatus }> {
-  // Rejadagi vaqtlar (HH:mm) formatida kelyapti
   const [startHour, startMinute] = startTime.split(':').map(Number);
   const [extraHour, extraMinute] = extraTime ? extraTime.split(':').map(Number) : [0, 0];
 
-  // actionTime dan kunni olish (mahalliy vaqt zonasi bo‘yicha)
   const eventDate = new Date(actionTime);
 
-  // startTime ni xuddi shu kun uchun mahalliy vaqt sifatida yaratamiz
   const startDateTime = new Date(actionTime);
   startDateTime.setHours(startHour, startMinute, 0, 0);
 
-  // Qo‘shimcha ruxsat berilgan vaqt (kechikish chegarasi)
   const allowedTime = new Date(startDateTime);
   allowedTime.setHours(startDateTime.getHours() + extraHour);
   allowedTime.setMinutes(startDateTime.getMinutes() + extraMinute);
 
-  // ⚙️ Har ikkala vaqtni bir xil vaqt zonasida solishtirish uchun
-  // UTC emas, balki local time asosida farqni olamiz
   const diffMs = eventDate.getTime() - allowedTime.getTime();
   console.log('time:',diffMs)
 

@@ -65,7 +65,14 @@ export class AttendanceService {
             where,
             include: {
                 employee: {
-                    select: { id: true, name: true, photo: true },
+                    select: {
+                        id: true, name: true, photo: true, department: {   // ✅ Department ma’lumotini ham qo‘shdik
+                            select: {
+                                id: true,
+                                fullName: true,
+                            },
+                        },
+                    },
                 },
             },
             orderBy: { startTime: 'desc' },
