@@ -15,9 +15,9 @@ import { ActionQueryDto, CreateActionDto, UpdateActionDto } from '../dto/action.
 import { ApiBearerAuth, ApiTags } from '@nestjs/swagger';
 
 
-@ApiTags('Attendance')
+@ApiTags('Actions')
 @ApiBearerAuth()
-@Controller('attendance')
+@Controller('action')
 export class ActionController {
   constructor(private readonly service: ActionService) { }
 

@@ -32,12 +32,12 @@ model Action {
 }
 
 model Gate {
-  id             Int    @id @default(autoincrement())
+  id             Int      @id @default(autoincrement())
   name           String
-  organizationId Int?   @map("organization_id")
-  createdAt    DateTime      @default(now()) @map("created_at")
+  organizationId Int?     @map("organization_id")
+  createdAt      DateTime @default(now()) @map("created_at")
 
-  organization Organization? @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  organization Organization?  @relation(fields: [organizationId], references: [id], onDelete: Cascade)
   devices      Device[]
   actions      Action[]
   EmployeeSync EmployeeSync[]
@@ -79,4 +79,20 @@ model Device {
   @@index([serialNumber])
   @@index([isActive])
   @@map("devices")
+}
+
+model Attendance {
+  id             Int           @id @default(autoincrement())
+  startTime      DateTime
+  endTime        DateTime?
+  arrivalStatus  ActionStatus // ON_TIME or LATE
+  goneStatus     ActionStatus? // ON_TIME or EARLY
+  reason         String?
+  employeeId     Int
+  organizationId Int
+
+  employee    Employee     @relation(fields: [employeeId], references: [id], onDelete: Cascade)
+  organiztion Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+
+  createdAt DateTime @default(now()) @map("created_at")
 }

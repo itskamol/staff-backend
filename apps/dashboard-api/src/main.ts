@@ -62,8 +62,9 @@ async function bootstrap() {
             'Credentials',
             'Hikvisions',
             'Employee-sync',
-            'Attendance',
-            'Schedule'
+            'Actions',
+            'Schedule',
+            'Attendance'
         ],
         extraModels: [ApiSuccessResponse, ApiErrorResponse, ApiPaginatedResponse],
     });

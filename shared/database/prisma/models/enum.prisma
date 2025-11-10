@@ -75,4 +75,5 @@ enum StatusEnum {
 enum ActionStatus {
   ON_TIME
   LATE
+  EARLY
 }

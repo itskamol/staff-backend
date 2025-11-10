@@ -17,7 +17,7 @@ export class HikvisionService {
 
   constructor(
     private configService: ConfigService,
-    private employeeService: EmployeeService
+    private employeeService: EmployeeService,
   ) {
     this.parser = new xml2js.Parser({ explicitArray: false });
     this.logger.log(`HikvisionService initialized`);

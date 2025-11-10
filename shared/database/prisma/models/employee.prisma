@@ -25,6 +25,7 @@ model Employee {
   EmployeeSync  EmployeeSync[]
 
   EmployeePlan EmployeePlan? @relation(fields: [employeePlanId], references: [id])
+  attendances  Attendance[]
 
   @@index([organizationId])
   @@index([organizationId, departmentId])

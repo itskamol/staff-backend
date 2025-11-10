@@ -6,9 +6,10 @@ import { EmployeeModule } from "../employee/employee.module"
 import { GateModule } from "../gate/gate.module"
 import { ActionModule } from "../action/action.module"
 import { ConfigModule } from "../../core/config/config.module"
+import { AttendanceModule } from "../attendance/attendance.module"
 
 @Module({
-  imports: [EmployeeModule, GateModule, ActionModule, ConfigModule],
+  imports: [EmployeeModule, GateModule, ActionModule, ConfigModule, AttendanceModule],
   controllers: [HikvisionController],
   providers: [HikvisionService, HikvisionAuthService],
   exports: [HikvisionService, HikvisionAuthService],

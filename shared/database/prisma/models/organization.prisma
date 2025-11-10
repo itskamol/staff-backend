@@ -19,11 +19,12 @@ model Organization {
   employees      Employee[]
   resourceGroups ResourceGroup[]
   resources      Resource[]
-  Credential     Credential[]
-  EmployeeSync   EmployeeSync[]
-  EmployeePlan   EmployeePlan[]
-  Action         Action[]
-  Gate           Gate[]
+  credentials    Credential[]
+  employeeSyncs  EmployeeSync[]
+  employeePlans  EmployeePlan[]
+  actions        Action[]
+  gates          Gate[]
+  attendances    Attendance[]
 
   @@map("organizations")
 }

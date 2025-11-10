@@ -25,6 +25,7 @@ import { HikvisionModule } from '../modules/hikvision/hikvision.module';
 import { EmployeeSyncModule } from '../modules/employeeSync/employee-sync.module';
 import { ActionModule } from '../modules/action/action.module';
 import { EmployeePlanModule } from '../modules/employeePlan/employee-plan.module';
+import { AttendanceModule } from '../modules/attendance/attendance.module';
 
 @Module({
     imports: [
@@ -49,7 +50,8 @@ import { EmployeePlanModule } from '../modules/employeePlan/employee-plan.module
         HikvisionModule,
         EmployeeSyncModule,
         ActionModule,
-        EmployeePlanModule
+        EmployeePlanModule,
+        AttendanceModule
     ],
     controllers: [AppController],
     providers: [
