@@ -66,7 +66,7 @@ export class AttendanceService {
             include: {
                 employee: {
                     select: {
-                        id: true, name: true, photo: true, department: {   // ✅ Department ma’lumotini ham qo‘shdik
+                        id: true, name: true, photo: true, department: { 
                             select: {
                                 id: true,
                                 fullName: true,

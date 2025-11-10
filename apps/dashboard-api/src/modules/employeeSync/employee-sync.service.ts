@@ -36,6 +36,8 @@ export class EmployeeSyncService {
         take: limit,
         include: {
           gate: { select: { id: true, name: true } }, // gate relation
+          employee: {select: {id: true, name: true, photo: true}},
+          organization: {select: {id: true, fullName: true}}
         },
       }),
       this.prisma.employeeSync.count({ where }),
