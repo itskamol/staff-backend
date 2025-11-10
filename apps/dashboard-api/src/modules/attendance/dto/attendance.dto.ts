@@ -89,12 +89,12 @@ export class AttendanceQueryDto {
   @IsDateString()
   to?: string;
 
-  @ApiPropertyOptional()
+  @ApiPropertyOptional({enum: ActionStatus})
   @IsOptional()
-  @IsString()
+  @IsEnum(ActionStatus)
   arrivalStatus?: string;
 
-  @ApiPropertyOptional()
+  @ApiPropertyOptional({enum: ActionStatus})
   @IsOptional()
   @IsEnum(ActionStatus)
   goneStatus?: ActionStatus;
