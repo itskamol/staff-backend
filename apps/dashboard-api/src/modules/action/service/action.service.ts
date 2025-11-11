@@ -174,10 +174,10 @@ export class ActionService {
   ): Promise<{ status: ActionStatus }> {
     const [startHour, startMinute] = startTime.split(':').map(Number);
     const [extraHour, extraMinute] = extraTime ? extraTime.split(':').map(Number) : [0, 0];
-
-    const eventDate = new Date(actionTime);
+    const actTime = new Date(actionTime)
+    const eventDate = new Date(actTime.toISOString());
     console.log('eventDate', eventDate)
-    const startDateTime = new Date(actionTime);
+    const startDateTime = new Date();
 
     startDateTime.setHours(startHour, startMinute, 0, 0);
 
