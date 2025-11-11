@@ -5,6 +5,7 @@ import { PrismaService } from '@app/shared/database';
 import { ActionMode, ActionStatus, ActionType, VisitorType } from '@prisma/client';
 import { AttendanceService } from '../../attendance/attendance.service';
 import { CreateAttendanceDto } from '../../attendance/dto/attendance.dto';
+import { resourceUsage } from 'process';
 
 @Injectable()
 export class ActionService {
@@ -64,8 +65,12 @@ export class ActionService {
       dto.entryType = lastInfo.nextEntryType as any;
     }
 
+    console.log('entryType', dto.entryType)
+
     if (dto.entryType === 'EXIT') {
       const { status: exitStatus } = await this.getExitStatus(actionTime, plan.endTime);
+      console.log('exit time:', actionTime);
+      console.log('status', exitStatus);
 
       const todayStart = new Date(actionTime);
       todayStart.setHours(0, 0, 0, 0);
@@ -86,13 +91,15 @@ export class ActionService {
       });
 
       if (existingAttendance) {
-        await this.prisma.attendance.update({
+        const result = await this.prisma.attendance.update({
           where: { id: existingAttendance.id },
           data: {
             endTime: actionTime,
             goneStatus: exitStatus,
           },
         });
+
+        console.log('update attendance', result)
 
       } else {
         console.warn(`⚠️ Attendance NOT FOUND (EXIT): employee ${employeeId}`);
