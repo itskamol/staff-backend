@@ -174,20 +174,17 @@ export class ActionService {
   ): Promise<{ status: ActionStatus }> {
     const [startHour, startMinute] = startTime.split(':').map(Number);
     const [extraHour, extraMinute] = extraTime ? extraTime.split(':').map(Number) : [0, 0];
-    const actTime = new Date(actionTime)
-    const eventDate = new Date(actTime.toISOString());
-    console.log('eventDate', eventDate)
+
+    const eventDate = this.parseLocalTime(actionTime)
     const startDateTime = new Date();
 
     startDateTime.setHours(startHour, startMinute, 0, 0);
 
-    console.log('startTime', startDateTime)
     const allowedTime = new Date(startDateTime);
 
     allowedTime.setHours(startDateTime.getHours() + extraHour);
     allowedTime.setMinutes(startDateTime.getMinutes() + extraMinute);
-    
-    console.log('allowedTime', allowedTime)
+
     const diffMs = eventDate.getTime() - allowedTime.getTime();
 
     console.log('diffMs', diffMs);
@@ -197,6 +194,20 @@ export class ActionService {
     } else {
       return { status: ActionStatus.ON_TIME };
     }
+  }
+
+  parseLocalTime(timeStr: string): Date {
+    const [datePart, timePart] = timeStr.split('T');
+    const [year, month, day] = datePart.split('-').map(Number);
+    const [timeWithoutZone] = timePart.split('+');
+    const [hour, minute, second] = timeWithoutZone.split(':').map(Number);
+
+    const d = new Date();
+    d.setFullYear(year);
+    d.setMonth(month - 1);
+    d.setDate(day);
+    d.setHours(hour, minute, second, 0);
+    return d;
   }
 
   async getExitStatus(
