@@ -1,4 +1,4 @@
-import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
+import { ApiProperty, ApiPropertyOptional, PartialType } from '@nestjs/swagger';
 import { Transform, Type } from 'class-transformer';
 import { IsBoolean, IsNotEmpty, IsOptional, IsString, IsInt, IsArray } from 'class-validator';
 
@@ -47,7 +47,7 @@ export class CreateEmployeePlanDto {
 
 }
 
-export class UpdateEmployeePlanDto extends CreateEmployeePlanDto { }
+export class UpdateEmployeePlanDto extends PartialType(CreateEmployeePlanDto) { }
 
 export class AssignEmployeesDto {
     @ApiProperty({ example: 1 })

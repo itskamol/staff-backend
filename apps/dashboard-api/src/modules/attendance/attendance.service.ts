@@ -1,4 +1,3 @@
-// ...existing code...
 import { BadRequestException, Injectable, NotFoundException } from '@nestjs/common';
 import { AttendanceRepository } from './attendance.repository';
 import { CreateAttendanceDto, AttendanceQueryDto, UpdateAttendanceDto } from './dto/attendance.dto';
@@ -31,7 +30,6 @@ export class AttendanceService {
                 return existing
             }
 
-            // mavjud bo‘lmasa, yaratish
             return this.repo.create({
                 ...dto,
                 employeeId: dto.employeeId,

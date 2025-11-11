@@ -18,7 +18,6 @@ export class ActionService {
     const acEvent = eventData.AccessControllerEvent || {};
     const employeeId = acEvent.employeeNoString ? parseInt(acEvent.employeeNoString) : undefined;
     const actionTime = eventData.dateTime;
-    console.log('actionTime:', actionTime)
 
     const device = await this.prisma.device.findFirst({ where: { id: deviceId } });
     if (!device) throw new Error(`Device ${deviceId} not found!`);
@@ -108,8 +107,7 @@ export class ActionService {
       organizationId: gate.organizationId,
     };
 
-    const result = await this.attendanceService.create(attendance)
-    console.log('attendance:', result)
+    await this.attendanceService.create(attendance)
 
     return this.prisma.action.create({ data: dto });
   }

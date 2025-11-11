@@ -124,14 +124,12 @@ export class HikvisionController {
         eventData = JSON.parse(str);
       }
     } catch (err) {
-      console.error('Event parse qilishda xatolik:', err.message);
+      console.error('Event parse error:', err.message);
     }
 
     const eployeeID = eventData?.AccessControllerEvent?.employeeNoString
     if (eployeeID) {  
-      console.log('event:',eventData)
-      const result =  await this.actionService.create(eventData, +deviceId);
-      console.log('Action',result)
+      await this.actionService.create(eventData, +deviceId);
     }
 
     res.setHeader('Content-Type', 'application/json');
