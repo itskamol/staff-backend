@@ -258,10 +258,10 @@ export class DeviceService {
             throw new NotFoundException('Device not found');
         }
 
-        if ((device as any)._count?.actions > 0) {
-            // Soft delete if has actions
-            return this.deviceRepository.update(id, { isActive: false });
-        }
+        // if ((device as any)._count?.actions > 0) {
+        //     // Soft delete if has actions
+        //     return this.deviceRepository.update(id, { isActive: false });
+        // }
 
         const result = await this.deviceRepository.delete(id, scope);
         return { message: 'Device deleted successfully', ...result };
