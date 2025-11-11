@@ -18,7 +18,7 @@ export class ActionService {
     const acEvent = eventData.AccessControllerEvent || {};
     const employeeId = acEvent.employeeNoString ? parseInt(acEvent.employeeNoString) : undefined;
     const actionTime = eventData.dateTime;
-    console.log('actionTime:',actionTime)
+    console.log('actionTime:', actionTime)
 
     const device = await this.prisma.device.findFirst({ where: { id: deviceId } });
     if (!device) throw new Error(`Device ${deviceId} not found!`);
@@ -176,15 +176,21 @@ export class ActionService {
     const [extraHour, extraMinute] = extraTime ? extraTime.split(':').map(Number) : [0, 0];
 
     const eventDate = new Date(actionTime);
-
+    console.log('eventDate', eventDate)
     const startDateTime = new Date(actionTime);
+
     startDateTime.setHours(startHour, startMinute, 0, 0);
 
+    console.log('startTime', startDateTime)
     const allowedTime = new Date(startDateTime);
+
     allowedTime.setHours(startDateTime.getHours() + extraHour);
     allowedTime.setMinutes(startDateTime.getMinutes() + extraMinute);
-
+    
+    console.log('allowedTime', allowedTime)
     const diffMs = eventDate.getTime() - allowedTime.getTime();
+
+    console.log('diffMs', diffMs);
 
     if (diffMs > 0) {
       return { status: ActionStatus.LATE };
