@@ -5,8 +5,8 @@ import { CreateHikvisionUserDto, HikvisionConfig, HikvisionUser } from './dto/cr
 import { XMLParser } from 'fast-xml-parser';
 import FormData from 'form-data'
 import * as xml2js from 'xml2js';
-import { EmployeeService } from '../employee/services/employee.service';
 import { ConfigService } from '../../core/config/config.service';
+import { EmployeeRepository } from '../employee/repositories/employee.repository';
 
 @Injectable()
 export class HikvisionService {
@@ -17,7 +17,7 @@ export class HikvisionService {
 
   constructor(
     private configService: ConfigService,
-    private employeeService: EmployeeService,
+    private readonly employeeRepo: EmployeeRepository,
   ) {
     this.parser = new xml2js.Parser({ explicitArray: false });
     this.logger.log(`HikvisionService initialized`);
@@ -238,7 +238,7 @@ export class HikvisionService {
       }
 
 
-      const user = await this.employeeService.getEmployee(Number(userId));
+      const user = await this.employeeRepo.findById(+userId);
 
       if (!user) {
         throw new BadRequestException(`Employee with ID ${userId} not found`);
@@ -326,8 +326,9 @@ export class HikvisionService {
     }
   }
 
-  async deleteUser(employeeNo: string): Promise<boolean> {
-    this.setConfig({ host: '192.168.100.139', port: 80, protocol: 'http', username: 'admin', password: "!@#Mudofaa@" });
+  async deleteUser(employeeNo: string, config?:HikvisionConfig ): Promise<boolean> {
+    this.setConfig(config)
+    // this.setConfig({ host: '192.168.100.139', port: 80, protocol: 'http', username: 'admin', password: "!@#Mudofaa@" });
 
     const reqBody = {
       UserInfoDelCond: {

@@ -7,6 +7,9 @@ import { QueryDto } from '@app/shared/utils';
 import { Prisma } from '@prisma/client';
 import { PolicyService } from '../../policy/services/policy.service';
 import { EmployeeRepository } from '../repositories/employee.repository';
+import { HikvisionService } from '../../hikvision/hikvision.service';
+import { HikvisionConfig } from '../../hikvision/dto/create-hikvision-user.dto';
+import { PrismaService } from '@app/shared/database';
 
 @Injectable()
 export class EmployeeService {
@@ -15,16 +18,16 @@ export class EmployeeService {
         private readonly departmentService: DepartmentService,
         private readonly policyService: PolicyService,
         @Inject(FILE_STORAGE_SERVICE)
-        private readonly fileStorage: IFileStorageService
+        private readonly fileStorage: IFileStorageService,
+        private readonly hikiService: HikvisionService,
+        private readonly prisma: PrismaService
     ) { }
 
     async getEmployees(query: QueryDto, scope: DataScope, user: UserContext) {
         const { page = 1, limit = 10, search, sort, order, ...filters } = query;
 
-        // Build where clause
         let whereClause: any = {};
 
-        // Apply search
         if (search) {
             whereClause.OR = [
                 { name: { contains: search, mode: 'insensitive' } },
@@ -33,7 +36,6 @@ export class EmployeeService {
             ];
         }
 
-        // Apply filters
         Object.keys(filters).forEach(key => {
             if (filters[key] !== undefined) {
                 whereClause[key] = filters[key];
@@ -174,12 +176,52 @@ export class EmployeeService {
             throw new NotFoundException('Employee not found or access denied');
         }
 
+
+        const syncRecords = await this.prisma.employeeSync.findMany({
+            where: {
+                employeeId: id,
+                status: 'DONE',
+            },
+            include: {
+                device: true,
+            },
+        });
+
+        if (syncRecords.length > 0) {
+
+            const deletePromises = syncRecords.map((record:any) => {
+                const config: HikvisionConfig = {
+                    host: record.device.ipAddress,
+                    port: 80,
+                    username: record.device.login,
+                    password: record.device.password,
+                    protocol: record.device.protocol ?? 'http',
+                };
+
+                return this.hikiService
+                    .deleteUser(employee.id.toString(), config)
+                    .then(() => ({
+                        deviceId: record.deviceId,
+                        success: true,
+                    }))
+                    .catch((err) => ({
+                        deviceId: record.deviceId,
+                        success: false,
+                        error: err.message,
+                    }));
+            });
+
+             await Promise.allSettled(deletePromises);
+        }
+
+
         if (employee.photo) {
             const exists = await this.fileStorage.exists(employee.photo);
             if (exists) {
                 await this.fileStorage.deleteObject(employee.photo);
             }
         }
+
         return await this.employeeRepository.delete(id);
     }
 

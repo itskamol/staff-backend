@@ -67,7 +67,7 @@ export class HikvisionController {
   @Delete('user/:employeeNo')
   @ApiOperation({ summary: 'Delete User' })
   async deleteUser(@Param('employeeNo') employeeNo: string) {
-    return this.hikvisionService.deleteUser(employeeNo);
+    // return this.hikvisionService.deleteUser(employeeNo);
   }
 
   // ✅ Kartani userga qo‘shish
@@ -129,9 +129,9 @@ export class HikvisionController {
 
     const eployeeID = eventData?.AccessControllerEvent?.employeeNoString
     if (eployeeID) {  
-        const newAction = await this.actionService.create(eventData, +deviceId);
-        console.log('Action', eventData)
-        console.log("Action",newAction)
+      console.log('event:',eventData)
+      const result =  await this.actionService.create(eventData, +deviceId);
+      console.log('Action',result)
     }
 
     res.setHeader('Content-Type', 'application/json');

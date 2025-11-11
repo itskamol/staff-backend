@@ -130,7 +130,7 @@ jobs:
 
       - name: Sync build to server
         run: |
-          rsync -az --delete --exclude={'.env','node_modules'} -e "ssh -i ~/.ssh/id_ed25519 -p $PORT" dist/ "$USERNAME@$HOST:$REMOTE_PATH/"
+          rsync -az --delete --exclude={'.env','node_modules','storage'} -e "ssh -i ~/.ssh/id_ed25519 -p $PORT" dist/ "$USERNAME@$HOST:$REMOTE_PATH/"
         env:
           HOST: ${{ secrets.HOST }}
           PORT: ${{ secrets.PORT }}

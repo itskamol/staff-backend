@@ -79,22 +79,20 @@ export class AttendanceQueryDto {
   @Type(() => Number)
   organizationId?: number;
 
-  @ApiPropertyOptional()
+  @ApiPropertyOptional({
+    description: 'Specific date (e.g. 2025-11-11)'
+  })
   @IsOptional()
   @IsDateString()
-  from?: string;
+  date?: string;
 
-  @ApiPropertyOptional()
-  @IsOptional()
-  @IsDateString()
-  to?: string;
 
-  @ApiPropertyOptional({enum: ActionStatus})
+  @ApiPropertyOptional({ enum: ActionStatus })
   @IsOptional()
   @IsEnum(ActionStatus)
   arrivalStatus?: string;
 
-  @ApiPropertyOptional({enum: ActionStatus})
+  @ApiPropertyOptional({ enum: ActionStatus })
   @IsOptional()
   @IsEnum(ActionStatus)
   goneStatus?: ActionStatus;

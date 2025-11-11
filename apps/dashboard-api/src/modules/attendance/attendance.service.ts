@@ -49,10 +49,18 @@ export class AttendanceService {
         if (query.organizationId !== undefined) where.organizationId = query.organizationId;
         if (query.arrivalStatus) where.arrivalStatus = query.arrivalStatus;
 
-        if (query.from || query.to) {
-            where.startTime = {};
-            if (query.from) where.startTime.gte = new Date(query.from);
-            if (query.to) where.startTime.lte = new Date(query.to);
+        if (query.date) {
+            const date = new Date(query.date);
+            const startOfDay = new Date(date);
+            startOfDay.setHours(0, 0, 0, 0);
+
+            const endOfDay = new Date(date);
+            endOfDay.setHours(23, 59, 59, 999);
+
+            where.startTime = {
+                gte: startOfDay,
+                lte: endOfDay,
+            };
         }
 
         const page = query.page ?? 1;
@@ -66,7 +74,7 @@ export class AttendanceService {
             include: {
                 employee: {
                     select: {
-                        id: true, name: true, photo: true, department: { 
+                        id: true, name: true, photo: true, department: {
                             select: {
                                 id: true,
                                 fullName: true,
