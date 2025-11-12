@@ -12,12 +12,16 @@ import { PrismaService } from '@app/shared/database';
 import { Server } from 'socket.io';
 import { StatusEnum } from '@prisma/client';
 import { EventsGateway } from '../../websocket/events.gateway';
-import { ConfigService } from 'apps/dashboard-api/src/core/config/config.service'; 
+import { ConfigService } from 'apps/dashboard-api/src/core/config/config.service';
+// import { InjectQueue } from '@nestjs/bullmq';
+// import { Queue } from 'bullmq';
+// import { JOB } from 'apps/dashboard-api/src/shared/constants';
 
 @Injectable()
 export class DeviceService {
     private socket: Server
     constructor(
+        // @InjectQueue('device') private readonly deviceQueue: Queue,
         private readonly deviceRepository: DeviceRepository,
         private readonly gateRepository: GateRepository,
         private hikvisionService: HikvisionService,
@@ -28,10 +32,10 @@ export class DeviceService {
         this.socket = this.gateway.server;
     }
 
-    async configCheck(){
-        const  port =  this.configService.port
+    async configCheck() {
+        const port = this.configService.port
         const ip = this.configService.hostIp
-        return {port,ip}
+        return { port, ip }
     }
 
     async findAll(query: QueryDto & { type?: DeviceType; gateId?: number }, scope: DataScope, user: UserContext) {
@@ -131,21 +135,18 @@ export class DeviceService {
             throw new BadRequestException('Qurilma capabilities ni olishda xatolik');
         }
 
-        // 3. FACE QO‘LLAB-QUVVATLANADIMI?
-        const rawCap = capResponse; // Bu JSON yoki XML parsed object
+        const rawCap = capResponse;
         const isSupportFace = Boolean(
-            rawCap?.DeviceCap?.isSupportFace ||                    // Umumiy cap
-            rawCap?.CapAccessControl?.isSupportFace ||             // Access Control cap
-            rawCap?.FaceLibCap?.maxFDNum > 0 ||                    // Face library bor
-            rawCap?.DeviceCap?.isSupportAlgorithmsInfo === true   // Algoritm bor
+            rawCap?.DeviceCap?.isSupportFace ||
+            rawCap?.CapAccessControl?.isSupportFace ||
+            rawCap?.FaceLibCap?.maxFDNum > 0 ||
+            rawCap?.DeviceCap?.isSupportAlgorithmsInfo === true
         );
 
-        // 4. JSONB uchun tayyor object
         const capabilities = {
             isSupportFace
         };
 
-        console.log('FACE SUPPORT:', isSupportFace ? 'YES ✅' : 'NO ❌');
         const deviceInfo = deviceInfoResult.data;
 
         if (gateId) {
@@ -195,7 +196,15 @@ export class DeviceService {
             scope
         );
 
-        await this.hikvisionService.configureEventListeningHost(hikvisionConfig, newDevice.id)
+        await this.hikvisionService.configureEventListeningHost(hikvisionConfig, newDevice.id);
+
+
+        // const job = await this.deviceQueue.add(JOB.DEVICE.CREATE, {
+        //     hikvisionConfig,
+        //     newDeviceId: newDevice.id,
+        //     gateId,
+        //     scope,
+        // });
 
         return newDevice
     }
@@ -258,10 +267,15 @@ export class DeviceService {
             throw new NotFoundException('Device not found');
         }
 
-        // if ((device as any)._count?.actions > 0) {
-        //     // Soft delete if has actions
-        //     return this.deviceRepository.update(id, { isActive: false });
-        // }
+        const config: HikvisionConfig = {
+            host: device.ipAddress,
+            port: 80,
+            username: device.login,
+            password: device.password,
+            protocol: device.protocol || 'http'
+        }
+
+        // const job = await this.deviceQueue.add(JOB.DEVICE.DELETE, { device, config });
 
         const result = await this.deviceRepository.delete(id, scope);
         return { message: 'Device deleted successfully', ...result };
@@ -275,10 +289,8 @@ export class DeviceService {
         }
 
         try {
-            // Simulate connection test (replace with actual HIKVision SDK call)
             const connectionResult = await this.performConnectionTest(device, timeout);
 
-            // Update device status based on test result
             await this.deviceRepository.updateStatus(id, connectionResult.success);
 
             return {
@@ -339,7 +351,7 @@ export class DeviceService {
     async assignEmployeesToGates(
         dto: AssignEmployeesToGatesDto,
         scope: DataScope,
-        user: UserContext) {
+        user?: UserContext) {
         const { gateIds, employeeIds } = dto;
         const result = {
             total: 0,
@@ -348,24 +360,43 @@ export class DeviceService {
 
         const organizationId = dto.organizationId ? dto.organizationId : scope.organizationId
 
-        const  port =  this.configService.port
+        const port = this.configService.port
         const ip = this.configService.hostIp
 
-        // 1. Gates
         const gates = await this.prisma.gate.findMany({
             where: { id: { in: gateIds } },
             include: { devices: true },
         });
-        if (!gates.length) throw new Error('Gate topilmadi');
+        if (!gates.length) throw new Error('Gate not found!');
 
-        // 2. Credentials
+        const employees = await this.prisma.employee.findMany({
+            where: { id: { in: employeeIds } }
+        })
+        if (!employees.length) throw new Error('Employees not found!');
+
+        const createData = [];
+
+        for (const gate of gates) {
+            for (const employee of employees) {
+                createData.push({
+                    employeeId: +employee.id,
+                    gateId: +gate.id,
+                });
+            }
+        }
+
+        await this.prisma.gateEmployee.createMany({
+            data: createData,
+            skipDuplicates: true,
+        });
+
+
         const credentials = await this.prisma.credential.findMany({
             where: { employeeId: { in: employeeIds }, type: 'PHOTO', isActive: true },
             select: { employeeId: true },
         });
         const credMap = new Map(credentials.map(c => [c.employeeId, true]));
 
-        // 3. MAIN LOOP
         for (const gate of gates) {
             if (!gate.devices?.length) {
                 this.gateway.server.emit('sync', {
@@ -373,8 +404,8 @@ export class DeviceService {
                     employee: null,
                     gate: { id: gate.id, name: gate.name },
                     device: null,
-                    status: 'ERROR',
-                    message: 'Ushbu gate uchun device topilmadi',
+                    status: 'FIELD',
+                    message: 'Device is not found this gate!',
                     step: 'DEVICE_CHECK',
                     timestamp: new Date().toISOString(),
                 });
@@ -410,7 +441,7 @@ export class DeviceService {
                             deviceId: device.id,
                             gateId: gate.id,
                             organizationId,
-                            status: 'INP',
+                            status: 'WAITING',
                         },
                     });
 
@@ -427,7 +458,7 @@ export class DeviceService {
 
                     try {
                         if (!credMap.has(empId)) {
-                            throw new Error('Photo credential topilmadi');
+                            throw new Error('Photo credential is not found!');
                         }
 
                         await this.hikvisionService.createUser(
@@ -445,12 +476,12 @@ export class DeviceService {
                                 password: device.password,
                             },
                         );
-                        await this.updateSync(sync.id, 'PROGRESS', 'User yaratildi');
-                        this.gateway.server.emit('sync', { ...emitBase, status: 'IN_PROGRESS', message: 'User yaratildi', step: 'USER_CREATION' });
+                        await this.updateSync(sync.id, 'PROCESS', 'User created!');
+                        this.gateway.server.emit('sync', { ...emitBase, status: 'WAITING', message: 'User created!', step: 'USER_CREATION' });
 
-                        if (!employee?.photo) throw new Error('Foto topilmadi');
+                        if (!employee?.photo) throw new Error('Foto is not found!');
 
-                        
+
                         const photoUrl = `http://${ip}:${port}/storage/${employee.photo}`;
                         await this.hikvisionService.addFaceToUserViaURL(
                             empId.toString(),
@@ -464,14 +495,14 @@ export class DeviceService {
                             },
                         );
 
-                        await this.updateSync(sync.id, 'DONE', 'Muvaffaqiyatli!');
+                        await this.updateSync(sync.id, 'DONE', 'Success!');
                         result.success++;
-                        this.gateway.server.emit('sync', { ...emitBase, status: 'DONE', message: 'Face muvaffaqiyatli qo‘shildi', step: 'ADD_FACE' });
+                        this.gateway.server.emit('sync', { ...emitBase, status: 'DONE', message: 'Face successfully added!', step: 'ADD_FACE' });
 
                     } catch (err: any) {
-                        const msg = err?.message || 'Noma’lum xato';
-                        await this.updateSync(sync.id, 'ERROR', msg);
-                        this.gateway.server.emit('sync', { ...emitBase, status: 'ERROR', message: msg, step: 'VALIDATION', error: msg });
+                        const msg = err?.message || 'Undifined error';
+                        await this.updateSync(sync.id, 'FIELD', msg);
+                        this.gateway.server.emit('sync', { ...emitBase, status: 'FIELD', message: msg, step: 'VALIDATION', error: msg });
                     }
                 }
             }
