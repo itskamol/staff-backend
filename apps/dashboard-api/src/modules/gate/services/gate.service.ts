@@ -10,7 +10,7 @@ import { CreateGateDto, UpdateGateDto } from '../dto/gate.dto';
 export class GateService {
     constructor(
         private readonly gateRepository: GateRepository
-    ) {}
+    ) { }
 
     async findAll(query: QueryDto, scope: DataScope, user: UserContext) {
         const { page, limit, sort = 'createdAt', order = 'desc', search } = query;
@@ -40,7 +40,7 @@ export class GateService {
                 _count: {
                     select: {
                         devices: true,
-                        actions: true,
+                        gateEmployees: true,
                     },
                 },
             },
@@ -66,10 +66,19 @@ export class GateService {
                     employee: { select: { id: true, name: true } },
                 },
             },
+            gateEmployees: {
+                include: {
+                    employee: {
+                        select: {
+                            id: true
+                        }
+                    }
+                }
+            },
             _count: {
                 select: {
                     devices: true,
-                    actions: true,
+                    gateEmployees: true,
                 },
             },
         });
@@ -85,14 +94,14 @@ export class GateService {
 
         const organizationId = createGateDto.organizationId ? createGateDto.organizationId : scope.organizationId
 
-        const dto = {...createGateDto, organizationId}
+        const dto = { ...createGateDto, organizationId }
         return this.gateRepository.create(
             { ...dto, },
             {
                 _count: {
                     select: {
                         devices: true,
-                        actions: true,
+                        gateEmployees: true,
                     },
                 },
             },
@@ -107,7 +116,7 @@ export class GateService {
             _count: {
                 select: {
                     devices: true,
-                    actions: true,
+                    gateEmployees: true,
                 },
             },
         });
@@ -120,6 +129,7 @@ export class GateService {
                 _count: {
                     select: {
                         devices: true,
+                        gateEmployees: true
                     },
                 },
             },

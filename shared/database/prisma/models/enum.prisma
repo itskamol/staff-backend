@@ -66,10 +66,10 @@ enum DeviceType {
 }
 
 enum StatusEnum {
-  INP
-  PROGRESS
+  WAITING
+  PROCESS
   DONE
-  ERROR
+  FIELD
 }
 
 enum ActionStatus {

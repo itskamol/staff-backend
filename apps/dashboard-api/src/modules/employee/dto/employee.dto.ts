@@ -1,4 +1,6 @@
+import { QueryDto } from '@app/shared/utils';
 import { ApiProperty, PartialType } from '@nestjs/swagger';
+import { ActionType } from '@prisma/client';
 import {
     IsBoolean,
     IsEmail,
@@ -8,6 +10,7 @@ import {
     MaxLength,
     ValidateIf,
     IsInt,
+    IsEnum,
 } from 'class-validator';
 
 export class CreateEmployeeDto {
@@ -329,4 +332,14 @@ export class EmployeeResponseDto {
         fullName: string;
         shortName: string;
     };
+}
+
+export class EmployeeQueryDto extends QueryDto {
+    @ApiProperty({
+        enum: ActionType,
+        required: false
+    })
+    @IsOptional()
+    @IsEnum(ActionType)
+    credentialType: ActionType
 }

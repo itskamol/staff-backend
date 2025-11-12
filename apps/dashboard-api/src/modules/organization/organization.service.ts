@@ -75,6 +75,17 @@ export class OrganizationService {
             }
         }
 
+        input.employeePlans = {
+            create: {
+                isDefault: true,
+                name: 'Default Plan',
+                startTime: '09:00',
+                extraTime: '00:10',
+                weekdays: 'Monday',
+                endTime: '18:00'
+            }
+        }
+
         const organization = await this.organizationRepository.create(input);
         
         return organization;

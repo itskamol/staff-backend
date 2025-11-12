@@ -33,7 +33,7 @@ export class GateRepository extends BaseRepository<
             _count: {
                 select: {
                     devices: true,
-                    actions: true,
+                    gateEmployees: true,
                 },
             },
         });
@@ -54,7 +54,7 @@ export class GateRepository extends BaseRepository<
             _count: {
                 select: {
                     devices: true,
-                    actions: true,
+                    gateEmployees: true,
                 },
             },
         });
@@ -74,7 +74,7 @@ export class GateRepository extends BaseRepository<
             },
         });
 
-        const totalEmployee = await this.prisma.action.groupBy({
+        const totalEmployee = await this.prisma.gateEmployee.groupBy({
             by: ['employeeId'],
             where: {
                 gateId: id,

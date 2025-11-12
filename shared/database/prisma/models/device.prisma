@@ -37,13 +37,25 @@ model Gate {
   organizationId Int?     @map("organization_id")
   createdAt      DateTime @default(now()) @map("created_at")
 
-  organization Organization?  @relation(fields: [organizationId], references: [id], onDelete: Cascade)
-  devices      Device[]
-  actions      Action[]
-  EmployeeSync EmployeeSync[]
+  organization  Organization?  @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  devices       Device[]
+  actions       Action[]
+  employeeSyncs EmployeeSync[]
+  gateEmployees GateEmployee[]
 
   @@index([name])
   @@map("gates")
+}
+
+model GateEmployee {
+  id         Int @id @default(autoincrement())
+  employeeId Int
+  gateId     Int
+
+  gate     Gate     @relation(fields: [gateId], references: [id])
+  employee Employee @relation(fields: [employeeId], references: [id])
+
+  @@unique([employeeId, gateId])
 }
 
 model Device {

@@ -1,7 +1,7 @@
 import { Inject, Injectable, NotFoundException } from '@nestjs/common';
 import { FILE_STORAGE_SERVICE, IFileStorageService } from '@app/shared/common';
 import { DataScope, UserContext } from '@app/shared/auth';
-import { BulkUpdateEmployees, CreateEmployeeDto, UpdateEmployeeDto } from '../dto';
+import { BulkUpdateEmployees, CreateEmployeeDto, EmployeeQueryDto, UpdateEmployeeDto } from '../dto';
 import { DepartmentService } from '../../department/department.service';
 import { QueryDto } from '@app/shared/utils';
 import { Prisma } from '@prisma/client';
@@ -23,10 +23,10 @@ export class EmployeeService {
         private readonly prisma: PrismaService
     ) { }
 
-    async getEmployees(query: QueryDto, scope: DataScope, user: UserContext) {
-        const { page = 1, limit = 10, search, sort, order, ...filters } = query;
+    async getEmployees(query: EmployeeQueryDto, scope: DataScope, user: UserContext) {
+        const { page = 1, limit = 10, search, sort, order, credentialType, ...filters } = query;
 
-        let whereClause: any = {};
+        let whereClause: Prisma.EmployeeWhereInput = {};
 
         if (search) {
             whereClause.OR = [
@@ -34,6 +34,14 @@ export class EmployeeService {
                 { email: { contains: search, mode: 'insensitive' } },
                 { phone: { contains: search, mode: 'insensitive' } },
             ];
+        }
+
+        if (credentialType) {
+            whereClause.credentials = {
+                some: {
+                    type: credentialType
+                }
+            }
         }
 
         Object.keys(filters).forEach(key => {
@@ -189,7 +197,7 @@ export class EmployeeService {
 
         if (syncRecords.length > 0) {
 
-            const deletePromises = syncRecords.map((record:any) => {
+            const deletePromises = syncRecords.map((record: any) => {
                 const config: HikvisionConfig = {
                     host: record.device.ipAddress,
                     port: 80,
@@ -211,7 +219,7 @@ export class EmployeeService {
                     }));
             });
 
-             await Promise.allSettled(deletePromises);
+            await Promise.allSettled(deletePromises);
         }
 
 

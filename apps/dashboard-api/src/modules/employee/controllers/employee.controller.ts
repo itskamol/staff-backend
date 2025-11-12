@@ -23,7 +23,7 @@ import {
     ApiTags,
 } from '@nestjs/swagger';
 import { EmployeeService } from '../services/employee.service';
-import { BulkUpdateEmployees, CreateEmployeeDto, EmployeeResponseDto, UpdateEmployeeDto } from '../dto';
+import { BulkUpdateEmployees, CreateEmployeeDto, EmployeeQueryDto, EmployeeResponseDto, UpdateEmployeeDto } from '../dto';
 import { ApiSuccessResponse } from '../../../shared/dto';
 import { ApiCrudOperation, ApiErrorResponses, ApiOkResponseData } from '../../../shared/utils';
 
@@ -63,7 +63,7 @@ export class EmployeeController {
         }
     })
     async getAllEmployees(
-        @Query() query: QueryDto,
+        @Query() query: EmployeeQueryDto,
         @Scope() scope: DataScope,
         @User() user: UserContext
     ) {
