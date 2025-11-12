@@ -65,12 +65,8 @@ export class ActionService {
       dto.entryType = lastInfo.nextEntryType as any;
     }
 
-    console.log('entryType', dto.entryType)
-
     if (dto.entryType === 'EXIT') {
       const { status: exitStatus } = await this.getExitStatus(actionTime, plan.endTime);
-      console.log('exit time:', actionTime);
-      console.log('status', exitStatus);
 
       const todayStart = new Date(actionTime);
       todayStart.setHours(0, 0, 0, 0);
@@ -99,7 +95,6 @@ export class ActionService {
           },
         });
 
-        console.log('update attendance', result)
 
       } else {
         console.warn(`⚠️ Attendance NOT FOUND (EXIT): employee ${employeeId}`);
@@ -192,7 +187,6 @@ export class ActionService {
 
     const diffMs = eventDate.getTime() - allowedTime.getTime();
 
-    console.log('diffMs', diffMs);
 
     if (diffMs > 0) {
       return { status: ActionStatus.LATE };
