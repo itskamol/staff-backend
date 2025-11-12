@@ -1,6 +1,7 @@
 import { PrismaService } from '@app/shared/database';
 import { Injectable } from '@nestjs/common';
 import { CreateEmployeePlanDto, UpdateEmployeePlanDto } from './employee-plan.dto';
+import { Prisma } from '@prisma/client';
 
 
 @Injectable()
@@ -8,20 +9,24 @@ export class EmployeePlanRepository {
     constructor(private readonly prisma: PrismaService) { }
 
     async create(data: CreateEmployeePlanDto) {
-        return this.prisma.employeePlan.create({data });
+        return this.prisma.employeePlan.create({ data });
     }
 
     async findAll() {
         return this.prisma.employeePlan.findMany({
-            include: { Employee: true },
+            include: { employees: true },
             orderBy: { id: 'desc' },
         });
+    }
+
+    async findOne(query: Prisma.EmployeePlanWhereInput) {
+        return this.prisma.employeePlan.findFirst({ where: query })
     }
 
     async findById(id: number) {
         return this.prisma.employeePlan.findUnique({
             where: { id },
-            include: { Employee: true },
+            include: { employees: true },
         });
     }
 
