@@ -82,7 +82,7 @@ export class EmployeePlanRepository {
                 where,
                 orderBy,
                 include: include ?? {
-                    Employee: {
+                    employees: {
                         select: {
                             id: true,
                             name: true,

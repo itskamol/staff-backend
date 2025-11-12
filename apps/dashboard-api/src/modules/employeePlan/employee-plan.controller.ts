@@ -52,9 +52,14 @@ export class EmployeePlanController {
     }
 
     @Post('assign')
+    @Roles(Role.ADMIN, Role.HR)
     @ApiOperation({ summary: 'Assign employee plan to employees' })
     @ApiResponse({ status: 200, description: 'Employees assigned to plan' })
-    async assignEmployees(@Body() dto: AssignEmployeesDto) {
-        return this.service.assignEmployees(dto);
+    async assignEmployees(
+        @Body() dto: AssignEmployeesDto,
+        @User() user: UserContext,
+        @Scope() scope: DataScope
+    ) {
+        return this.service.assignEmployees(dto,scope, user);
     }
 }

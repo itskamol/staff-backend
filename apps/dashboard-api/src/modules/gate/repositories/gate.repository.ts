@@ -77,10 +77,7 @@ export class GateRepository extends BaseRepository<
         const totalEmployee = await this.prisma.gateEmployee.groupBy({
             by: ['employeeId'],
             where: {
-                gateId: id,
-                employeeId: {
-                    not: null,
-                },
+                gateId: id
             },
             _count: {
                 employeeId: true,

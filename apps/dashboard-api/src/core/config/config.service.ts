@@ -17,6 +17,14 @@ export class ConfigService {
         return this.configService.get<number>('PORT', 3000);
     }
 
+    get redisHost(): string{
+        return this.configService.get<string>('REDIS_HOST', 'localhost')
+    }
+
+    get redisPort(): number {
+        return this.configService.get<number>('REDIS_PORT', 6379)
+    }
+
     get storageDriver(): string {
         return this.configService.get<string>('STORAGE_DRIVER', 'local');
     }

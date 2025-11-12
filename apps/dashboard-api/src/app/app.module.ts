@@ -1,13 +1,10 @@
 import { MiddlewareConsumer, Module, NestModule, RequestMethod } from '@nestjs/common';
 import { APP_GUARD, APP_FILTER, APP_INTERCEPTOR } from '@nestjs/core';
-import { ConfigModule } from '@nestjs/config';
 
 import { SharedDatabaseModule } from '@app/shared/database';
 import { SharedAuthModule, JwtAuthGuard, RolesGuard, DataScopeGuard } from '@app/shared/auth';
 import { SharedUtilsModule, GlobalExceptionFilter } from '@app/shared/utils';
 
-import { AppController } from './app.controller';
-import { AppService } from './app.service';
 import { AuthModule } from '../modules/auth/auth.module';
 import { UserModule } from '../modules/user/user.module';
 import { OrganizationModule } from '../modules/organization/organization.module';
@@ -26,13 +23,12 @@ import { EmployeeSyncModule } from '../modules/employeeSync/employee-sync.module
 import { ActionModule } from '../modules/action/action.module';
 import { EmployeePlanModule } from '../modules/employeePlan/employee-plan.module';
 import { AttendanceModule } from '../modules/attendance/attendance.module';
+import { ConfigModule } from '../core/config/config.module';
+import { QueueModule } from '../modules/queue/queue.module';
 
 @Module({
     imports: [
-        ConfigModule.forRoot({
-            isGlobal: true,
-            envFilePath: ['.env', '.env.local'],
-        }),
+        ConfigModule,
         SharedDatabaseModule,
         SharedAuthModule,
         SharedUtilsModule,
@@ -51,11 +47,10 @@ import { AttendanceModule } from '../modules/attendance/attendance.module';
         EmployeeSyncModule,
         ActionModule,
         EmployeePlanModule,
-        AttendanceModule
+        AttendanceModule,
+        QueueModule
     ],
-    controllers: [AppController],
     providers: [
-        AppService,
         {
             provide: APP_FILTER,
             useClass: GlobalExceptionFilter,

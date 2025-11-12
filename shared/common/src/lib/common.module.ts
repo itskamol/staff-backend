@@ -1,5 +1,5 @@
 import { Module } from '@nestjs/common';
-import { ConfigModule, ConfigService } from '@nestjs/config';
+import { ConfigService } from '@nestjs/config';
 import * as path from 'node:path';
 import { PaginationService } from './services/pagination.service';
 import { MorganLoggerMiddleware } from './middleware/morgan-logger.middleware';
@@ -7,7 +7,6 @@ import { FILE_STORAGE_SERVICE, IFileStorageService } from './storage/file-storag
 import { LocalFileStorageService } from './storage/local-file-storage.service';
 
 @Module({
-    imports: [ConfigModule],
     providers: [
         PaginationService,
         MorganLoggerMiddleware,

@@ -149,6 +149,38 @@ export class EmployeeService {
         return await this.employeeRepository.updateWithValidation(id, updateData, scope, user.role);
     }
 
+    async updateManyEmployees(
+        ids: number[],
+        dto: UpdateEmployeeDto,
+        scope: DataScope,
+        user: UserContext
+    ) {
+        if (!ids || ids.length === 0) {
+            throw new Error('No employee IDs provided');
+        }
+
+        const results = [];
+
+        for (const id of ids) {
+            try {
+                const updated = await this.updateEmployee(id, dto, scope, user);
+                results.push({
+                    id,
+                    status: 'success',
+                    employee: updated,
+                });
+            } catch (error) {
+                results.push({
+                    id,
+                    status: 'failed',
+                    error: error.message,
+                });
+            }
+        }
+
+        return results;
+    }
+
     async bulkUpdateEmployees(
         dto: BulkUpdateEmployees,
         scope: DataScope,

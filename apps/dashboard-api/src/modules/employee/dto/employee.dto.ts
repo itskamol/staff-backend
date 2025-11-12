@@ -199,6 +199,10 @@ export class UpdateEmployeeDto {
     @IsOptional()
     @IsBoolean()
     isActive?: boolean;
+
+    @IsInt()
+    @IsOptional()
+    employeePlanId?: number
 }
 
 export class BulkUpdateEmployees {

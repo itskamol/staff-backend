@@ -13,15 +13,15 @@ import { Server } from 'socket.io';
 import { StatusEnum } from '@prisma/client';
 import { EventsGateway } from '../../websocket/events.gateway';
 import { ConfigService } from 'apps/dashboard-api/src/core/config/config.service';
-// import { InjectQueue } from '@nestjs/bullmq';
-// import { Queue } from 'bullmq';
-// import { JOB } from 'apps/dashboard-api/src/shared/constants';
+import { InjectQueue } from '@nestjs/bullmq';
+import { Queue } from 'bullmq';
+import { JOB } from 'apps/dashboard-api/src/shared/constants';
 
 @Injectable()
 export class DeviceService {
     private socket: Server
     constructor(
-        // @InjectQueue('device') private readonly deviceQueue: Queue,
+        @InjectQueue(JOB.DEVICE.NAME) private readonly deviceQueue: Queue,
         private readonly deviceRepository: DeviceRepository,
         private readonly gateRepository: GateRepository,
         private hikvisionService: HikvisionService,
@@ -196,15 +196,14 @@ export class DeviceService {
             scope
         );
 
-        await this.hikvisionService.configureEventListeningHost(hikvisionConfig, newDevice.id);
 
 
-        // const job = await this.deviceQueue.add(JOB.DEVICE.CREATE, {
-        //     hikvisionConfig,
-        //     newDeviceId: newDevice.id,
-        //     gateId,
-        //     scope,
-        // });
+        const job = await this.deviceQueue.add(JOB.DEVICE.CREATE, {
+            hikvisionConfig,
+            newDeviceId: newDevice.id,
+            gateId,
+            scope,
+        });
 
         return newDevice
     }
@@ -275,7 +274,7 @@ export class DeviceService {
             protocol: device.protocol || 'http'
         }
 
-        // const job = await this.deviceQueue.add(JOB.DEVICE.DELETE, { device, config });
+        const job = await this.deviceQueue.add(JOB.DEVICE.DELETE, { device, config });
 
         const result = await this.deviceRepository.delete(id, scope);
         return { message: 'Device deleted successfully', ...result };

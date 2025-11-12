@@ -1,19 +1,24 @@
 import { Controller, Get, Post, Put, Delete, Body, Param, Query, Res } from '@nestjs/common';
 import { ApiTags, ApiBearerAuth, ApiExtraModels, ApiResponse } from '@nestjs/swagger';
-import { Roles, Role, DataScope, Public, User } from '@app/shared/auth';
+import { Roles, Role, DataScope, User, Scope } from '@app/shared/auth';
 import { QueryDto } from '@app/shared/utils';
 import { DeviceService } from '../services/device.service';
 import { UserContext } from 'apps/dashboard-api/src/shared/interfaces';
-import { CreateDeviceDto, DeviceDto, UpdateDeviceDto, TestConnectionDto, AssignEmployeesToGatesDto } from '../dto/device.dto';
+import {
+    CreateDeviceDto,
+    DeviceDto,
+    UpdateDeviceDto,
+    TestConnectionDto,
+    AssignEmployeesToGatesDto,
+} from '../dto/device.dto';
 import { ApiCrudOperation } from 'apps/dashboard-api/src/shared/utils';
-import { Scope } from 'apps/dashboard-api/src/shared/decorators';
 
 @ApiTags('Devices')
 @Controller('devices')
 @ApiExtraModels(DeviceDto)
 @ApiBearerAuth()
 export class DeviceController {
-    constructor(private readonly deviceService: DeviceService) { }
+    constructor(private readonly deviceService: DeviceService) {}
 
     @Get('test-config')
     testSocket() {
@@ -36,11 +41,7 @@ export class DeviceController {
             },
         },
     })
-    async findAll(
-        @Query() query: QueryDto,
-        @User() user: UserContext,
-        @Scope() scope: DataScope
-    ) {
+    async findAll(@Query() query: QueryDto, @User() user: UserContext, @Scope() scope: DataScope) {
         return await this.deviceService.findAll(query, scope, user);
     }
 
@@ -57,7 +58,12 @@ export class DeviceController {
         body: CreateDeviceDto,
         summary: 'Create new device',
     })
-    async create(@Body() createDeviceDto: CreateDeviceDto, @Scope() scope: DataScope) {
+    async create(
+        @Body() createDeviceDto: CreateDeviceDto,
+        @Scope() scope: DataScope,
+        @User() user: UserContext
+    ) {
+        console.log(scope, user);
         return await this.deviceService.create(createDeviceDto, scope);
     }
 
@@ -82,11 +88,7 @@ export class DeviceController {
         summary: 'Delete device by ID',
         errorResponses: { notFound: true, forbidden: true },
     })
-    async remove(
-        @Param('id') id: number,
-        @Scope() scope: DataScope,
-        @User() user: UserContext
-    ) {
+    async remove(@Param('id') id: number, @Scope() scope: DataScope, @User() user: UserContext) {
         return await this.deviceService.remove(id, scope, user);
     }
 
@@ -97,13 +99,9 @@ export class DeviceController {
         summary: 'Test device connection',
         errorResponses: { notFound: true, badRequest: true },
     })
-    async testConnection(
-        @Param('id') id: number,
-        @Body() testConnectionDto: TestConnectionDto
-    ) {
+    async testConnection(@Param('id') id: number, @Body() testConnectionDto: TestConnectionDto) {
         return await this.deviceService.testConnection(id, testConnectionDto.timeout);
     }
-
 
     @Post('assign-employees')
     @Roles(Role.ADMIN, Role.HR)
@@ -132,11 +130,8 @@ export class DeviceController {
     async assignEmployeesToGates(
         @Body() dto: AssignEmployeesToGatesDto,
         @User() user: UserContext,
-        @Scope() scope: DataScope,
+        @Scope() scope: DataScope
     ) {
         return await this.deviceService.assignEmployeesToGates(dto, scope, user);
     }
-
-
-
 }

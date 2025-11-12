@@ -2,7 +2,6 @@ import { Global, Module } from '@nestjs/common';
 import { WinstonModule, WinstonModuleOptions } from 'nest-winston';
 import { LoggerService } from './services/logger.service';
 import { ConfigService } from '../config/config.service';
-import { ConfigModule } from '../config/config.module';
 import { DataSanitizerService } from '../../shared/services/data-sanitizer.service';
 import { WinstonConfig } from './winston.config';
 
@@ -10,7 +9,6 @@ import { WinstonConfig } from './winston.config';
 @Module({
     imports: [
         WinstonModule.forRootAsync({
-            imports: [ConfigModule],
             useFactory: async (
                 configService: ConfigService,
 

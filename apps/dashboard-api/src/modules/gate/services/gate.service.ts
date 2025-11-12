@@ -58,21 +58,9 @@ export class GateService {
                     },
                 },
             },
-            actions: {
-                take: 10,
-                orderBy: { actionTime: 'desc' },
-                include: {
-                    device: { select: { id: true, name: true } },
-                    employee: { select: { id: true, name: true } },
-                },
-            },
             gateEmployees: {
-                include: {
-                    employee: {
-                        select: {
-                            id: true
-                        }
-                    }
+                select: {
+                    employeeId: true
                 }
             },
             _count: {

@@ -3,11 +3,13 @@ import { EmployeePlanRepository } from './employee-plan.repository';
 import { AssignEmployeesDto, CreateEmployeePlanDto, EmployeePlanQueryDto, UpdateEmployeePlanDto } from './employee-plan.dto';
 import { PrismaService } from '@app/shared/database';
 import { DataScope, UserContext } from '@app/shared/auth';
+import { EmployeeService } from '../employee/services/employee.service';
 
 @Injectable()
 export class EmployeePlanService {
     constructor(private readonly repo: EmployeePlanRepository,
         private readonly prisma: PrismaService,
+        private readonly employeeService: EmployeeService
     ) { }
 
     async create(
@@ -77,8 +79,19 @@ export class EmployeePlanService {
         return this.repo.delete(id);
     }
 
-    async assignEmployees(dto: AssignEmployeesDto) {
-        await this.findById(dto.employeePlanId);
+    async assignEmployees(dto: AssignEmployeesDto, scope:DataScope, user: UserContext ) {
+        const plan = await this.findById(dto.employeePlanId);
+
+        if (plan.employees && plan.employees.length) {
+            const defaultPlan = await this.repo.findOne({ isDefault: true });
+            const ids = plan.employees.map(e => e.id)
+            
+            // TODD: Update Many from employeeService
+            const dto = {
+                employeePlanId: defaultPlan?.id || null
+            }
+            await this.employeeService.updateManyEmployees(ids,dto, scope, user);
+        }
 
         const employees = await this.repo.findMany({
             where: { id: { in: dto.employeeIds } },
