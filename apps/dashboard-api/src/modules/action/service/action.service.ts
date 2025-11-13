@@ -6,12 +6,14 @@ import { ActionMode, ActionStatus, ActionType, VisitorType } from '@prisma/clien
 import { AttendanceService } from '../../attendance/attendance.service';
 import { CreateAttendanceDto } from '../../attendance/dto/attendance.dto';
 import { resourceUsage } from 'process';
+import { LoggerService } from 'apps/dashboard-api/src/core/logger';
 
 @Injectable()
 export class ActionService {
   constructor(private readonly repo: ActionRepository,
     private prisma: PrismaService,
-    private attendanceService: AttendanceService
+    private attendanceService: AttendanceService,
+    private readonly logger: LoggerService
 
   ) { }
 
@@ -97,7 +99,7 @@ export class ActionService {
 
 
       } else {
-        console.warn(`⚠️ Attendance NOT FOUND (EXIT): employee ${employeeId}`);
+        this.logger.warn(`⚠️ Attendance NOT FOUND (EXIT): employee ${employeeId}`);
       }
     }
 

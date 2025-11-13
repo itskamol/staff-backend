@@ -1,4 +1,4 @@
-import { ApiPropertyOptional } from "@nestjs/swagger";
+import { ApiPropertyOptional, PartialType } from "@nestjs/swagger";
 import { ActionMode, ActionStatus, ActionType, EntryType, VisitorType } from "@prisma/client";
 import { IsDateString, IsEnum, IsInt, IsOptional, IsString } from "class-validator";
 
@@ -45,7 +45,7 @@ export class CreateActionDto {
     organizationId: number
 }
 
-export class UpdateActionDto extends CreateActionDto { }
+export class UpdateActionDto extends PartialType(CreateActionDto) { }
 
 
 export class ActionQueryDto {

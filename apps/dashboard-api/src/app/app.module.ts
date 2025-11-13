@@ -25,6 +25,7 @@ import { EmployeePlanModule } from '../modules/employeePlan/employee-plan.module
 import { AttendanceModule } from '../modules/attendance/attendance.module';
 import { ConfigModule } from '../core/config/config.module';
 import { QueueModule } from '../modules/queue/queue.module';
+import { XmlJsonService } from '../shared/services/xtml-json.service';
 
 @Module({
     imports: [
@@ -70,7 +71,7 @@ import { QueueModule } from '../modules/queue/queue.module';
         {
             provide: APP_INTERCEPTOR,
             useClass: TenantContextInterceptor,
-        },
+        }
     ],
 })
 export class AppModule implements NestModule {

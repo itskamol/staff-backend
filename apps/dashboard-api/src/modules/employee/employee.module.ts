@@ -9,6 +9,8 @@ import { DepartmentRepository } from '../department/department.repository';
 import { PolicyRepository } from '../policy/repositories/policy.repository';
 import { HikvisionService } from '../hikvision/hikvision.service';
 import { ConfigService } from '../../core/config/config.service';
+import { XmlJsonService } from '../../shared/services/xtml-json.service';
+import { EncryptionService } from '../../shared/services/encryption.service';
 
 @Module({
     imports: [SharedCommonModule],
@@ -21,7 +23,9 @@ import { ConfigService } from '../../core/config/config.service';
         PolicyService,
         PolicyRepository,
         HikvisionService,
-        ConfigService
+        ConfigService,
+        XmlJsonService,
+        EncryptionService
     ],
     exports: [EmployeeService, EmployeeRepository],
 })

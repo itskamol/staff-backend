@@ -10,6 +10,7 @@ import { WebsocketModule } from '../websocket/websocket.module';
 import { BullModule } from '@nestjs/bullmq';
 import { JOB } from '../../shared/constants';
 import { DeviceProcessor } from '../queue/job/device.processor';
+import { EncryptionService } from '../../shared/services/encryption.service';
 
 @Module({
     imports: [
@@ -23,7 +24,7 @@ import { DeviceProcessor } from '../queue/job/device.processor';
         WebsocketModule,
     ],
     controllers: [DeviceController],
-    providers: [DeviceService, DeviceRepository, GateRepository, DeviceProcessor],
+    providers: [DeviceService, DeviceRepository, GateRepository, DeviceProcessor, EncryptionService],
     exports: [DeviceService],
 })
 export class DeviceModule {}

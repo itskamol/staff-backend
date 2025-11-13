@@ -1,21 +1,5 @@
-import { IsString, IsArray, IsISO8601, IsNumber, IsInt, IsOptional } from 'class-validator';
+import { IsString, IsInt, IsOptional } from 'class-validator';
 import { ApiProperty } from '@nestjs/swagger';
-
-export class RightPlanDto {
-  @ApiProperty({
-    example: 1,
-    description: 'Qaysi eshik uchun kirish huquqi (doorNo)',
-  })
-  @IsNumber()
-  doorNo: number;
-
-  @ApiProperty({
-    example: '1',
-    description: 'Reja shablon raqami (planTemplateNo)',
-  })
-  @IsString()
-  planTemplateNo: string;
-}
 
 export class CreateHikvisionUserDto {
   @ApiProperty({

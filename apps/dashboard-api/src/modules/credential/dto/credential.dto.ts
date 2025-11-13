@@ -1,6 +1,6 @@
 import { IsString, IsInt, IsBoolean, IsOptional, IsEnum, MinLength, MaxLength, IsNumber, Min, IsPositive } from 'class-validator';
 import { Type } from 'class-transformer';
-import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
+import { ApiProperty, ApiPropertyOptional, PartialType } from '@nestjs/swagger';
 import { ActionType } from '@prisma/client';
 
 export class CreateCredentialDto {
@@ -36,7 +36,7 @@ export class CreateCredentialDto {
   organizationId?: number
 }
 
-export class UpdateCredentialDto extends CreateCredentialDto {
+export class UpdateCredentialDto extends PartialType(CreateCredentialDto) {
 }
 
 export class CredentialResponseDto {

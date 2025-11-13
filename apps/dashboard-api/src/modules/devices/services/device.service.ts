@@ -16,6 +16,7 @@ import { ConfigService } from 'apps/dashboard-api/src/core/config/config.service
 import { InjectQueue } from '@nestjs/bullmq';
 import { Queue } from 'bullmq';
 import { JOB } from 'apps/dashboard-api/src/shared/constants';
+import { EncryptionService } from 'apps/dashboard-api/src/shared/services/encryption.service';
 
 @Injectable()
 export class DeviceService {
@@ -27,7 +28,8 @@ export class DeviceService {
         private hikvisionService: HikvisionService,
         private readonly prisma: PrismaService,
         private readonly gateway: EventsGateway,
-        private readonly configService: ConfigService
+        private readonly configService: ConfigService,
+        private readonly encryptionService: EncryptionService
     ) {
         this.socket = this.gateway.server;
     }
@@ -106,6 +108,8 @@ export class DeviceService {
     async create(createDeviceDto: CreateDeviceDto, scope: DataScope) {
         const { gateId, ipAddress, ...dtoData } = createDeviceDto;
 
+        dtoData.password = this.encryptionService.encrypt(dtoData.password);
+        
         if (gateId && ipAddress) {
             const existing = await this.deviceRepository.findOneByGateAndIp(gateId, ipAddress);
             if (existing) {
@@ -155,6 +159,7 @@ export class DeviceService {
                 throw new NotFoundException('Gate not found');
             }
         }
+
 
         const device = {
             name: deviceInfo.deviceName || dtoData.name,

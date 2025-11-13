@@ -63,7 +63,6 @@ export class DeviceController {
         @Scope() scope: DataScope,
         @User() user: UserContext
     ) {
-        console.log(scope, user);
         return await this.deviceService.create(createDeviceDto, scope);
     }
 

@@ -61,7 +61,8 @@ export class HikvisionController {
   @Get('users')
   @ApiOperation({ summary: 'Get all users' })
   async getAllUsers() {
-    return this.hikvisionService.getAllUsers();
+    // return this.hikvisionService.getAllUsers();
+    return 'Hikvisions employees'
   }
 
   @Delete('user/:employeeNo')
