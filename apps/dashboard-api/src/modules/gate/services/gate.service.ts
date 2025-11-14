@@ -49,7 +49,7 @@ export class GateService {
         );
     }
 
-    async findOne(id: number, user: UserContext) {
+    async findOne(id: string, user: UserContext) {
         const gate = await this.gateRepository.findById(id, {
             devices: {
                 include: {
@@ -97,7 +97,7 @@ export class GateService {
         );
     }
 
-    async update(id: number, updateGateDto: UpdateGateDto, user: UserContext) {
+    async update(id: string, updateGateDto: UpdateGateDto, user: UserContext) {
         await this.findOne(id, user);
 
         return this.gateRepository.update(id, updateGateDto, {
@@ -110,7 +110,7 @@ export class GateService {
         });
     }
 
-    async remove(id: number, scope: DataScope, user: UserContext) {
+    async remove(id: string, scope: DataScope, user: UserContext) {
         const gate = await this.gateRepository.findById(
             id,
             {
@@ -137,7 +137,7 @@ export class GateService {
         return this.gateRepository.delete(id, scope);
     }
 
-    async getGateStatistics(id: number, user: UserContext) {
+    async getGateStatistics(id: string, user: UserContext) {
         const statistics = await this.gateRepository.getGateStatistics(id);
 
         if (!statistics) {
@@ -147,7 +147,7 @@ export class GateService {
         return statistics;
     }
 
-    async getGateWithDevices(id: number, user: UserContext) {
+    async getGateWithDevices(id: string, user: UserContext) {
         const gate = await this.gateRepository.findWithDevices(id);
 
         if (!gate) {

@@ -75,7 +75,7 @@ export class VisitorService {
         );
     }
 
-    async findOne(id: number, user: UserContext) {
+    async findOne(id: string, user: UserContext) {
         const visitor = await this.prisma.visitor.findUnique({
             where: { id },
             select: {
@@ -150,14 +150,14 @@ export class VisitorService {
         const visitor = await this.prisma.visitor.create({
             data: {
                 ...createVisitorDto,
-                creator: { connect: { id: +user.sub } },
+                creator: { connect: { id: user.sub } },
             },
         });
 
         return visitor;
     }
 
-    async update(id: number, updateVisitorDto: UpdateVisitorDto, user: UserContext) {
+    async update(id: string, updateVisitorDto: UpdateVisitorDto, user: UserContext) {
         // Check if visitor exists and access permissions
         await this.findOne(id, user);
 
@@ -182,7 +182,7 @@ export class VisitorService {
         return visitor;
     }
 
-    async remove(id: number, user: UserContext) {
+    async remove(id: string, user: UserContext) {
         // Check if visitor exists and access permissions
         const visitor = await this.findOne(id, user);
 
@@ -206,7 +206,7 @@ export class VisitorService {
         });
     }
 
-    async generateCode(id: number, generateCodeDto: GenerateCodeDto, user: UserContext) {
+    async generateCode(id: string, generateCodeDto: GenerateCodeDto, user: UserContext) {
         // Check if visitor exists and access permissions
         const visitor = await this.findOne(id, user);
 
@@ -284,7 +284,7 @@ export class VisitorService {
         }
     }
 
-    async getEntryLogs(id: number, paginationDto: PaginationDto, user: UserContext) {
+    async getEntryLogs(id: string, paginationDto: PaginationDto, user: UserContext) {
         // Check access permissions first
         await this.findOne(id, user);
 
@@ -363,7 +363,7 @@ export class VisitorService {
         return onetimeCode;
     }
 
-    async deactivateCode(codeId: number, user: UserContext) {
+    async deactivateCode(codeId: string, user: UserContext) {
         // Check if code exists and user has access
         const onetimeCode = await this.prisma.onetimeCode.findUnique({
             where: { id: codeId },

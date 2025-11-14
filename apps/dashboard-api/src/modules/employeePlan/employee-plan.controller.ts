@@ -34,21 +34,21 @@ export class EmployeePlanController {
     @ApiOperation({ summary: 'Get employee plan by id' })
     @ApiResponse({ status: 200, description: 'Employee plan data' })
     async findById(@Param('id') id: string) {
-        return this.service.findById(Number(id));
+        return this.service.findById(id);
     }
 
     @Put(':id')
     @ApiOperation({ summary: 'Update employee plan' })
     @ApiResponse({ status: 200, description: 'Updated employee plan' })
     async update(@Param('id') id: string, @Body() dto: UpdateEmployeePlanDto) {
-        return this.service.update(Number(id), dto);
+        return this.service.update(id, dto);
     }
 
     @Delete(':id')
     @ApiOperation({ summary: 'Delete employee plan' })
     @ApiResponse({ status: 200, description: 'Employee plan deleted' })
     async delete(@Param('id') id: string) {
-        return this.service.delete(Number(id));
+        return this.service.delete(id);
     }
 
     @Post('assign')

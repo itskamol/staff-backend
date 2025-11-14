@@ -40,7 +40,7 @@ export class DeviceService {
         return { port, ip }
     }
 
-    async findAll(query: QueryDto & { type?: DeviceType; gateId?: number }, scope: DataScope, user: UserContext) {
+    async findAll(query: QueryDto & { type?: DeviceType; gateId?: string }, scope: DataScope, user: UserContext) {
         const { page, limit, sort = 'createdAt', order = 'desc', search, type, gateId } = query;
         const where: Prisma.DeviceWhereInput = {};
 
@@ -80,7 +80,7 @@ export class DeviceService {
         );
     }
 
-    async findOne(id: number, user: UserContext) {
+    async findOne(id: string, user: UserContext) {
         const device = await this.deviceRepository.findById(id, {
             gate: {
                 select: {
@@ -214,7 +214,7 @@ export class DeviceService {
     }
 
 
-    async update(id: number, updateDeviceDto: UpdateDeviceDto, user: UserContext) {
+    async update(id: string, updateDeviceDto: UpdateDeviceDto, user: UserContext) {
         await this.findOne(id, user);
 
         const { gateId, ipAddress, ...dtoData } = updateDeviceDto;
@@ -254,7 +254,7 @@ export class DeviceService {
     }
 
 
-    async remove(id: number, scope: DataScope, user: UserContext) {
+    async remove(id: string, scope: DataScope, user: UserContext) {
         const device = await this.deviceRepository.findById(
             id,
             {
@@ -285,7 +285,7 @@ export class DeviceService {
         return { message: 'Device deleted successfully', ...result };
     }
 
-    async testConnection(id: number, timeout: number = 5) {
+    async testConnection(id: string, timeout: number = 5) {
         const device = await this.deviceRepository.findById(id);
 
         if (!device) {
@@ -331,11 +331,11 @@ export class DeviceService {
         return this.deviceRepository.findOnlineDevices();
     }
 
-    async updateDeviceStatus(id: number, isActive: boolean) {
+    async updateDeviceStatus(id: string, isActive: boolean) {
         return this.deviceRepository.updateStatus(id, isActive);
     }
 
-    async findByGate(gateId: number) {
+    async findByGate(gateId: string) {
         return this.deviceRepository.findMany(
             { gateId },
             { name: 'asc' },
@@ -383,8 +383,8 @@ export class DeviceService {
         for (const gate of gates) {
             for (const employee of employees) {
                 createData.push({
-                    employeeId: +employee.id,
-                    gateId: +gate.id,
+                    employeeId: employee.id,
+                    gateId: gate.id,
                 });
             }
         }
@@ -518,7 +518,7 @@ export class DeviceService {
     }
 
 
-    private async updateSync(id: number, status: StatusEnum, message?: string) {
+    private async updateSync(id: string, status: StatusEnum, message?: string) {
         const updated = await this.prisma.employeeSync.update({
             where: { id },
             data: { status, message, updatedAt: new Date() },

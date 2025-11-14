@@ -49,7 +49,7 @@ export class OrganizationService {
         };
     }
 
-    async getOrganizationById(id: number, scope?: DataScope) {
+    async getOrganizationById(id: string, scope?: DataScope) {
         return this.organizationRepository.findById(id, { departments: true }, scope);
     }
 
@@ -91,11 +91,11 @@ export class OrganizationService {
         return organization;
     }
 
-    async updateOrganization(id: number, data: UpdateOrganizationDto, scope?: DataScope) {
+    async updateOrganization(id: string, data: UpdateOrganizationDto, scope?: DataScope) {
         return this.organizationRepository.update(id, data, undefined, scope);
     }
 
-    async deleteOrganization(id: number, scope?: DataScope) {       
+    async deleteOrganization(id: string, scope?: DataScope) {       
         return this.organizationRepository.delete(id, scope);
     }
 }

@@ -72,7 +72,7 @@ export class PolicyService {
         );
     }
 
-    async findOne(id: number, scope: DataScope, user: UserContext) {
+    async findOne(id: string, scope: DataScope, user: UserContext) {
         const policy = await this.policyRepository.findById(id, {
             employees: {
                 select: { id: true },
@@ -118,7 +118,7 @@ export class PolicyService {
         return this.policyRepository.create(input, undefined, scope);
     }
 
-    async update(id: number, updatePolicyDto: UpdatePolicyDto, scope: DataScope) {
+    async update(id: string, updatePolicyDto: UpdatePolicyDto, scope: DataScope) {
         const policy = await this.policyRepository.findByIdOrThrow(
             id,
             { employees: { select: { id: true } } },
@@ -136,7 +136,7 @@ export class PolicyService {
         return this.policyRepository.update(id, input, undefined, scope);
     }
 
-    async remove(id: number, scope: DataScope, user: UserContext) {
+    async remove(id: string, scope: DataScope, user: UserContext) {
         const policy: PolicyWithRelations = await this.policyRepository.findById(
             id,
             { employees: { select: { id: true } } },
@@ -153,7 +153,7 @@ export class PolicyService {
         }
     }
 
-    async getDefaultPolicy(organizationId: number) {
+    async getDefaultPolicy(organizationId: string) {
         return this.policyRepository.getDefaultPolicy(organizationId);
     }
 

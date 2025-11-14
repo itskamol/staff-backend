@@ -1,13 +1,13 @@
-import { IsString, IsInt, IsBoolean, IsOptional, IsEnum, MinLength, MaxLength, IsNumber, Min, IsPositive } from 'class-validator';
+import { IsString, IsInt, IsBoolean, IsOptional, IsEnum, MinLength, MaxLength,IsPositive, IsNotEmpty } from 'class-validator';
 import { Type } from 'class-transformer';
 import { ApiProperty, ApiPropertyOptional, PartialType } from '@nestjs/swagger';
 import { ActionType } from '@prisma/client';
 
 export class CreateCredentialDto {
   @ApiProperty({ description: 'The ID of the employee this credential belongs to' })
-  @Type(() => Number)
-  @IsInt()
-  employeeId: number;
+  @IsString()
+  @IsNotEmpty()
+  employeeId: string;
 
   @ApiProperty({ description: 'The unique code associated with the credential (e.g., card number, license plate)', minLength: 1, maxLength: 50 })
   @IsString()
@@ -30,10 +30,10 @@ export class CreateCredentialDto {
   @IsBoolean()
   isActive?: boolean;
 
-  @ApiProperty({ example: 1 })
+  @ApiProperty({ example: 'org-uuid' })
   @IsOptional()
-  @IsInt()
-  organizationId?: number
+  @IsString()
+  organizationId?: string
 }
 
 export class UpdateCredentialDto extends PartialType(CreateCredentialDto) {
@@ -41,7 +41,7 @@ export class UpdateCredentialDto extends PartialType(CreateCredentialDto) {
 
 export class CredentialResponseDto {
   @ApiProperty()
-  id: number;
+  id: string;
 
   @ApiProperty()
   code: string;
@@ -50,7 +50,7 @@ export class CredentialResponseDto {
   type: ActionType;
 
   @ApiProperty()
-  employeeId: number;
+  employeeId: string;
 
   @ApiProperty()
   isActive: boolean;
@@ -98,20 +98,17 @@ export class CredentialQueryDto {
   type?: ActionType;
 
   @ApiPropertyOptional({ description: 'Filter by Employee ID' })
-  @Type(() => Number)
-  @IsInt()
+  @IsString()
   @IsOptional()
-  employeeId?: number;
+  employeeId?: string;
 
   @ApiPropertyOptional({ description: 'Filter by Department ID' })
-  @Type(() => Number)
-  @IsInt()
+  @IsString()
   @IsOptional()
-  departmentId?: number;
+  departmentId?: string;
 
   @ApiPropertyOptional({ description: 'Filter by Organization ID' })
-  @Type(() => Number)
-  @IsInt()
+  @IsString()
   @IsOptional()
-  organizationId?: number;
+  organizationId?: string;
 }

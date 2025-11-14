@@ -40,7 +40,7 @@ export class GroupService {
         );
     }
 
-    async findOne(id: number, user: UserContext) {
+    async findOne(id: string, user: UserContext) {
         const group = await this.groupRepository.findById(id, {
             resourceGroups: {
                 select: {
@@ -105,13 +105,13 @@ export class GroupService {
         return this.groupRepository.create(input, undefined, scope);
     }
 
-    async update(id: number, updateGroupDto: UpdateGroupDto, user: UserContext) {
+    async update(id: string, updateGroupDto: UpdateGroupDto, user: UserContext) {
         await this.findOne(id, user);
 
         return this.groupRepository.update(id, updateGroupDto);
     }
 
-    async remove(id: number, scope: DataScope, user: UserContext) {
+    async remove(id: string, scope: DataScope, user: UserContext) {
         const group = await this.groupRepository.findById(id, undefined, scope);
 
         if (!group) {
@@ -125,7 +125,7 @@ export class GroupService {
         return this.groupRepository.delete(id, scope);
     }
 
-    async addResources(groupId: number, resourceIds: number[], user: UserContext) {
+    async addResources(groupId: string, resourceIds: string[], user: UserContext) {
         await this.findOne(groupId, user);
 
         const existingConnections = await this.prisma.resourceGroups.findMany({
@@ -152,7 +152,7 @@ export class GroupService {
         return { added: newResourceIds.length };
     }
 
-    async removeResource(groupId: number, resourceId: number, user: UserContext) {
+    async removeResource(groupId: string, resourceId: string, user: UserContext) {
         await this.findOne(groupId, user);
 
         const connection = await this.prisma.resourceGroups.findFirst({

@@ -8,10 +8,10 @@ export class CreateDeviceDto {
   @IsString()
   name?: string;
 
-  @ApiProperty({ example: 1, description: 'Gate ID', required: false })
+  @ApiProperty({ example: 'uuid', description: 'Gate ID', required: false })
   @IsOptional()
-  @IsInt()
-  gateId?: number;
+  @IsString()
+  gateId?: string;
 
   @ApiProperty({ example: DeviceType.FACE, description: 'Device type', enum: DeviceType, required: false })
   @IsOptional()
@@ -33,27 +33,22 @@ export class CreateDeviceDto {
   @IsEnum(EntryType)
   entryType?: EntryType;
 
-  // @ApiProperty({ example: true, description: 'Device active status', required: false, default: true })
   @IsOptional()
   @IsBoolean()
   isActive?: boolean = true;
 
-  // @ApiProperty({ example: 'ACME Corp', description: 'Device manufacturer', required: false })
   @IsOptional()
   @IsString()
   manufacturer?: string;
 
-  // @ApiProperty({ example: 'Model X', description: 'Device model', required: false })
   @IsOptional()
   @IsString()
   model?: string;
 
-  // @ApiProperty({ example: '1.0.0', description: 'Device firmware version', required: false })
   @IsOptional()
   @IsString()
   firmware?: string;
 
-  // @ApiProperty({ example: 'SN123456', description: 'Serial number', required: false })
   @IsOptional()
   @IsString()
   serialNumber?: string;
@@ -87,9 +82,9 @@ export class CreateDeviceDto {
 export class UpdateDeviceDto extends PartialType(CreateDeviceDto) { }
 
 export class DeviceDto extends CreateDeviceDto {
-  @ApiProperty({ example: 1, description: 'Device ID' })
+  @ApiProperty({ example: 'uuid', description: 'Device ID' })
   @IsInt()
-  id: number;
+  id: string;
 
   @ApiProperty({ example: 'online', description: 'Device status' })
   @IsString()
@@ -112,7 +107,7 @@ export class DeviceDto extends CreateDeviceDto {
 
   @ApiProperty({ description: 'Gate information', required: false })
   gate?: {
-    id: number;
+    id: string;
     name: string;
   };
 }
@@ -131,28 +126,28 @@ export class TestConnectionDto {
 
 export class AssignEmployeesToGatesDto {
   @ApiProperty({
-    example: [1, 2, 3],
+    example: ['uuid', 'uuid-2'],
     description: 'Gate IDlar ro‘yxati',
-    type: [Number],
+    type: [String],
   })
   @IsArray()
   @ArrayNotEmpty()
-  @IsInt({ each: true })
-  gateIds: number[];
+  @IsString({ each: true })
+  gateIds: string[];
 
   @ApiProperty({
-    example: [5, 6, 7],
+    example: ['uuid','uuid-2'],
     description: 'Employee IDlar ro‘yxati',
-    type: [Number],
+    type: [String],
   })
   @IsArray()
   @ArrayNotEmpty()
-  @IsInt({ each: true })
-  employeeIds: number[];
+  @IsString({ each: true })
+  employeeIds: string[];
 
 
-  @ApiProperty({ example: 1 })
+  @ApiProperty({ example: 'uuid' })
   @IsOptional()
-  @IsInt()
-  organizationId?: number
+  @IsString()
+  organizationId?: string
 }

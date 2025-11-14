@@ -51,7 +51,7 @@ export class VisitorRepository extends BaseRepository<
         return this.findFirst({ pinfl });
     }
 
-    async findByCreator(creatorId: number, include?: Prisma.VisitorInclude) {
+    async findByCreator(creatorId: string, include?: Prisma.VisitorInclude) {
         return this.findMany({ creatorId }, undefined, include);
     }
 

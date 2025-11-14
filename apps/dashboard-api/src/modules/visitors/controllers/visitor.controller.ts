@@ -57,7 +57,7 @@ export class VisitorController {
     @Get(':id')
     @Roles(Role.ADMIN, Role.HR, Role.DEPARTMENT_LEAD, Role.GUARD)
     @ApiCrudOperation(VisitorWithRelationsDto, 'get', { summary: 'Get visitor by ID' })
-    async findOne(@Param('id') id: number, @CurrentUser() user: UserContext) {
+    async findOne(@Param('id') id: string, @CurrentUser() user: UserContext) {
         return await this.visitorService.findOne(id, user);
     }
 
@@ -79,7 +79,7 @@ export class VisitorController {
         errorResponses: { notFound: true, forbidden: true },
     })
     async update(
-        @Param('id') id: number,
+        @Param('id') id: string,
         @Body() updateVisitorDto: UpdateVisitorDto,
         @CurrentUser() user: UserContext
     ) {
@@ -93,7 +93,7 @@ export class VisitorController {
         errorResponses: { notFound: true, forbidden: true },
     })
     async remove(
-        @Param('id') id: number,
+        @Param('id') id: string,
         @Scope() scope: DataScope,
         @CurrentUser() user: UserContext
     ) {
@@ -108,7 +108,7 @@ export class VisitorController {
         errorResponses: { notFound: true, badRequest: true },
     })
     async generateCode(
-        @Param('id') id: number,
+        @Param('id') id: string,
         @Body() generateCodeDto: GenerateCodeDto,
         @CurrentUser() user: UserContext
     ) {
@@ -120,7 +120,7 @@ export class VisitorController {
     @ApiCrudOperation(null, 'list', {
         summary: 'Get visitor actions (entry/exit logs)',
     })
-    async getActions(@Param('id') id: number, @CurrentUser() user: UserContext) {
+    async getActions(@Param('id') id: string, @CurrentUser() user: UserContext) {
         return await this.visitorService.getActions(id, user);
     }
 

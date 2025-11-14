@@ -12,7 +12,7 @@ export class ActionRepository {
     return this.prisma.action.create({ data: payload });
   }
 
-  async findOne(id: number) {
+  async findOne(id: string) {
     return this.prisma.action.findUnique({ where: { id } });
   }
 
@@ -40,13 +40,13 @@ export class ActionRepository {
     });
   }
 
-  async update(id: number, data: UpdateActionDto) {
+  async update(id: string, data: UpdateActionDto) {
     const payload: any = { ...data };
     if (data.actionTime) payload.actionTime = new Date(data.actionTime);
     return this.prisma.action.update({ where: { id }, data: payload });
   }
 
-  async remove(id: number) {
+  async remove(id: string) {
     return this.prisma.action.delete({ where: { id } });
   }
 

@@ -141,7 +141,7 @@ export abstract class BaseCrudController<
     @ApiCrudOperation('get' as any, 'get', {
         summary: 'Get entity by ID',
     })
-    async findOne(@Param('id') id: number): Promise<TEntity> {
+    async findOne(@Param('id') id: string): Promise<TEntity> {
         const include = this.getInclude();
         const entity = await this.service.findByIdOrThrow(id, include);
         return this.toResponseDto(entity);
@@ -155,7 +155,7 @@ export abstract class BaseCrudController<
     @ApiCrudOperation('update' as any, 'update', {
         summary: 'Update entity',
     })
-    async update(@Param('id') id: number, @Body() updateDto: TUpdateDto): Promise<TEntity> {
+    async update(@Param('id') id: string, @Body() updateDto: TUpdateDto): Promise<TEntity> {
         const include = this.getInclude();
         const entity = await this.service.update(id, updateDto, include);
         return this.toResponseDto(entity);
@@ -170,7 +170,7 @@ export abstract class BaseCrudController<
     @ApiCrudOperation('delete' as any, 'delete', {
         summary: 'Delete entity',
     })
-    async remove(@Param('id') id: number): Promise<void> {
+    async remove(@Param('id') id: string): Promise<void> {
         await this.service.delete(id);
     }
 
@@ -182,7 +182,7 @@ export abstract class BaseCrudController<
     @ApiCrudOperation('update' as any, 'update', {
         summary: 'Soft delete entity',
     })
-    async softDelete(@Param('id') id: number): Promise<TEntity> {
+    async softDelete(@Param('id') id: string): Promise<TEntity> {
         const entity = await this.service.softDelete(id);
         return this.toResponseDto(entity);
     }

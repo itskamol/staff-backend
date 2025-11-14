@@ -42,9 +42,9 @@ export class LogoutDto {
 class UserLoginResponseDto {
     @ApiProperty({
         description: 'The unique identifier for the user.',
-        example: 1,
+        example: 'uuid',
     })
-    id: number;
+    id: string;
 
     @ApiProperty({
         description: 'The username of the user.',

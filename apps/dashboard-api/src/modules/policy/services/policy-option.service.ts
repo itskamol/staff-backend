@@ -19,7 +19,7 @@ export class PolicyOptionService {
         const where: Prisma.PolicyOptionWhereInput = {};
 
         if (policyId) {
-            where.policyId = parseInt(policyId as string);
+            where.policyId = policyId;
         }
 
         return this.policyOptionRepository.findManyWithPagination(
@@ -38,7 +38,7 @@ export class PolicyOptionService {
         );
     }
 
-    async findOne(id: number, user: UserContext) {
+    async findOne(id: string, user: UserContext) {
         const policyOption = await this.policyOptionRepository.findById(id, {
             policy: {
                 select: {
@@ -87,7 +87,7 @@ export class PolicyOptionService {
         }, undefined, scope);
     }
 
-    async update(id: number, updatePolicyOptionDto: UpdatePolicyOptionDto, user: UserContext) {
+    async update(id: string, updatePolicyOptionDto: UpdatePolicyOptionDto, user: UserContext) {
         await this.findOne(id, user);
 
         // If updating policy or group, check for duplicates
@@ -104,7 +104,7 @@ export class PolicyOptionService {
         return this.policyOptionRepository.update(id, updatePolicyOptionDto);
     }
 
-    async remove(id: number, scope: DataScope, user: UserContext) {
+    async remove(id: string, scope: DataScope, user: UserContext) {
         const policyOption = await this.policyOptionRepository.findById(id, undefined, scope);
 
         if (!policyOption) {
@@ -114,13 +114,13 @@ export class PolicyOptionService {
         return this.policyOptionRepository.delete(id, scope);
     }
 
-    async findByPolicyId(policyId: number) {
+    async findByPolicyId(policyId: string) {
         return this.policyOptionRepository.findByPolicyId(policyId, {
             rules: true
         });
     }
 
-    async findByGroupId(groupId: number) {
+    async findByGroupId(groupId: string) {
         return this.policyOptionRepository.findByGroupId(groupId, {
             policy: {
                 select: {
@@ -177,11 +177,11 @@ export class PolicyOptionService {
         // };
     }
 
-    async removeByPolicyId(policyId: number, scope: DataScope) {
+    async removeByPolicyId(policyId: string, scope: DataScope) {
         return this.policyOptionRepository.deleteByPolicyId(policyId);
     }
 
-    async removeByGroupId(groupId: number, scope: DataScope) {
+    async removeByGroupId(groupId: string, scope: DataScope) {
         return this.policyOptionRepository.deleteByGroupId(groupId);
     }
 }

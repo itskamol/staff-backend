@@ -40,7 +40,7 @@ export class OnetimeCodeService {
         }
 
         if (visitorId) {
-            where.visitorId = parseInt(visitorId);
+            where.visitorId = visitorId;
         }
 
         if (codeType) {
@@ -69,7 +69,7 @@ export class OnetimeCodeService {
         );
     }
 
-    async findOne(id: number, user: UserContext) {
+    async findOne(id: string, user: UserContext) {
         const onetimeCode = await this.onetimeCodeRepository.findById(id, {
             visitor: {
                 select: {
@@ -130,7 +130,7 @@ export class OnetimeCodeService {
         );
     }
 
-    async update(id: number, updateOnetimeCodeDto: UpdateOnetimeCodeDto, user: UserContext) {
+    async update(id: string, updateOnetimeCodeDto: UpdateOnetimeCodeDto, user: UserContext) {
         await this.findOne(id, user);
 
         // Check if updating to existing code
@@ -154,7 +154,7 @@ export class OnetimeCodeService {
         return this.onetimeCodeRepository.update(id, updateData);
     }
 
-    async remove(id: number, scope: DataScope, user: UserContext) {
+    async remove(id: string, scope: DataScope, user: UserContext) {
         const onetimeCode = await this.onetimeCodeRepository.findById(id, undefined, scope);
 
         if (!onetimeCode) {
@@ -164,17 +164,17 @@ export class OnetimeCodeService {
         return this.onetimeCodeRepository.delete(id, scope);
     }
 
-    async activate(id: number, user: UserContext) {
+    async activate(id: string, user: UserContext) {
         await this.findOne(id, user);
         return this.onetimeCodeRepository.activateCode(id);
     }
 
-    async deactivate(id: number, user: UserContext) {
+    async deactivate(id: string, user: UserContext) {
         await this.findOne(id, user);
         return this.onetimeCodeRepository.deactivateCode(id);
     }
 
-    async findByVisitorId(visitorId: number) {
+    async findByVisitorId(visitorId: string) {
         return this.onetimeCodeRepository.findByVisitorId(visitorId, {
             visitor: {
                 select: {
@@ -237,7 +237,7 @@ export class OnetimeCodeService {
     }
 
     async generateCode(
-        visitorId: number,
+        visitorId: string,
         codeType: VisitorCodeType,
         validityHours: number = 24,
         additionalDetails?: string

@@ -61,10 +61,10 @@ export class EmployeeService {
         );
     }
 
-    async getEmployeeById(id: number, scope: DataScope, user: UserContext) {
+    async getEmployeeById(id: string, scope: DataScope, user: UserContext) {
         return this.employeeRepository.findByIdWithRoleScope(id, undefined, scope, user.role);
     }
-    async getEmployee(id: number) {
+    async getEmployee(id: string) {
         return this.employeeRepository.findById(id);
     }
 
@@ -112,7 +112,7 @@ export class EmployeeService {
         return await this.employeeRepository.createWithValidation(createData, undefined, user.role);
     }
 
-    async updateEmployee(id: number, dto: UpdateEmployeeDto, scope: DataScope, user: UserContext) {
+    async updateEmployee(id: string, dto: UpdateEmployeeDto, scope: DataScope, user: UserContext) {
 
         const existingEmployee = await this.employeeRepository.findByIdWithRoleScope(id, undefined, scope, user.role);
         if (!existingEmployee) {
@@ -150,7 +150,7 @@ export class EmployeeService {
     }
 
     async updateManyEmployees(
-        ids: number[],
+        ids: string[],
         dto: UpdateEmployeeDto,
         scope: DataScope,
         user: UserContext
@@ -205,7 +205,7 @@ export class EmployeeService {
         );
     }
 
-    async deleteEmployee(id: number, scope: DataScope, user: UserContext) {
+    async deleteEmployee(id: string, scope: DataScope, user: UserContext) {
         const employee = await this.employeeRepository.findByIdWithRoleScope(
             id,
             undefined,
@@ -265,7 +265,7 @@ export class EmployeeService {
         return await this.employeeRepository.delete(id);
     }
 
-    async getEmployeeEntryLogs(id: number, query: QueryDto, scope: DataScope, user: UserContext) {
+    async getEmployeeEntryLogs(id: string, query: QueryDto, scope: DataScope, user: UserContext) {
         // Verify access to employee
         const employee = await this.employeeRepository.findByIdWithRoleScope(
             id,
@@ -294,7 +294,7 @@ export class EmployeeService {
     }
 
     async getEmployeeActivityReport(
-        id: number,
+        id: string,
         query: QueryDto,
         scope: DataScope,
         user: UserContext
@@ -322,7 +322,7 @@ export class EmployeeService {
         return await this.employeeRepository.getEmployeeActivityStats(id, dateRange);
     }
 
-    async getEmployeeComputerUsers(id: number, scope: DataScope, user: UserContext) {
+    async getEmployeeComputerUsers(id: string, scope: DataScope, user: UserContext) {
         // Verify access to employee
         const employee = await this.employeeRepository.findByIdWithRoleScope(
             id,
@@ -342,7 +342,7 @@ export class EmployeeService {
         };
     }
 
-    async assignCardToEmployee(id: number, dto: any, scope: DataScope, user: UserContext) {
+    async assignCardToEmployee(id: string, dto: any, scope: DataScope, user: UserContext) {
         // Verify access to employee
         const employee = await this.employeeRepository.findByIdWithRoleScope(
             id,
@@ -367,7 +367,7 @@ export class EmployeeService {
         };
     }
 
-    async assignCarToEmployee(id: number, dto: any, scope: DataScope, user: UserContext) {
+    async assignCarToEmployee(id: string, dto: any, scope: DataScope, user: UserContext) {
         // Verify access to employee
         const employee = await this.employeeRepository.findByIdWithRoleScope(
             id,
@@ -392,7 +392,7 @@ export class EmployeeService {
         };
     }
 
-    async linkComputerUserToEmployee(id: number, dto: any, scope: DataScope, user: UserContext) {
+    async linkComputerUserToEmployee(id: string, dto: any, scope: DataScope, user: UserContext) {
         // Verify access to employee
         const employee = await this.employeeRepository.findByIdWithRoleScope(
             id,
@@ -414,8 +414,8 @@ export class EmployeeService {
     }
 
     async unlinkComputerUserFromEmployee(
-        id: number,
-        computerUserId: number,
+        id: string,
+        computerUserId: string,
         scope: DataScope,
         user: UserContext
     ) {

@@ -15,7 +15,7 @@ export class PrismaService extends PrismaClient implements OnModuleInit, OnModul
         await this.$disconnect();
     }
 
-    async setTenantContext(organizationId: number, role: string) {
+    async setTenantContext(organizationId: string, role: string) {
         // Use `.$executeRawUnsafe` because template string methods do not support function calls like `set_config`.
         // The values are properly parameterized, so this is safe.
         await this.$executeRawUnsafe(

@@ -40,25 +40,25 @@ export class CreateEmployeePlanDto {
     @IsBoolean()
     isActive?: boolean;
 
-    @ApiProperty({ example: 1 })
+    @ApiProperty({ example: 'uuid' })
     @IsOptional()
-    @IsInt()
-    organizationId?: number
+    @IsString()
+    organizationId?: string
 
 }
 
 export class UpdateEmployeePlanDto extends PartialType(CreateEmployeePlanDto) { }
 
 export class AssignEmployeesDto {
-    @ApiProperty({ example: 1 })
+    @ApiProperty({ example: 'uuid' })
     @IsNotEmpty()
-    @IsInt()
-    employeePlanId: number;
+    @IsString()
+    employeePlanId: string;
 
-    @ApiProperty({ example: [1, 2, 3] })
+    @ApiProperty({ example: ['uuid', 'uuid-2'] })
     @IsArray()
-    @IsInt({ each: true })
-    employeeIds: number[];
+    @IsString({ each: true })
+    employeeIds: string[];
 }
 
 export class EmployeePlanQueryDto {

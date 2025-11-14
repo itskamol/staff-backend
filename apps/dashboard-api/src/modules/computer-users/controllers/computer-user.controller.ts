@@ -47,7 +47,7 @@ export class ComputerUserController {
 
     @Get(':id')
     @ApiCrudOperation(ComputerUserDto, 'get', { summary: 'Get computer user by ID' })
-    async findOne(@Param('id') id: number, @CurrentUser() user: UserContext) {
+    async findOne(@Param('id') id: string, @CurrentUser() user: UserContext) {
         return await this.computerUserService.findOne(id, user);
     }
 
@@ -58,7 +58,7 @@ export class ComputerUserController {
         errorResponses: { notFound: true, forbidden: true },
     })
     async update(
-        @Param('id') id: number,
+        @Param('id') id: string,
         @Body() updateComputerUserDto: UpdateComputerUserDto,
         @CurrentUser() user: UserContext
     ) {
@@ -71,7 +71,7 @@ export class ComputerUserController {
         errorResponses: { notFound: true, forbidden: true },
     })
     async remove(
-        @Param('id') id: number,
+        @Param('id') id: string,
         @Scope() scope: DataScope,
         @CurrentUser() user: UserContext
     ) {
@@ -85,7 +85,7 @@ export class ComputerUserController {
         errorResponses: { notFound: true, badRequest: true },
     })
     async linkEmployee(
-        @Param('id') id: number,
+        @Param('id') id: string,
         @Body() linkEmployeeDto: LinkEmployeeDto,
         @CurrentUser() user: UserContext
     ) {
@@ -98,7 +98,7 @@ export class ComputerUserController {
         errorResponses: { notFound: true, badRequest: true },
     })
     async unlinkEmployee(
-        @Param('id') id: number,
+        @Param('id') id: string,
         @CurrentUser() user: UserContext
     ) {
         return await this.computerUserService.unlinkEmployee(id, user);

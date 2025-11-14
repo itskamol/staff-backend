@@ -30,22 +30,22 @@ export class CreateGroupDto {
     type: ResourceType;
 
     @ApiProperty({
-        example: 1,
+        example: 'uuid',
         description: 'Organization ID (auto-populated from user context)',
         required: false,
     })
-    @IsInt()
+    @IsString()
     @IsOptional()
-    organizationId: number;
+    organizationId: string;
 
     @ApiProperty({
-        example: [1, 2, 3, 4],
+        example: ['uuid', 'uuid-2'],
         description: 'Array of resource IDs to include in the group',
     })
     @IsArray()
-    @IsInt({ each: true })
+    @IsString({ each: true })
     @IsOptional()
-    resourceIds?: number[];
+    resourceIds?: string[];
 
     @ApiProperty({
         example: ['ya.ru', 'facebook.com', 'twitter.com'],
@@ -69,13 +69,13 @@ export class CreateGroupDto {
 export class UpdateGroupDto extends PartialType(CreateGroupDto) {}
 
 export class GroupDto extends CreateGroupDto {
-    @ApiProperty({ example: 1, description: 'Group ID' })
+    @ApiProperty({ example: 'uuid', description: 'Group ID' })
     @IsInt()
-    id: number;
+    id: string;
 
-    @ApiProperty({ example: 1, description: 'Organization ID' })
+    @ApiProperty({ example: 'uuid', description: 'Organization ID' })
     @IsInt()
-    organizationId!: number;
+    organizationId!: string;
 
     @ApiProperty({ example: true, description: 'Group active status' })
     @IsBoolean()
@@ -102,11 +102,11 @@ export class GroupDto extends CreateGroupDto {
 
 export class AddResourceToGroupDto {
     @ApiProperty({
-        example: [1, 2, 3],
+        example: ['uuid', 'uuid-2'],
         description: 'Array of resource IDs to add to group',
     })
-    @IsInt({ each: true })
-    resourceIds: number[];
+    @IsString({ each: true })
+    resourceIds: string[];
 }
 
 export class GroupQueryDto extends QueryDto {

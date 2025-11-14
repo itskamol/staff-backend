@@ -60,7 +60,7 @@ export class DepartmentController {
     @ApiCrudOperation(DepartmentResponseDto, 'get', {
         summary: 'Get a department by ID',
     })
-    async getDepartmentById(@Param('id') id: number, @Scope() scope: DataScope) {
+    async getDepartmentById(@Param('id') id: string, @Scope() scope: DataScope) {
         const department = await this.departmentService.getDepartmentById(id, scope);
         if (!department) {
             throw new NotFoundException('Department not found.');
@@ -74,7 +74,7 @@ export class DepartmentController {
         summary: 'Update a department by ID',
     })
     async updateDepartment(
-        @Param('id') id: number,
+        @Param('id') id: string,
         @Body() dto: UpdateDepartmentDto,
         @Scope() scope: DataScope
     ) {
@@ -85,7 +85,7 @@ export class DepartmentController {
     @ApiCrudOperation(DepartmentResponseDto, 'delete', {
         summary: 'Delete a department by ID',
     })
-    async deleteDepartment(@Param('id') id: number, @Scope() scope: DataScope) {
+    async deleteDepartment(@Param('id') id: string, @Scope() scope: DataScope) {
         await this.departmentService.deleteDepartment(id, scope);
         return { message: 'Department deleted successfully.' };
     }

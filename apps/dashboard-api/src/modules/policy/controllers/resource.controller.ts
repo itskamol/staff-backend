@@ -26,7 +26,7 @@ export class ResourceController {
             filters: {
                 value: String,
                 type: String,
-                groupId: Number,
+                groupId: String,
             },
         },
     })
@@ -40,7 +40,7 @@ export class ResourceController {
 
     @Get(':id')
     @ApiCrudOperation(ResourceResponseDto, 'get', { summary: 'Get resource by ID' })
-    async findOne(@Param('id') id: number, @CurrentUser() user: UserContext) {
+    async findOne(@Param('id') id: string, @CurrentUser() user: UserContext) {
         return await this.resourceService.findOne(id, user);
     }
 

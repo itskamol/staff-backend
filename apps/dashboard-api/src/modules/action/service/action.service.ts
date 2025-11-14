@@ -5,7 +5,6 @@ import { PrismaService } from '@app/shared/database';
 import { ActionMode, ActionStatus, ActionType, VisitorType } from '@prisma/client';
 import { AttendanceService } from '../../attendance/attendance.service';
 import { CreateAttendanceDto } from '../../attendance/dto/attendance.dto';
-import { resourceUsage } from 'process';
 import { LoggerService } from 'apps/dashboard-api/src/core/logger';
 
 @Injectable()
@@ -17,9 +16,9 @@ export class ActionService {
 
   ) { }
 
-  async create(eventData: any, deviceId: number) {
+  async create(eventData: any, deviceId: string) {
     const acEvent = eventData.AccessControllerEvent || {};
-    const employeeId = acEvent.employeeNoString ? parseInt(acEvent.employeeNoString) : undefined;
+    const employeeId = acEvent.employeeNoString ? acEvent.employeeNoString : undefined;
     const actionTime = eventData.dateTime;
 
     const device = await this.prisma.device.findFirst({ where: { id: deviceId } });
@@ -117,7 +116,7 @@ export class ActionService {
   }
 
 
-  async findOne(id: number) {
+  async findOne(id: string) {
     const action = await this.repo.findOne(id);
     if (!action) throw new NotFoundException(`Action ${id} not found`);
     return action;
@@ -151,12 +150,12 @@ export class ActionService {
     };
   }
 
-  async update(id: number, dto: UpdateActionDto) {
+  async update(id: string, dto: UpdateActionDto) {
     await this.findOne(id);
     return this.repo.update(id, dto);
   }
 
-  async remove(id: number) {
+  async remove(id: string) {
     await this.findOne(id);
     return this.repo.remove(id);
   }
@@ -232,7 +231,7 @@ export class ActionService {
   }
 
 
-  async getLastActionInfo(employeeId: number, deviceId: number) {
+  async getLastActionInfo(employeeId: string, deviceId: string) {
 
     const lastAction = await this.prisma.action.findFirst({
       where: { employeeId, deviceId },

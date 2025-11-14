@@ -28,7 +28,7 @@ export class OnetimeCodeRepository extends BaseRepository<
         return this.findFirst({ code });
     }
 
-    async findByVisitorId(visitorId: number, include?: Prisma.OnetimeCodeInclude) {
+    async findByVisitorId(visitorId: string, include?: Prisma.OnetimeCodeInclude) {
         return this.findMany({ visitorId }, { createdAt: 'desc' }, include);
     }
 
@@ -55,11 +55,11 @@ export class OnetimeCodeRepository extends BaseRepository<
         return this.findMany({ codeType }, { createdAt: 'desc' }, include);
     }
 
-    async activateCode(id: number) {
+    async activateCode(id: string) {
         return this.update(id, { isActive: true });
     }
 
-    async deactivateCode(id: number) {
+    async deactivateCode(id: string) {
         return this.update(id, { isActive: false });
     }
 

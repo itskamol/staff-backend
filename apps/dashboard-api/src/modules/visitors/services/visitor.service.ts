@@ -36,7 +36,7 @@ export class VisitorService {
         }
 
         if (creatorId) {
-            where.creatorId = parseInt(creatorId);
+            where.creatorId = creatorId;
         }
 
         return this.visitorRepository.findManyWithPagination(
@@ -73,7 +73,7 @@ export class VisitorService {
         );
     }
 
-    async findOne(id: number, user: UserContext) {
+    async findOne(id: string, user: UserContext) {
         const visitor = await this.visitorRepository.findById(id, {
             creator: {
                 select: {
@@ -177,7 +177,7 @@ export class VisitorService {
         );
     }
 
-    async update(id: number, updateVisitorDto: UpdateVisitorDto, user: UserContext) {
+    async update(id: string, updateVisitorDto: UpdateVisitorDto, user: UserContext) {
         await this.findOne(id, user);
 
         // Check for duplicate passport or PINFL if updating
@@ -200,7 +200,7 @@ export class VisitorService {
         return this.visitorRepository.update(id, updateVisitorDto);
     }
 
-    async remove(id: number, scope: DataScope, user: UserContext) {
+    async remove(id: string, scope: DataScope, user: UserContext) {
         const visitor = await this.visitorRepository.findById(
             id,
             {
@@ -226,7 +226,7 @@ export class VisitorService {
         return this.visitorRepository.delete(id, scope);
     }
 
-    async generateCode(id: number, generateCodeDto: GenerateCodeDto, user: UserContext) {
+    async generateCode(id: string, generateCodeDto: GenerateCodeDto, user: UserContext) {
         const visitor = await this.findOne(id, user);
 
         // Generate new code
@@ -289,7 +289,7 @@ export class VisitorService {
         });
     }
 
-    async findByCreator(creatorId: number) {
+    async findByCreator(creatorId: string) {
         return this.visitorRepository.findByCreator(creatorId, {
             _count: {
                 select: {
@@ -300,7 +300,7 @@ export class VisitorService {
         });
     }
 
-    async getActions(id: number, user: UserContext) {
+    async getActions(id: string, user: UserContext) {
         const visitor = await this.findOne(id, user);
 
         const actions = await this.prisma.action.findMany({

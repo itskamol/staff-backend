@@ -6,23 +6,23 @@ import { BaseRepository } from 'apps/dashboard-api/src/shared/repositories/base.
 
 export type EmployeeWithRelations = Employee & {
     department?: {
-        id: number;
+        id: string;
         fullName: string;
         shortName: string;
-        organizationId?: number;
+        organizationId?: string;
     };
     policy?: {
-        id: number;
+        id: string;
         title: string;
     };
     credentials?: Array<{
-        id: number;
+        id: string;
         code: string;
         type: string;
         isActive: boolean;
     }>;
     computerUsers?: Array<{
-        id: number;
+        id: string;
         name: string;
         username: string;
         isActive: boolean;
@@ -122,7 +122,7 @@ export class EmployeeRepository extends BaseRepository<
      * Find employee by ID with role-based scoping
      */
     async findByIdWithRoleScope(
-        id: number,
+        id: string,
         include?: Prisma.EmployeeInclude,
         scope?: DataScope,
         userRole?: Role
@@ -161,7 +161,7 @@ export class EmployeeRepository extends BaseRepository<
     ): Promise<EmployeeWithRelations> {
         // For HR role, validate that department belongs to their organization
         if (userRole === Role.HR && scope?.organizationId && typeof data.department === 'object' && 'connect' in data.department) {
-            const departmentId = (data.department.connect as { id: number }).id;
+            const departmentId = (data.department.connect as { id: string }).id;
 
             const department = await this.prisma.department.findFirst({
                 where: {
@@ -182,7 +182,7 @@ export class EmployeeRepository extends BaseRepository<
      * Update employee with department validation
      */
     async updateWithValidation(
-        id: number,
+        id: string,
         data: Prisma.EmployeeUpdateInput,
         scope?: DataScope,
         userRole?: Role
@@ -195,7 +195,7 @@ export class EmployeeRepository extends BaseRepository<
 
         // For HR role, validate department change if applicable
         if (userRole === Role.HR && scope?.organizationId && data.department && typeof data.department === 'object' && 'connect' in data.department) {
-            const departmentId = (data.department.connect as { id: number }).id;
+            const departmentId = (data.department.connect as { id: string }).id;
 
             const department = await this.prisma.department.findFirst({
                 where: {
@@ -223,7 +223,7 @@ export class EmployeeRepository extends BaseRepository<
 
         // For HR role, prevent department changes to unauthorized departments
         if (userRole === Role.HR && scope?.organizationId && data.department && typeof data.department === 'object' && 'connect' in data.department) {
-            const departmentId = (data.department.connect as { id: number }).id;
+            const departmentId = (data.department.connect as { id: string }).id;
 
             const department = await this.prisma.department.findFirst({
                 where: {
@@ -265,7 +265,7 @@ export class EmployeeRepository extends BaseRepository<
      * Get employee entry logs (actions)
      */
     async getEmployeeEntryLogs(
-        employeeId: number,
+        employeeId: string,
         pagination?: { page: number; limit: number },
         dateRange?: { startDate?: Date; endDate?: Date }
     ) {
@@ -321,7 +321,7 @@ export class EmployeeRepository extends BaseRepository<
     /**
      * Get employee computer users with activity data
      */
-    async getEmployeeComputerUsers(employeeId: number) {
+    async getEmployeeComputerUsers(employeeId: string) {
         return await this.prisma.computerUser.findMany({
             where: { employeeId },
             include: {
@@ -349,7 +349,7 @@ export class EmployeeRepository extends BaseRepository<
      * Get employee activity statistics
      */
     async getEmployeeActivityStats(
-        employeeId: number,
+        employeeId: string,
         dateRange?: { startDate?: Date; endDate?: Date }
     ) {
         const computerUsers = await this.prisma.computerUser.findMany({
@@ -416,7 +416,7 @@ export class EmployeeRepository extends BaseRepository<
      * Assign credential (card/car) to employee
      */
     async assignCredential(
-        employeeId: number,
+        employeeId: string,
         credentialData: {
             code: string;
             type: 'CARD' | 'CAR' | 'QR' | 'PERSONAL_CODE';
@@ -436,7 +436,7 @@ export class EmployeeRepository extends BaseRepository<
     /**
      * Link computer user to employee
      */
-    async linkComputerUser(employeeId: number, computerUserId: number) {
+    async linkComputerUser(employeeId: string, computerUserId: string) {
         return await this.prisma.computerUser.update({
             where: { id: computerUserId },
             data: { employeeId },
@@ -446,7 +446,7 @@ export class EmployeeRepository extends BaseRepository<
     /**
      * Unlink computer user from employee
      */
-    async unlinkComputerUser(employeeId: number, computerUserId: number) {
+    async unlinkComputerUser(employeeId: string, computerUserId: string) {
         // Verify the computer user belongs to this employee
         const computerUser = await this.prisma.computerUser.findFirst({
             where: {
@@ -518,7 +518,7 @@ export class EmployeeRepository extends BaseRepository<
      * Get employees by department
      */
     async findByDepartment(
-        departmentId: number,
+        departmentId: string,
         include?: Prisma.EmployeeInclude,
         pagination?: { page: number; limit: number }
     ): Promise<EmployeeWithRelations[]> {
@@ -533,7 +533,7 @@ export class EmployeeRepository extends BaseRepository<
     /**
      * Get active employees count by department
      */
-    async getActiveCountByDepartment(departmentId: number): Promise<number> {
+    async getActiveCountByDepartment(departmentId: string): Promise<number> {
         return await this.count({
             departmentId,
             isActive: true,

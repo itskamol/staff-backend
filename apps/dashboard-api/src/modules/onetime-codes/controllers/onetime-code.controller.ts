@@ -66,13 +66,13 @@ export class OnetimeCodeController {
     @ApiCrudOperation(OnetimeCodeWithRelationsDto, 'list', {
         summary: 'Get onetime codes by visitor ID',
     })
-    async findByVisitorId(@Param('visitorId') visitorId: number) {
+    async findByVisitorId(@Param('visitorId') visitorId: string) {
         return await this.onetimeCodeService.findByVisitorId(visitorId);
     }
 
     @Get(':id')
     @ApiCrudOperation(OnetimeCodeWithRelationsDto, 'get', { summary: 'Get onetime code by ID' })
-    async findOne(@Param('id') id: number, @CurrentUser() user: UserContext) {
+    async findOne(@Param('id') id: string, @CurrentUser() user: UserContext) {
         return await this.onetimeCodeService.findOne(id, user);
     }
 
@@ -94,7 +94,7 @@ export class OnetimeCodeController {
         errorResponses: { notFound: true, forbidden: true },
     })
     async update(
-        @Param('id') id: number,
+        @Param('id') id: string,
         @Body() updateOnetimeCodeDto: UpdateOnetimeCodeDto,
         @CurrentUser() user: UserContext
     ) {
@@ -108,7 +108,7 @@ export class OnetimeCodeController {
         errorResponses: { notFound: true, forbidden: true },
     })
     async remove(
-        @Param('id') id: number,
+        @Param('id') id: string,
         @Scope() scope: DataScope,
         @CurrentUser() user: UserContext
     ) {
@@ -122,7 +122,7 @@ export class OnetimeCodeController {
         errorResponses: { notFound: true },
     })
     async activate(
-        @Param('id') id: number,
+        @Param('id') id: string,
         @CurrentUser() user: UserContext
     ) {
         return await this.onetimeCodeService.activate(id, user);
@@ -135,7 +135,7 @@ export class OnetimeCodeController {
         errorResponses: { notFound: true },
     })
     async deactivate(
-        @Param('id') id: number,
+        @Param('id') id: string,
         @CurrentUser() user: UserContext
     ) {
         return await this.onetimeCodeService.deactivate(id, user);

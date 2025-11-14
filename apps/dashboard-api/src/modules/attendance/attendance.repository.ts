@@ -1,4 +1,3 @@
-// ...existing code...
 import { Injectable } from '@nestjs/common';
 import { PrismaService } from '@app/shared/database';
 import { CreateAttendanceDto, UpdateAttendanceDto } from './dto/attendance.dto';
@@ -18,7 +17,7 @@ export class AttendanceRepository {
   });
 }
 
-  async findById(id: number) {
+  async findById(id: string) {
     return this.prisma.attendance.findUnique({
       where: { id },
       include: {
@@ -27,7 +26,7 @@ export class AttendanceRepository {
     });
   }
 
-  async update(id: number, data: UpdateAttendanceDto) {
+  async update(id: string, data: UpdateAttendanceDto) {
   return this.prisma.attendance.update({
     where: { id },
     data: {
@@ -38,7 +37,7 @@ export class AttendanceRepository {
   });
 }
 
-  async delete(id: number) {
+  async delete(id: string) {
     return this.prisma.attendance.delete({ where: { id } });
   }
 

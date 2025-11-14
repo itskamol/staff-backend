@@ -1,23 +1,23 @@
-import { IsInt, IsNotEmpty, IsEnum, IsOptional, IsBoolean, IsArray } from 'class-validator';
+import { IsInt, IsNotEmpty, IsEnum, IsOptional, IsBoolean, IsArray, IsString } from 'class-validator';
 import { ApiProperty, PartialType } from '@nestjs/swagger';
 import { OptionType } from '@prisma/client';
 
 export class CreatePolicyOptionDto {
     @ApiProperty({
-        example: 1,
+        example: 'uuid',
         description: 'Policy ID',
     })
-    @IsInt()
+    @IsString()
     @IsNotEmpty()
-    policyId: number;
+    policyId: string;
 
     @ApiProperty({
-        example: 1,
+        example: 'uuid',
         description: 'Group ID',
     })
-    @IsInt()
+    @IsString()
     @IsNotEmpty()
-    groupId: number;
+    groupId: string;
 
     @ApiProperty({
         example: OptionType.ACTIVE_WINDOW,
@@ -41,9 +41,9 @@ export class CreatePolicyOptionDto {
 export class UpdatePolicyOptionDto extends PartialType(CreatePolicyOptionDto) {}
 
 export class PolicyOptionDto extends CreatePolicyOptionDto {
-    @ApiProperty({ example: 1, description: 'Policy option ID' })
+    @ApiProperty({ example: 'uuid', description: 'Policy option ID' })
     @IsInt()
-    id: number;
+    id: string;
 
     @ApiProperty({ example: true, description: 'Policy option active status' })
     @IsBoolean()
@@ -64,20 +64,20 @@ export class PolicyOptionDto extends CreatePolicyOptionDto {
 
 export class BulkCreatePolicyOptionDto {
     @ApiProperty({
-        example: 1,
+        example: 'uuid',
         description: 'Policy ID',
     })
-    @IsInt()
+    @IsString()
     @IsNotEmpty()
-    policyId: number;
+    policyId: string;
 
     @ApiProperty({
-        example: [1, 2, 3],
+        example: ['uuid', 'uuid-2'],
         description: 'Array of group IDs',
     })
     @IsArray()
-    @IsInt({ each: true })
-    groupIds: number[];
+    @IsString({ each: true })
+    groupIds: string[];
 
     @ApiProperty({
         example: OptionType.ACTIVE_WINDOW,
@@ -99,13 +99,13 @@ export class BulkResponsePolicyOptionDto {
 export class PolicyOptionWithRelationsDto extends PolicyOptionDto {
     @ApiProperty({ description: 'Policy information' })
     policy?: {
-        id: number;
+        id: string;
         title: string;
     };
 
     @ApiProperty({ description: 'Group information' })
     group?: {
-        id: number;
+        id: string;
         name: string;
         type: string;
     };

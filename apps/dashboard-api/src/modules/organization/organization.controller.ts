@@ -71,7 +71,7 @@ export class OrganizationController {
     @ApiCrudOperation(OrganizationResponseDto, 'get', {
         summary: 'Get an organization by ID',
     })
-    async getOrganizationById(@Param('id') id: number) {
+    async getOrganizationById(@Param('id') id: string) {
         const organization = await this.organizationService.getOrganizationById(id);
         if (!organization) {
             throw new NotFoundException('Organization not found.');
@@ -87,7 +87,7 @@ export class OrganizationController {
         summary: 'Update an organization by ID',
     })
     async updateOrganization(
-        @Param('id') id: number,
+        @Param('id') id: string,
         @Body() dto: UpdateOrganizationDto,
         @Scope() scope: DataScope
     ) {
@@ -100,7 +100,7 @@ export class OrganizationController {
     @ApiCrudOperation(OrganizationResponseDto, 'delete', {
         summary: 'Delete an organization by ID',
     })
-    async deleteOrganization(@Param('id') id: number) {
+    async deleteOrganization(@Param('id') id: string) {
         await this.organizationService.deleteOrganization(id);
         return { message: 'Organization deleted successfully.' };
     }

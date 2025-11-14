@@ -14,22 +14,22 @@ import { QueryDto } from '@app/shared/utils';
 
 class RuleTypeDto {
     @ApiProperty({
-        example: [1, 2, 3],
+        example: ['uuid', 'uuid-2'],
         description: 'Array of group IDs',
     })
-    @IsInt({ each: true })
+    @IsString({ each: true })
     @IsArray()
     @IsOptional()
-    useful?: number[];
+    useful?: string[];
 
     @ApiProperty({
-        example: [1, 2, 3],
+        example: ['uuid', 'uuid-2'],
         description: 'Array of group IDs',
     })
-    @IsInt({ each: true })
+    @IsString({ each: true })
     @IsArray()
     @IsOptional()
-    unuseful?: number[];
+    unuseful?: string[];
 }
 
 export class CreatePolicyOptionDto extends RuleTypeDto {
@@ -73,12 +73,12 @@ export class CreatePolicyDto {
     isVisitedSitesEnabled: boolean;
 
     @ApiProperty({
-        example: 1,
+        example: 'uuid',
         description: 'Organization ID to which the policy belongs',
     })
-    @IsInt()
+    @IsString()
     @IsNotEmpty({ message: 'Organization ID is required' })
-    organizationId: number;
+    organizationId: string;
 
     @ApiProperty({
         example: 60,
@@ -137,9 +137,9 @@ export class CreatePolicyDto {
 export class UpdatePolicyDto extends PartialType(CreatePolicyDto) {}
 
 export class PolicyDto extends CreatePolicyDto {
-    @ApiProperty({ example: 1, description: 'Policy ID' })
+    @ApiProperty({ example: 'uuid', description: 'Policy ID' })
     @IsInt()
-    id: number;
+    id: string;
 
     @ApiProperty({ example: true, description: 'Policy active status' })
     @IsBoolean()

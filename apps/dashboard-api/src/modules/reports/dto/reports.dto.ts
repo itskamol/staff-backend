@@ -61,25 +61,23 @@ export class GenerateReportDto {
 
     @ApiPropertyOptional({
         description: 'Department IDs to filter by',
-        type: [Number],
-        example: [1, 2, 3],
+        type: [String],
+        example: ['uuid', 'uuid-2'],
     })
     @IsOptional()
     @IsArray()
-    @Type(() => Number)
-    @IsInt({ each: true })
-    departmentIds?: number[];
+    @IsString({ each: true })
+    departmentIds?: string[];
 
     @ApiPropertyOptional({
         description: 'Employee IDs to filter by',
-        type: [Number],
-        example: [1, 2, 3],
+        type: [String],
+        example: ['uuid', 'uuid-2'],
     })
     @IsOptional()
     @IsArray()
-    @Type(() => Number)
-    @IsInt({ each: true })
-    employeeIds?: number[];
+    @IsString({ each: true })
+    employeeIds?: string[];
 
     @ApiPropertyOptional({
         description: 'Export format for the report',
@@ -110,13 +108,11 @@ export class AttendanceReportDto {
 
     @ApiPropertyOptional({
         description: 'Department ID to filter by',
-        example: 1,
+        example: 'uuid',
     })
     @IsOptional()
-    @Type(() => Number)
-    @IsInt()
-    @Min(1)
-    departmentId?: number;
+    @IsString()
+    departmentId?: string;
 }
 
 export class ProductivityReportDto {
@@ -138,13 +134,12 @@ export class ProductivityReportDto {
 
     @ApiPropertyOptional({
         description: 'Employee IDs to include in report',
-        type: [Number],
-        example: [1, 2, 3],
+        type: [String],
+        example: ['uuid', 'uuid-2'],
     })
     @IsOptional()
     @IsArray()
-    @Type(() => Number)
-    @IsInt({ each: true })
+    @IsString({ each: true })
     employeeIds?: number[];
 }
 
@@ -167,18 +162,18 @@ export class DeviceUsageReportDto {
 
     @ApiPropertyOptional({
         description: 'Gate IDs to filter by',
-        type: [Number],
-        example: [1, 2],
+        type: [String],
+        example: ['uuid','uuid-2'],
     })
     @IsOptional()
     @IsArray()
-    @Type(() => Number)
-    @IsInt({ each: true })
-    gateIds?: number[];
+    @Type(() => String)
+    @IsString({ each: true })
+    gateIds?: string[];
 }
 
 export interface AttendanceReportData {
-    employeeId: number;
+    employeeId: string;
     employeeName: string;
     department: string;
     totalWorkingDays: number;
@@ -192,7 +187,7 @@ export interface AttendanceReportData {
 }
 
 export interface ProductivityReportData {
-    employeeId: number;
+    employeeId: string;
     employeeName: string;
     department: string;
     totalActiveTime: number;
@@ -213,7 +208,7 @@ export interface ProductivityReportData {
 }
 
 export interface DeviceUsageReportData {
-    deviceId: number;
+    deviceId: string;
     deviceName: string;
     gateName: string;
     totalEntries: number;
@@ -229,7 +224,7 @@ export interface DeviceUsageReportData {
 }
 
 export interface VisitorActivityReportData {
-    visitorId: number;
+    visitorId: string;
     visitorName: string;
     totalVisits: number;
     totalDuration: number;

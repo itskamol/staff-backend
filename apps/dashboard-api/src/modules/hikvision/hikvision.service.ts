@@ -231,15 +231,16 @@ export class HikvisionService {
                 return true;
             }
 
-            const user = await this.employeeRepo.findById(+userId);
+            const user = await this.employeeRepo.findById(userId);
 
             if (!user) {
                 throw new BadRequestException(`Employee with ID ${userId} not found`);
             }
 
+            console.log('user-id:', user.id)
             const resBody = {
                 UserInfo: {
-                    employeeNo: user.id.toString(),
+                    employeeNo: user.id,
                     name: user.name,
                     userType: 'normal',
                     doorRight: '1',

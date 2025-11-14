@@ -1,7 +1,7 @@
-import { IsBoolean, IsInt, IsOptional } from 'class-validator';
+import { IsBoolean, IsOptional, IsString } from 'class-validator';
 import { QueryDto } from '../../../shared/dto';
 import { ApiProperty } from '@nestjs/swagger';
-import { Transform, Type } from 'class-transformer';
+import { Transform } from 'class-transformer';
 
 export class DepartmentQueryDto extends QueryDto {
     @IsOptional()
@@ -20,14 +20,12 @@ export class DepartmentQueryDto extends QueryDto {
     isActive?: boolean;
 
     @IsOptional()
-    @Type(() => Number)
-    @IsInt()
-    @Transform(({ value }) => (value ? parseInt(value, 10) : undefined))
+    @IsString()
     @ApiProperty({
         description: 'Filter by organization ID',
-        type: Number,
+        type: String,
         required: false,
-        example: 1,
+        example: 'uuid',
     })
-    organizationId?: number;
+    organizationId?: string;
 }

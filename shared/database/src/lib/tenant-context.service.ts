@@ -3,7 +3,7 @@ import { Injectable } from '@nestjs/common';
 import { Role } from '@prisma/client';
 
 export interface TenantContext {
-    organizationId?: number | null;
+    organizationId?: string | null;
     role: Role;
     userId?: number;
 }

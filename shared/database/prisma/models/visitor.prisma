@@ -1,5 +1,5 @@
 model Visitor {
-  id                Int      @id @default(autoincrement())
+  id                String      @id @default(uuid())
   firstName         String   @map("first_name")
   lastName          String   @map("last_name")
   middleName        String?  @map("middle_name")
@@ -9,7 +9,7 @@ model Visitor {
   pinfl             String?
   workPlace         String?  @map("work_place")
   additionalDetails String?  @map("additional_details")
-  creatorId         Int      @map("creator_id")
+  creatorId         String      @map("creator_id")
   isActive          Boolean  @default(true) @map("is_active")
   createdAt         DateTime @default(now()) @map("created_at")
 
@@ -27,8 +27,8 @@ model Visitor {
 }
 
 model OnetimeCode {
-  id                Int             @id @default(autoincrement())
-  visitorId         Int             @map("visitor_id")
+  id                String             @id @default(uuid())
+  visitorId         String             @map("visitor_id")
   codeType          VisitorCodeType @map("code_type")
   code              String
   additionalDetails String?         @map("additional_details")

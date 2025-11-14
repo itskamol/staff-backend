@@ -43,7 +43,7 @@ export class CredentialController {
     @ApiOperation({ summary: 'Get all credentials for a specific employee' })
     @ApiResponse({ status: 200, type: [CredentialResponseDto] })
     async getByEmployeeId(
-        @Param('employeeId') employeeId: number,
+        @Param('employeeId') employeeId: string,
         @User() user: UserContext,
         @Scope() scope: DataScope,
     ) {
@@ -65,7 +65,7 @@ export class CredentialController {
     @ApiOperation({ summary: 'Get a credential by its ID' })
     @ApiResponse({ status: 200, type: CredentialResponseDto })
     async getById(
-        @Param('id') id: number,
+        @Param('id') id: string,
         @User() user: UserContext,
         @Scope() scope: DataScope,
     ) {
@@ -79,7 +79,7 @@ export class CredentialController {
     @ApiOperation({ summary: 'Update an existing credential' })
     @ApiResponse({ status: 200, type: CredentialResponseDto })
     async update(
-        @Param('id') id: number,
+        @Param('id') id: string,
         @Body() dto: UpdateCredentialDto,
         @User() user: UserContext,
         @Scope() scope: DataScope,
@@ -94,7 +94,7 @@ export class CredentialController {
     @ApiOperation({ summary: 'Delete a credential by ID' })
     @ApiResponse({ status: 200, description: 'Credential successfully deleted' })
     async delete(
-        @Param('id') id: number,
+        @Param('id') id: string,
         @User() user: UserContext,
         @Scope() scope: DataScope,
     ) {

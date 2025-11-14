@@ -9,7 +9,7 @@ import { PaginationDto, PaginationResponseDto } from '../dto';
  */
 @Injectable()
 export abstract class BaseRepository<
-    TEntity extends { id: number; createdAt?: Date; isActive?: boolean},
+    TEntity extends { id: string; createdAt?: Date; isActive?: boolean},
     TCreateInput extends Record<string, unknown>,
     TUpdateInput extends Record<string, unknown>,
     TWhereInput extends Record<string, unknown> = Record<string, unknown>,
@@ -89,7 +89,7 @@ export abstract class BaseRepository<
      * Find a record by unique identifier
      */
     async findById(
-        id: number,
+        id: string,
         include?: TInclude,
         scope?: DataScope,
         select?: TSelect
@@ -116,7 +116,7 @@ export abstract class BaseRepository<
      * Find a record by unique identifier or throw NotFoundException
      */
     async findByIdOrThrow(
-        id: number,
+        id: string,
         include?: TInclude,
         scope?: DataScope
     ): Promise<TEntity> {
@@ -235,7 +235,7 @@ export abstract class BaseRepository<
      * Update a record by ID
      */
     async update(
-        id: number,
+        id: string,
         data: TUpdateInput,
         include?: TInclude,
         scope?: DataScope
@@ -279,7 +279,7 @@ export abstract class BaseRepository<
     /**
      * Delete a record by ID
      */
-    async delete(id: number, scope?: DataScope): Promise<TEntity> {
+    async delete(id: string, scope?: DataScope): Promise<TEntity> {
         this.logger.debug(`Deleting ${this.modelName} with ID: ${id}`);
 
         // First verify the record exists and is accessible with scope
@@ -296,7 +296,7 @@ export abstract class BaseRepository<
     /**
      * Soft delete a record (if the model supports isActive field)
      */
-    async softDelete(id: number, scope?: DataScope): Promise<TEntity> {
+    async softDelete(id: string, scope?: DataScope): Promise<TEntity> {
         this.logger.debug(`Soft deleting ${this.modelName} with ID: ${id}`);
 
         const result = await this.update(

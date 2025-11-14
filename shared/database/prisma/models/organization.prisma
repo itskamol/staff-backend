@@ -1,5 +1,5 @@
 model Organization {
-  id                Int     @id @default(autoincrement())
+  id                String     @id @default(uuid())
   fullName          String  @map("full_name")
   shortName         String  @unique @map("short_name")
   address           String?
@@ -30,9 +30,9 @@ model Organization {
 }
 
 model Department {
-  id                Int     @id @default(autoincrement())
-  organizationId    Int     @map("organization_id")
-  parentId          Int?    @map("parent_id")
+  id                String     @id @default(uuid())
+  organizationId    String     @map("organization_id")
+  parentId          String?    @map("parent_id")
   fullName          String  @map("full_name")
   shortName         String  @map("short_name")
   address           String?

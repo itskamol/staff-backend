@@ -74,7 +74,7 @@ export class UserController {
         summary: 'Get current user',
     })
     async getCurrentUser(@User() user: UserContext): Promise<Omit<UserModel, 'password'>> {
-        const currentUser = await this.userService.findById(+user.sub);
+        const currentUser = await this.userService.findById(user.sub);
         if (!currentUser) {
             throw new NotFoundException('User not found');
         }
@@ -86,7 +86,7 @@ export class UserController {
     @ApiCrudOperation(UserResponseDto, 'get', {
         summary: 'Get a specific user by ID',
     })
-    async getUserById(@Param('id') id: number): Promise<Omit<UserModel, 'password'>> {
+    async getUserById(@Param('id') id: string): Promise<Omit<UserModel, 'password'>> {
         const user = await this.userService.findById(id);
         if (!user) {
             throw new NotFoundException('User not found');
@@ -103,7 +103,7 @@ export class UserController {
         @Body() updateUserDto: UpdateCurrentUserDto,
         @User() user: UserContext
     ): Promise<UserResponseDto> {
-        return this.userService.updateCurrentUser(+user.sub, updateUserDto);
+        return this.userService.updateCurrentUser(user.sub, updateUserDto);
     }
 
     @Put(':id')
@@ -113,7 +113,7 @@ export class UserController {
         summary: 'Update a user',
     })
     async updateUser(
-        @Param('id') id: number,
+        @Param('id') id: string,
         @Body() updateUserDto: UpdateUserDto,
         @User() user: UserContext
     ): Promise<UserResponseDto> {
@@ -126,7 +126,7 @@ export class UserController {
         summary: 'Delete a user',
         errorResponses: { notFound: true },
     })
-    async deleteUser(@Param('id') id: number, @User() user: UserContext): Promise<UserResponseDto> {
+    async deleteUser(@Param('id') id: string, @User() user: UserContext): Promise<UserResponseDto> {
         return this.userService.deleteUser(id, user);
     }
 
@@ -138,7 +138,7 @@ export class UserController {
         errorResponses: { notFound: true, badRequest: true },
     })
     async assignDepartment(
-        @Param('id') id: number,
+        @Param('id') id: string,
         @Body() assignUserToDepartmentDto: AssignUserToDepartmentDto
     ): Promise<UserResponseDto> {
         return this.userService.assignDepartment(id, assignUserToDepartmentDto.departmentIds);

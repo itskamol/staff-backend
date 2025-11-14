@@ -41,7 +41,7 @@ export class PolicyController {
     @Get(':id')
     @ApiCrudOperation(PolicyDto, 'get', { summary: 'Get policy by ID' })
     async findOne(
-        @Param('id') id: number,
+        @Param('id') id: string,
         @Scope() scope: DataScope,
         @CurrentUser() user: UserContext
     ) {
@@ -64,7 +64,7 @@ export class PolicyController {
         errorResponses: { notFound: true, forbidden: true },
     })
     async update(
-        @Param('id') id: number,
+        @Param('id') id: string,
         @Body() updatePolicyDto: UpdatePolicyDto,
         @Scope() scope: DataScope
     ) {
@@ -77,7 +77,7 @@ export class PolicyController {
         errorResponses: { notFound: true, forbidden: true },
     })
     async remove(
-        @Param('id') id: number,
+        @Param('id') id: string,
         @Scope() scope: DataScope,
         @CurrentUser() user: UserContext
     ) {

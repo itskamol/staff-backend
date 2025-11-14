@@ -1,6 +1,6 @@
 model ComputerUser {
-  id         Int     @id @default(autoincrement())
-  employeeId Int     @map("employee_id")
+  id         String     @id @default(uuid())
+  employeeId String     @map("employee_id")
   sid        String  @unique
   name       String
   domain     String?
@@ -23,7 +23,7 @@ model ComputerUser {
 }
 
 model Computer {
-  id          Int     @id @default(autoincrement())
+  id          String     @id @default(uuid())
   computerUid String  @unique @map("computer_uid")
   os          String?
   ipAddress   String? @map("ip_address")
@@ -43,9 +43,9 @@ model Computer {
 }
 
 model UsersOnComputers {
-  id             Int @id @default(autoincrement())
-  computerUserId Int @map("computer_user_id")
-  computerId     Int @map("computer_id")
+  id             String @id @default(uuid())
+  computerUserId String @map("computer_user_id")
+  computerId     String @map("computer_id")
 
   // --- Standard Fields ---
   isActive  Boolean  @default(true) @map("is_active")

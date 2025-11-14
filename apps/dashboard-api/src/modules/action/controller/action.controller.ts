@@ -1,17 +1,14 @@
-// ...existing code...
 import {
   Controller,
-  Post,
   Get,
   Put,
   Delete,
   Param,
   Body,
   Query,
-  ParseIntPipe,
 } from '@nestjs/common';
 import { ActionService } from '../service/action.service';
-import { ActionQueryDto, CreateActionDto, UpdateActionDto } from '../dto/action.dto';
+import { ActionQueryDto, UpdateActionDto } from '../dto/action.dto';
 import { ApiBearerAuth, ApiTags } from '@nestjs/swagger';
 
 
@@ -29,17 +26,17 @@ export class ActionController {
   }
 
   @Get(':id')
-  async findOne(@Param('id', ParseIntPipe) id: number) {
+  async findOne(@Param('id') id: string) {
     return this.service.findOne(id);
   }
 
   @Put(':id')
-  async update(@Param('id', ParseIntPipe) id: number, @Body() dto: UpdateActionDto) {
+  async update(@Param('id') id: string, @Body() dto: UpdateActionDto) {
     return this.service.update(id, dto);
   }
 
   @Delete(':id')
-  async remove(@Param('id', ParseIntPipe) id: number) {
+  async remove(@Param('id') id: string) {
     return this.service.remove(id);
   }
 }

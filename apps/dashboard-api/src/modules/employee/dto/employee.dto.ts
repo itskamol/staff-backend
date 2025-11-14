@@ -17,41 +17,33 @@ export class CreateEmployeeDto {
     @ApiProperty({
         description:
             'The ID of the organization (Required for ADMIN, auto-populated for HR from token)',
-        example: 1,
+        example: 'uuid',
         required: false,
     })
     @ValidateIf((o, context) => {
         const request = context?.['request'];
         return request?.user?.role === 'ADMIN';
     })
-    @IsInt()
+    @IsString()
     @IsNotEmpty({ message: 'Organization ID is required for ADMIN users' })
     @IsOptional()
-    organizationId?: number;
+    organizationId?: string;
 
     @ApiProperty({
         description: 'The ID of the department where the employee belongs.',
-        example: 1,
+        example: 'uuid',
     })
-    @IsInt()
+    @IsString()
     @IsNotEmpty()
-    departmentId: number;
-
-    @ApiProperty({
-        description: 'The ID of the employee group.',
-        example: 1,
-    })
-    @IsInt()
-    @IsOptional()
-    groupId?: number;
+    departmentId: string;
 
     @ApiProperty({
         description: 'The ID of the policy.',
-        example: 1,
+        example: 'uuid',
     })
-    @IsInt()
+    @IsString()
     @IsOptional()
-    policyId?: number;
+    policyId?: string;
 
     @ApiProperty({
         description: "The employee's full name.",
@@ -120,21 +112,21 @@ export class CreateEmployeeDto {
 export class UpdateEmployeeDto {
     @ApiProperty({
         description: 'The ID of the department where the employee belongs.',
-        example: 1,
+        example: 'uuid',
         required: false,
     })
     @IsOptional()
-    @IsInt()
-    departmentId?: number;
+    @IsString()
+    departmentId?: string;
 
     @ApiProperty({
         description: 'The ID of the employee group.',
-        example: 1,
+        example: 'uuid',
         required: false,
     })
     @IsOptional()
-    @IsInt()
-    policyId?: number;
+    @IsString()
+    policyId?: string;
 
     @ApiProperty({
         description: "The employee's full name.",
@@ -200,53 +192,53 @@ export class UpdateEmployeeDto {
     @IsBoolean()
     isActive?: boolean;
 
-    @IsInt()
+    @IsString()
     @IsOptional()
-    employeePlanId?: number
+    employeePlanId?: string
 }
 
 export class BulkUpdateEmployees {
     @ApiProperty({
         description: 'Array of employee IDs to be updated.',
-        example: [1, 2, 3],
-        type: [Number],
+        example: ['uuid', 'uuid-2'],
     })
     @IsNotEmpty()
-    @IsInt({ each: true })
-    employeeIds: number[];
+    @IsString()
+    employeeIds: string[];
 
 
     @ApiProperty({
         description: 'Data to update for the specified employees.'
     })
     @IsNotEmpty()
-    policyId?: number;
+    @IsString()
+    policyId?: string;
 }
 
 export class EmployeeResponseDto {
     @ApiProperty({
         description: 'The unique identifier for the employee.',
-        example: 1,
+        example: 'uuid',
     })
-    id: number;
+    id: string;
 
     @ApiProperty({
         description: 'Organization ID',
-        example: 1,
+        example: 'uuid',
     })
-    organizationId: number;
+    organizationId: string;
 
     @ApiProperty({
         description: 'The ID of the department where the employee belongs.',
-        example: 1,
+        example: 'uuid',
     })
-    departmentId: number;
+    departmentId: string;
 
     @ApiProperty({
         description: 'The ID of the employee group.',
-        example: 1,
+        example: 'uuid',
     })
-    policyId: number;
+    policyId: string;
 
     @ApiProperty({
         description: "The employee's full name.",
@@ -311,7 +303,7 @@ export class EmployeeResponseDto {
         required: false,
     })
     department?: {
-        id: number;
+        id: string;
         fullName: string;
         shortName: string;
         organizationId: number;
@@ -322,7 +314,7 @@ export class EmployeeResponseDto {
         required: false,
     })
     group?: {
-        id: number;
+        id: string;
         name: string;
         organizationId: number;
     };
@@ -332,7 +324,7 @@ export class EmployeeResponseDto {
         required: false,
     })
     organization?: {
-        id: number;
+        id: string;
         fullName: string;
         shortName: string;
     };

@@ -3,9 +3,9 @@ import { Role } from '@prisma/client';
 export { Role } from '@prisma/client';
 
 export interface DataScope {
-    organizationId?: number;
-    departments?: number[];
-    departmentIds?: number[];
+    organizationId?: string;
+    departments?: string[];
+    departmentIds?: string[];
 }
 
 export interface UserContext extends DataScope {

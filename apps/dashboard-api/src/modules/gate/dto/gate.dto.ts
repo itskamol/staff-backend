@@ -10,17 +10,17 @@ export class CreateGateDto {
     @IsNotEmpty()
     name: string;
 
-    @ApiProperty({example: 1, description: 'Organization Id'})
-    @IsInt()
-    organizationId: number
+    @ApiProperty({example: 'uuid', description: 'Organization Id'})
+    @IsString()
+    organizationId: string
 }
 
 export class UpdateGateDto extends PartialType(CreateGateDto) {}
 
 export class GateDto extends CreateGateDto {
-    @ApiProperty({ example: 1, description: 'Gate ID' })
-    @IsInt()
-    id: number;
+    @ApiProperty({ example: 'uuid', description: 'Gate ID' })
+    @IsString()
+    id: string;
 
     @ApiProperty({ example: '2023-10-01T12:00:00Z', description: 'Creation timestamp' })
     @IsString()

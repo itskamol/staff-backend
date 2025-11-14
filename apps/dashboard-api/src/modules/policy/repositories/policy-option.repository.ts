@@ -24,23 +24,23 @@ export class PolicyOptionRepository extends BaseRepository<
         return this.prisma.policyOption;
     }
 
-    async findByPolicyId(policyId: number, include?: Prisma.PolicyOptionInclude) {
+    async findByPolicyId(policyId: string, include?: Prisma.PolicyOptionInclude) {
         return this.findMany({ policyId }, undefined, include);
     }
 
-    async findByGroupId(groupId: number, include?: Prisma.PolicyOptionInclude) {
+    async findByGroupId(groupId: string, include?: Prisma.PolicyOptionInclude) {
         return this.findMany({}, undefined, include);
     }
 
-    async findByPolicyAndGroup(policyId: number) {
+    async findByPolicyAndGroup(policyId: string) {
         return this.findFirst({ policyId });
     }
 
-    async deleteByPolicyId(policyId: number) {
+    async deleteByPolicyId(policyId: string) {
         return this.deleteMany({ policyId });
     }
 
-    async deleteByGroupId(groupId: number) {
+    async deleteByGroupId(groupId: string) {
         return this.deleteByPolicyId(groupId);
     }
 }

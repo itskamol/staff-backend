@@ -23,13 +23,13 @@ export class CreateResourceDto {
     value: string;
 
     @ApiProperty({
-        example: 1,
+        example: 'uuid',
         description: 'Organization ID (auto-populated from user context)',
         required: false,
     })
-    @IsInt()
+    @IsString()
     @IsOptional()
-    organizationId?: number;
+    organizationId?: string;
 }
 
 export class ResourceQueryDto extends QueryDto {
@@ -44,29 +44,29 @@ export class ResourceQueryDto extends QueryDto {
     type?: ResourceType;
 
     @ApiProperty({
-        example: 1,
+        example: 'uuid',
         description: 'Filter by group ID',
         required: false,
     })
-    @IsInt()
+    @IsString()
     @IsOptional()
-    groupId?: number;
+    groupId?: string;
 }
 
 export class UpdateResourceDto extends PartialType(CreateResourceDto) {}
 
 export class ResourceResponseDto extends CreateResourceDto {
     @ApiProperty({
-        example: 1,
+        example: 'uuid',
         description: 'Unique identifier for the resource',
     })
-    id: number;
+    id: string;
 
     @ApiProperty({
-        example: 1,
+        example: 'uuid',
         description: 'Organization ID',
     })
-    organizationId!: number;
+    organizationId!: string;
 
     @ApiProperty({
         example: '2024-01-01T00:00:00.000Z',

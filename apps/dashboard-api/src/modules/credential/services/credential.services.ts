@@ -84,7 +84,7 @@ export class CredentialService {
     // }
 
     async getCredentialById(
-        id: number,
+        id: string,
         scope: DataScope,
         user: UserContext,
     ): Promise<CredentialWithRelations> {
@@ -106,7 +106,7 @@ export class CredentialService {
 
 
     async getCredentialsByEmployeeId(
-        employeeId: number,
+        employeeId: string,
         scope: DataScope,
         user: UserContext,
     ): Promise<CredentialWithRelations[]> {
@@ -152,7 +152,7 @@ export class CredentialService {
     }
 
     async updateCredential(
-        id: number,
+        id: string,
         dto: UpdateCredentialDto,
         scope: DataScope,
         user: UserContext,
@@ -180,7 +180,7 @@ export class CredentialService {
 
 
     async deleteCredential(
-        id: number,
+        id: string,
         scope: DataScope,
         user: UserContext,
     ): Promise<Credential> {

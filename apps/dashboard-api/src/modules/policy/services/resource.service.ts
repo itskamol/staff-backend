@@ -36,7 +36,7 @@ export class ResourceService {
         );
     }
 
-    async findOne(id: number, user: UserContext) {
+    async findOne(id: string, user: UserContext) {
         const resource = await this.resourceRepository.findById(id, {
             resourceGroups: {
                 include: {
@@ -87,7 +87,7 @@ export class ResourceService {
         return this.resourceRepository.create(input, undefined, scope);
     }
 
-    async update(id: number, updateResourceDto: UpdateResourceDto, user: UserContext) {
+    async update(id: string, updateResourceDto: UpdateResourceDto, user: UserContext) {
         await this.findOne(id, user);
 
         // Check if updating to existing value
@@ -101,7 +101,7 @@ export class ResourceService {
         return this.resourceRepository.update(id, updateResourceDto);
     }
 
-    async remove(id: number, scope: DataScope, user: UserContext) {
+    async remove(id: string, scope: DataScope, user: UserContext) {
         const resource = await this.resourceRepository.findById(
             id,
             {

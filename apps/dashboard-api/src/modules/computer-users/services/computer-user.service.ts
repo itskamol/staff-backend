@@ -15,7 +15,7 @@ export class ComputerUserService {
     ) {}
 
     async findAll(
-        query: QueryDto & { linked?: string; computerId?: number },
+        query: QueryDto & { linked?: string; computerId?: string },
         scope: DataScope,
         user: UserContext
     ) {
@@ -71,7 +71,7 @@ export class ComputerUserService {
         );
     }
 
-    async findOne(id: number, user: UserContext) {
+    async findOne(id: string, user: UserContext) {
         const computerUser = await this.computerUserRepository.findById(id, {
             employee: {
                 select: {
@@ -94,13 +94,13 @@ export class ComputerUserService {
         return computerUser;
     }
 
-    async update(id: number, updateComputerUserDto: UpdateComputerUserDto, user: UserContext) {
+    async update(id: string, updateComputerUserDto: UpdateComputerUserDto, user: UserContext) {
         await this.findOne(id, user);
 
         return this.computerUserRepository.update(id, updateComputerUserDto);
     }
 
-    async remove(id: number, scope: DataScope, user: UserContext) {
+    async remove(id: string, scope: DataScope, user: UserContext) {
         const computerUser = await this.computerUserRepository.findById(id, undefined, scope);
 
         if (!computerUser) {
@@ -118,7 +118,7 @@ export class ComputerUserService {
         });
     }
 
-    async linkEmployee(id: number, employeeId: number, user: UserContext) {
+    async linkEmployee(id: string, employeeId: string, user: UserContext) {
         const computerUser = await this.findOne(id, user);
 
         if (computerUser.employeeId) {
@@ -137,7 +137,7 @@ export class ComputerUserService {
         return this.computerUserRepository.linkEmployee(id, employeeId);
     }
 
-    async unlinkEmployee(id: number, user: UserContext) {
+    async unlinkEmployee(id: string, user: UserContext) {
         const computerUser = await this.findOne(id, user);
 
         if (!computerUser.employeeId) {
@@ -147,7 +147,7 @@ export class ComputerUserService {
         return this.computerUserRepository.unlinkEmployee(id);
     }
 
-    async findByEmployeeId(employeeId: number) {
+    async findByEmployeeId(employeeId: string) {
         return this.computerUserRepository.findByEmployeeId(employeeId, {
             usersOnComputers: {
                 include: { computer: true },

@@ -36,7 +36,7 @@ export class GateController {
     @Get(':id')
     @Roles(Role.ADMIN, Role.GUARD)
     @ApiCrudOperation(GateDto, 'get', { summary: 'Get gate by ID' })
-    async findOne(@Param('id') id: number, @CurrentUser() user: UserContext) {
+    async findOne(@Param('id') id: string, @CurrentUser() user: UserContext) {
         return await this.gateService.findOne(id, user);
     }
 
@@ -47,7 +47,7 @@ export class GateController {
         errorResponses: { notFound: true },
     })
     async getStatistics(
-        @Param('id') id: number,
+        @Param('id') id: string,
         @CurrentUser() user: UserContext
     ) {
         return await this.gateService.getGateStatistics(id, user);
@@ -60,7 +60,7 @@ export class GateController {
         errorResponses: { notFound: true },
     })
     async getWithDevices(
-        @Param('id') id: number,
+        @Param('id') id: string,
         @CurrentUser() user: UserContext
     ) {
         return await this.gateService.getGateWithDevices(id, user);
@@ -84,7 +84,7 @@ export class GateController {
         errorResponses: { notFound: true, forbidden: true },
     })
     async update(
-        @Param('id') id: number,
+        @Param('id') id: string,
         @Body() updateGateDto: UpdateGateDto,
         @CurrentUser() user: UserContext
     ) {
@@ -98,7 +98,7 @@ export class GateController {
         errorResponses: { notFound: true, forbidden: true },
     })
     async remove(
-        @Param('id') id: number,
+        @Param('id') id: string,
         @Scope() scope: DataScope,
         @CurrentUser() user: UserContext
     ) {

@@ -54,14 +54,14 @@ export class CreateUserDto {
 
     @ApiProperty({
         description: 'The ID of the organization (Required when creating HR users, optional for SUPER_ADMIN)',
-        example: 1,
+        example: 'uuid',
         required: false,
     })
     @ValidateIf(o => o.role === Role.HR || o.role === Role.ADMIN)
-    @IsNumber()
+    @IsString()
     @IsNotEmpty({ message: 'Organization ID is required for HR and ADMIN users' })
     @IsOptional()
-    organizationId?: number;
+    organizationId?: String;
 
     @ApiProperty({
         description: 'The status of the user account. Defaults to true.',
@@ -137,12 +137,12 @@ export class UpdateUserDto {
 
     @ApiProperty({
         description: 'The ID of the organization the user belongs to.',
-        example: 1,
+        example: 'uuid',
         required: false,
     })
     @IsOptional()
-    @IsNumber()
-    organizationId?: number;
+    @IsString()
+    organizationId?: string;
 
     @ApiProperty({
         description: 'The password for the user account.',
@@ -180,12 +180,12 @@ export class UpdateUserDto {
 export class AssignUserToDepartmentDto {
     @ApiProperty({
         description: 'The IDs of the departments to assign the user to.',
-        example: [1, 2, 3],
-        type: [Number],
+        example: ['uuid', 'uuid-2'],
+        type: [String],
     })
     @IsNotEmpty({ each: true })
-    @IsNumber({}, { each: true })
-    departmentIds: number[];
+    @IsString({ each: true })
+    departmentIds: string[];
 }
 
 export class UserResponseDto {
@@ -193,7 +193,7 @@ export class UserResponseDto {
         description: 'The unique identifier for the user.',
         example: 1,
     })
-    id: number;
+    id: string;
 
     @ApiProperty({
         description: 'The username of the user.',
@@ -216,10 +216,10 @@ export class UserResponseDto {
 
     @ApiProperty({
         description: 'Organization ID',
-        example: 1,
+        example: 'uuid',
         required: false,
     })
-    organizationId?: number;
+    organizationId?: string;
 
     @ApiProperty({
         description: 'The status of the user account.',
@@ -244,7 +244,7 @@ export class UserResponseDto {
         required: false,
     })
     organization?: {
-        id: number;
+        id: string;
         fullName: string;
         shortName: string;
     };
@@ -254,7 +254,7 @@ export class UserResponseDto {
         required: false,
     })
     departments?: Array<{
-        id: number;
+        id: string;
         fullName: string;
         shortName: string;
     }>;

@@ -1,17 +1,17 @@
 model Action {
-  id             Int           @id @default(autoincrement())
-  deviceId       Int?          @map("device_id")
-  gateId         Int?          @map("gate_id")
+  id             String           @id @default(uuid())
+  deviceId       String?          @map("device_id")
+  gateId         String?          @map("gate_id")
   actionTime     DateTime      @map("action_time")
-  employeeId     Int?          @map("employee_id")
-  visitorId      Int?          @map("visitor_id")
+  employeeId     String?          @map("employee_id")
+  visitorId      String?          @map("visitor_id")
   visitorType    VisitorType
   entryType      EntryType
   actionType     ActionType
   actionResult   String?       @map("action_result")
   actionMode     ActionMode
   status         ActionStatus?
-  organizationId Int?          @map("organization_id")
+  organizationId String?          @map("organization_id")
 
   organization Organization? @relation(fields: [organizationId], references: [id], onDelete: Cascade)
   device       Device?       @relation(fields: [deviceId], references: [id], onDelete: SetNull)
@@ -32,9 +32,9 @@ model Action {
 }
 
 model Gate {
-  id             Int      @id @default(autoincrement())
+  id             String      @id @default(uuid())
   name           String
-  organizationId Int?     @map("organization_id")
+  organizationId String?     @map("organization_id")
   createdAt      DateTime @default(now()) @map("created_at")
 
   organization  Organization?  @relation(fields: [organizationId], references: [id], onDelete: Cascade)
@@ -48,9 +48,9 @@ model Gate {
 }
 
 model GateEmployee {
-  id         Int @id @default(autoincrement())
-  employeeId Int
-  gateId     Int
+  id         String @id @default(uuid())
+  employeeId String
+  gateId     String
 
   gate     Gate     @relation(fields: [gateId], references: [id])
   employee Employee @relation(fields: [employeeId], references: [id])
@@ -59,8 +59,8 @@ model GateEmployee {
 }
 
 model Device {
-  id               Int           @id @default(autoincrement())
-  gateId           Int?          @map("gate_id")
+  id               String           @id @default(uuid())
+  gateId           String?          @map("gate_id")
   name             String?
   entryType        EntryType?    @map("entry_type")
   type             DeviceType?   @map("type")
@@ -94,14 +94,14 @@ model Device {
 }
 
 model Attendance {
-  id             Int           @id @default(autoincrement())
+  id             String           @id @default(uuid())
   startTime      DateTime
   endTime        DateTime?
   arrivalStatus  ActionStatus // ON_TIME or LATE
   goneStatus     ActionStatus? // ON_TIME or EARLY
   reason         String?
-  employeeId     Int
-  organizationId Int
+  employeeId     String
+  organizationId String
 
   employee    Employee     @relation(fields: [employeeId], references: [id], onDelete: Cascade)
   organiztion Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)

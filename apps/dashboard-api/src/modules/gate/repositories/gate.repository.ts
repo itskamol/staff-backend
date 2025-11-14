@@ -39,7 +39,7 @@ export class GateRepository extends BaseRepository<
         });
     }
 
-    async findWithDevices(id: number) {
+    async findWithDevices(id: string) {
         return this.findById(id, {
             devices: {
                 where: { isActive: true },
@@ -48,7 +48,7 @@ export class GateRepository extends BaseRepository<
         });
     }
 
-    async getGateStatistics(id: number) {
+    async getGateStatistics(id: string) {
         const gate = await this.findById(id, {
             devices: true,
             _count: {

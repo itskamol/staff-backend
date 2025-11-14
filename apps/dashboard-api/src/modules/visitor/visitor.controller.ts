@@ -51,7 +51,7 @@ export class VisitorController {
         errorResponses: { notFound: true },
     })
     async findOne(
-        @Param('id', ParseIntPipe) id: number,
+        @Param('id') id: string,
         @CurrentUser() user: UserContext
     ): Promise<ApiResponseDto> {
         const visitor = await this.visitorService.findOne(id, user);
@@ -82,7 +82,7 @@ export class VisitorController {
         errorResponses: { badRequest: true, notFound: true, conflict: true },
     })
     async update(
-        @Param('id', ParseIntPipe) id: number,
+        @Param('id') id: string,
         @Body() updateVisitorDto: UpdateVisitorDto,
         @CurrentUser() user: UserContext
     ): Promise<ApiResponseDto> {
@@ -97,7 +97,7 @@ export class VisitorController {
         errorResponses: { notFound: true },
     })
     async remove(
-        @Param('id', ParseIntPipe) id: number,
+        @Param('id') id: string,
         @CurrentUser() user: UserContext
     ): Promise<ApiResponseDto> {
         await this.visitorService.remove(id, user);
@@ -112,7 +112,7 @@ export class VisitorController {
         errorResponses: { badRequest: true, notFound: true },
     })
     async generateCode(
-        @Param('id', ParseIntPipe) id: number,
+        @Param('id') id: string,
         @Body() generateCodeDto: GenerateCodeDto,
         @CurrentUser() user: UserContext
     ): Promise<ApiResponseDto> {
@@ -131,7 +131,7 @@ export class VisitorController {
         errorResponses: { notFound: true },
     })
     async getEntryLogs(
-        @Param('id', ParseIntPipe) id: number,
+        @Param('id') id: string,
         @Query() paginationDto: PaginationDto,
         @CurrentUser() user: UserContext
     ): Promise<ApiResponseDto> {
@@ -157,7 +157,7 @@ export class VisitorController {
         errorResponses: { notFound: true, badRequest: true },
     })
     async deactivateCode(
-        @Param('codeId', ParseIntPipe) codeId: number,
+        @Param('codeId', ParseIntPipe) codeId: string,
         @CurrentUser() user: UserContext
     ): Promise<ApiResponseDto> {
         const result = await this.visitorService.deactivateCode(codeId, user);

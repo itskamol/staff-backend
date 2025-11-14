@@ -4,23 +4,23 @@ import { IsDateString, IsEnum, IsInt, IsOptional, IsString } from "class-validat
 
 export class CreateActionDto {
     @IsOptional()
-    @IsInt()
-    deviceId?: number;
+    @IsString()
+    deviceId?: string;
 
     @IsOptional()
-    @IsInt()
-    gateId?: number;
+    @IsString()
+    gateId?: string;
 
     @IsDateString()
     actionTime: string;
 
     @IsOptional()
-    @IsInt()
-    employeeId?: number;
+    @IsString()
+    employeeId?: string;
 
     @IsOptional()
-    @IsInt()
-    visitorId?: number;
+    @IsString()
+    visitorId?: string;
 
     @IsEnum(VisitorType)
     visitorType: VisitorType;
@@ -41,8 +41,8 @@ export class CreateActionDto {
     @IsEnum(ActionStatus)
     status: ActionStatus
 
-    @IsInt()
-    organizationId: number
+    @IsString()
+    organizationId: string
 }
 
 export class UpdateActionDto extends PartialType(CreateActionDto) { }
@@ -62,18 +62,18 @@ export class ActionQueryDto {
 
     @ApiPropertyOptional()
     @IsOptional()
-    @IsInt()
-    deviceId?: number;
+    @IsString()
+    deviceId?: string;
 
     @ApiPropertyOptional()
     @IsOptional()
-    @IsInt()
-    gateId?: number;
+    @IsString()
+    gateId?: string;
 
     @ApiPropertyOptional()
     @IsOptional()
-    @IsInt()
-    employeeId?: number;
+    @IsString()
+    employeeId?: string;
 
     @ApiPropertyOptional({enum: ActionStatus})
     @IsOptional()

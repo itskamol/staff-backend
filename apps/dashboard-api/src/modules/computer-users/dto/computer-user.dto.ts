@@ -1,4 +1,4 @@
-import { IsString, IsNotEmpty, IsOptional, IsBoolean, IsInt, IsEmail } from 'class-validator';
+import { IsString, IsNotEmpty, IsOptional, IsBoolean } from 'class-validator';
 import { ApiProperty, PartialType } from '@nestjs/swagger';
 
 export class CreateComputerUserDto {
@@ -11,12 +11,12 @@ export class CreateComputerUserDto {
     sid: string;
 
     @ApiProperty({ 
-        example: 12345,
+        example: 'uuid',
         description: 'Computer ID'
     })
-    @IsInt()
+    @IsString()
     @IsNotEmpty()
-    computer_id: number;
+    computer_id: string;
 
     @ApiProperty({ 
         example: 'John Doe',
@@ -77,14 +77,14 @@ export class CreateComputerUserDto {
 export class UpdateComputerUserDto extends PartialType(CreateComputerUserDto) {}
 
 export class ComputerUserDto extends CreateComputerUserDto {
-    @ApiProperty({ example: 1, description: 'Computer user ID' })
-    @IsInt()
+    @ApiProperty({ example: 'uuid', description: 'Computer user ID' })
+    @IsString()
     id: number;
 
-    @ApiProperty({ example: 1, description: 'Linked employee ID', required: false })
+    @ApiProperty({ example: 'uuid', description: 'Linked employee ID', required: false })
     @IsOptional()
-    @IsInt()
-    employee_id?: number;
+    @IsString()
+    employee_id?: string;
 
     @ApiProperty({ example: '2023-10-01T12:00:00Z', description: 'Creation timestamp' })
     @IsString()
@@ -97,10 +97,10 @@ export class ComputerUserDto extends CreateComputerUserDto {
 
 export class LinkEmployeeDto {
     @ApiProperty({ 
-        example: 1,
+        example: 'uuid',
         description: 'Employee ID to link'
     })
-    @IsInt()
+    @IsString()
     @IsNotEmpty()
-    employee_id: number;
+    employee_id: string;
 }

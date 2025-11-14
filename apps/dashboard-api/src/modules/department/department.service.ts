@@ -10,7 +10,7 @@ export class DepartmentService {
     constructor(private readonly departmentRepository: DepartmentRepository) {}
 
     async getDepartments(
-        query: QueryDto & { isActive?: boolean; organizationId?: number },
+        query: QueryDto & { isActive?: boolean; organizationId?: string },
         scope?: DataScope
     ) {
         const {
@@ -61,7 +61,7 @@ export class DepartmentService {
         );
     }
 
-    async getDepartmentById(id: number, scope?: DataScope) {
+    async getDepartmentById(id: string, scope?: DataScope) {
         return this.departmentRepository.findById(
             id,
             {
@@ -89,11 +89,11 @@ export class DepartmentService {
         );
     }
 
-    async updateDepartment(id: number, data: UpdateDepartmentDto, scope?: DataScope) {
+    async updateDepartment(id: string, data: UpdateDepartmentDto, scope?: DataScope) {
         return this.departmentRepository.update(id, data, undefined, scope);
     }
 
-    async deleteDepartment(id: number, scope?: DataScope) {
+    async deleteDepartment(id: string, scope?: DataScope) {
         return this.departmentRepository.delete(id, scope);
     }
 }

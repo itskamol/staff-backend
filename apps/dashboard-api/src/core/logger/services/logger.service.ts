@@ -100,7 +100,7 @@ export class LoggerService implements NestLoggerService, OnModuleDestroy {
     }
 
     // Utility methods for common scenarios
-    logUserAction(userId: number, action: string, details?: any): void {
+    logUserAction(userId: string, action: string, details?: any): void {
         this.log(`User action: ${action}`, {
             module: 'user-action',
             userId,

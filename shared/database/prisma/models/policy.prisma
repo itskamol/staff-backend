@@ -1,6 +1,6 @@
 model Policy {
-    id             Int     @id @default(autoincrement())
-    organizationId Int     @map("organization_id")
+    id             String     @id @default(uuid())
+    organizationId String     @map("organization_id")
     title          String
     description    String?
 
@@ -33,8 +33,8 @@ model Policy {
 }
 
 model PolicyOption {
-    id       Int        @id @default(autoincrement())
-    policyId Int        @map("policy_id")
+    id       String        @id @default(uuid())
+    policyId String        @map("policy_id")
     type     OptionType
 
     isActive  Boolean  @default(true) @map("is_active")
@@ -51,9 +51,9 @@ model PolicyOption {
 }
 
 model RuleGroup {
-    id       Int      @id @default(autoincrement())
-    optionId Int      @map("option_id")
-    groupId  Int      @map("group_id")
+    id       String      @id @default(uuid())
+    optionId String      @map("option_id")
+    groupId  String      @map("group_id")
     type     RuleType
 
     option PolicyOption  @relation(fields: [optionId], references: [id], onDelete: Cascade)
@@ -82,8 +82,8 @@ enum OptionType {
 }
 
 model ResourceGroup {
-    id             Int          @id @default(autoincrement())
-    organizationId Int          @map("organization_id")
+    id             String          @id @default(uuid())
+    organizationId String          @map("organization_id")
     name           String
     type           ResourceType
 
@@ -103,9 +103,9 @@ model ResourceGroup {
 }
 
 model ResourceGroups {
-    id         Int @id @default(autoincrement())
-    resourceId Int @map("resource_id")
-    groupId    Int @map("group_id")
+    id         String @id @default(uuid())
+    resourceId String @map("resource_id")
+    groupId    String @map("group_id")
 
     createdAt DateTime @default(now()) @map("created_at")
 
@@ -116,8 +116,8 @@ model ResourceGroups {
 }
 
 model Resource {
-    id             Int          @id @default(autoincrement())
-    organizationId Int          @map("organization_id")
+    id             String          @id @default(uuid())
+    organizationId String        @map("organization_id")
     value          String
     type           ResourceType
 

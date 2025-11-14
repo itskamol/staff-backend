@@ -28,7 +28,7 @@ export class DeviceRepository extends BaseRepository<
         return this.findFirst({ ipAddress });
     }
 
-    async findOneByGateAndIp(gateId: number, ipAddress: string): Promise<Device | null> {
+    async findOneByGateAndIp(gateId: string, ipAddress: string): Promise<Device | null> {
     return this.prisma.device.findFirst({where: {gateId: gateId,ipAddress: ipAddress,},
     });
   }
@@ -41,7 +41,7 @@ export class DeviceRepository extends BaseRepository<
         return this.findMany({ isActive: true });
     }
 
-    async updateStatus(id: number, isActive: boolean) {
+    async updateStatus(id: string, isActive: boolean) {
         return this.update(id, { isActive });
     }
 

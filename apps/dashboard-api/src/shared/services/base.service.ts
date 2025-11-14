@@ -39,7 +39,7 @@ export abstract class BaseCrudService<
     /**
      * Validate update data (override in child classes for custom validation)
      */
-    protected async validateUpdate(id: number, data: TUpdateDto): Promise<void> {
+    protected async validateUpdate(id: string, data: TUpdateDto): Promise<void> {
         // Override in child classes for custom validation
     }
 
@@ -67,7 +67,7 @@ export abstract class BaseCrudService<
     /**
      * Hook called after entity deletion (override in child classes)
      */
-    protected async afterDelete(id: number): Promise<void> {
+    protected async afterDelete(id: string): Promise<void> {
         // Override in child classes for post-deletion operations
     }
 
@@ -90,7 +90,7 @@ export abstract class BaseCrudService<
     /**
      * Find entity by ID
      */
-    async findById(id: number, include?: any, select?: any): Promise<TEntity | null> {
+    async findById(id: string, include?: any, select?: any): Promise<TEntity | null> {
         this.logger.log(`Finding ${this.entityName} by ID: ${id}`);
 
         const scope = this.getDataScope();
@@ -102,7 +102,7 @@ export abstract class BaseCrudService<
     /**
      * Find entity by ID or throw exception
      */
-    async findByIdOrThrow(id: number, include?: any): Promise<TEntity> {
+    async findByIdOrThrow(id: string, include?: any): Promise<TEntity> {
         this.logger.log(`Finding ${this.entityName} by ID or throw: ${id}`);
 
         const scope = this.getDataScope();
@@ -167,7 +167,7 @@ export abstract class BaseCrudService<
     /**
      * Update entity by ID
      */
-    async update(id: number, data: TUpdateDto, include?: any): Promise<TEntity> {
+    async update(id: string, data: TUpdateDto, include?: any): Promise<TEntity> {
         this.logger.log(`Updating ${this.entityName} with ID: ${id}`);
 
         await this.validateUpdate(id, data);
@@ -183,7 +183,7 @@ export abstract class BaseCrudService<
     /**
      * Delete entity by ID
      */
-    async delete(id: number): Promise<TEntity> {
+    async delete(id: string): Promise<TEntity> {
         this.logger.log(`Deleting ${this.entityName} with ID: ${id}`);
 
         const scope = this.getDataScope();
@@ -197,7 +197,7 @@ export abstract class BaseCrudService<
     /**
      * Soft delete entity (if supported)
      */
-    async softDelete(id: number): Promise<TEntity> {
+    async softDelete(id: string): Promise<TEntity> {
         this.logger.log(`Soft deleting ${this.entityName} with ID: ${id}`);
 
         const scope = this.getDataScope();

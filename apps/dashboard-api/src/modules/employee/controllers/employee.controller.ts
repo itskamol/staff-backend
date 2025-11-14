@@ -124,7 +124,7 @@ export class EmployeeController {
         summary: 'Get an employee by ID'
     })
     async getEmployeeById(
-        @Param('id') id: number,
+        @Param('id') id: string,
         @Scope() scope: DataScope,
         @User() user: UserContext
     ) {
@@ -143,7 +143,7 @@ export class EmployeeController {
         summary: 'Update an employee'
     })
     async updateEmployee(
-        @Param('id') id: number,
+        @Param('id') id: string,
         @Body() dto: UpdateEmployeeDto,
         @Scope() scope: DataScope,
         @User() user: UserContext
@@ -172,7 +172,7 @@ export class EmployeeController {
         summary: 'Delete an employee'
     })
     async deleteEmployee(
-        @Param('id') id: number,
+        @Param('id') id: string,
         @Scope() scope: DataScope,
         @User() user: UserContext
     ) {
@@ -187,7 +187,7 @@ export class EmployeeController {
         summary: 'Get employee entry logs'
     })
     async getEmployeeEntryLogs(
-        @Param('id') id: number,
+        @Param('id') id: string,
         @Query() query: QueryDto,
         @Scope() scope: DataScope,
         @User() user: UserContext
@@ -202,7 +202,7 @@ export class EmployeeController {
         summary: 'Get employee activity report'
     })
     async getEmployeeActivityReport(
-        @Param('id') id: number,
+        @Param('id') id: string,
         @Query() query: QueryDto,
         @Scope() scope: DataScope,
         @User() user: UserContext
@@ -217,7 +217,7 @@ export class EmployeeController {
         summary: 'Get employee computer users'
     })
     async getEmployeeComputerUsers(
-        @Param('id') id: number,
+        @Param('id') id: string,
         @Scope() scope: DataScope,
         @User() user: UserContext
     ) {
@@ -232,7 +232,7 @@ export class EmployeeController {
     })
     @ApiErrorResponses({ forbidden: true, notFound: true, badRequest: true })
     async assignCardToEmployee(
-        @Param('id') id: number,
+        @Param('id') id: string,
         @Body() dto: AssignCardDto,
         @Scope() scope: DataScope,
         @User() user: UserContext
@@ -248,7 +248,7 @@ export class EmployeeController {
     })
     @ApiErrorResponses({ forbidden: true, notFound: true, badRequest: true })
     async assignCarToEmployee(
-        @Param('id') id: number,
+        @Param('id') id: string,
         @Body() dto: AssignCarDto,
         @Scope() scope: DataScope,
         @User() user: UserContext
@@ -264,7 +264,7 @@ export class EmployeeController {
     })
     @ApiErrorResponses({ forbidden: true, notFound: true, badRequest: true })
     async linkComputerUserToEmployee(
-        @Param('id') id: number,
+        @Param('id') id: string,
         @Body() dto: LinkComputerUserDto,
         @Scope() scope: DataScope,
         @User() user: UserContext
@@ -280,8 +280,8 @@ export class EmployeeController {
         summary: 'Unlink computer user from employee'
     })
     async unlinkComputerUserFromEmployee(
-        @Param('id') id: number,
-        @Param('computer_user_id') computerUserId: number,
+        @Param('id') id: string,
+        @Param('computer_user_id') computerUserId: string,
         @Scope() scope: DataScope,
         @User() user: UserContext
     ) {

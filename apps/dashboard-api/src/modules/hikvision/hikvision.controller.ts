@@ -130,7 +130,7 @@ export class HikvisionController {
 
     const eployeeID = eventData?.AccessControllerEvent?.employeeNoString
     if (eployeeID) {  
-      await this.actionService.create(eventData, +deviceId);
+      await this.actionService.create(eventData, deviceId);
     }
 
     res.setHeader('Content-Type', 'application/json');

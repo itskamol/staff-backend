@@ -1,14 +1,11 @@
 import { BadRequestException, Injectable, NotFoundException } from '@nestjs/common';
 import { AttendanceRepository } from './attendance.repository';
 import { CreateAttendanceDto, AttendanceQueryDto, UpdateAttendanceDto } from './dto/attendance.dto';
-import { PrismaService } from '@app/shared/database';
-import { DataScope, UserContext } from '@app/shared/auth';
 
 @Injectable()
 export class AttendanceService {
     constructor(
         private readonly repo: AttendanceRepository,
-        private readonly prisma: PrismaService,
     ) { }
 
     async create(dto: CreateAttendanceDto) {
@@ -94,18 +91,18 @@ export class AttendanceService {
         };
     }
 
-    async findById(id: number) {
+    async findById(id: string) {
         const record = await this.repo.findById(id);
         if (!record) throw new NotFoundException('Attendance record not found');
         return record;
     }
 
-    async update(id: number, dto: UpdateAttendanceDto) {
+    async update(id: string, dto: UpdateAttendanceDto) {
         await this.findById(id);
         return this.repo.update(id, dto);
     }
 
-    async delete(id: number) {
+    async delete(id: string) {
         await this.findById(id);
         return this.repo.delete(id);
     }

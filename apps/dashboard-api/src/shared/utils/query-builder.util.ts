@@ -4,7 +4,7 @@ export class QueryBuilder {
     /**
      * Builds organization-scoped where clause
      */
-    static buildOrganizationScope(scope: DataScope): { organizationId: number } {
+    static buildOrganizationScope(scope: DataScope): { organizationId: string } {
         return {
             organizationId: scope.organizationId,
         };

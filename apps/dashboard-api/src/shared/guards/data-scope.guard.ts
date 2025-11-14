@@ -43,7 +43,7 @@ export class DataScopeGuard implements CanActivate {
 
         if (noScoping) {
             if (user.role !== Role.ADMIN) {
-                this.logger.logUserAction(+user.sub, 'DATA_SCOPE_VIOLATION_NO_SCOPING', {
+                this.logger.logUserAction(user.sub, 'DATA_SCOPE_VIOLATION_NO_SCOPING', {
                     userId: user.sub,
                     role: user.role,
                     url: request.url,
@@ -56,7 +56,7 @@ export class DataScopeGuard implements CanActivate {
         }
 
         if (!user.organizationId && user.role !== Role.ADMIN) {
-            this.logger.logUserAction(+user.sub, 'DATA_SCOPE_VIOLATION_NO_ORGANIZATION', {
+            this.logger.logUserAction(user.sub, 'DATA_SCOPE_VIOLATION_NO_ORGANIZATION', {
                 userId: user.sub,
                 role: user.role,
                 url: request.url,

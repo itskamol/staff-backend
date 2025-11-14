@@ -47,7 +47,7 @@ export class UserService {
     /**
      * Find user by ID
      */
-    async findById(id: number): Promise<Omit<User, 'password'>> {
+    async findById(id: string): Promise<Omit<User, 'password'>> {
         const { password, ...user } = await this.userRepository.findById(id);
         return user;
     }
@@ -63,14 +63,14 @@ export class UserService {
      * Update user
      */
     async updateUser(
-        id: number,
+        id: string,
         updateUserDto: UpdateUserDto,
         user: UserContext
     ): Promise<Omit<User, 'password'>> {
         const existingUser = await this.userRepository.findById(id);
         if (!existingUser) throw new NotFoundException('User not found');
 
-        if (+user.sub === id) throw new ConflictException('You can only update your own profile');
+        if (user.sub === id) throw new ConflictException('You can only update your own profile');
 
         if (updateUserDto.password)
             updateUserDto.password = await this.validateAndHashPassword(updateUserDto.password);
@@ -85,7 +85,7 @@ export class UserService {
     }
 
     async updateCurrentUser(
-        id: number,
+        id: string,
         { currentPassword, newPassword, ...updateUserData }: UpdateCurrentUserDto
     ): Promise<Omit<User, 'password'>> {
         const updateUserDto: Prisma.UserUpdateInput = updateUserData;
@@ -108,7 +108,7 @@ export class UserService {
         return this.userRepository.update(id, updateUserDto);
     }
 
-    async assignDepartment(id: number, departmentIds: number[]): Promise<Omit<User, 'password'>> {
+    async assignDepartment(id: string, departmentIds: string[]): Promise<Omit<User, 'password'>> {
         const user = await this.userRepository.findById(id);
         if (!user) {
             throw new NotFoundException('User not found');
@@ -150,8 +150,8 @@ export class UserService {
         );
     }
 
-    async deleteUser(id: number, user: UserContext): Promise<Omit<User, 'password'>> {
-        if (+user.sub === id) throw new ConflictException('User cannot delete themselves');
+    async deleteUser(id: string, user: UserContext): Promise<Omit<User, 'password'>> {
+        if (user.sub === id) throw new ConflictException('User cannot delete themselves');
 
         const existingUser = await this.userRepository.findById(id);
         if (!existingUser) {

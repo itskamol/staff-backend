@@ -1,4 +1,3 @@
-// ...existing code...
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import { IsDateString, IsEnum, IsInt, IsNotEmpty, IsOptional, IsString } from 'class-validator';
 import { Type } from 'class-transformer';
@@ -18,27 +17,27 @@ export class CreateAttendanceDto {
   @ApiProperty({ example: 'ON_TIME' })
   @IsNotEmpty()
   @IsEnum(ActionStatus)
-  arrivalStatus: ActionStatus; // ActionStatus enum in prisma
+  arrivalStatus: ActionStatus;
 
   @ApiPropertyOptional({ example: 'ON_TIME' })
   @IsOptional()
   @IsEnum(ActionStatus)
-  goneStatus?: ActionStatus; // ActionStatus enum in prisma
+  goneStatus?: ActionStatus;
 
   @ApiPropertyOptional({ example: 'Reason for late arrival' })
   @IsOptional()
   @IsString()
   reason?: string;
 
-  @ApiProperty({ example: 1 })
+  @ApiProperty({ example: 'uuid' })
   @IsNotEmpty()
-  @IsInt()
-  employeeId: number;
+  @IsString()
+  employeeId: string;
 
-  @ApiProperty({ example: 1 })
+  @ApiProperty({ example: 'uuid' })
   @IsOptional()
-  @IsInt()
-  organizationId?: number;
+  @IsString()
+  organizationId?: string;
 }
 
 export class UpdateAttendanceDto {
@@ -71,13 +70,13 @@ export class UpdateAttendanceDto {
 export class AttendanceQueryDto {
   @ApiPropertyOptional()
   @IsOptional()
-  @Type(() => Number)
-  employeeId?: number;
+  @IsString()
+  employeeId?: string;
 
   @ApiPropertyOptional()
   @IsOptional()
-  @Type(() => Number)
-  organizationId?: number;
+  @IsString()
+  organizationId?: string;
 
   @ApiPropertyOptional({
     description: 'Specific date (e.g. 2025-11-11)'

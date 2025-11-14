@@ -48,7 +48,7 @@ export class DeviceController {
     @Get(':id')
     @Roles(Role.ADMIN, Role.GUARD)
     @ApiCrudOperation(DeviceDto, 'get', { summary: 'Get device by ID' })
-    async findOne(@Param('id') id: number, @User() user: UserContext) {
+    async findOne(@Param('id') id: string, @User() user: UserContext) {
         return await this.deviceService.findOne(id, user);
     }
 
@@ -74,7 +74,7 @@ export class DeviceController {
         errorResponses: { notFound: true, forbidden: true },
     })
     async update(
-        @Param('id') id: number,
+        @Param('id') id: string,
         @Body() updateDeviceDto: UpdateDeviceDto,
         @User() user: UserContext
     ) {
@@ -87,7 +87,7 @@ export class DeviceController {
         summary: 'Delete device by ID',
         errorResponses: { notFound: true, forbidden: true },
     })
-    async remove(@Param('id') id: number, @Scope() scope: DataScope, @User() user: UserContext) {
+    async remove(@Param('id') id: string, @Scope() scope: DataScope, @User() user: UserContext) {
         return await this.deviceService.remove(id, scope, user);
     }
 
@@ -98,7 +98,7 @@ export class DeviceController {
         summary: 'Test device connection',
         errorResponses: { notFound: true, badRequest: true },
     })
-    async testConnection(@Param('id') id: number, @Body() testConnectionDto: TestConnectionDto) {
+    async testConnection(@Param('id') id: string, @Body() testConnectionDto: TestConnectionDto) {
         return await this.deviceService.testConnection(id, testConnectionDto.timeout);
     }
 
@@ -109,22 +109,7 @@ export class DeviceController {
     })
     @ApiResponse({
         status: 200,
-        description: 'Biriktirish natijasi',
-        schema: {
-            example: {
-                total: 10,
-                success: 8,
-                errors: ['Gate 2, Device 5: Credential topilmadi'],
-                details: [
-                    {
-                        gateId: 1,
-                        deviceId: 3,
-                        employeeId: 5,
-                        status: 'ok',
-                    },
-                ],
-            },
-        },
+        description: 'Biriktirish natijasi'
     })
     async assignEmployeesToGates(
         @Body() dto: AssignEmployeesToGatesDto,

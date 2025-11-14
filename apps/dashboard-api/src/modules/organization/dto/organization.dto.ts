@@ -63,9 +63,9 @@ export class UpdateOrganizationDto extends PartialType(CreateOrganizationDto) {}
 export class OrganizationResponseDto {
     @ApiProperty({
         description: 'The unique identifier for the organization.',
-        example: 1,
+        example: 'uuid'
     })
-    id: number;
+    id: string;
 
     @ApiProperty({
         description: 'Full name of the organization',

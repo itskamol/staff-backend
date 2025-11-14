@@ -1,6 +1,6 @@
 model ActiveWindow {
-  id                 Int      @id @default(autoincrement())
-  usersOnComputersId Int      @map("users_on_computers_id")
+  id                 String      @id @default(uuid())
+  usersOnComputersId String      @map("users_on_computers_id")
   datetime           DateTime
   title              String
   processName        String   @map("process_name")
@@ -18,8 +18,8 @@ model ActiveWindow {
 }
 
 model VisitedSite {
-  id                 Int      @id @default(autoincrement())
-  usersOnComputersId Int      @map("users_on_computers_id")
+  id                 String      @id @default(uuid())
+  usersOnComputersId String      @map("users_on_computers_id")
   datetime           DateTime
   title              String?
   url                String
@@ -39,8 +39,8 @@ model VisitedSite {
 }
 
 model Screenshot {
-  id                 Int      @id @default(autoincrement())
-  usersOnComputersId Int      @map("users_on_computers_id")
+  id                 String      @id @default(uuid())
+  usersOnComputersId String      @map("users_on_computers_id")
   datetime           DateTime
   title              String?
   filePath           String   @map("file_path")
@@ -58,8 +58,8 @@ model Screenshot {
 }
 
 model UserSession {
-  id                 Int         @id @default(autoincrement())
-  usersOnComputersId Int         @map("users_on_computers_id")
+  id                 String         @id @default(uuid())
+  usersOnComputersId String         @map("users_on_computers_id")
   startTime          DateTime    @map("start_time")
   endTime            DateTime?   @map("end_time")
   sessionType        SessionType @map("session_type")

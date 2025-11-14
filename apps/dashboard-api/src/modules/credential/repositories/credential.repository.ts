@@ -1,11 +1,11 @@
 import { Injectable } from '@nestjs/common';
-import { Action, ActionType, Credential, Prisma } from '@prisma/client';
+import { ActionType, Credential, Prisma } from '@prisma/client';
 import { PrismaService } from '@app/shared/database';
 import { BaseRepository } from 'apps/dashboard-api/src/shared/repositories/base.repository';
 
 export type CredentialWithRelations = Credential & {
     employee?: {
-        id: number;
+        id: string;
         name: string;
     }
 };
@@ -42,7 +42,7 @@ export class CredentialRepository extends BaseRepository<
     }
     
    
-    async findByEmployeeId(employeeId: number): Promise<CredentialWithRelations[]> {
+    async findByEmployeeId(employeeId: string): Promise<CredentialWithRelations[]> {
         return await this.findMany(
             { employeeId },
             { createdAt: 'desc' },
@@ -63,7 +63,7 @@ export class CredentialRepository extends BaseRepository<
     }
 
    
-    async deleteCredential(id: number): Promise<Credential> {
+    async deleteCredential(id: string): Promise<Credential> {
         return await this.delete(id);
     }
 }

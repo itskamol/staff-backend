@@ -39,7 +39,7 @@ export class GroupController {
 
     @Get(':id')
     @ApiCrudOperation(GroupDto, 'get', { summary: 'Get group by ID' })
-    async findOne(@Param('id') id: number, @CurrentUser() user: UserContext) {
+    async findOne(@Param('id') id: string, @CurrentUser() user: UserContext) {
         return await this.groupService.findOne(id, user);
     }
 
@@ -59,7 +59,7 @@ export class GroupController {
         errorResponses: { notFound: true, forbidden: true },
     })
     async update(
-        @Param('id') id: number,
+        @Param('id') id: string,
         @Body() updateGroupDto: UpdateGroupDto,
         @CurrentUser() user: UserContext
     ) {
@@ -72,7 +72,7 @@ export class GroupController {
         errorResponses: { notFound: true, forbidden: true },
     })
     async remove(
-        @Param('id') id: number,
+        @Param('id') id: string,
         @Scope() scope: DataScope,
         @CurrentUser() user: UserContext
     ) {
@@ -86,7 +86,7 @@ export class GroupController {
         errorResponses: { notFound: true, badRequest: true },
     })
     async addResources(
-        @Param('id') id: number,
+        @Param('id') id: string,
         @Body() addResourceDto: AddResourceToGroupDto,
         @CurrentUser() user: UserContext
     ) {
@@ -99,8 +99,8 @@ export class GroupController {
         errorResponses: { notFound: true },
     })
     async removeResource(
-        @Param('id') id: number,
-        @Param('resourceId') resourceId: number,
+        @Param('id') id: string,
+        @Param('resourceId') resourceId: string,
         @CurrentUser() user: UserContext
     ) {
         return await this.groupService.removeResource(id, resourceId, user);

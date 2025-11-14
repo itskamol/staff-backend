@@ -23,25 +23,25 @@ export class EmployeePlanRepository {
         return this.prisma.employeePlan.findFirst({ where: query })
     }
 
-    async findById(id: number) {
+    async findById(id: string) {
         return this.prisma.employeePlan.findUnique({
             where: { id },
             include: { employees: true },
         });
     }
 
-    async update(id: number, data: UpdateEmployeePlanDto) {
+    async update(id: string, data: UpdateEmployeePlanDto) {
         return this.prisma.employeePlan.update({
             where: { id },
             data,
         });
     }
 
-    async delete(id: number) {
+    async delete(id: string) {
         return this.prisma.employeePlan.delete({ where: { id } });
     }
 
-    async assignEmployees(employeePlanId: number, employeeIds: number[]) {
+    async assignEmployees(employeePlanId: string, employeeIds: string[]) {
 
         return this.prisma.employee.updateMany({
             where: { id: { in: employeeIds } },

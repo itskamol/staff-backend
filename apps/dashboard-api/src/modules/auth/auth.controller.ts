@@ -24,7 +24,7 @@ export class ValidateTokenResponseDto {
         sub: string;
         username: string;
         role: string;
-        organizationId?: number;
+        organizationId?: string;
     };
 }
 

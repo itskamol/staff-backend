@@ -59,26 +59,26 @@ export class CreateDepartmentDto {
 
     @ApiProperty({
         description: 'The ID of the organization (Required for ADMIN, auto-populated for HR from token)',
-        example: 1,
+        example: 'uuid',
         required: false,
     })
     @ValidateIf((o, context) => {
         const request = context?.['request'];
         return request?.user?.role === 'ADMIN';
     })
-    @IsNumber()
+    @IsString()
     @IsNotEmpty({ message: 'Organization ID is required for ADMIN users' })
     @IsOptional()
-    organizationId?: number;
+    organizationId?: string;
 
     @ApiProperty({
         description: 'The ID of the parent department, if this is a sub-department.',
-        example: 2,
+        example: 'uuid',
         required: false,
     })
     @IsOptional()
     @IsNumber()
-    parentId?: number;
+    parentId?: string;
 }
 
 export class UpdateDepartmentDto extends PartialType(CreateDepartmentDto) {}
@@ -86,9 +86,9 @@ export class UpdateDepartmentDto extends PartialType(CreateDepartmentDto) {}
 export class DepartmentResponseDto {
     @ApiProperty({
         description: 'The unique identifier for the department.',
-        example: 1,
+        example: 'uuid',
     })
-    id: number;
+    id: string;
 
     @ApiProperty({
         description: 'Full name of the department',
@@ -131,16 +131,16 @@ export class DepartmentResponseDto {
 
     @ApiProperty({
         description: 'Organization ID',
-        example: 1,
+        example: 'uuid',
     })
-    organizationId: number;
+    organizationId: string;
 
     @ApiProperty({
         description: 'Parent department ID',
-        example: 2,
+        example: 'uuid',
         required: false,
     })
-    parentId?: number;
+    parentId?: string;
 
     @ApiProperty({
         description: 'The date and time when the department was created.',
@@ -173,7 +173,7 @@ export class DepartmentResponseDto {
         required: false,
     })
     organization?: {
-        id: number;
+        id: string;
         fullName: string;
         shortName: string;
     };

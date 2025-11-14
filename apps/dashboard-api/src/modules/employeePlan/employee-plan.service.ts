@@ -63,18 +63,18 @@ export class EmployeePlanService {
         };
     }
 
-    async findById(id: number) {
+    async findById(id: string) {
         const plan = await this.repo.findById(id);
         if (!plan) throw new NotFoundException('Employee plan not found');
         return plan;
     }
 
-    async update(id: number, dto: UpdateEmployeePlanDto) {
+    async update(id: string, dto: UpdateEmployeePlanDto) {
         await this.findById(id);
         return this.repo.update(id, dto);
     }
 
-    async delete(id: number) {
+    async delete(id: string) {
         await this.findById(id);
         return this.repo.delete(id);
     }

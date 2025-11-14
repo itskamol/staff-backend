@@ -4,12 +4,12 @@ import { VisitorCodeType } from '@prisma/client';
 
 export class CreateOnetimeCodeDto {
     @ApiProperty({ 
-        example: 1,
+        example: 'uuid',
         description: 'Visitor ID'
     })
-    @IsInt()
+    @IsString()
     @IsNotEmpty()
-    visitorId: number;
+    visitorId: string;
 
     @ApiProperty({ 
         example: 'ONETIME',
@@ -64,9 +64,9 @@ export class CreateOnetimeCodeDto {
 export class UpdateOnetimeCodeDto extends PartialType(CreateOnetimeCodeDto) {}
 
 export class OnetimeCodeDto extends CreateOnetimeCodeDto {
-    @ApiProperty({ example: 1, description: 'Code ID' })
-    @IsInt()
-    id: number;
+    @ApiProperty({ example: 'uuid', description: 'Code ID' })
+    @IsString()
+    id: string;
 
     @ApiProperty({ example: '2023-10-01T12:00:00Z', description: 'Creation timestamp' })
     @IsString()
@@ -76,7 +76,7 @@ export class OnetimeCodeDto extends CreateOnetimeCodeDto {
 export class OnetimeCodeWithRelationsDto extends OnetimeCodeDto {
     @ApiProperty({ description: 'Visitor information' })
     visitor?: {
-        id: number;
+        id: string;
         firstName: string;
         lastName: string;
         workPlace: string;

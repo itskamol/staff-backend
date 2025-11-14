@@ -30,8 +30,8 @@ export class PolicyOptionController {
             search: false,
             sort: true,
             filters: {
-                policyId: Number,
-                groupId: Number,
+                policyId: String,
+                groupId: String,
                 type: String,
                 isActive: Boolean,
             },
@@ -47,7 +47,7 @@ export class PolicyOptionController {
 
     @Get(':id')
     @ApiCrudOperation(PolicyOptionWithRelationsDto, 'get', { summary: 'Get policy option by ID' })
-    async findOne(@Param('id') id: number, @CurrentUser() user: UserContext) {
+    async findOne(@Param('id') id: string, @CurrentUser() user: UserContext) {
         return await this.policyOptionService.findOne(id, user);
     }
 
@@ -80,7 +80,7 @@ export class PolicyOptionController {
         errorResponses: { notFound: true, forbidden: true },
     })
     async update(
-        @Param('id') id: number,
+        @Param('id') id: string,
         @Body() updatePolicyOptionDto: UpdatePolicyOptionDto,
         @CurrentUser() user: UserContext
     ) {
@@ -93,7 +93,7 @@ export class PolicyOptionController {
         errorResponses: { notFound: true, forbidden: true },
     })
     async remove(
-        @Param('id') id: number,
+        @Param('id') id: string,
         @Scope() scope: DataScope,
         @CurrentUser() user: UserContext
     ) {
@@ -104,7 +104,7 @@ export class PolicyOptionController {
     @ApiCrudOperation(PolicyOptionWithRelationsDto, 'list', {
         summary: 'Get policy options by policy ID',
     })
-    async findByPolicyId(@Param('policyId') policyId: number) {
+    async findByPolicyId(@Param('policyId') policyId: string) {
         return await this.policyOptionService.findByPolicyId(policyId);
     }
 
@@ -112,7 +112,7 @@ export class PolicyOptionController {
     @ApiCrudOperation(PolicyOptionWithRelationsDto, 'list', {
         summary: 'Get policy options by group ID',
     })
-    async findByGroupId(@Param('groupId') groupId: number) {
+    async findByGroupId(@Param('groupId') groupId: string) {
         return await this.policyOptionService.findByGroupId(groupId);
     }
 }

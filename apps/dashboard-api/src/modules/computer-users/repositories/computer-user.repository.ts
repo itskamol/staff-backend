@@ -28,11 +28,11 @@ export class ComputerUserRepository extends BaseRepository<
         return this.findMany({ employeeId: null }, undefined, include);
     }
 
-    async findByEmployeeId(employeeId: number, include?: Prisma.ComputerUserInclude) {
+    async findByEmployeeId(employeeId: string, include?: Prisma.ComputerUserInclude) {
         return this.findMany({ employeeId }, undefined, include);
     }
 
-    async findByComputerId(computerId: number, include?: Prisma.ComputerUserInclude) {
+    async findByComputerId(computerId: string, include?: Prisma.ComputerUserInclude) {
         return this.findMany({ id: computerId }, undefined, include);
     }
 
@@ -40,11 +40,11 @@ export class ComputerUserRepository extends BaseRepository<
         return this.findFirst({ sid: sidId });
     }
 
-    async linkEmployee(id: number, employeeId: number) {
+    async linkEmployee(id: string, employeeId: string) {
         return this.update(id, { employee: { connect: { id: employeeId } } });
     }
 
-    async unlinkEmployee(id: number) {
+    async unlinkEmployee(id: string) {
         return // Set employeeId to null to unlink;
     }
 }

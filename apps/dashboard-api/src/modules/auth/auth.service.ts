@@ -70,7 +70,7 @@ export class AuthService {
         //     throw new UnauthorizedException('Refresh token has been revoked');
         // }
 
-        const user = await this.userRepository.findById(+payload.sub);
+        const user = await this.userRepository.findById(payload.sub);
         if (!user || !user.isActive) {
             throw new UnauthorizedException('Invalid refresh token');
         }
@@ -89,7 +89,7 @@ export class AuthService {
     /**
      * Validate user by ID (used by JWT strategy)
      */
-    async validateUser(userId: number): Promise<User | null> {
+    async validateUser(userId: string): Promise<User | null> {
         const user = await this.userRepository.findById(userId);
         if (!user || !user.isActive) {
             return null;

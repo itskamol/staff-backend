@@ -8,9 +8,9 @@ export interface JwtPayload {
     sub: string;
     username: string;
     role: Role;
-    organizationId?: number;
-    departmentIds?: number[];
-    departments?: number[];
+    organizationId?: string;
+    departmentIds?: string[];
+    departments?: string[];
     iat?: number;
     exp?: number;
 }
