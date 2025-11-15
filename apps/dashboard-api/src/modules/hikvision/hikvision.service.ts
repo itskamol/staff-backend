@@ -263,7 +263,7 @@ export class HikvisionService {
             }
             return false;
         } catch (error) {
-            if (error.response) console.log(error.response.data);
+            if (error.response) console.log('error:',error.response.data);
             this.logger.error(`Failed to create user ${dto.employeeId}:`, error.message);
             throw new BadRequestException(`Hikvision da user yaratishda xatolik: ${error.message}`);
         }
