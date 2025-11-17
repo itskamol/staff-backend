@@ -17,6 +17,7 @@ import { ApiCrudOperation } from 'apps/dashboard-api/src/shared/utils';
 @Controller('devices')
 @ApiExtraModels(DeviceDto)
 @ApiBearerAuth()
+@Roles(Role.ADMIN, Role.GUARD, Role.HR)
 export class DeviceController {
     constructor(private readonly deviceService: DeviceService) {}
 
@@ -26,7 +27,6 @@ export class DeviceController {
     }
 
     @Get()
-    @Roles(Role.ADMIN, Role.GUARD)
     @ApiCrudOperation(DeviceDto, 'list', {
         summary: 'Get all devices with pagination',
         includeQueries: {
@@ -46,14 +46,12 @@ export class DeviceController {
     }
 
     @Get(':id')
-    @Roles(Role.ADMIN, Role.GUARD)
     @ApiCrudOperation(DeviceDto, 'get', { summary: 'Get device by ID' })
-    async findOne(@Param('id') id: number, @User() user: UserContext) {
-        return await this.deviceService.findOne(id, user);
+    async findOne(@Param('id') id: number, @User() scope: DataScope) {
+        return await this.deviceService.findOne(id, scope);
     }
 
     @Post()
-    @Roles(Role.ADMIN)
     @ApiCrudOperation(DeviceDto, 'create', {
         body: CreateDeviceDto,
         summary: 'Create new device',
@@ -67,7 +65,6 @@ export class DeviceController {
     }
 
     @Put(':id')
-    @Roles(Role.ADMIN)
     @ApiCrudOperation(DeviceDto, 'update', {
         body: UpdateDeviceDto,
         summary: 'Update existing device',
@@ -76,13 +73,12 @@ export class DeviceController {
     async update(
         @Param('id') id: number,
         @Body() updateDeviceDto: UpdateDeviceDto,
-        @User() user: UserContext
+        @Scope() scope: UserContext
     ) {
-        return await this.deviceService.update(id, updateDeviceDto, user);
+        return await this.deviceService.update(id, updateDeviceDto, scope);
     }
 
     @Delete(':id')
-    @Roles(Role.ADMIN)
     @ApiCrudOperation(null, 'delete', {
         summary: 'Delete device by ID',
         errorResponses: { notFound: true, forbidden: true },
@@ -92,7 +88,6 @@ export class DeviceController {
     }
 
     @Post(':id/test-connection')
-    @Roles(Role.ADMIN)
     @ApiCrudOperation(null, 'create', {
         body: TestConnectionDto,
         summary: 'Test device connection',
@@ -103,7 +98,6 @@ export class DeviceController {
     }
 
     @Post('assign-employees')
-    @Roles(Role.ADMIN, Role.HR)
     @ApiCrudOperation(DeviceDto, 'create', {
         summary: 'Assign employees to gate devices for facial access',
     })

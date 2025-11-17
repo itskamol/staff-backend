@@ -76,6 +76,7 @@ model Device {
   welcomeTextType  WelcomeText?  @map("welcome_text_type")
   welcomePhoto     String?       @map("welcome_photo")
   welcomePhotoType WelcomePhoto? @map("welcome_photo_type")
+  organizationId   Int?          @map("organization_id")
 
   // --- Standard Fields ---
   isActive  Boolean  @default(true) @map("is_active")
@@ -85,6 +86,7 @@ model Device {
   gate         Gate?          @relation(fields: [gateId], references: [id], onDelete: SetNull)
   actions      Action[]
   EmployeeSync EmployeeSync[]
+  organization Organization?  @relation(fields: [organizationId], references: [id], onDelete: Cascade)
 
   @@index([gateId])
   @@index([ipAddress])

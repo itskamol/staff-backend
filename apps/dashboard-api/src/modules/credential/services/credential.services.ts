@@ -1,36 +1,23 @@
 import { BadRequestException, Injectable, NotFoundException } from '@nestjs/common';
-import { Credential, ActionType, Prisma } from '@prisma/client';
+import { Prisma, Credential } from '@prisma/client';
 import { DataScope, UserContext } from '@app/shared/auth';
 import { EmployeeService } from '../../employee/services/employee.service';
 import { CredentialRepository, CredentialWithRelations } from '../repositories/credential.repository';
 import { CreateCredentialDto, CredentialQueryDto, UpdateCredentialDto } from '../dto/credential.dto';
-import { PrismaService } from '@app/shared/database';
 
 @Injectable()
 export class CredentialService {
     constructor(
         private readonly credentialRepository: CredentialRepository,
         private readonly employeeService: EmployeeService,
-        private readonly prisma: PrismaService,
-    ) { }
-
+    ) {}
 
     async getAllCredentials(
         query: CredentialQueryDto,
         scope: DataScope,
         user: UserContext,
     ) {
-        const {
-            page = 1,
-            limit = 10,
-            sortBy = 'createdAt',
-            sortOrder = 'desc',
-            search,
-            type,
-            employeeId,
-            departmentId,
-            organizationId,
-        } = query;
+        const { page = 1, limit = 10, sortBy = 'createdAt', sortOrder = 'desc', search, type, employeeId, departmentId, organizationId } = query;
 
         const where: Prisma.CredentialWhereInput = {
             ...(type && { type }),
@@ -46,16 +33,16 @@ export class CredentialService {
             ];
         }
 
-        const [items, total] = await this.prisma.$transaction([
-            this.prisma.credential.findMany({
-                where,
-                include: this.getDefaultInclude(),
-                orderBy: { [sortBy]: sortOrder },
-                skip: (page - 1) * limit,
-                take: limit,
-            }),
-            this.prisma.credential.count({ where }),
-        ]);
+        const items = await this.credentialRepository.findMany(
+            where,
+            { [sortBy]: sortOrder },
+            this.credentialRepository.getDefaultInclude(),
+            { page, limit },
+            undefined,
+            scope
+        );
+
+        const total = await this.credentialRepository.count(where, scope);
 
         return {
             items,
@@ -65,45 +52,20 @@ export class CredentialService {
         };
     }
 
-    private getDefaultInclude(): Prisma.CredentialInclude {
-        return {
-            employee: {
-                select: {
-                    id: true,
-                    name: true,
-                    departmentId: true,
-                    organizationId: true,
-                },
-            },
-        };
-    }
-
-
-    // async getEmployeePhotoCredential(employeeId:number){
-    //   return this.credentialRepository.getCredentialsByEmployeeId(employeeId, )
-    // }
-
     async getCredentialById(
         id: number,
         scope: DataScope,
         user: UserContext,
     ): Promise<CredentialWithRelations> {
-        const credential = await this.credentialRepository.findById(id, this.credentialRepository.getDefaultInclude());
+        const credential = await this.credentialRepository.findById(id, this.credentialRepository.getDefaultInclude(), scope);
 
-        if (!credential) {
-            throw new NotFoundException(`Credential with ID ${id} not found.`);
-        }
+        if (!credential) throw new NotFoundException(`Credential with ID ${id} not found.`);
 
-        const employeeId = credential.employeeId;
-        const employee = await this.employeeService.getEmployeeById(employeeId, scope, user);
-
-        if (!employee) {
-            throw new NotFoundException('Credential found, but access to the associated employee is denied.');
-        }
+        const employee = await this.employeeService.getEmployeeById(credential.employeeId, scope, user);
+        if (!employee) throw new NotFoundException('Access to the associated employee is denied.');
 
         return credential;
     }
-
 
     async getCredentialsByEmployeeId(
         employeeId: number,
@@ -111,33 +73,22 @@ export class CredentialService {
         user: UserContext,
     ): Promise<CredentialWithRelations[]> {
         const employee = await this.employeeService.getEmployeeById(employeeId, scope, user);
+        if (!employee) throw new NotFoundException('Employee not found or access denied.');
 
-        if (!employee) {
-            throw new NotFoundException('Employee not found or access denied.');
-        }
-
-        return this.credentialRepository.findByEmployeeId(employeeId);
+        return this.credentialRepository.findByEmployeeId(employeeId, scope);
     }
-
 
     async createCredential(
         dto: CreateCredentialDto,
         scope: DataScope,
         user: UserContext,
     ): Promise<CredentialWithRelations> {
-
-        const organizationId = dto.organizationId ? dto.organizationId : scope.organizationId
-
         const employee = await this.employeeService.getEmployeeById(dto.employeeId, scope, user);
+        if (!employee) throw new NotFoundException(`Employee with ID ${dto.employeeId} not found or access denied.`);
 
-        if (!employee) {
-            throw new NotFoundException(`Employee with ID ${dto.employeeId} not found or access denied.`);
+        if (dto.type === 'PHOTO' && !employee.photo) {
+            throw new BadRequestException('Employee photo is missing.');
         }
-
-        if (dto.type === ActionType.PHOTO && !employee.photo) {
-            throw new BadRequestException('Employee photo is missing. Please upload a photo first.');
-        }
-
 
         const data: Prisma.CredentialCreateInput = {
             code: dto.code,
@@ -145,10 +96,10 @@ export class CredentialService {
             additionalDetails: dto.additionalDetails,
             isActive: dto.isActive,
             employee: { connect: { id: dto.employeeId } },
-            organization: { connect: { id: organizationId } }
+            ...(scope.organizationId ? { organization: { connect: { id: scope.organizationId } } } : {}),
         };
 
-        return this.credentialRepository.create(data, this.credentialRepository.getDefaultInclude());
+        return this.credentialRepository.create(data, this.credentialRepository.getDefaultInclude(), scope);
     }
 
     async updateCredential(
@@ -160,12 +111,8 @@ export class CredentialService {
         const existingCredential = await this.getCredentialById(id, scope, user);
         const employee = await this.employeeService.getEmployeeById(existingCredential.employeeId, scope, user);
 
-        if (!existingCredential) {
-            throw new NotFoundException(`Credential with ID ${id} not found.`);
-        }
-
-        if (dto.type === ActionType.PHOTO && !employee.photo) {
-            throw new BadRequestException('Employee photo is missing. Please upload a photo first.');
+        if (dto.type === 'PHOTO' && !employee.photo) {
+            throw new BadRequestException('Employee photo is missing.');
         }
 
         const updateData: Prisma.CredentialUpdateInput = {
@@ -175,20 +122,15 @@ export class CredentialService {
             isActive: dto.isActive,
         };
 
-        return this.credentialRepository.update(id, updateData, this.credentialRepository.getDefaultInclude());
+        return this.credentialRepository.update(id, updateData, this.credentialRepository.getDefaultInclude(), scope);
     }
-
 
     async deleteCredential(
         id: number,
         scope: DataScope,
         user: UserContext,
     ): Promise<Credential> {
-        const existingCredential = await this.getCredentialById(id, scope, user);
-        if (!existingCredential) {
-            throw new NotFoundException(`Credential with ID ${id} not found.`);
-        }
-
-        return this.credentialRepository.deleteCredential(existingCredential.id);
+        await this.getCredentialById(id, scope, user);
+        return this.credentialRepository.deleteCredential(id, scope);
     }
 }

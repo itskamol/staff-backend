@@ -9,7 +9,7 @@ import { PaginationDto, PaginationResponseDto } from '../dto';
  */
 @Injectable()
 export abstract class BaseRepository<
-    TEntity extends { id: number; createdAt?: Date; isActive?: boolean},
+    TEntity extends { id: number; createdAt?: Date; isActive?: boolean },
     TCreateInput extends Record<string, unknown>,
     TUpdateInput extends Record<string, unknown>,
     TWhereInput extends Record<string, unknown> = Record<string, unknown>,
@@ -37,7 +37,6 @@ export abstract class BaseRepository<
         scope?: DataScope
     ): Record<string, unknown> {
         if (!scope) return where;
-
         const scopedWhere = { ...where };
 
         if (scope?.organizationId) {
@@ -115,11 +114,7 @@ export abstract class BaseRepository<
     /**
      * Find a record by unique identifier or throw NotFoundException
      */
-    async findByIdOrThrow(
-        id: number,
-        include?: TInclude,
-        scope?: DataScope
-    ): Promise<TEntity> {
+    async findByIdOrThrow(id: number, include?: TInclude, scope?: DataScope): Promise<TEntity> {
         if (!id) {
             throw new BadRequestException('ID is required');
         }
@@ -184,7 +179,7 @@ export abstract class BaseRepository<
     ): Promise<TEntity[]> {
         this.logger.debug(`Finding many ${this.modelName} with conditions:`, where);
 
-        const scopedWhere = this.applyDataScope(where || {}, scope);
+        const scopedWhere = this.applyDataScope(where, scope)
 
         const options: {
             where: Record<string, unknown>;
@@ -222,7 +217,6 @@ export abstract class BaseRepository<
         select?: TSelect
     ): Promise<PaginationResponseDto<TEntity>> {
         this.logger.debug(`Finding paginated ${this.modelName} with conditions:`, where);
-
         const [data, total] = await Promise.all([
             this.findMany(where, orderBy, include, pagination, select, scope),
             this.count(where, scope),

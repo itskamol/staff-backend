@@ -1,5 +1,5 @@
 import { QueryDto } from '@app/shared/utils';
-import { ApiProperty, PartialType } from '@nestjs/swagger';
+import { ApiProperty, OmitType, PartialType } from '@nestjs/swagger';
 import { ActionType } from '@prisma/client';
 import {
     IsBoolean,
@@ -11,7 +11,13 @@ import {
     ValidateIf,
     IsInt,
     IsEnum,
+    IsArray,
 } from 'class-validator';
+import { CreateCredentialDto } from '../../credential/dto/credential.dto';
+
+class EmployeeCredentialDto extends OmitType(CreateCredentialDto, ['employeeId', 'organizationId']) {
+
+}
 
 export class CreateEmployeeDto {
     @ApiProperty({
@@ -115,6 +121,15 @@ export class CreateEmployeeDto {
     @IsOptional()
     @IsBoolean()
     isActive?: boolean;
+
+    @ApiProperty({
+        description: 'Employee credentials',
+        required: false,
+        type: [EmployeeCredentialDto]
+    })
+    @IsOptional()
+    @IsArray()
+    credentials: EmployeeCredentialDto[];
 }
 
 export class UpdateEmployeeDto {

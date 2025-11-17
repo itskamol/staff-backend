@@ -1,6 +1,7 @@
 import { Injectable } from '@nestjs/common';
-import { Action, ActionType, Credential, Prisma } from '@prisma/client';
+import { Credential, Prisma } from '@prisma/client';
 import { PrismaService } from '@app/shared/database';
+import { DataScope } from '@app/shared/auth';
 import { BaseRepository } from 'apps/dashboard-api/src/shared/repositories/base.repository';
 
 export type CredentialWithRelations = Credential & {
@@ -22,7 +23,7 @@ export class CredentialRepository extends BaseRepository<
 > {
     protected readonly modelName = 'Credential';
 
-    constructor(prisma: PrismaService) {
+    constructor(protected readonly prisma: PrismaService) {
         super(prisma);
     }
 
@@ -40,30 +41,26 @@ export class CredentialRepository extends BaseRepository<
             }
         };
     }
-    
-   
-    async findByEmployeeId(employeeId: number): Promise<CredentialWithRelations[]> {
-        return await this.findMany(
+
+    async findByEmployeeId(employeeId: number, scope?: DataScope): Promise<CredentialWithRelations[]> {
+        return this.findMany(
             { employeeId },
             { createdAt: 'desc' },
-            this.getDefaultInclude()
+            this.getDefaultInclude(),
+            undefined,
+            undefined,
+            scope
         );
     }
 
-
     async findByCodeAndType(code: string, type: string): Promise<CredentialWithRelations | null> {
-        return await this.getDelegate().findFirst({
-            where: {
-                code,
-                type: type as ActionType,
-                isActive: true
-            },
+        return this.getDelegate().findFirst({
+            where: { code, type: type as any, isActive: true },
             include: this.getDefaultInclude()
         });
     }
 
-   
-    async deleteCredential(id: number): Promise<Credential> {
-        return await this.delete(id);
+    async deleteCredential(id: number, scope?: DataScope): Promise<Credential> {
+        return this.delete(id, scope);
     }
 }

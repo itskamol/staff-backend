@@ -1,3 +1,4 @@
+import { DataScope } from '@app/shared/auth';
 import { PrismaService } from '@app/shared/database';
 import { Injectable } from '@nestjs/common';
 import { Gate, Prisma } from '@prisma/client';
@@ -39,16 +40,16 @@ export class GateRepository extends BaseRepository<
         });
     }
 
-    async findWithDevices(id: number) {
+    async findWithDevices(id: number, scope: DataScope) {
         return this.findById(id, {
             devices: {
                 where: { isActive: true },
                 orderBy: { name: 'asc' },
             },
-        });
+        },scope);
     }
 
-    async getGateStatistics(id: number) {
+    async getGateStatistics(id: number, scope: DataScope) {
         const gate = await this.findById(id, {
             devices: true,
             _count: {
@@ -57,7 +58,7 @@ export class GateRepository extends BaseRepository<
                     gateEmployees: true,
                 },
             },
-        });
+        }, scope);
 
         if (!gate) {
             return null;

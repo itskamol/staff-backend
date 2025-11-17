@@ -50,47 +50,6 @@ export class EmployeeRepository extends BaseRepository<
     }
 
     /**
-     * Override data scope application for employee-specific logic
-     */
-    protected applyDataScope(
-        where: Record<string, unknown>,
-        scope?: DataScope,
-        userRole?: Role
-    ): Record<string, unknown> {
-        if (!scope || !userRole) return where;
-
-        const scopedWhere = { ...where };
-
-        // Apply role-based scoping
-        switch (userRole) {
-            case Role.DEPARTMENT_LEAD:
-                // Department leads can only see employees in their department
-                scopedWhere.id = { in: scope.departments };
-                break;
-
-            case Role.HR:
-                // HR can see employees from their organization's departments
-                scopedWhere.department = {
-                    organizationId: scope.organizationId
-                };
-                break;
-
-            case Role.GUARD:
-                // Guards have basic read access, apply organization scope
-                scopedWhere.department = {
-                    organizationId: scope.organizationId
-                };
-                break;
-
-            case Role.ADMIN:
-                // Admins can see all employees - no additional scoping
-                break;
-        }
-
-        return scopedWhere;
-    }
-
-    /**
      * Find employees with role-based scoping
      */
     async findManyWithRoleScope(
@@ -101,7 +60,7 @@ export class EmployeeRepository extends BaseRepository<
         scope?: DataScope,
         userRole?: Role
     ): Promise<EmployeeWithRelations[]> {
-        const scopedWhere = this.applyDataScope(where || {}, scope, userRole) as Prisma.EmployeeWhereInput;
+        const scopedWhere = this.applyDataScope(where || {}, scope) as Prisma.EmployeeWhereInput;
 
         const options: Prisma.EmployeeFindManyArgs = {
             where: scopedWhere,
@@ -128,26 +87,11 @@ export class EmployeeRepository extends BaseRepository<
         userRole?: Role
     ): Promise<EmployeeWithRelations | null> {
         const where = { id };
-        const scopedWhere = this.applyDataScope(where, scope, userRole) as Prisma.EmployeeWhereInput;
+        const scopedWhere = this.applyDataScope(where, scope) as Prisma.EmployeeWhereInput;
 
         return await this.getDelegate().findFirst({
             where: scopedWhere,
             include: include || this.getDefaultInclude(),
-        });
-    }
-
-    /**
-     * Count employees with role-based scoping
-     */
-    async countWithRoleScope(
-        where?: Prisma.EmployeeWhereInput,
-        scope?: DataScope,
-        userRole?: Role
-    ): Promise<number> {
-        const scopedWhere = this.applyDataScope(where || {}, scope, userRole) as Prisma.EmployeeWhereInput;
-
-        return await this.getDelegate().count({
-            where: scopedWhere,
         });
     }
 
@@ -219,7 +163,7 @@ export class EmployeeRepository extends BaseRepository<
         userRole?: Role
     ): Promise<Prisma.BatchPayload> {
         // Apply role-based scoping to the where clause
-        const scopedWhere = this.applyDataScope(where, scope, userRole) as Prisma.EmployeeWhereInput;
+        const scopedWhere = this.applyDataScope(where, scope) as Prisma.EmployeeWhereInput;
 
         // For HR role, prevent department changes to unauthorized departments
         if (userRole === Role.HR && scope?.organizationId && data.department && typeof data.department === 'object' && 'connect' in data.department) {

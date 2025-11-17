@@ -1,46 +1,35 @@
-import { PrismaService } from '@app/shared/database';
 import { Injectable } from '@nestjs/common';
-import { CreateEmployeePlanDto, UpdateEmployeePlanDto } from './employee-plan.dto';
-import { Prisma } from '@prisma/client';
+import { Prisma, EmployeePlan } from '@prisma/client';
+import { PrismaService } from '@app/shared/database';
+import { BaseRepository } from '../../shared/repositories/base.repository';
 
+type EmployeePlanWithEmployees = EmployeePlan & {
+    employees?: { id: number; name: string; photo?: string }[];
+};
 
 @Injectable()
-export class EmployeePlanRepository {
-    constructor(private readonly prisma: PrismaService) { }
+export class EmployeePlanRepository extends BaseRepository<
+    EmployeePlanWithEmployees,
+    Prisma.EmployeePlanCreateInput,
+    Prisma.EmployeePlanUpdateInput,
+    Prisma.EmployeePlanWhereInput,
+    Prisma.EmployeePlanWhereUniqueInput,
+    Prisma.EmployeePlanOrderByWithRelationInput,
+    Prisma.EmployeePlanInclude
+> {
+    protected readonly modelName = Prisma.ModelName.EmployeePlan;
 
-    async create(data: CreateEmployeePlanDto) {
-        return this.prisma.employeePlan.create({ data });
+    constructor(protected readonly prisma: PrismaService) {
+        super(prisma);
     }
 
-    async findAll() {
-        return this.prisma.employeePlan.findMany({
-            include: { employees: true },
-            orderBy: { id: 'desc' },
-        });
+    protected getDelegate() {
+        return this.prisma.employeePlan;
     }
 
-    async findOne(query: Prisma.EmployeePlanWhereInput) {
-        return this.prisma.employeePlan.findFirst({ where: query })
-    }
-
-    async findById(id: number) {
-        return this.prisma.employeePlan.findUnique({
-            where: { id },
-            include: { employees: true },
-        });
-    }
-
-    async update(id: number, data: UpdateEmployeePlanDto) {
-        return this.prisma.employeePlan.update({
-            where: { id },
-            data,
-        });
-    }
-
-    async delete(id: number) {
-        return this.prisma.employeePlan.delete({ where: { id } });
-    }
-
+    /**
+     * Assign employees to a plan
+     */
     async assignEmployees(employeePlanId: number, employeeIds: number[]) {
 
         return this.prisma.employee.updateMany({
@@ -49,53 +38,29 @@ export class EmployeePlanRepository {
         });
     }
 
-    async findMany(params: {
-        skip?: number;
-        take?: number;
-        where?: any;
-        orderBy?: any;
-        select?: any;
-        include?: any;
-    }) {
-        const { skip = 0, take = 50, where = {}, orderBy = { id: 'asc' }, select, include } = params;
-
-        const args: any = { skip, take, where, orderBy };
-        if (select) args.select = select;
-        else if (include) args.include = include;
-
-        return this.prisma.employee.findMany(args);
-    }
-
+    /**
+     * Find many plans with default include
+     */
     async findManyPlan(params: {
         skip?: number;
         take?: number;
-        where?: any;
-        orderBy?: any;
-        include?: any;
+        where?: Prisma.EmployeePlanWhereInput;
+        orderBy?: Prisma.EmployeePlanOrderByWithRelationInput;
+        include?: Prisma.EmployeePlanInclude;
+        scope?: any; // DataScope
     }) {
-        const { skip = 0, take = 10, where = {}, orderBy = { id: 'desc' }, include } = params;
+        const { skip = 0, take = 10, where = {}, orderBy = { id: 'desc' }, include, scope } = params;
 
-        return this.prisma.employeePlan.findMany(
-            {
-                skip,
-                take,
-                where,
-                orderBy,
-                include: include ?? {
-                    employees: {
-                        select: {
-                            id: true,
-                            name: true,
-                            photo: true,
-                        },
-                    },
-                    organization: {
-                        select: {
-                            fullName: true
-                        }
-                    }
-                },
-            }
+        return this.findMany(
+            where,
+            orderBy,
+            include ?? {
+                employees: { select: { id: true, name: true, photo: true } },
+                organization: { select: { fullName: true } },
+            },
+            { page: Math.floor(skip / take) + 1, limit: take },
+            undefined,
+            scope
         );
     }
 }
