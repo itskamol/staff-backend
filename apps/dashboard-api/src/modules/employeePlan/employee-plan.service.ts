@@ -1,27 +1,29 @@
 import { BadRequestException, Injectable, NotFoundException } from '@nestjs/common';
 import { EmployeePlanRepository } from './employee-plan.repository';
-import { AssignEmployeesDto, CreateEmployeePlanDto, EmployeePlanQueryDto, UpdateEmployeePlanDto } from './employee-plan.dto';
+import {
+    AssignEmployeesDto,
+    CreateEmployeePlanDto,
+    EmployeePlanQueryDto,
+    UpdateEmployeePlanDto,
+} from './employee-plan.dto';
 import { PrismaService } from '@app/shared/database';
 import { DataScope, UserContext } from '@app/shared/auth';
 import { EmployeeService } from '../employee/services/employee.service';
 
 @Injectable()
 export class EmployeePlanService {
-    constructor(private readonly repo: EmployeePlanRepository,
+    constructor(
+        private readonly repo: EmployeePlanRepository,
         private readonly prisma: PrismaService,
         private readonly employeeService: EmployeeService
-    ) { }
+    ) {}
 
-    async create(
-        dto: CreateEmployeePlanDto,
-        user: UserContext,
-        scope: DataScope) {
-
+    async create(dto: CreateEmployeePlanDto, user: UserContext, scope: DataScope) {
         try {
-            const organizationId = dto.organizationId ? dto.organizationId : scope.organizationId
+            const organizationId = dto.organizationId ? dto.organizationId : scope.organizationId;
             return this.repo.create({ ...dto, organizationId });
         } catch (error) {
-            throw new BadRequestException({ message: error.message })
+            throw new BadRequestException({ message: error.message });
         }
     }
 
@@ -29,7 +31,7 @@ export class EmployeePlanService {
         const where: any = {};
         if (query.isActive !== undefined) where.isActive = query.isActive;
 
-        let search = query.search
+        let search = query.search;
 
         if (search) {
             where.OR = [
@@ -52,11 +54,16 @@ export class EmployeePlanService {
             orderBy,
         });
 
+        const formattedData = data.map(item => ({
+            ...item,
+            weekdays: item.weekdays ? item.weekdays.split(',') : [],
+        }));
+
         // Total count olish
         const total = await this.prisma.employeePlan.count({ where });
 
         return {
-            data,
+            formattedData,
             total,
             page: query.page || 1,
             limit: query.limit || 10,
@@ -66,7 +73,11 @@ export class EmployeePlanService {
     async findById(id: number) {
         const plan = await this.repo.findById(id);
         if (!plan) throw new NotFoundException('Employee plan not found');
-        return plan;
+
+        return {
+            ...plan,
+            weekdays: plan.weekdays ? plan.weekdays.split(',') : [],
+        };
     }
 
     async update(id: number, dto: UpdateEmployeePlanDto) {
@@ -79,18 +90,18 @@ export class EmployeePlanService {
         return this.repo.delete(id);
     }
 
-    async assignEmployees(dto: AssignEmployeesDto, scope:DataScope, user: UserContext ) {
+    async assignEmployees(dto: AssignEmployeesDto, scope: DataScope, user: UserContext) {
         const plan = await this.findById(dto.employeePlanId);
 
         if (plan.employees && plan.employees.length) {
             const defaultPlan = await this.repo.findOne({ isDefault: true });
-            const ids = plan.employees.map(e => e.id)
-            
+            const ids = plan.employees.map(e => e.id);
+
             // TODD: Update Many from employeeService
             const dto = {
-                employeePlanId: defaultPlan?.id || null
-            }
-            await this.employeeService.updateManyEmployees(ids,dto, scope, user);
+                employeePlanId: defaultPlan?.id || null,
+            };
+            await this.employeeService.updateManyEmployees(ids, dto, scope, user);
         }
 
         const employees = await this.repo.findMany({
@@ -111,5 +122,4 @@ export class EmployeePlanService {
             invalidIds,
         };
     }
-
 }

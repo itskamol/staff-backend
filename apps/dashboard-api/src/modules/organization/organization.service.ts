@@ -1,4 +1,4 @@
-import { Injectable } from '@nestjs/common';
+import { ConflictException, Injectable } from '@nestjs/common';
 import { OrganizationRepository } from './organization.repository';
 import { Organization, Prisma } from '@prisma/client';
 import { DataScope } from '@app/shared/auth';
@@ -36,7 +36,7 @@ export class OrganizationService {
                 },
                 { page, limit },
                 undefined,
-                scope,
+                scope
             ),
             this.organizationRepository.count(filters, scope),
         ]);
@@ -60,20 +60,24 @@ export class OrganizationService {
             undefined,
             undefined,
             undefined,
-            scope,
+            scope
         );
     }
 
     async createOrganization(data: CreateOrganizationDto): Promise<Organization> {
-        const input : Prisma.OrganizationCreateInput = { ...data };
+        const input: Prisma.OrganizationCreateInput = { ...data };
 
-        input.policies = { 
+        const exsists = await this.organizationRepository.findUnique({ shortName: data.shortName });
+
+        if (exsists) throw new ConflictException('shortName already exists!');
+
+        input.policies = {
             create: {
                 title: 'Default Policy',
                 description: 'Default policy created with organization',
                 isDefault: true,
-            }
-        }
+            },
+        };
 
         input.employeePlans = {
             create: {
@@ -82,12 +86,13 @@ export class OrganizationService {
                 startTime: '09:00',
                 extraTime: '00:10',
                 weekdays: 'Monday',
-                endTime: '18:00'
-            }
-        }
+                endTime: '18:00',
+            },
+        };
+
 
         const organization = await this.organizationRepository.create(input);
-        
+
         return organization;
     }
 
@@ -95,7 +100,7 @@ export class OrganizationService {
         return this.organizationRepository.update(id, data, undefined, scope);
     }
 
-    async deleteOrganization(id: number, scope?: DataScope) {       
+    async deleteOrganization(id: number, scope?: DataScope) {
         return this.organizationRepository.delete(id, scope);
     }
 }

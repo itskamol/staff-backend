@@ -51,7 +51,7 @@ model Department {
   employees       Employee[]
   departmentUsers DepartmentUser[]
 
-  @@unique([organizationId, fullName], name: "org_dept_fullname_unique")
+  @@unique([organizationId, shortName], name: "org_dept_shortname_unique")
   @@index([organizationId])
   @@index([organizationId, parentId])
   @@index([organizationId, isActive])

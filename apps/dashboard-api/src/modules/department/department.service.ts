@@ -1,4 +1,4 @@
-import { Injectable } from '@nestjs/common';
+import { ConflictException, Injectable } from '@nestjs/common';
 import { DepartmentRepository } from './department.repository';
 import { Department, Prisma } from '@prisma/client';
 import { DataScope } from '@app/shared/auth';
@@ -8,10 +8,7 @@ import { CreateDepartmentDto, DepartmentQueryDto, UpdateDepartmentDto } from './
 export class DepartmentService {
     constructor(private readonly departmentRepository: DepartmentRepository) {}
 
-    async getDepartments(
-        query: DepartmentQueryDto,
-        scope?: DataScope
-    ) {
+    async getDepartments(query: DepartmentQueryDto, scope?: DataScope) {
         const {
             page,
             limit,
@@ -20,7 +17,7 @@ export class DepartmentService {
             search,
             isActive,
             organizationId,
-            parentId
+            parentId,
         } = query;
 
         const filters: Prisma.DepartmentWhereInput = {};
@@ -30,8 +27,8 @@ export class DepartmentService {
                 { shortName: { contains: search, mode: 'insensitive' } },
             ];
         }
-        if(parentId){
-            filters.parentId = parentId
+        if (parentId) {
+            filters.parentId = parentId;
         }
 
         if (typeof isActive === 'boolean') {
@@ -46,7 +43,7 @@ export class DepartmentService {
             filters,
             { [sort]: order },
             {
-               childrens: true,
+                childrens: true,
                 _count: { select: { employees: true, childrens: true } },
             },
             { page, limit },
@@ -87,6 +84,13 @@ export class DepartmentService {
         { organizationId, parentId, ...data }: CreateDepartmentDto,
         scope: DataScope
     ): Promise<Department> {
+        const orgId = organizationId || scope.organizationId;
+        const exsists = await this.departmentRepository.findUnique({
+            org_dept_shortname_unique: { shortName: data.shortName, organizationId: orgId },
+        });
+
+        if (exsists) throw new ConflictException('shortname already exists this organization')
+
         return this.departmentRepository.create(
             {
                 ...data,
