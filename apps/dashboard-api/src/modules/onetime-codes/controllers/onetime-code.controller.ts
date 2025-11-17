@@ -1,12 +1,11 @@
 import { Controller, Get, Post, Put, Delete, Body, Param, Query } from '@nestjs/common';
 import { ApiTags, ApiBearerAuth } from '@nestjs/swagger';
-import { Roles, Role, User as CurrentUser, DataScope } from '@app/shared/auth';
+import { Roles, Role, User as CurrentUser, DataScope, Scope } from '@app/shared/auth';
 import { QueryDto } from '@app/shared/utils';
 import { OnetimeCodeService } from '../services/onetime-code.service';
 import { UserContext } from 'apps/dashboard-api/src/shared/interfaces';
 import { CreateOnetimeCodeDto, OnetimeCodeWithRelationsDto, UpdateOnetimeCodeDto, ActivateCodeDto } from '../dto/onetime-code.dto';
 import { ApiCrudOperation } from 'apps/dashboard-api/src/shared/utils';
-import { Scope } from 'apps/dashboard-api/src/shared/decorators';
 
 @ApiTags('Onetime Codes')
 @Controller('onetime-codes')

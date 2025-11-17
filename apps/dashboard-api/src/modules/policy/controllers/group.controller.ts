@@ -1,11 +1,10 @@
 import { Controller, Get, Post, Put, Delete, Body, Param, Query } from '@nestjs/common';
 import { ApiTags, ApiBearerAuth, ApiExtraModels } from '@nestjs/swagger';
-import { Roles, Role, User as CurrentUser, DataScope } from '@app/shared/auth';
+import { Roles, Role, User as CurrentUser, DataScope, Scope } from '@app/shared/auth';
 import { GroupService } from '../services/group.service';
 import { UserContext } from 'apps/dashboard-api/src/shared/interfaces';
 import { CreateGroupDto, GroupDto, UpdateGroupDto, AddResourceToGroupDto, GroupQueryDto } from '../dto/group.dto';
 import { ApiCrudOperation } from 'apps/dashboard-api/src/shared/utils';
-import { Scope } from 'apps/dashboard-api/src/shared/decorators';
 
 @ApiTags('Policy Groups')
 @Controller('policies/groups')

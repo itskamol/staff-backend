@@ -1,12 +1,11 @@
 import { Controller, Get, Post, Put, Delete, Body, Param, Query } from '@nestjs/common';
 import { ApiTags, ApiBearerAuth, ApiExtraModels } from '@nestjs/swagger';
-import { Roles, Role, User as CurrentUser, DataScope } from '@app/shared/auth';
+import { Roles, Role, User as CurrentUser, DataScope, Scope } from '@app/shared/auth';
 import { QueryDto } from '@app/shared/utils';
 import { PolicyService } from '../services/policy.service';
 import { UserContext } from 'apps/dashboard-api/src/shared/interfaces';
 import { CreatePolicyDto, PolicyDto, PolicyQueryDto, UpdatePolicyDto } from '../dto/policy.dto';
 import { ApiCrudOperation } from 'apps/dashboard-api/src/shared/utils';
-import { Scope } from 'apps/dashboard-api/src/shared/decorators';
 
 @ApiTags('Policies')
 @Controller('policies')

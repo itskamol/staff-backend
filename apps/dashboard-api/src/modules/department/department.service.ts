@@ -1,7 +1,6 @@
 import { Injectable } from '@nestjs/common';
 import { DepartmentRepository } from './department.repository';
 import { Department, Prisma } from '@prisma/client';
-import { QueryDto } from '../../shared/dto/query.dto';
 import { DataScope } from '@app/shared/auth';
 import { CreateDepartmentDto, DepartmentQueryDto, UpdateDepartmentDto } from './dto';
 

@@ -17,9 +17,8 @@ import {
     OrganizationResponseDto,
     UpdateOrganizationDto,
 } from './dto';
-import { DataScope, NoScoping, Role, Roles } from '@app/shared/auth';
+import { DataScope, NoScoping, Role, Roles, Scope } from '@app/shared/auth';
 import { ApiCrudOperation } from '../../shared/utils';
-import { Scope } from '../../shared/decorators';
 import { QueryDto } from '@app/shared/utils';
 
 @ApiTags('Organizations')
