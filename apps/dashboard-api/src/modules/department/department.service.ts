@@ -42,7 +42,10 @@ export class DepartmentService {
         const result = await this.departmentRepository.findManyWithPagination(
             filters,
             { [sort]: order },
-            { _count: { select: { employees: true, childrens: true } } },
+            {
+               childrens: true,
+                _count: { select: { employees: true, childrens: true } },
+            },
             { page, limit },
             scope
         );
@@ -54,7 +57,10 @@ export class DepartmentService {
         return this.departmentRepository.findMany(
             {},
             {},
-            { _count: { select: { employees: true, childrens: true } } },
+            {
+                childrens: true,
+                _count: { select: { employees: true, childrens: true } },
+            },
             undefined,
             undefined,
             scope

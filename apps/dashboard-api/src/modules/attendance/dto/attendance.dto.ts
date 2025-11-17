@@ -69,6 +69,12 @@ export class UpdateAttendanceDto {
 }
 
 export class AttendanceQueryDto {
+
+  @ApiPropertyOptional()
+  @IsOptional()
+  @IsString()
+  search?: string
+
   @ApiPropertyOptional()
   @IsOptional()
   @Type(() => Number)

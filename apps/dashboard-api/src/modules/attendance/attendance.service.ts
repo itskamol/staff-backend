@@ -8,8 +8,8 @@ import { DataScope, UserContext } from '@app/shared/auth';
 export class AttendanceService {
     constructor(
         private readonly repo: AttendanceRepository,
-        private readonly prisma: PrismaService,
-    ) { }
+        private readonly prisma: PrismaService
+    ) {}
 
     async create(dto: CreateAttendanceDto) {
         try {
@@ -27,7 +27,7 @@ export class AttendanceService {
             });
 
             if (existing.length > 0) {
-                return existing
+                return existing;
             }
 
             return this.repo.create({
@@ -61,6 +61,15 @@ export class AttendanceService {
             };
         }
 
+        if (query.search) {
+            where.employee = {
+                name: {
+                    contains: query.search,
+                    mode: 'insensitive',
+                },
+            };
+        }
+
         const page = query.page ?? 1;
         const limit = query.limit ?? 20;
         const skip = (page - 1) * limit;
@@ -72,7 +81,10 @@ export class AttendanceService {
             include: {
                 employee: {
                     select: {
-                        id: true, name: true, photo: true, department: {
+                        id: true,
+                        name: true,
+                        photo: true,
+                        department: {
                             select: {
                                 id: true,
                                 fullName: true,
