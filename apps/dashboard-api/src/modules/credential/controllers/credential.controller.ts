@@ -8,12 +8,12 @@ import { CredentialService } from '../services/credential.services';
 @ApiTags('Credentials')
 @ApiBearerAuth()
 @Controller('credentials')
+@Roles(Role.ADMIN, Role.HR, Role.DEPARTMENT_LEAD, Role.GUARD)
 export class CredentialController {
     constructor(private readonly credentialService: CredentialService) { }
 
 
     @Post()
-    @Roles(Role.ADMIN, Role.HR)
     @ApiOperation({ summary: 'Create a new credential and assign it to an employee' })
     @ApiResponse({ status: 201, type: CredentialResponseDto })
     async create(
@@ -25,7 +25,6 @@ export class CredentialController {
     }
 
     @Get()
-    @Roles(Role.ADMIN, Role.HR, Role.DEPARTMENT_LEAD, Role.GUARD)
     @ApiOperation({ summary: 'Get all credentials with filters, search and pagination' })
     @ApiResponse({ status: 200, type: [CredentialResponseDto] })
     async getAll(
@@ -38,7 +37,6 @@ export class CredentialController {
 
 
     @Get('/by-employee/:employeeId')
-    @Roles(Role.ADMIN, Role.HR, Role.DEPARTMENT_LEAD, Role.GUARD)
     @ApiParam({ name: 'employeeId', type: Number })
     @ApiOperation({ summary: 'Get all credentials for a specific employee' })
     @ApiResponse({ status: 200, type: [CredentialResponseDto] })
@@ -51,7 +49,6 @@ export class CredentialController {
     }
 
     @Get('/get-action-type')
-    @Roles(Role.ADMIN, Role.HR, Role.DEPARTMENT_LEAD, Role.GUARD)
     @ApiOperation({ summary: 'Get Action type' })
     @ApiResponse({ status: 200, type: Object })
     async getActionType() {
@@ -60,7 +57,6 @@ export class CredentialController {
 
 
     @Get(':id')
-    @Roles(Role.ADMIN, Role.HR, Role.DEPARTMENT_LEAD, Role.GUARD)
     @ApiParam({ name: 'id', type: Number })
     @ApiOperation({ summary: 'Get a credential by its ID' })
     @ApiResponse({ status: 200, type: CredentialResponseDto })
@@ -74,7 +70,6 @@ export class CredentialController {
 
 
     @Put(':id')
-    @Roles(Role.ADMIN, Role.HR)
     @ApiParam({ name: 'id', type: Number })
     @ApiOperation({ summary: 'Update an existing credential' })
     @ApiResponse({ status: 200, type: CredentialResponseDto })
@@ -89,7 +84,6 @@ export class CredentialController {
 
 
     @Delete(':id')
-    @Roles(Role.ADMIN, Role.HR)
     @ApiParam({ name: 'id', type: Number })
     @ApiOperation({ summary: 'Delete a credential by ID' })
     @ApiResponse({ status: 200, description: 'Credential successfully deleted' })

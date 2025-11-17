@@ -8,9 +8,7 @@ import { CreateGateDto, UpdateGateDto } from '../dto/gate.dto';
 
 @Injectable()
 export class GateService {
-    constructor(
-        private readonly gateRepository: GateRepository
-    ) { }
+    constructor(private readonly gateRepository: GateRepository) {}
 
     async findAll(query: QueryDto, scope: DataScope, user: UserContext) {
         const { page, limit, sort = 'createdAt', order = 'desc', search } = query;
@@ -34,8 +32,8 @@ export class GateService {
                 },
                 organization: {
                     select: {
-                        fullName: true
-                    }
+                        fullName: true,
+                    },
                 },
                 _count: {
                     select: {
@@ -49,7 +47,7 @@ export class GateService {
         );
     }
 
-    async findOne(id: number, user: UserContext) {
+    async findOne(id: number, scope: DataScope) {
         const gate = await this.gateRepository.findById(id, {
             devices: {
                 include: {
@@ -60,8 +58,8 @@ export class GateService {
             },
             gateEmployees: {
                 select: {
-                    employeeId: true
-                }
+                    employeeId: true,
+                },
             },
             _count: {
                 select: {
@@ -69,7 +67,7 @@ export class GateService {
                     gateEmployees: true,
                 },
             },
-        });
+        }, scope);
 
         if (!gate) {
             throw new NotFoundException('Gate not found');
@@ -79,12 +77,13 @@ export class GateService {
     }
 
     async create(createGateDto: CreateGateDto, scope: DataScope) {
+        const organizationId = createGateDto.organizationId
+            ? createGateDto.organizationId
+            : scope.organizationId;
 
-        const organizationId = createGateDto.organizationId ? createGateDto.organizationId : scope.organizationId
-
-        const dto = { ...createGateDto, organizationId }
+        const dto = { ...createGateDto, organizationId };
         return this.gateRepository.create(
-            { ...dto, },
+            { ...dto },
             {
                 _count: {
                     select: {
@@ -97,17 +96,22 @@ export class GateService {
         );
     }
 
-    async update(id: number, updateGateDto: UpdateGateDto, user: UserContext) {
-        await this.findOne(id, user);
+    async update(id: number, updateGateDto: UpdateGateDto, scope: DataScope) {
+        await this.findOne(id, scope);
 
-        return this.gateRepository.update(id, updateGateDto, {
-            _count: {
-                select: {
-                    devices: true,
-                    gateEmployees: true,
+        return this.gateRepository.update(
+            id,
+            updateGateDto,
+            {
+                _count: {
+                    select: {
+                        devices: true,
+                        gateEmployees: true,
+                    },
                 },
             },
-        });
+            scope
+        );
     }
 
     async remove(id: number, scope: DataScope, user: UserContext) {
@@ -117,7 +121,7 @@ export class GateService {
                 _count: {
                     select: {
                         devices: true,
-                        gateEmployees: true
+                        gateEmployees: true,
                     },
                 },
             },
@@ -137,8 +141,8 @@ export class GateService {
         return this.gateRepository.delete(id, scope);
     }
 
-    async getGateStatistics(id: number, user: UserContext) {
-        const statistics = await this.gateRepository.getGateStatistics(id);
+    async getGateStatistics(id: number, scope: DataScope) {
+        const statistics = await this.gateRepository.getGateStatistics(id, scope);
 
         if (!statistics) {
             throw new NotFoundException('Gate not found');
@@ -147,8 +151,8 @@ export class GateService {
         return statistics;
     }
 
-    async getGateWithDevices(id: number, user: UserContext) {
-        const gate = await this.gateRepository.findWithDevices(id);
+    async getGateWithDevices(id: number, scope: DataScope) {
+        const gate = await this.gateRepository.findWithDevices(id, scope);
 
         if (!gate) {
             throw new NotFoundException('Gate not found');

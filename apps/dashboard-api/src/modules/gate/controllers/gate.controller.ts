@@ -11,11 +11,11 @@ import { ApiCrudOperation } from 'apps/dashboard-api/src/shared/utils';
 @Controller('gates')
 @ApiExtraModels(GateDto)
 @ApiBearerAuth()
+@Roles(Role.ADMIN, Role.GUARD, Role.HR)
 export class GateController {
     constructor(private readonly gateService: GateService) {}
 
     @Get()
-    @Roles(Role.ADMIN, Role.GUARD)
     @ApiCrudOperation(GateDto, 'list', {
         summary: 'Get all gates with pagination',
         includeQueries: {
@@ -33,40 +33,30 @@ export class GateController {
     }
 
     @Get(':id')
-    @Roles(Role.ADMIN, Role.GUARD)
     @ApiCrudOperation(GateDto, 'get', { summary: 'Get gate by ID' })
-    async findOne(@Param('id') id: number, @CurrentUser() user: UserContext) {
-        return await this.gateService.findOne(id, user);
+    async findOne(@Param('id') id: number, @Scope() scope: DataScope) {
+        return await this.gateService.findOne(id, scope);
     }
 
     @Get(':id/statistics')
-    @Roles(Role.ADMIN, Role.GUARD)
-    @ApiCrudOperation(null, 'get', { 
+    @ApiCrudOperation(null, 'get', {
         summary: 'Get gate statistics',
         errorResponses: { notFound: true },
     })
-    async getStatistics(
-        @Param('id') id: number,
-        @CurrentUser() user: UserContext
-    ) {
-        return await this.gateService.getGateStatistics(id, user);
+    async getStatistics(@Param('id') id: number, @Scope() scope: DataScope) {
+        return await this.gateService.getGateStatistics(id, scope);
     }
 
     @Get(':id/devices')
-    @Roles(Role.ADMIN, Role.GUARD)
-    @ApiCrudOperation(null, 'get', { 
+    @ApiCrudOperation(null, 'get', {
         summary: 'Get gate with active devices',
         errorResponses: { notFound: true },
     })
-    async getWithDevices(
-        @Param('id') id: number,
-        @CurrentUser() user: UserContext
-    ) {
-        return await this.gateService.getGateWithDevices(id, user);
+    async getWithDevices(@Param('id') id: number, @Scope() scope: DataScope) {
+        return await this.gateService.getGateWithDevices(id, scope);
     }
 
     @Post()
-    @Roles(Role.ADMIN, Role.DEPARTMENT_LEAD, Role.HR)
     @ApiCrudOperation(GateDto, 'create', {
         body: CreateGateDto,
         summary: 'Create new gate',
@@ -76,7 +66,6 @@ export class GateController {
     }
 
     @Put(':id')
-    @Roles(Role.ADMIN)
     @ApiCrudOperation(GateDto, 'update', {
         body: UpdateGateDto,
         summary: 'Update existing gate',
@@ -85,13 +74,12 @@ export class GateController {
     async update(
         @Param('id') id: number,
         @Body() updateGateDto: UpdateGateDto,
-        @CurrentUser() user: UserContext
+        @Scope() scope: DataScope
     ) {
-        return await this.gateService.update(id, updateGateDto, user);
+        return await this.gateService.update(id, updateGateDto, scope);
     }
 
     @Delete(':id')
-    @Roles(Role.ADMIN)
     @ApiCrudOperation(null, 'delete', {
         summary: 'Delete gate by ID',
         errorResponses: { notFound: true, forbidden: true },

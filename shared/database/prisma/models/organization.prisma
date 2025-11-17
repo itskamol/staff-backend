@@ -25,6 +25,7 @@ model Organization {
   actions        Action[]
   gates          Gate[]
   attendances    Attendance[]
+  devices        Device[]
 
   @@map("organizations")
 }

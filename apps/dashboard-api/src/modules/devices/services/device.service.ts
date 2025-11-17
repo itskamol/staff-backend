@@ -17,10 +17,11 @@ import { InjectQueue } from '@nestjs/bullmq';
 import { Queue } from 'bullmq';
 import { JOB } from 'apps/dashboard-api/src/shared/constants';
 import { EncryptionService } from 'apps/dashboard-api/src/shared/services/encryption.service';
+import { GateDto } from '../../gate/dto/gate.dto';
 
 @Injectable()
 export class DeviceService {
-    private socket: Server
+    private socket: Server;
     constructor(
         @InjectQueue(JOB.DEVICE.NAME) private readonly deviceQueue: Queue,
         private readonly deviceRepository: DeviceRepository,
@@ -35,12 +36,16 @@ export class DeviceService {
     }
 
     async configCheck() {
-        const port = this.configService.port
-        const ip = this.configService.hostIp
-        return { port, ip }
+        const port = this.configService.port;
+        const ip = this.configService.hostIp;
+        return { port, ip };
     }
 
-    async findAll(query: QueryDto & { type?: DeviceType; gateId?: number }, scope: DataScope, user: UserContext) {
+    async findAll(
+        query: QueryDto & { type?: DeviceType; gateId?: number; organizationId?: number },
+        scope: DataScope,
+        user: UserContext
+    ) {
         const { page, limit, sort = 'createdAt', order = 'desc', search, type, gateId } = query;
         const where: Prisma.DeviceWhereInput = {};
 
@@ -50,6 +55,11 @@ export class DeviceService {
                 { ipAddress: { contains: search, mode: 'insensitive' } },
             ];
         }
+
+        // if(scope?.organizationId){
+        //     console.log(scope?.organizationId)
+        //     where.gate.organizationId = scope?.organizationId
+        // }
 
         if (type) {
             where.type = type;
@@ -80,23 +90,27 @@ export class DeviceService {
         );
     }
 
-    async findOne(id: number, user: UserContext) {
-        const device = await this.deviceRepository.findById(id, {
-            gate: {
-                select: {
-                    id: true,
-                    name: true,
+    async findOne(id: number, scope: DataScope) {
+        const device = await this.deviceRepository.findById(
+            id,
+            {
+                gate: {
+                    select: {
+                        id: true,
+                        name: true,
+                    },
                 },
-            },
-            actions: {
-                take: 10,
-                orderBy: { actionTime: 'desc' },
-                include: {
-                    employee: { select: { id: true, name: true } },
+                actions: {
+                    take: 10,
+                    orderBy: { actionTime: 'desc' },
+                    include: {
+                        employee: { select: { id: true, name: true } },
+                    },
                 },
+                _count: { select: { actions: true } },
             },
-            _count: { select: { actions: true } },
-        });
+            scope
+        );
 
         if (!device) {
             throw new NotFoundException('Device not found');
@@ -109,11 +123,13 @@ export class DeviceService {
         const { gateId, ipAddress, ...dtoData } = createDeviceDto;
 
         dtoData.password = this.encryptionService.encrypt(dtoData.password);
-        
+
         if (gateId && ipAddress) {
             const existing = await this.deviceRepository.findOneByGateAndIp(gateId, ipAddress);
             if (existing) {
-                throw new BadRequestException('This gate already has a device with the same IP address');
+                throw new BadRequestException(
+                    'This gate already has a device with the same IP address'
+                );
             }
         }
 
@@ -130,7 +146,7 @@ export class DeviceService {
         const deviceInfoResult = await this.hikvisionService.getDeviceInfo(hikvisionConfig);
         if (!deviceInfoResult.success) {
             throw new BadRequestException(
-                `Qurilmadan ma'lumot olishda xatolik: ${deviceInfoResult.message}`,
+                `Qurilmadan ma'lumot olishda xatolik: ${deviceInfoResult.message}`
             );
         }
 
@@ -142,24 +158,25 @@ export class DeviceService {
         const rawCap = capResponse;
         const isSupportFace = Boolean(
             rawCap?.DeviceCap?.isSupportFace ||
-            rawCap?.CapAccessControl?.isSupportFace ||
-            rawCap?.FaceLibCap?.maxFDNum > 0 ||
-            rawCap?.DeviceCap?.isSupportAlgorithmsInfo === true
+                rawCap?.CapAccessControl?.isSupportFace ||
+                rawCap?.FaceLibCap?.maxFDNum > 0 ||
+                rawCap?.DeviceCap?.isSupportAlgorithmsInfo === true
         );
 
         const capabilities = {
-            isSupportFace
+            isSupportFace,
         };
 
         const deviceInfo = deviceInfoResult.data;
 
+        let gate: GateDto;
+
         if (gateId) {
-            const gate = await this.gateRepository.findById(gateId);
+            gate = await this.gateRepository.findById(gateId);
             if (!gate) {
                 throw new NotFoundException('Gate not found');
             }
         }
-
 
         const device = {
             name: deviceInfo.deviceName || dtoData.name,
@@ -177,18 +194,22 @@ export class DeviceService {
             welcomePhoto: dtoData.welcomePhoto || null,
             welcomePhotoType: dtoData.welcomePhotoType || null,
             isActive: dtoData.isActive !== undefined ? dtoData.isActive : true,
-            capabilities
-        }
-
+            capabilities,
+        };
 
         const newDevice = await this.deviceRepository.create(
             {
                 ...device,
                 ...(gateId && {
                     gate: {
-                        connect: { id: gateId }
-                    }
-                })
+                        connect: { id: gateId },
+                    },
+                }),
+                ...(gate && {
+                    organization: {
+                        connect: { id: gate.organizationId },
+                    },
+                }),
             },
             {
                 gate: {
@@ -201,8 +222,6 @@ export class DeviceService {
             scope
         );
 
-
-
         const job = await this.deviceQueue.add(JOB.DEVICE.CREATE, {
             hikvisionConfig,
             newDeviceId: newDevice.id,
@@ -210,37 +229,37 @@ export class DeviceService {
             scope,
         });
 
-        return newDevice
+        return newDevice;
     }
 
-
-    async update(id: number, updateDeviceDto: UpdateDeviceDto, user: UserContext) {
-        await this.findOne(id, user);
+    async update(id: number, updateDeviceDto: UpdateDeviceDto, scope: DataScope) {
+        await this.findOne(id, scope);
 
         const { gateId, ipAddress, ...dtoData } = updateDeviceDto;
 
         if (gateId && ipAddress) {
             const existing = await this.deviceRepository.findOneByGateAndIp(gateId, ipAddress);
             if (existing && existing.id !== id) {
-                throw new BadRequestException('This gate already has a device with the same IP address');
+                throw new BadRequestException(
+                    'This gate already has a device with the same IP address'
+                );
             }
         }
 
         if (gateId) {
-            const gate = await this.gateRepository.findById(gateId);
+            const gate = await this.gateRepository.findById(gateId, {}, scope);
             if (!gate) {
                 throw new NotFoundException('Gate not found');
             }
         }
 
-        return this.deviceRepository.update(id,
+        return this.deviceRepository.update(
+            id,
             {
                 ...dtoData,
                 ...(updateDeviceDto.gateId !== undefined && {
-                    gate: gateId
-                        ? { connect: { id: gateId } }
-                        : { disconnect: true }
-                })
+                    gate: gateId ? { connect: { id: gateId } } : { disconnect: true },
+                }),
             },
             {
                 gate: {
@@ -249,10 +268,10 @@ export class DeviceService {
                         name: true,
                     },
                 },
-            }
+            },
+            scope
         );
     }
-
 
     async remove(id: number, scope: DataScope, user: UserContext) {
         const device = await this.deviceRepository.findById(
@@ -276,8 +295,8 @@ export class DeviceService {
             port: 80,
             username: device.login,
             password: device.password,
-            protocol: device.protocol || 'http'
-        }
+            protocol: device.protocol || 'http',
+        };
 
         const job = await this.deviceQueue.add(JOB.DEVICE.DELETE, { device, config });
 
@@ -347,7 +366,6 @@ export class DeviceService {
         );
     }
 
-
     setSocketServer(socket: Server) {
         this.socket = socket;
     }
@@ -355,17 +373,18 @@ export class DeviceService {
     async assignEmployeesToGates(
         dto: AssignEmployeesToGatesDto,
         scope: DataScope,
-        user?: UserContext) {
+        user?: UserContext
+    ) {
         const { gateIds, employeeIds } = dto;
         const result = {
             total: 0,
-            success: 0
+            success: 0,
         };
 
-        const organizationId = dto.organizationId ? dto.organizationId : scope.organizationId
+        const organizationId = dto.organizationId ? dto.organizationId : scope.organizationId;
 
-        const port = this.configService.port
-        const ip = this.configService.hostIp
+        const port = this.configService.port;
+        const ip = this.configService.hostIp;
 
         const gates = await this.prisma.gate.findMany({
             where: { id: { in: gateIds } },
@@ -374,8 +393,8 @@ export class DeviceService {
         if (!gates.length) throw new Error('Gate not found!');
 
         const employees = await this.prisma.employee.findMany({
-            where: { id: { in: employeeIds } }
-        })
+            where: { id: { in: employeeIds } },
+        });
         if (!employees.length) throw new Error('Employees not found!');
 
         const createData = [];
@@ -393,7 +412,6 @@ export class DeviceService {
             data: createData,
             skipDuplicates: true,
         });
-
 
         const credentials = await this.prisma.credential.findMany({
             where: { employeeId: { in: employeeIds }, type: 'PHOTO', isActive: true },
@@ -424,7 +442,11 @@ export class DeviceService {
                         syncId: null,
                         employee: null,
                         gate: { id: gate.id, name: gate.name },
-                        device: { id: device.id, name: device.name || device.ipAddress, ip: device.ipAddress },
+                        device: {
+                            id: device.id,
+                            name: device.name || device.ipAddress,
+                            ip: device.ipAddress,
+                        },
                         status: 'SKIPPED',
                         message: 'Face is not supported.',
                         step: 'DEVICE_CHECK',
@@ -449,16 +471,24 @@ export class DeviceService {
                         },
                     });
 
-
                     const emitBase = {
                         syncId: sync.id,
                         employee: { id: empId, name: employee?.name || 'Noma’lum' },
                         gate: { id: gate.id, name: gate.name },
-                        device: { id: device.id, name: device.name || device.ipAddress, ip: device.ipAddress },
+                        device: {
+                            id: device.id,
+                            name: device.name || device.ipAddress,
+                            ip: device.ipAddress,
+                        },
                         timestamp: new Date().toISOString(),
                     };
 
-                    this.gateway.server.emit('sync', { ...emitBase, status: 'IN_PROGRESS', message: 'Boshlandi', step: 'VALIDATION' });
+                    this.gateway.server.emit('sync', {
+                        ...emitBase,
+                        status: 'IN_PROGRESS',
+                        message: 'Boshlandi',
+                        step: 'VALIDATION',
+                    });
 
                     try {
                         if (!credMap.has(empId)) {
@@ -478,13 +508,17 @@ export class DeviceService {
                                 protocol: 'http',
                                 username: device.login,
                                 password: device.password,
-                            },
+                            }
                         );
                         await this.updateSync(sync.id, 'PROCESS', 'User created!');
-                        this.gateway.server.emit('sync', { ...emitBase, status: 'WAITING', message: 'User created!', step: 'USER_CREATION' });
+                        this.gateway.server.emit('sync', {
+                            ...emitBase,
+                            status: 'WAITING',
+                            message: 'User created!',
+                            step: 'USER_CREATION',
+                        });
 
                         if (!employee?.photo) throw new Error('Foto is not found!');
-
 
                         const photoUrl = `http://${ip}:${port}/storage/${employee.photo}`;
                         await this.hikvisionService.addFaceToUserViaURL(
@@ -496,17 +530,27 @@ export class DeviceService {
                                 protocol: 'http',
                                 username: device.login,
                                 password: device.password,
-                            },
+                            }
                         );
 
                         await this.updateSync(sync.id, 'DONE', 'Success!');
                         result.success++;
-                        this.gateway.server.emit('sync', { ...emitBase, status: 'DONE', message: 'Face successfully added!', step: 'ADD_FACE' });
-
+                        this.gateway.server.emit('sync', {
+                            ...emitBase,
+                            status: 'DONE',
+                            message: 'Face successfully added!',
+                            step: 'ADD_FACE',
+                        });
                     } catch (err: any) {
                         const msg = err?.message || 'Undifined error';
                         await this.updateSync(sync.id, 'FIELD', msg);
-                        this.gateway.server.emit('sync', { ...emitBase, status: 'FIELD', message: msg, step: 'VALIDATION', error: msg });
+                        this.gateway.server.emit('sync', {
+                            ...emitBase,
+                            status: 'FIELD',
+                            message: msg,
+                            step: 'VALIDATION',
+                            error: msg,
+                        });
                     }
                 }
             }
@@ -514,9 +558,7 @@ export class DeviceService {
 
         result.total = result.success;
         return { success: true };
-
     }
-
 
     private async updateSync(id: number, status: StatusEnum, message?: string) {
         const updated = await this.prisma.employeeSync.update({
@@ -532,7 +574,6 @@ export class DeviceService {
         });
     }
 
-
     testSocket() {
         this.gateway.server.emit('sync', {
             syncId: 999,
@@ -541,10 +582,9 @@ export class DeviceService {
             gateId: 1,
             deviceId: 1,
             employeeId: 999,
-            updatedAt: new Date().toISOString()
+            updatedAt: new Date().toISOString(),
         });
 
         return { success: true, message: 'Test emit yuborildi!' };
     }
-
 }

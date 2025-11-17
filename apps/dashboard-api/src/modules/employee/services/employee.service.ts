@@ -1,7 +1,12 @@
 import { Inject, Injectable, NotFoundException } from '@nestjs/common';
 import { FILE_STORAGE_SERVICE, IFileStorageService } from '@app/shared/common';
 import { DataScope, UserContext } from '@app/shared/auth';
-import { BulkUpdateEmployees, CreateEmployeeDto, EmployeeQueryDto, UpdateEmployeeDto } from '../dto';
+import {
+    BulkUpdateEmployees,
+    CreateEmployeeDto,
+    EmployeeQueryDto,
+    UpdateEmployeeDto,
+} from '../dto';
 import { DepartmentService } from '../../department/department.service';
 import { QueryDto } from '@app/shared/utils';
 import { Prisma } from '@prisma/client';
@@ -21,13 +26,12 @@ export class EmployeeService {
         private readonly fileStorage: IFileStorageService,
         private readonly hikiService: HikvisionService,
         private readonly prisma: PrismaService
-    ) { }
+    ) {}
 
     async getEmployees(query: EmployeeQueryDto, scope: DataScope, user: UserContext) {
         const { page = 1, limit = 10, search, sort, order, credentialType, ...filters } = query;
 
         let whereClause: Prisma.EmployeeWhereInput = {};
-
         if (search) {
             whereClause.OR = [
                 { name: { contains: search, mode: 'insensitive' } },
@@ -36,12 +40,16 @@ export class EmployeeService {
             ];
         }
 
+        // if (scope.organizationId) {
+        //     whereClause.organizationId = scope?.organizationId;
+        // }
+
         if (credentialType) {
             whereClause.credentials = {
                 some: {
-                    type: credentialType
-                }
-            }
+                    type: credentialType,
+                },
+            };
         }
 
         Object.keys(filters).forEach(key => {
@@ -105,6 +113,18 @@ export class EmployeeService {
             },
         };
 
+        if (dto.credentials && dto.credentials.length) {
+            const credentialsWithOrgId = dto.credentials.map(credential => ({
+                ...credential,
+                organizationId: department.organizationId,
+            }));
+            createData.credentials = {
+                createMany: {
+                    data: credentialsWithOrgId,
+                },
+            };
+        }
+
         if (photoKey) {
             createData.photo = photoKey;
         }
@@ -113,8 +133,12 @@ export class EmployeeService {
     }
 
     async updateEmployee(id: number, dto: UpdateEmployeeDto, scope: DataScope, user: UserContext) {
-
-        const existingEmployee = await this.employeeRepository.findByIdWithRoleScope(id, undefined, scope, user.role);
+        const existingEmployee = await this.employeeRepository.findByIdWithRoleScope(
+            id,
+            undefined,
+            scope,
+            user.role
+        );
         if (!existingEmployee) {
             throw new NotFoundException('Employee not found or access denied');
         }
@@ -181,11 +205,7 @@ export class EmployeeService {
         return results;
     }
 
-    async bulkUpdateEmployees(
-        dto: BulkUpdateEmployees,
-        scope: DataScope,
-        user: UserContext
-    ) {
+    async bulkUpdateEmployees(dto: BulkUpdateEmployees, scope: DataScope, user: UserContext) {
         const updateData: Prisma.EmployeeUpdateInput = {};
         if (dto.policyId) {
             updateData.policy = {
@@ -216,7 +236,6 @@ export class EmployeeService {
             throw new NotFoundException('Employee not found or access denied');
         }
 
-
         const syncRecords = await this.prisma.employeeSync.findMany({
             where: {
                 employeeId: id,
@@ -228,7 +247,6 @@ export class EmployeeService {
         });
 
         if (syncRecords.length > 0) {
-
             const deletePromises = syncRecords.map((record: any) => {
                 const config: HikvisionConfig = {
                     host: record.device.ipAddress,
@@ -244,7 +262,7 @@ export class EmployeeService {
                         deviceId: record.deviceId,
                         success: true,
                     }))
-                    .catch((err) => ({
+                    .catch(err => ({
                         deviceId: record.deviceId,
                         success: false,
                         error: err.message,
@@ -253,7 +271,6 @@ export class EmployeeService {
 
             await Promise.allSettled(deletePromises);
         }
-
 
         if (employee.photo) {
             const exists = await this.fileStorage.exists(employee.photo);
@@ -314,9 +331,9 @@ export class EmployeeService {
         const dateRange =
             query.startDate && query.endDate
                 ? {
-                    startDate: new Date(query.startDate),
-                    endDate: new Date(query.endDate),
-                }
+                      startDate: new Date(query.startDate),
+                      endDate: new Date(query.endDate),
+                  }
                 : undefined;
 
         return await this.employeeRepository.getEmployeeActivityStats(id, dateRange);

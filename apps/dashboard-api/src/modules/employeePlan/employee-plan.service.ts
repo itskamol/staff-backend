@@ -6,7 +6,6 @@ import {
     EmployeePlanQueryDto,
     UpdateEmployeePlanDto,
 } from './employee-plan.dto';
-import { PrismaService } from '@app/shared/database';
 import { DataScope, UserContext } from '@app/shared/auth';
 import { EmployeeService } from '../employee/services/employee.service';
 
@@ -14,112 +13,80 @@ import { EmployeeService } from '../employee/services/employee.service';
 export class EmployeePlanService {
     constructor(
         private readonly repo: EmployeePlanRepository,
-        private readonly prisma: PrismaService,
         private readonly employeeService: EmployeeService
     ) {}
 
     async create(dto: CreateEmployeePlanDto, user: UserContext, scope: DataScope) {
         try {
-            const organizationId = dto.organizationId ? dto.organizationId : scope.organizationId;
-            return this.repo.create({ ...dto, organizationId });
+            const orgId = dto.organizationId || scope.organizationId;
+            dto.organizationId = orgId;
+            return await this.repo.create({ ...dto }, undefined, scope);
         } catch (error) {
-            throw new BadRequestException({ message: error.message });
+            throw new BadRequestException(error.message);
         }
     }
 
-    async findAll(query: EmployeePlanQueryDto) {
+    async findAll(query: EmployeePlanQueryDto, scope: DataScope) {
         const where: any = {};
         if (query.isActive !== undefined) where.isActive = query.isActive;
 
-        let search = query.search;
-
-        if (search) {
+        if (query.search) {
             where.OR = [
-                { name: { contains: search, mode: 'insensitive' } },
-                { addadditionalDetails: { contains: search, mode: 'insensitive' } },
+                { name: { contains: query.search, mode: 'insensitive' } },
+                { addadditionalDetails: { contains: query.search, mode: 'insensitive' } },
             ];
         }
 
-        const orderBy: any = {};
-        if (query.sortBy) {
-            orderBy[query.sortBy] = query.sortOrder || 'asc';
-        } else {
-            orderBy.id = 'desc';
-        }
+        const orderBy = { [query.sortBy ?? 'id']: query.sortOrder ?? 'desc' };
 
         const data = await this.repo.findManyPlan({
-            skip: query.page ?? 0,
+            skip: ((query.page ?? 1) - 1) * (query.limit ?? 10),
             take: query.limit ?? 10,
             where,
             orderBy,
+            scope,
         });
 
-        const formattedData = data.map(item => ({
-            ...item,
-            weekdays: item.weekdays ? item.weekdays.split(',') : [],
-        }));
-
-        // Total count olish
-        const total = await this.prisma.employeePlan.count({ where });
+        const total = await this.repo.count(where, scope);
 
         return {
-            formattedData,
+            data: data.map(item => ({ ...item, weekdays: item.weekdays?.split(',') ?? [] })),
             total,
-            page: query.page || 1,
-            limit: query.limit || 10,
+            page: query.page ?? 1,
+            limit: query.limit ?? 10,
         };
     }
 
-    async findById(id: number) {
-        const plan = await this.repo.findById(id);
-        if (!plan) throw new NotFoundException('Employee plan not found');
-
-        return {
-            ...plan,
-            weekdays: plan.weekdays ? plan.weekdays.split(',') : [],
-        };
+    async findById(id: number, scope: DataScope)  {
+        const plan = await this.repo.findByIdOrThrow(id, { employees: true }, scope);
+        return { ...plan, weekdays: plan.weekdays?.split(',') ?? [] };
     }
 
-    async update(id: number, dto: UpdateEmployeePlanDto) {
-        await this.findById(id);
-        return this.repo.update(id, dto);
+    async update(id: number, dto: UpdateEmployeePlanDto, scope: DataScope) {
+        await this.findById(id, scope);
+        return this.repo.update(id, dto, undefined, scope);
     }
 
-    async delete(id: number) {
-        await this.findById(id);
-        return this.repo.delete(id);
+    async delete(id: number, scope: DataScope) {
+        await this.findById(id, scope);
+        return this.repo.delete(id, scope);
     }
 
     async assignEmployees(dto: AssignEmployeesDto, scope: DataScope, user: UserContext) {
-        const plan = await this.findById(dto.employeePlanId);
+        const plan = await this.findById(dto.employeePlanId, scope);
 
-        if (plan.employees && plan.employees.length) {
-            const defaultPlan = await this.repo.findOne({ isDefault: true });
+        if (plan.employees?.length) {
+            const defaultPlan = await this.repo.findFirst({ isDefault: true }, undefined);
             const ids = plan.employees.map(e => e.id);
-
-            // TODD: Update Many from employeeService
-            const dto = {
-                employeePlanId: defaultPlan?.id || null,
-            };
-            await this.employeeService.updateManyEmployees(ids, dto, scope, user);
+            await this.employeeService.updateManyEmployees(ids, { employeePlanId: defaultPlan?.id ?? null }, scope, user);
         }
 
-        const employees = await this.repo.findMany({
-            where: { id: { in: dto.employeeIds } },
-            select: { id: true, name: true, photo: true },
-        });
-
+        const employees = await this.repo.findMany({ id: { in: dto.employeeIds } }, undefined, undefined, undefined, undefined, scope);
         const validIds = employees.map(e => e.id);
         const invalidIds = dto.employeeIds.filter(id => !validIds.includes(id));
 
         await this.repo.assignEmployees(dto.employeePlanId, validIds);
 
-        const successfullyAssigned = employees.filter(e => validIds.includes(e.id));
-
-        return {
-            message: `Assigned ${successfullyAssigned.length} employees`,
-            successfullyAssigned,
-            invalidIds,
-        };
+        return { message: `Assigned ${validIds.length} employees`, successfullyAssigned: employees, invalidIds };
     }
 }
