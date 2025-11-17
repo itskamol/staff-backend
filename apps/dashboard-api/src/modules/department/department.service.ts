@@ -3,14 +3,14 @@ import { DepartmentRepository } from './department.repository';
 import { Department, Prisma } from '@prisma/client';
 import { QueryDto } from '../../shared/dto/query.dto';
 import { DataScope } from '@app/shared/auth';
-import { CreateDepartmentDto, UpdateDepartmentDto } from './dto';
+import { CreateDepartmentDto, DepartmentQueryDto, UpdateDepartmentDto } from './dto';
 
 @Injectable()
 export class DepartmentService {
     constructor(private readonly departmentRepository: DepartmentRepository) {}
 
     async getDepartments(
-        query: QueryDto & { isActive?: boolean; organizationId?: number },
+        query: DepartmentQueryDto,
         scope?: DataScope
     ) {
         const {
@@ -21,6 +21,7 @@ export class DepartmentService {
             search,
             isActive,
             organizationId,
+            parentId
         } = query;
 
         const filters: Prisma.DepartmentWhereInput = {};
@@ -29,6 +30,9 @@ export class DepartmentService {
                 { fullName: { contains: search, mode: 'insensitive' } },
                 { shortName: { contains: search, mode: 'insensitive' } },
             ];
+        }
+        if(parentId){
+            filters.parentId = parentId
         }
 
         if (typeof isActive === 'boolean') {

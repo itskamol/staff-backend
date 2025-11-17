@@ -30,4 +30,16 @@ export class DepartmentQueryDto extends QueryDto {
         example: 1,
     })
     organizationId?: number;
+
+    @IsOptional()
+    @Type(() => Number)
+    @IsInt()
+    @Transform(({ value }) => (value ? parseInt(value, 10) : undefined))
+    @ApiProperty({
+        description: 'Filter by parent ID',
+        type: Number,
+        required: false,
+        example: 1,
+    })
+    parentId?: number;
 }

@@ -66,7 +66,7 @@ export class ConfigService {
     }
 
     get jwtExpirationTime(): number | StringValue {
-        return this.configService.get<number | StringValue>('JWT_EXPIRATION', '7d');
+        return this.configService.get<number | StringValue>('JWT_EXPIRATION', '1h');
     }
 
     get refreshTokenSecret(): string {
