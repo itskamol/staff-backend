@@ -79,6 +79,7 @@ export class AuthService {
             sub: String(user.id),
             role: user.role as Role,
             username: user.username,
+            organizationId: user.organizationId
         };
 
         const newTokens = this.jwtService.generateTokenPair(jwtPayload, payload.tokenVersion + 1);
