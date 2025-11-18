@@ -69,6 +69,20 @@ export class EmployeeService {
         );
     }
 
+    async findByIds(ids: number[], scope: DataScope) {
+        return this.employeeRepository.findMany(
+            {
+                id: { in: ids },
+                ...(scope.organizationId ? { organizationId: scope.organizationId } : {}),
+            },
+            { id: 'asc' }, // id bo‘yicha tartib
+            undefined,
+            undefined,
+            undefined,
+            scope
+        );
+    }
+
     async getEmployeeById(id: number, scope: DataScope, user: UserContext) {
         return this.employeeRepository.findByIdWithRoleScope(id, undefined, scope, user.role);
     }

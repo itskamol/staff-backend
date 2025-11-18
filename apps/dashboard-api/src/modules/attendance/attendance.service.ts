@@ -1,47 +1,47 @@
 import { BadRequestException, Injectable, NotFoundException } from '@nestjs/common';
 import { AttendanceRepository } from './attendance.repository';
 import { CreateAttendanceDto, AttendanceQueryDto, UpdateAttendanceDto } from './dto/attendance.dto';
-import { PrismaService } from '@app/shared/database';
-import { DataScope, UserContext } from '@app/shared/auth';
+import { DataScope } from '@app/shared/auth';
+import { Prisma } from '@prisma/client';
 
 @Injectable()
 export class AttendanceService {
-    constructor(
-        private readonly repo: AttendanceRepository,
-        private readonly prisma: PrismaService
-    ) {}
+    constructor(private readonly repo: AttendanceRepository) {}
 
     async create(dto: CreateAttendanceDto) {
         try {
+            const {employeeId, organizationId, ...dtoData} = dto
             const todayStart = new Date();
             todayStart.setHours(0, 0, 0, 0);
 
             const todayEnd = new Date();
             todayEnd.setHours(23, 59, 59, 999);
 
-            const existing = await this.repo.findMany({
-                where: {
-                    employeeId: dto.employeeId,
-                    startTime: { gte: todayStart, lte: todayEnd },
-                },
-            });
+            const where: Prisma.AttendanceWhereInput = {};
+
+            where.employeeId = dto.employeeId;
+            where.startTime = { gte: todayStart, lte: todayEnd };
+
+            const existing = await this.repo.findMany(where);
 
             if (existing.length > 0) {
                 return existing;
             }
 
-            return this.repo.create({
-                ...dto,
-                employeeId: dto.employeeId,
-                organizationId: dto.organizationId,
-            });
+            const data: Prisma.AttendanceCreateInput = {
+                ...dtoData,
+                employee: { connect: { id: employeeId } },
+                organiztion: { connect: { id: organizationId } },
+            };
+
+            return this.repo.create(data);
         } catch (error) {
             throw new BadRequestException({ message: error.message });
         }
     }
 
-    async findAll(query: AttendanceQueryDto) {
-        const where: any = {};
+    async findAll(query: AttendanceQueryDto, scope: DataScope) {
+        const where: Prisma.AttendanceWhereInput = {};
 
         if (query.employeeId !== undefined) where.employeeId = query.employeeId;
         if (query.organizationId !== undefined) where.organizationId = query.organizationId;
@@ -71,14 +71,12 @@ export class AttendanceService {
         }
 
         const page = query.page ?? 1;
-        const limit = query.limit ?? 20;
-        const skip = (page - 1) * limit;
+        const limit = query.limit ?? 10;
 
-        const data = await this.repo.findMany({
-            skip,
-            take: limit,
+        const data = await this.repo.findManyWithPagination(
             where,
-            include: {
+            { startTime: 'desc' },
+            {
                 employee: {
                     select: {
                         id: true,
@@ -93,32 +91,44 @@ export class AttendanceService {
                     },
                 },
             },
-            orderBy: { startTime: 'desc' },
-        });
+            { page, limit },
+            scope
+        );
 
-        const total = await this.repo.count(where);
-
-        return {
-            data,
-            total,
-            page,
-            limit,
-        };
+        return data;
     }
 
-    async findById(id: number) {
-        const record = await this.repo.findById(id);
+    async findById(id: number, scope: DataScope) {
+        const record = await this.repo.findById(
+            id,
+            {
+                employee: {
+                    select: {
+                        id: true,
+                        name: true,
+                        photo: true,
+                        department: {
+                            select: {
+                                id: true,
+                                fullName: true,
+                            },
+                        },
+                    },
+                },
+            },
+            scope
+        );
         if (!record) throw new NotFoundException('Attendance record not found');
         return record;
     }
 
-    async update(id: number, dto: UpdateAttendanceDto) {
-        await this.findById(id);
-        return this.repo.update(id, dto);
+    async update(id: number, dto: UpdateAttendanceDto, scope: DataScope) {
+        await this.findById(id, scope);
+        return this.repo.update(id, dto, {}, scope);
     }
 
-    async delete(id: number) {
-        await this.findById(id);
-        return this.repo.delete(id);
+    async delete(id: number, scope: DataScope) {
+        await this.findById(id, scope);
+        return this.repo.delete(id, scope);
     }
 }

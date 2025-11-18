@@ -12,6 +12,7 @@ export class CreateGateDto {
 
     @ApiProperty({example: 1, description: 'Organization Id'})
     @IsInt()
+    @IsOptional()
     organizationId: number
 }
 
