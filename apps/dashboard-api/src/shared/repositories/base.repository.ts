@@ -40,7 +40,11 @@ export abstract class BaseRepository<
         const scopedWhere = { ...where };
 
         if (scope?.organizationId) {
-            scopedWhere.organizationId = scope.organizationId;
+            if (this.modelName.toLowerCase() === 'organization') {
+                scopedWhere.id = scope.organizationId;
+            } else {
+                scopedWhere.organizationId = scope.organizationId;
+            }
         }
 
         if (scope?.departments?.length) {
@@ -179,7 +183,7 @@ export abstract class BaseRepository<
     ): Promise<TEntity[]> {
         this.logger.debug(`Finding many ${this.modelName} with conditions:`, where);
 
-        const scopedWhere = this.applyDataScope(where, scope)
+        const scopedWhere = this.applyDataScope(where, scope);
 
         const options: {
             where: Record<string, unknown>;
