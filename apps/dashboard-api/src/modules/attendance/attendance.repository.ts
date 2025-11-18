@@ -1,61 +1,25 @@
-// ...existing code...
 import { Injectable } from '@nestjs/common';
+import { Prisma, Attendance } from '@prisma/client';
 import { PrismaService } from '@app/shared/database';
-import { CreateAttendanceDto, UpdateAttendanceDto } from './dto/attendance.dto';
-import { ActionStatus, Prisma } from '@prisma/client';
+import { BaseRepository } from 'apps/dashboard-api/src/shared/repositories/base.repository';
 
 @Injectable()
-export class AttendanceRepository {
-  constructor(private readonly prisma: PrismaService) {}
+export class AttendanceRepository extends BaseRepository<
+  Attendance,
+  Prisma.AttendanceCreateInput,
+  Prisma.AttendanceUpdateInput,
+  Prisma.AttendanceWhereInput,
+  Prisma.AttendanceWhereUniqueInput,
+  Prisma.AttendanceOrderByWithRelationInput,
+  Prisma.AttendanceInclude
+> {
+  protected readonly modelName = 'Attendance';
 
-  async create(data: CreateAttendanceDto) {
-  return this.prisma.attendance.create({
-    data: {
-      ...data,
-      employeeId: data.employeeId,
-      organizationId: data.organizationId,
-    } as Prisma.AttendanceUncheckedCreateInput,
-  });
-}
-
-  async findById(id: number) {
-    return this.prisma.attendance.findUnique({
-      where: { id },
-      include: {
-        employee: { select: { id: true, name: true, photo: true } },
-      },
-    });
+  constructor(protected readonly prisma: PrismaService) {
+    super(prisma);
   }
 
-  async update(id: number, data: UpdateAttendanceDto) {
-  return this.prisma.attendance.update({
-    where: { id },
-    data: {
-      ...data,
-      arrivalStatus: data.arrivalStatus as ActionStatus,
-      goneStatus: data.goneStatus as ActionStatus,
-    } as Prisma.AttendanceUncheckedUpdateInput,
-  });
-}
-
-  async delete(id: number) {
-    return this.prisma.attendance.delete({ where: { id } });
-  }
-
-  async findMany(params: {
-    skip?: number;
-    take?: number;
-    where?: any;
-    orderBy?: any;
-    include?: any;
-  }) {
-    const { skip = 0, take = 50, where = {}, orderBy = { startTime: 'desc' }, include } = params;
-    const args: any = { skip, take, where, orderBy };
-    if (include) args.include = include;
-    return this.prisma.attendance.findMany(args);
-  }
-
-  async count(where: any = {}) {
-    return this.prisma.attendance.count({ where });
+  protected getDelegate() {
+    return this.prisma.attendance;
   }
 }

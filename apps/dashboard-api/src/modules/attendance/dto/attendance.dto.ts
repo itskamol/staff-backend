@@ -1,6 +1,6 @@
 // ...existing code...
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
-import { IsDateString, IsEnum, IsInt, IsNotEmpty, IsOptional, IsString } from 'class-validator';
+import { IsDateString, isEnum, IsEnum, IsInt, IsNotEmpty, IsOptional, IsString } from 'class-validator';
 import { Type } from 'class-transformer';
 import { ActionStatus } from '@prisma/client';
 
@@ -52,15 +52,15 @@ export class UpdateAttendanceDto {
   @IsDateString()
   endTime?: string;
 
-  @ApiPropertyOptional({ example: 'ON_TIME' })
+  @ApiPropertyOptional({ enum: ActionStatus })
   @IsOptional()
-  @IsString()
-  arrivalStatus?: string;
+  @IsEnum(ActionStatus)
+  arrivalStatus?: ActionStatus;
 
-  @ApiPropertyOptional({ example: 'ON_TIME' })
+  @ApiPropertyOptional({ enum: ActionStatus })
   @IsOptional()
-  @IsString()
-  goneStatus?: string;
+  @IsEnum(ActionStatus)
+  goneStatus?: ActionStatus;
 
   @ApiPropertyOptional({ example: 'Updated reason' })
   @IsOptional()
@@ -96,7 +96,7 @@ export class AttendanceQueryDto {
   @ApiPropertyOptional({ enum: ActionStatus })
   @IsOptional()
   @IsEnum(ActionStatus)
-  arrivalStatus?: string;
+  arrivalStatus?: ActionStatus;
 
   @ApiPropertyOptional({ enum: ActionStatus })
   @IsOptional()

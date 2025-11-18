@@ -1,45 +1,46 @@
-// ...existing code...
 import {
-  Controller,
-  Post,
-  Get,
-  Put,
-  Delete,
-  Param,
-  Body,
-  Query,
-  ParseIntPipe,
+    Controller,
+    Get,
+    Put,
+    Delete,
+    Param,
+    Body,
+    Query,
+    ParseIntPipe,
 } from '@nestjs/common';
 import { ActionService } from '../service/action.service';
-import { ActionQueryDto, CreateActionDto, UpdateActionDto } from '../dto/action.dto';
+import { ActionQueryDto, UpdateActionDto } from '../dto/action.dto';
 import { ApiBearerAuth, ApiTags } from '@nestjs/swagger';
-
+import { DataScope, Role, Roles, Scope } from '@app/shared/auth';
 
 @ApiTags('Actions')
 @ApiBearerAuth()
 @Controller('action')
+@Roles(Role.ADMIN, Role.GUARD, Role.HR)
 export class ActionController {
-  constructor(private readonly service: ActionService) { }
+    constructor(private readonly service: ActionService) {}
 
-  @Get()
-  async findAll(
-    @Query() dto?: ActionQueryDto
-  ) {
-    return this.service.findAll(dto);
-  }
+    @Get()
+    async findAll(@Query() dto?: ActionQueryDto, @Scope() scope?: DataScope) {
+        return this.service.findAll(dto, scope);
+    }
 
-  @Get(':id')
-  async findOne(@Param('id', ParseIntPipe) id: number) {
-    return this.service.findOne(id);
-  }
+    @Get(':id')
+    async findOne(@Param('id', ParseIntPipe) id: number, @Scope() scope?: DataScope) {
+        return this.service.findOne(id, scope);
+    }
 
-  @Put(':id')
-  async update(@Param('id', ParseIntPipe) id: number, @Body() dto: UpdateActionDto) {
-    return this.service.update(id, dto);
-  }
+    @Put(':id')
+    async update(
+        @Param('id', ParseIntPipe) id: number,
+        @Body() dto: UpdateActionDto,
+        @Scope() scope?: DataScope
+    ) {
+        return this.service.update(id, dto, scope);
+    }
 
-  @Delete(':id')
-  async remove(@Param('id', ParseIntPipe) id: number) {
-    return this.service.remove(id);
-  }
+    @Delete(':id')
+    async remove(@Param('id', ParseIntPipe) id: number, @Scope() scope?: DataScope) {
+        return this.service.remove(id, scope);
+    }
 }

@@ -8,6 +8,7 @@ import {
 } from './employee-plan.dto';
 import { DataScope, UserContext } from '@app/shared/auth';
 import { EmployeeService } from '../employee/services/employee.service';
+import { unwatchFile } from 'fs';
 
 @Injectable()
 export class EmployeePlanService {
@@ -76,12 +77,12 @@ export class EmployeePlanService {
         const plan = await this.findById(dto.employeePlanId, scope);
 
         if (plan.employees?.length) {
-            const defaultPlan = await this.repo.findFirst({ isDefault: true }, undefined);
+            const defaultPlan = await this.repo.findFirst({ isDefault: true },{},{},scope);
             const ids = plan.employees.map(e => e.id);
-            await this.employeeService.updateManyEmployees(ids, { employeePlanId: defaultPlan?.id ?? null }, scope, user);
+            await this.employeeService.updateManyEmployees(ids, { employeePlanId: defaultPlan?.id ?? null },scope, user);
         }
 
-        const employees = await this.repo.findMany({ id: { in: dto.employeeIds } }, undefined, undefined, undefined, undefined, scope);
+        const employees = await this.employeeService.findByIds(dto.employeeIds, scope);
         const validIds = employees.map(e => e.id);
         const invalidIds = dto.employeeIds.filter(id => !validIds.includes(id));
 

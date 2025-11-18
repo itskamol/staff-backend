@@ -2,6 +2,7 @@ import { Injectable } from '@nestjs/common';
 import { Prisma, EmployeePlan } from '@prisma/client';
 import { PrismaService } from '@app/shared/database';
 import { BaseRepository } from '../../shared/repositories/base.repository';
+import { DataScope } from '@app/shared/auth';
 
 type EmployeePlanWithEmployees = EmployeePlan & {
     employees?: { id: number; name: string; photo?: string }[];
@@ -47,7 +48,7 @@ export class EmployeePlanRepository extends BaseRepository<
         where?: Prisma.EmployeePlanWhereInput;
         orderBy?: Prisma.EmployeePlanOrderByWithRelationInput;
         include?: Prisma.EmployeePlanInclude;
-        scope?: any; // DataScope
+        scope?: DataScope; // DataScope
     }) {
         const { skip = 0, take = 10, where = {}, orderBy = { id: 'desc' }, include, scope } = params;
 

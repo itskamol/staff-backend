@@ -1,40 +1,56 @@
 // ...existing code...
-import { Body, Controller, Delete, Get, Param, Post, Put, Query } from '@nestjs/common';
+import { Body, Controller, Delete, Get, Param, ParseIntPipe, Post, Put, Query } from '@nestjs/common';
 import { AttendanceService } from './attendance.service';
 import { CreateAttendanceDto, AttendanceQueryDto, UpdateAttendanceDto } from './dto/attendance.dto';
 import { ApiBearerAuth, ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger';
+import { Role } from '@prisma/client';
+import { DataScope, Roles, Scope } from '@app/shared/auth';
 
 @ApiTags('Attendance')
 @Controller('attendances')
 @ApiBearerAuth()
+@Roles(Role.ADMIN, Role.GUARD, Role.HR)
 export class AttendanceController {
   constructor(private readonly service: AttendanceService) {}
 
   @Get()
   @ApiOperation({ summary: 'Get attendance records with filters' })
   @ApiResponse({ status: 200, description: 'List of attendance records' })
-  async findAll(@Query() query: AttendanceQueryDto) {
-    return this.service.findAll(query);
+  async findAll(
+    @Query() query: AttendanceQueryDto,
+    @Scope() scope: DataScope
+  ) {
+    return this.service.findAll(query, scope);
   }
 
   @Get(':id')
   @ApiOperation({ summary: 'Get attendance by id' })
   @ApiResponse({ status: 200, description: 'Attendance record' })
-  async findById(@Param('id') id: string) {
-    return this.service.findById(Number(id));
+  async findById(
+    @Param('id', ParseIntPipe) id: number,
+    @Scope() scope: DataScope
+  ) {
+    return this.service.findById(id, scope);
   }
 
   @Put(':id')
   @ApiOperation({ summary: 'Update attendance record' })
   @ApiResponse({ status: 200, description: 'Updated attendance record' })
-  async update(@Param('id') id: string, @Body() dto: UpdateAttendanceDto) {
-    return this.service.update(Number(id), dto);
+  async update(
+    @Param('id', ParseIntPipe) id: number, 
+    @Body() dto: UpdateAttendanceDto,
+    @Scope() scope: DataScope
+  ) {
+    return this.service.update(id, dto, scope);
   }
 
   @Delete(':id')
   @ApiOperation({ summary: 'Delete attendance record' })
   @ApiResponse({ status: 200, description: 'Attendance deleted' })
-  async delete(@Param('id') id: string) {
-    return this.service.delete(Number(id));
+  async delete(
+    @Param('id', ParseIntPipe) id: number,
+    @Scope() scope: DataScope
+) {
+    return this.service.delete(id,scope);
   }
 }
