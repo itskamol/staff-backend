@@ -54,14 +54,7 @@ export class OrganizationService {
     }
 
     async getOrganizationsByScope(scope: DataScope) {
-        return this.organizationRepository.findMany(
-            undefined,
-            undefined,
-            undefined,
-            undefined,
-            undefined,
-            scope
-        );
+        return this.organizationRepository.findWithScope(scope);
     }
 
     async createOrganization(data: CreateOrganizationDto): Promise<Organization> {
@@ -89,7 +82,6 @@ export class OrganizationService {
                 endTime: '18:00',
             },
         };
-
 
         const organization = await this.organizationRepository.create(input);
 

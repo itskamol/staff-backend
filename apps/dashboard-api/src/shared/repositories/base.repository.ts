@@ -40,11 +40,7 @@ export abstract class BaseRepository<
         const scopedWhere = { ...where };
 
         if (scope?.organizationId) {
-            if (this.modelName.toLowerCase() === 'organization') {
-                scopedWhere.id = scope.organizationId;
-            } else {
-                scopedWhere.organizationId = scope.organizationId;
-            }
+            scopedWhere.organizationId = scope.organizationId;
         }
 
         if (scope?.departments?.length) {
