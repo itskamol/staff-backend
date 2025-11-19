@@ -12,7 +12,6 @@ import {
   ApiTags,
   ApiOperation,
   ApiBearerAuth,
-  ApiHideProperty,
 } from '@nestjs/swagger';
 import { HikvisionService } from './hikvision.service';
 import { CreateHikvisionUserDto, HikvisionConfig } from './dto/create-hikvision-user.dto';

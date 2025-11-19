@@ -381,6 +381,8 @@ export class DeviceService {
             success: 0,
         };
 
+        if (!gateIds?.length || !employeeIds?.length) return;
+
         const organizationId = dto.organizationId ? dto.organizationId : scope.organizationId;
 
         const port = this.configService.port;
@@ -390,33 +392,38 @@ export class DeviceService {
             where: { id: { in: gateIds } },
             include: { devices: true },
         });
-        if (!gates.length) throw new Error('Gate not found!');
+
+        if (!gates.length) return;
 
         const employees = await this.prisma.employee.findMany({
-            where: { id: { in: employeeIds } },
+            where: {
+                id: {
+                    in: employeeIds,
+                },
+            },
+            select: {
+                id: true,
+            },
         });
-        if (!employees.length) throw new Error('Employees not found!');
 
-        const createData = [];
-
-        for (const gate of gates) {
-            for (const employee of employees) {
-                createData.push({
-                    employeeId: +employee.id,
-                    gateId: +gate.id,
-                });
-            }
-        }
-
-        await this.prisma.employee.createMany({
-            data: createData,
-            skipDuplicates: true,
-        });
+        if (!employees.length) return;
 
         const credentials = await this.prisma.credential.findMany({
             where: { employeeId: { in: employeeIds }, type: 'PHOTO', isActive: true },
             select: { employeeId: true },
         });
+
+        for (const gate of gates) {
+            await this.prisma.gate.update({
+                where: { id: gate.id },
+                data: {
+                    employees: {
+                        connect: employees,
+                    },
+                },
+            });
+        }
+
         const credMap = new Map(credentials.map(c => [c.employeeId, true]));
 
         for (const gate of gates) {
@@ -520,7 +527,7 @@ export class DeviceService {
 
                         if (!employee?.photo) throw new Error('Foto is not found!');
 
-                        const photoUrl = `http://${ip}:${port}/storage/${employee.photo}`;
+                        const photoUrl = `http://${ip}:${port}/api/storage/${employee.photo}`;
                         await this.hikvisionService.addFaceToUserViaURL(
                             empId.toString(),
                             photoUrl,
