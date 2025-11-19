@@ -73,9 +73,9 @@ export class EmployeeService {
         return this.employeeRepository.findMany(
             {
                 id: { in: ids },
-                ...(scope.organizationId ? { organizationId: scope.organizationId } : {}),
+                ...(scope?.organizationId ? { organizationId: scope?.organizationId } : {}),
             },
-            { id: 'asc' }, // id bo‘yicha tartib
+            { id: 'asc' },
             undefined,
             undefined,
             undefined,

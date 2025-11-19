@@ -1,6 +1,6 @@
 import { Role } from '@prisma/client';
 
-export { Role } from '@prisma/client';
+export { Role }
 
 export interface DataScope {
     organizationId?: number;

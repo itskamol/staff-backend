@@ -27,7 +27,7 @@ export class OrganizationRepository extends BaseRepository<
     async findWithScope(scope: DataScope) {
         const where: Prisma.OrganizationWhereInput = {};
 
-        if (scope.organizationId) {
+        if (scope?.organizationId) {
             where.id = scope.organizationId;
         }
 

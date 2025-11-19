@@ -11,9 +11,14 @@ import {
 } from '@nestjs/common';
 import { ApiBearerAuth, ApiExtraModels, ApiTags } from '@nestjs/swagger';
 import { DepartmentService } from './department.service';
-import { DataScope, Role, Roles, Scope } from '@app/shared/auth';
+import { DataScope, Role, Roles, Scope, User, UserContext } from '@app/shared/auth';
 import { ApiSuccessResponse } from '../../shared/dto';
-import { CreateDepartmentDto, DepartmentQueryDto, DepartmentResponseDto, UpdateDepartmentDto } from './dto';
+import {
+    CreateDepartmentDto,
+    DepartmentQueryDto,
+    DepartmentResponseDto,
+    UpdateDepartmentDto,
+} from './dto';
 import { ApiCrudOperation, ApiOkResponseData } from '../../shared/utils';
 
 @ApiTags('Departments')
