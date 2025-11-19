@@ -90,13 +90,15 @@ export class CredentialService {
             throw new BadRequestException('Employee photo is missing.');
         }
 
+        const orgId = scope?.organizationId || dto?.organizationId
+
         const data: Prisma.CredentialCreateInput = {
             code: dto.code,
             type: dto.type,
             additionalDetails: dto.additionalDetails,
             isActive: dto.isActive,
             employee: { connect: { id: dto.employeeId } },
-            ...(scope.organizationId ? { organization: { connect: { id: scope.organizationId } } } : {}),
+            organization: { connect: { id: orgId } },
         };
 
         return this.credentialRepository.create(data, this.credentialRepository.getDefaultInclude(), scope);
