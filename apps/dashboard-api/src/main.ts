@@ -13,17 +13,17 @@ import { rawBodyMiddleware } from './modules/hikvision/middleware';
 
 async function bootstrap() {
     const app = await NestFactory.create<NestExpressApplication>(AppModule);
-
+    const prefix = '/api/v1'
     const logger = app.get(LoggerService);
     app.useLogger(logger);
 
-    app.useStaticAssets(join(process.cwd(), 'storage'), { prefix: '/storage' });
+    app.useStaticAssets(join(process.cwd(), 'storage'), { prefix: '/api/storage' });
 
     app.use(
         bodyParser.raw({ type: ['application/xml', 'text/xml'], limit: '1mb' })
     );
 
-    app.use('/api/v1/hikvision/event', rawBodyMiddleware);
+    app.use(`${prefix}/hikvision/event`, rawBodyMiddleware);
 
     const configService = app.get(ConfigService);
     const port = configService.port;
@@ -37,9 +37,9 @@ async function bootstrap() {
         })
     );
 
-    app.setGlobalPrefix('api/v1');
+    app.setGlobalPrefix(prefix);
 
-    setupSwagger(app, 'dashboard/docs', {
+    setupSwagger(app, prefix, {
         title: 'Staff Control System - Dashboard API',
         description: 'Comprehensive API for staff management, monitoring, and reporting',
         version: '1.0',
