@@ -1,12 +1,10 @@
 import { PrismaService } from '@app/shared/database';
-import { Processor, WorkerHost, } from '@nestjs/bullmq';
+import { Processor, WorkerHost } from '@nestjs/bullmq';
 import { JOB } from 'apps/dashboard-api/src/shared/constants';
 import { Job } from 'bullmq';
 import { HikvisionService } from '../../hikvision/hikvision.service';
 import { DeviceService } from '../../devices/services/device.service';
 import { LoggerService } from 'apps/dashboard-api/src/core/logger';
-
-
 
 @Processor(JOB.DEVICE.NAME, { concurrency: 1 })
 export class DeviceProcessor extends WorkerHost {
@@ -25,8 +23,11 @@ export class DeviceProcessor extends WorkerHost {
         try {
             await this.hikvisionService.configureEventListeningHost(hikvisionConfig, newDeviceId);
 
-            const employees = await this.prisma.gateEmployee.findMany({ where: { gateId } });
-            const employeeIds = employees.map((e) => e.employeeId);
+            const gate = await this.prisma.gate.findFirstOrThrow({
+                where: { id: gateId },
+                select: { employees: { select: { id: true } } },
+            });
+            const employeeIds = gate?.employees?.map(e => e.id);
 
             let effectiveScope = scope || {};
             if (!effectiveScope.organizationId) {
@@ -34,10 +35,16 @@ export class DeviceProcessor extends WorkerHost {
                 if (gate) effectiveScope.organizationId = gate.organizationId;
             }
 
-            await this.device.assignEmployeesToGates({ gateIds: [gateId], employeeIds }, effectiveScope);
+            await this.device.assignEmployeesToGates(
+                { gateIds: [gateId], employeeIds },
+                effectiveScope
+            );
             this.logger.log(`[DeviceJob] Device ${newDeviceId} background tasks completed`);
         } catch (err) {
-            this.logger.error(`[DeviceJob] Device ${newDeviceId} background job failed:`, err.message);
+            this.logger.error(
+                `[DeviceJob] Device ${newDeviceId} background job failed:`,
+                err.message
+            );
         }
     }
 
@@ -45,15 +52,22 @@ export class DeviceProcessor extends WorkerHost {
         const { device, config } = job.data;
 
         try {
-            const employees = await this.prisma.gateEmployee.findMany({
-                where: { gateId: device.gateId },
+            const gate = await this.prisma.gate.findFirstOrThrow({
+                where: { id: device.gateId },
+                select: {
+                    employees: {
+                        select: {
+                            id: true,
+                        },
+                    },
+                },
             });
 
-            for (const e of employees) {
+            for (const e of gate.employees) {
                 try {
-                    await this.hikvisionService.deleteUser(String(e.employeeId), config);
+                    await this.hikvisionService.deleteUser(String(e.id), config);
                 } catch (err) {
-                    this.logger.warn(`[DeviceJob] Employee ${e.employeeId} not deleted: ${err.message}`);
+                    this.logger.warn(`[DeviceJob] Employee ${e.id} not deleted: ${err.message}`);
                 }
             }
 

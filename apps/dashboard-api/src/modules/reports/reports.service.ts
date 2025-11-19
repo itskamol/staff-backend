@@ -237,118 +237,118 @@ export class ReportsService {
             employeeFilter.id = { in: employeeIds };
         }
 
-        const employees = await this.prisma.employee.findMany({
-            where: employeeFilter,
-            include: {
-                department: {
-                    select: {
-                        fullName: true,
-                    },
-                },
-                computerUsers: {
-                    include: {
-                        usersOnComputers: {
-                            include: {
-                                activeWindows: {
-                                    where: {
-                                        datetime: {
-                                            gte: new Date(startDate || '2024-01-01'),
-                                            lte: new Date(endDate || new Date()),
-                                        },
-                                    },
-                                },
-                                visitedSites: {
-                                    where: {
-                                        datetime: {
-                                            gte: new Date(startDate || '2024-01-01'),
-                                            lte: new Date(endDate || new Date()),
-                                        },
-                                    },
-                                },
-                            },
-                        },
-                    },
-                },
-            },
-        });
+        // const employees = await this.prisma.employee.findMany({
+        //     where: employeeFilter,
+        //     include: {
+        //         department: {
+        //             select: {
+        //                 fullName: true,
+        //             },
+        //         },
+        //         computerUsers: {
+        //             include: {
+        //                 employee: {
+        //                     include: {
+        //                         activeWindows: {
+        //                             where: {
+        //                                 datetime: {
+        //                                     gte: new Date(startDate || '2024-01-01'),
+        //                                     lte: new Date(endDate || new Date()),
+        //                                 },
+        //                             },
+        //                         },
+        //                         visitedSites: {
+        //                             where: {
+        //                                 datetime: {
+        //                                     gte: new Date(startDate || '2024-01-01'),
+        //                                     lte: new Date(endDate || new Date()),
+        //                                 },
+        //                             },
+        //                         },
+        //                     },
+        //                 },
+        //             },
+        //         },
+        //     },
+        // });
 
         const reportData: ProductivityReportData[] = [];
 
-        for (const employee of employees) {
-            let totalActiveTime = 0;
-            let productiveTime = 0;
-            let unproductiveTime = 0;
-            const applicationUsage = new Map<string, number>();
-            const websiteUsage = new Map<string, number>();
+        // for (const employee of employees) {
+        //     let totalActiveTime = 0;
+        //     let productiveTime = 0;
+        //     let unproductiveTime = 0;
+        //     const applicationUsage = new Map<string, number>();
+        //     const websiteUsage = new Map<string, number>();
 
-            // Process computer usage data
-            for (const computerUser of employee.computerUsers) {
-                for (const userOnComputer of computerUser.usersOnComputers) {
-                    // Process active windows
-                    for (const window of userOnComputer.activeWindows) {
-                        totalActiveTime += window.activeTime;
+        //     // Process computer usage data
+        //     for (const computerUser of employee.) {
+        //         for (const userOnComputer of computerUser.usersOnComputers) {
+        //             // Process active windows
+        //             for (const window of userOnComputer.activeWindows) {
+        //                 totalActiveTime += window.activeTime;
 
-                        // TODO: Implement productivity classification logic
-                        // For now, assume all time is productive
-                        productiveTime += window.activeTime;
+        //                 // TODO: Implement productivity classification logic
+        //                 // For now, assume all time is productive
+        //                 productiveTime += window.activeTime;
 
-                        const appName = window.processName;
-                        applicationUsage.set(
-                            appName,
-                            (applicationUsage.get(appName) || 0) + window.activeTime
-                        );
-                    }
+        //                 const appName = window.processName;
+        //                 applicationUsage.set(
+        //                     appName,
+        //                     (applicationUsage.get(appName) || 0) + window.activeTime
+        //                 );
+        //             }
 
-                    // Process visited sites
-                    for (const site of userOnComputer.visitedSites) {
-                        totalActiveTime += site.activeTime;
+        //             // Process visited sites
+        //             for (const site of userOnComputer.visitedSites) {
+        //                 totalActiveTime += site.activeTime;
 
-                        // TODO: Implement productivity classification logic
-                        productiveTime += site.activeTime;
+        //                 // TODO: Implement productivity classification logic
+        //                 productiveTime += site.activeTime;
 
-                        const url = new URL(site.url).hostname;
-                        websiteUsage.set(url, (websiteUsage.get(url) || 0) + site.activeTime);
-                    }
-                }
-            }
+        //                 const url = new URL(site.url).hostname;
+        //                 websiteUsage.set(url, (websiteUsage.get(url) || 0) + site.activeTime);
+        //             }
+        //         }
+        //     }
 
-            const idleTime = 0; // TODO: Calculate idle time
-            const productivityPercentage =
-                totalActiveTime > 0 ? (productiveTime / totalActiveTime) * 100 : 0;
+        //     const idleTime = 0; // TODO: Calculate idle time
+        //     const productivityPercentage =
+        //         totalActiveTime > 0 ? (productiveTime / totalActiveTime) * 100 : 0;
 
-            // Get top applications
-            const topApplications = Array.from(applicationUsage.entries())
-                .sort((a, b) => b[1] - a[1])
-                .slice(0, 10)
-                .map(([name, timeSpent]) => ({
-                    name,
-                    timeSpent,
-                    percentage: totalActiveTime > 0 ? (timeSpent / totalActiveTime) * 100 : 0,
-                }));
+        //     // Get top applications
+        //     const topApplications = Array.from(applicationUsage.entries())
+        //         .sort((a, b) => b[1] - a[1])
+        //         .slice(0, 10)
+        //         .map(([name, timeSpent]) => ({
+        //             name,
+        //             timeSpent,
+        //             percentage: totalActiveTime > 0 ? (timeSpent / totalActiveTime) * 100 : 0,
+        //         }));
 
-            // Get top websites
-            const topWebsites = Array.from(websiteUsage.entries())
-                .sort((a, b) => b[1] - a[1])
-                .slice(0, 10)
-                .map(([url, timeSpent]) => ({
-                    url,
-                    timeSpent,
-                    percentage: totalActiveTime > 0 ? (timeSpent / totalActiveTime) * 100 : 0,
-                }));
+        //     // Get top websites
+        //     const topWebsites = Array.from(websiteUsage.entries())
+        //         .sort((a, b) => b[1] - a[1])
+        //         .slice(0, 10)
+        //         .map(([url, timeSpent]) => ({
+        //             url,
+        //             timeSpent,
+        //             percentage: totalActiveTime > 0 ? (timeSpent / totalActiveTime) * 100 : 0,
+        //         }));
 
-            reportData.push({
-                employeeId: employee.id,
-                employeeName: employee.name,
-                department: employee.department.fullName,
-                totalActiveTime,
-                productiveTime,
-                unproductiveTime,
-                idleTime,
-                productivityPercentage: Math.round(productivityPercentage * 100) / 100,
-                topApplications,
-                topWebsites,
-            });
-        }
+        //     reportData.push({
+        //         employeeId: employee.id,
+        //         employeeName: employee.name,
+        //         department: employee..fullName,
+        //         totalActiveTime,
+        //         productiveTime,
+        //         unproductiveTime,
+        //         idleTime,
+        //         productivityPercentage: Math.round(productivityPercentage * 100) / 100,
+        //         topApplications,
+        //         topWebsites,
+        //     });
+        // }
 
         return reportData;
     }

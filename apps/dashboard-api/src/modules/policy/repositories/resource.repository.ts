@@ -43,7 +43,7 @@ export class ResourceRepository extends BaseRepository<
         return this.findMany(where, undefined, {
             _count: {
                 select: {
-                    resourceGroups: true
+                    groups: true
                 }
             }
         });

@@ -32,8 +32,8 @@ export class GroupRepository extends BaseRepository<
         return this.findMany(where, undefined, {
             _count: {
                 select: {
-                    resourceGroups: true,
-                    rules: true
+                    policyRules: true,
+                    resources: true,
                 }
             }
         });

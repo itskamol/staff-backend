@@ -98,7 +98,6 @@ export class OnetimeCodeService {
     }
 
     async create(createOnetimeCodeDto: CreateOnetimeCodeDto, scope: DataScope) {
-        // Verify visitor exists
         const visitor = await this.prisma.visitor.findUnique({
             where: { id: createOnetimeCodeDto.visitorId },
         });
@@ -121,6 +120,9 @@ export class OnetimeCodeService {
                 endDate: new Date(createOnetimeCodeDto.endDate),
                 additionalDetails: createOnetimeCodeDto.additionalDetails,
                 isActive: createOnetimeCodeDto.isActive,
+                organization: {
+                    connect: { id: scope.organizationId },
+                },
                 visitor: {
                     connect: { id: createOnetimeCodeDto.visitorId },
                 },
@@ -265,6 +267,9 @@ export class OnetimeCodeService {
             endDate,
             additionalDetails,
             isActive: true,
+            organization: {
+                connect: { id: visitor.organizationId },
+            },
             visitor: {
                 connect: { id: visitorId },
             },

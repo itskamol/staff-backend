@@ -82,9 +82,7 @@ export class ComputerUserService {
                     },
                 },
             },
-            usersOnComputers: {
-                include: { computer: true },
-            },
+            computers: true,
         });
 
         if (!computerUser) {
@@ -112,9 +110,7 @@ export class ComputerUserService {
 
     async findUnlinked(scope: DataScope) {
         return this.computerUserRepository.findUnlinked({
-            usersOnComputers: {
-                include: { computer: true },
-            },
+            computers: true,
         });
     }
 
@@ -149,9 +145,7 @@ export class ComputerUserService {
 
     async findByEmployeeId(employeeId: number) {
         return this.computerUserRepository.findByEmployeeId(employeeId, {
-            usersOnComputers: {
-                include: { computer: true },
-            },
+            computers: true,
         });
     }
 }

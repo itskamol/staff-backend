@@ -1,9 +1,9 @@
 import { MiddlewareConsumer, Module, NestModule, RequestMethod } from '@nestjs/common';
-import { APP_GUARD, APP_FILTER, APP_INTERCEPTOR } from '@nestjs/core';
+import { APP_FILTER, APP_GUARD, APP_INTERCEPTOR } from '@nestjs/core';
 
 import { SharedDatabaseModule } from '@app/shared/database';
-import { SharedAuthModule, JwtAuthGuard, RolesGuard, DataScopeGuard } from '@app/shared/auth';
-import { SharedUtilsModule, GlobalExceptionFilter } from '@app/shared/utils';
+import { DataScopeGuard, JwtAuthGuard, RolesGuard, SharedAuthModule } from '@app/shared/auth';
+import { GlobalExceptionFilter, SharedUtilsModule } from '@app/shared/utils';
 
 import { AuthModule } from '../modules/auth/auth.module';
 import { UserModule } from '../modules/user/user.module';
@@ -14,7 +14,7 @@ import { VisitorModule } from '../modules/visitor/visitor.module';
 import { PolicyModule } from '../modules/policy/policy.module';
 import { LoggerModule } from '../core/logger';
 import { MorganLoggerMiddleware } from '../shared/middleware';
-import { TenantContextInterceptor } from '../shared/interceptors';
+import { TenantContextInterceptor } from '@app/shared/common';
 import { DeviceModule } from '../modules/devices/device.module';
 import { GateModule } from '../modules/gate/gate.module';
 import { CredentialModule } from '../modules/credential/credential.module';
@@ -25,7 +25,6 @@ import { EmployeePlanModule } from '../modules/employeePlan/employee-plan.module
 import { AttendanceModule } from '../modules/attendance/attendance.module';
 import { ConfigModule } from '../core/config/config.module';
 import { QueueModule } from '../modules/queue/queue.module';
-import { XmlJsonService } from '../shared/services/xtml-json.service';
 
 @Module({
     imports: [

@@ -1,56 +1,61 @@
 model Organization {
-  id                Int     @id @default(autoincrement())
-  fullName          String  @map("full_name")
-  shortName         String  @unique @map("short_name")
+  id                Int      @id @default(autoincrement())
+  fullName          String   @map("full_name")
+  shortName         String   @unique @map("short_name")
   address           String?
   phone             String?
   email             String?
   logo              String?
-  additionalDetails String? @map("additional_details")
+  additionalDetails String?  @map("additional_details")
+  isActive          Boolean  @default(true) @map("is_active")
+  createdAt         DateTime @default(now()) @map("created_at")
+  updatedAt         DateTime @updatedAt @map("updated_at")
 
-  // --- Standard Fields ---
-  isActive  Boolean  @default(true) @map("is_active")
-  createdAt DateTime @default(now()) @map("created_at")
-  updatedAt DateTime @updatedAt @map("updated_at")
-
-  policies       Policy[]
-  users          User[]
-  departments    Department[]
-  employees      Employee[]
-  resourceGroups ResourceGroup[]
-  resources      Resource[]
-  credentials    Credential[]
-  employeeSyncs  EmployeeSync[]
-  employeePlans  EmployeePlan[]
-  actions        Action[]
-  gates          Gate[]
-  attendances    Attendance[]
-  devices        Device[]
+  policies        Policy[]
+  users           User[]
+  departments     Department[]
+  employees       Employee[]
+  resourceGroups  ResourceGroup[]
+  resources       Resource[]
+  credentials     Credential[]
+  employeeSyncs   EmployeeSync[]
+  employeePlans   EmployeePlan[]
+  actions         Action[]
+  gates           Gate[]
+  attendances     Attendance[]
+  devices         Device[]
+  computerUsers   ComputerUser[]
+  computers       Computer[]
+  changeHistories ChangeHistory[]
+  activeWindows   ActiveWindow[]
+  visitedSites    VisitedSite[]
+  screenshots     Screenshot[]
+  userSessions    UserSession[]
+  visitors        Visitor[]
+  onetimeCodes    OnetimeCode[]
 
   @@map("organizations")
 }
 
 model Department {
-  id                Int     @id @default(autoincrement())
-  organizationId    Int     @map("organization_id")
-  parentId          Int?    @map("parent_id")
-  fullName          String  @map("full_name")
-  shortName         String  @map("short_name")
+  id                Int      @id @default(autoincrement())
+  organizationId    Int      @map("organization_id")
+  parentId          Int?     @map("parent_id")
+  fullName          String   @map("full_name")
+  shortName         String   @map("short_name")
   address           String?
   phone             String?
   email             String?
-  additionalDetails String? @map("additional_details")
+  additionalDetails String?  @map("additional_details")
+  isActive          Boolean  @default(true) @map("is_active")
+  createdAt         DateTime @default(now()) @map("created_at")
+  updatedAt         DateTime @updatedAt @map("updated_at")
 
-  // --- Standard Fields ---
-  isActive  Boolean  @default(true) @map("is_active")
-  createdAt DateTime @default(now()) @map("created_at")
-  updatedAt DateTime @updatedAt @map("updated_at")
-
-  organization    Organization     @relation(fields: [organizationId], references: [id], onDelete: Cascade)
-  parent          Department?      @relation("DepartmentHierarchy", fields: [parentId], references: [id])
-  childrens       Department[]     @relation("DepartmentHierarchy")
-  employees       Employee[]
-  departmentUsers DepartmentUser[]
+  organization Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  parent       Department?  @relation("DepartmentHierarchy", fields: [parentId], references: [id])
+  childrens    Department[] @relation("DepartmentHierarchy")
+  employees    Employee[]
+  users        User[]
 
   @@unique([organizationId, shortName], name: "org_dept_shortname_unique")
   @@index([organizationId])

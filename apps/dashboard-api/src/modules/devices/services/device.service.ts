@@ -408,7 +408,7 @@ export class DeviceService {
             }
         }
 
-        await this.prisma.gateEmployee.createMany({
+        await this.prisma.employee.createMany({
             data: createData,
             skipDuplicates: true,
         });

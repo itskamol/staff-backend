@@ -171,6 +171,9 @@ export class VisitorService {
                 creator: {
                     connect: { id: createVisitorDto.creatorId },
                 },
+                organization:{
+                    connect: { id: scope?.organizationId }
+                }
             },
             undefined,
             scope
@@ -240,6 +243,7 @@ export class VisitorService {
         const onetimeCode = await this.prisma.onetimeCode.create({
             data: {
                 visitorId: id,
+                organizationId: user.organizationId,
                 codeType: generateCodeDto.codeType,
                 code,
                 startDate,

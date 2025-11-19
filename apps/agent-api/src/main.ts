@@ -3,16 +3,11 @@ import { NestFactory } from '@nestjs/core';
 import { WsAdapter } from '@nestjs/platform-ws';
 import { AppModule } from './app/app.module';
 import { NestExpressApplication } from '@nestjs/platform-express';
-import { setupSwagger, TenantContextInterceptor } from '@app/shared/common';
-import { PrismaService } from '@app/shared/database';
+import { setupSwagger } from '@app/shared/common';
 
 async function bootstrap() {
     const app = await NestFactory.create<NestExpressApplication>(AppModule);
     app.useWebSocketAdapter(new WsAdapter(app));
-
-    // Setup RLS Tenant Context Interceptor
-    const prismaService = app.get(PrismaService);
-    app.useGlobalInterceptors(new TenantContextInterceptor(prismaService));
 
     const globalPrefix = 'api';
     app.setGlobalPrefix(globalPrefix);

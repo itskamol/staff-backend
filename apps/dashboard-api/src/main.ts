@@ -5,8 +5,7 @@ import { ConfigService } from './core/config/config.service';
 import { CustomValidationException } from './shared/exceptions/validation.exception';
 import { LoggerService } from './core/logger';
 import { ApiErrorResponse, ApiPaginatedResponse, ApiSuccessResponse } from './shared/dto';
-import { setupSwagger, TenantContextInterceptor } from '@app/shared/common';
-import { PrismaService } from '@app/shared/database';
+import { setupSwagger } from '@app/shared/common';
 import { NestExpressApplication } from '@nestjs/platform-express';
 import { join } from 'path';
 import * as bodyParser from 'body-parser';
@@ -14,10 +13,6 @@ import { rawBodyMiddleware } from './modules/hikvision/middleware';
 
 async function bootstrap() {
     const app = await NestFactory.create<NestExpressApplication>(AppModule);
-
-    // Setup RLS Tenant Context Interceptor
-    const prismaService = app.get(PrismaService);
-    app.useGlobalInterceptors(new TenantContextInterceptor(prismaService));
 
     const logger = app.get(LoggerService);
     app.useLogger(logger);

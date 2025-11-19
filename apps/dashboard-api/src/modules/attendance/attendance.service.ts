@@ -31,7 +31,7 @@ export class AttendanceService {
             const data: Prisma.AttendanceCreateInput = {
                 ...dtoData,
                 employee: { connect: { id: employeeId } },
-                organiztion: { connect: { id: organizationId } },
+                organization: { connect: { id: organizationId } },
             };
 
             return this.repo.create(data);

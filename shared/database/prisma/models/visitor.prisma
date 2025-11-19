@@ -12,17 +12,14 @@ model Visitor {
   creatorId         Int      @map("creator_id")
   isActive          Boolean  @default(true) @map("is_active")
   createdAt         DateTime @default(now()) @map("created_at")
+  organizationId    Int      @map("organization_id")
 
+  organization Organization  @relation(fields: [organizationId], references: [id], onDelete: Cascade)
   creator      User          @relation("CreatedVisitors", fields: [creatorId], references: [id], onDelete: Restrict)
   onetimeCodes OnetimeCode[]
   actions      Action[]
 
-  @@index([creatorId])
-  @@index([phone])
-  @@index([passportNumber])
-  @@index([pinfl])
-  @@index([isActive])
-  @@index([createdAt])
+  @@index([organizationId])
   @@map("visitors")
 }
 
@@ -34,16 +31,13 @@ model OnetimeCode {
   additionalDetails String?         @map("additional_details")
   startDate         DateTime        @map("start_date")
   endDate           DateTime        @map("end_date")
+  isActive          Boolean         @default(true) @map("is_active")
+  createdAt         DateTime        @default(now()) @map("created_at")
+  organizationId    Int             @map("organization_id")
 
-  // --- Standard Fields ---
-  isActive  Boolean  @default(true) @map("is_active")
-  createdAt DateTime @default(now()) @map("created_at")
+  organization Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  visitor      Visitor      @relation(fields: [visitorId], references: [id], onDelete: Cascade)
 
-  visitor Visitor @relation(fields: [visitorId], references: [id], onDelete: Cascade)
-
-  @@index([visitorId])
-  @@index([code])
-  @@index([startDate, endDate])
-  @@index([isActive])
+  @@index([organizationId])
   @@map("onetime_codes")
 }

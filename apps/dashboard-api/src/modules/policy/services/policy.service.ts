@@ -53,15 +53,12 @@ export class PolicyService {
             { [sort]: order },
             {
                 _count: { select: { employees: true } },
-                options: {
+                rules: {
                     select: {
                         type: true,
                         id: true,
-                        rules: {
-                            select: {
-                                type: true,
-                                group: { select: { name: true, id: true, type: true } },
-                            },
+                        resourceGroup: {
+                            select: { name: true, id: true, type: true },
                         },
                     },
                 },
@@ -77,20 +74,17 @@ export class PolicyService {
             employees: {
                 select: { id: true },
             },
-            options: {
+            rules: {
                 select: {
                     id: true,
                     type: true,
-                    rules: {
+                    resourceGroup: {
                         select: {
                             type: true,
                             id: true,
-                            group: { select: { id: true, name: true, type: true } },
+                            name: true,
                         },
                     },
-                    isActive: true,
-                    createdAt: true,
-                    updatedAt: true,
                 },
             },
         });
@@ -107,12 +101,14 @@ export class PolicyService {
 
         if (!organizationId) throw new NotFoundException('Organization ID is required');
 
-        const policyOptions = this.extractOptions(options) || [];
-
         const input: Prisma.PolicyCreateInput = {
             ...createPolicyDto,
             organization: { connect: { id: organizationId } },
-            options: { create: policyOptions },
+            rules: {
+                createMany: {
+                    data: [],
+                },
+            },
         };
 
         return this.policyRepository.create(input, undefined, scope);
@@ -130,7 +126,6 @@ export class PolicyService {
 
         const input: Prisma.PolicyUpdateInput = {
             ...policyData,
-            options: options ? { deleteMany: {}, create: policyOptions } : undefined,
         };
 
         return this.policyRepository.update(id, input, undefined, scope);

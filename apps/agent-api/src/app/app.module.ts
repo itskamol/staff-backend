@@ -1,9 +1,10 @@
 import { Module } from '@nestjs/common';
-import { APP_INTERCEPTOR, APP_FILTER } from '@nestjs/core';
+import { APP_FILTER, APP_INTERCEPTOR } from '@nestjs/core';
 import { ConfigModule } from '@nestjs/config';
 
 import { SharedDatabaseModule } from '@app/shared/database';
 import { SharedUtilsModule, ResponseInterceptor, GlobalExceptionFilter } from '@app/shared/utils';
+import { TenantContextInterceptor } from '@app/shared/common';
 
 import { AppController } from './app.controller';
 import { AppService } from './app.service';
@@ -28,6 +29,10 @@ import { SecurityModule } from '../modules/security/security.module';
     controllers: [AppController],
     providers: [
         AppService,
+        {
+            provide: APP_INTERCEPTOR,
+            useClass: TenantContextInterceptor,
+        },
         {
             provide: APP_INTERCEPTOR,
             useClass: ResponseInterceptor,

@@ -38,7 +38,7 @@ export class ResourceService {
 
     async findOne(id: number, user: UserContext) {
         const resource = await this.resourceRepository.findById(id, {
-            resourceGroups: {
+            groups: {
                 include: {
                     group: {
                         select: {
@@ -107,7 +107,7 @@ export class ResourceService {
             {
                 _count: {
                     select: {
-                        resourceGroups: true,
+                        groups: true,
                     },
                 },
             },

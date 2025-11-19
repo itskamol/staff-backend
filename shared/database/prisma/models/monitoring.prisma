@@ -1,37 +1,43 @@
 model ActiveWindow {
-  id                 Int      @id @default(autoincrement())
-  usersOnComputersId Int      @map("users_on_computers_id")
-  datetime           DateTime
-  title              String
-  processName        String   @map("process_name")
-  icon               String?
-  activeTime         Int      @map("active_time") // in seconds
-  createdAt          DateTime @default(now()) @map("created_at")
+  id             Int      @id @default(autoincrement())
+  computerUserId Int      @map("computer_user_id")
+  organizationId Int      @map("organization_id")
+  datetime       DateTime
+  title          String
+  processName    String   @map("process_name")
+  icon           String?
+  activeTime     Int      @map("active_time") // in seconds
+  createdAt      DateTime @default(now()) @map("created_at")
 
-  usersOnComputers UsersOnComputers @relation(fields: [usersOnComputersId], references: [id], onDelete: Cascade)
+  organization Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  computerUser ComputerUser @relation(fields: [computerUserId], references: [id], onDelete: Cascade)
 
-  @@index([usersOnComputersId])
-  @@index([usersOnComputersId, datetime])
+  @@index([organizationId])
+  @@index([computerUserId])
+  @@index([computerUserId, datetime])
   @@index([datetime])
   @@index([processName])
   @@map("active_windows")
 }
 
 model VisitedSite {
-  id                 Int      @id @default(autoincrement())
-  usersOnComputersId Int      @map("users_on_computers_id")
-  datetime           DateTime
-  title              String?
-  url                String
-  processName        String   @map("process_name")
-  icon               String?
-  activeTime         Int      @map("active_time") // in seconds
-  createdAt          DateTime @default(now()) @map("created_at")
+  id             Int      @id @default(autoincrement())
+  computerUserId Int      @map("computer_user_id")
+  organizationId Int      @map("organization_id")
+  datetime       DateTime
+  title          String?
+  url            String
+  processName    String   @map("process_name")
+  icon           String?
+  activeTime     Int      @map("active_time") // in seconds
+  createdAt      DateTime @default(now()) @map("created_at")
 
-  usersOnComputers UsersOnComputers @relation(fields: [usersOnComputersId], references: [id], onDelete: Cascade)
+  organization Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  computerUser ComputerUser @relation(fields: [computerUserId], references: [id], onDelete: Cascade)
 
-  @@index([usersOnComputersId])
-  @@index([usersOnComputersId, datetime])
+  @@index([organizationId])
+  @@index([computerUserId])
+  @@index([computerUserId, datetime])
   @@index([datetime])
   @@index([url])
   @@index([processName])
@@ -39,35 +45,40 @@ model VisitedSite {
 }
 
 model Screenshot {
-  id                 Int      @id @default(autoincrement())
-  usersOnComputersId Int      @map("users_on_computers_id")
-  datetime           DateTime
-  title              String?
-  filePath           String   @map("file_path")
-  processName        String   @map("process_name")
-  icon               String?
-  createdAt          DateTime @default(now()) @map("created_at")
+  id             Int      @id @default(autoincrement())
+  computerUserId Int      @map("computer_user_id")
+  organizationId Int      @map("organization_id")
+  datetime       DateTime
+  title          String?
+  filePath       String   @map("file_path")
+  processName    String   @map("process_name")
+  icon           String?
+  createdAt      DateTime @default(now()) @map("created_at")
 
-  usersOnComputers UsersOnComputers @relation(fields: [usersOnComputersId], references: [id], onDelete: Cascade)
+  organization Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  computerUser ComputerUser @relation(fields: [computerUserId], references: [id], onDelete: Cascade)
 
-  @@index([usersOnComputersId])
-  @@index([usersOnComputersId, datetime])
+  @@index([computerUserId])
+  @@index([computerUserId, datetime])
   @@index([datetime])
   @@index([filePath])
   @@map("screenshots")
 }
 
 model UserSession {
-  id                 Int         @id @default(autoincrement())
-  usersOnComputersId Int         @map("users_on_computers_id")
-  startTime          DateTime    @map("start_time")
-  endTime            DateTime?   @map("end_time")
-  sessionType        SessionType @map("session_type")
+  id             Int         @id @default(autoincrement())
+  organizationId Int         @map("organization_id")
+  computerUserId Int         @map("computer_user_id")
+  startTime      DateTime    @map("start_time")
+  endTime        DateTime?   @map("end_time")
+  sessionType    SessionType @map("session_type")
 
-  usersOnComputers UsersOnComputers @relation(fields: [usersOnComputersId], references: [id], onDelete: Cascade)
+  organization Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  computerUser ComputerUser @relation(fields: [computerUserId], references: [id], onDelete: Cascade)
 
-  @@index([usersOnComputersId])
-  @@index([usersOnComputersId, startTime])
+  @@index([organizationId])
+  @@index([computerUserId])
+  @@index([computerUserId, startTime])
   @@index([startTime])
   @@index([sessionType])
   @@map("user_sessions")

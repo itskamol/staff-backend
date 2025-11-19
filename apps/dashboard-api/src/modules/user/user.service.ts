@@ -121,10 +121,8 @@ export class UserService {
         }
 
         await this.userRepository.update(id, {
-            departmentUsers: {
-                createMany: {
-                    data: departmentIds.map(departmentId => ({ departmentId })),
-                },
+            departments: {
+                connect: departmentIds.map(deptId => ({ id: deptId })),
             },
         });
 
@@ -145,7 +143,7 @@ export class UserService {
         return this.userRepository.findManyWithPagination(
             filters,
             { [sort]: order },
-            { departmentUsers: { select: { departmentId: true } } },
+            { departments: { select: { id: true } } },
             { page, limit }
         );
     }

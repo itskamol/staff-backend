@@ -1,38 +1,19 @@
 model User {
-  id             Int    @id @default(autoincrement())
+  id             Int      @id @default(autoincrement())
   name           String
-  username       String @unique
+  username       String   @unique
   password       String
-  organizationId Int?   @map("organization_id")
+  organizationId Int?     @map("organization_id")
   role           Role
+  isActive       Boolean  @default(true) @map("is_active")
+  createdAt      DateTime @default(now()) @map("created_at")
+  updatedAt      DateTime @updatedAt @map("updated_at")
 
-  // --- Standard Fields ---
-  isActive  Boolean  @default(true) @map("is_active")
-  createdAt DateTime @default(now()) @map("created_at")
-  updatedAt DateTime @updatedAt @map("updated_at")
-
-  organization    Organization?    @relation(fields: [organizationId], references: [id], onDelete: SetNull)
-  createdVisitors Visitor[]        @relation("CreatedVisitors")
+  organization    Organization?   @relation(fields: [organizationId], references: [id], onDelete: SetNull)
+  createdVisitors Visitor[]       @relation("CreatedVisitors")
   changeHistories ChangeHistory[]
-  departmentUsers DepartmentUser[]
+  departments     Department[]
 
   @@index([organizationId])
-  @@index([username])
-  @@index([role])
-  @@index([organizationId, role])
-  @@index([isActive])
   @@map("users")
-}
-
-model DepartmentUser {
-  userId       Int @map("user_id")
-  departmentId Int @map("department_id")
-
-  user       User       @relation(fields: [userId], references: [id], onDelete: Cascade)
-  department Department @relation(fields: [departmentId], references: [id], onDelete: Cascade)
-
-  @@id([userId, departmentId])
-  @@index([userId])
-  @@index([departmentId])
-  @@map("department_users")
 }

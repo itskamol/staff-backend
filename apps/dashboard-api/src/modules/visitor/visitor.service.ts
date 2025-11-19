@@ -24,9 +24,9 @@ export class VisitorService {
             };
         } else if (user.role === Role.DEPARTMENT_LEAD) {
             where.creator = {
-                departmentUsers: {
+                departments: {
                     some: {
-                        departmentId: { in: user.departmentIds || [] },
+                        id: { in: user.departmentIds || [] },
                     },
                 },
             };
@@ -102,9 +102,9 @@ export class VisitorService {
                                 shortName: true,
                             },
                         },
-                        departmentUsers: {
+                        departments: {
                             select: {
-                                departmentId: true,
+                                id: true,
                             },
                         },
                     },
@@ -135,8 +135,8 @@ export class VisitorService {
         }
 
         if (user.role === Role.DEPARTMENT_LEAD) {
-            const hasAccess = visitor.creator.departmentUsers.some(du =>
-                user.departmentIds?.includes(du.departmentId)
+            const hasAccess = visitor.creator.departments.some(du =>
+                user.departmentIds?.includes(du.id)
             );
             if (!hasAccess) {
                 throw new ForbiddenException('Access denied to this visitor');
@@ -151,6 +151,7 @@ export class VisitorService {
             data: {
                 ...createVisitorDto,
                 creator: { connect: { id: +user.sub } },
+                organization: { connect: { id: user.organizationId } }
             },
         });
 
@@ -223,6 +224,7 @@ export class VisitorService {
                 startDate: new Date(startDate),
                 endDate: new Date(endDate),
                 additionalDetails,
+                organizationId: user.organizationId
             },
             select: {
                 id: true,
@@ -373,11 +375,7 @@ export class VisitorService {
                         creator: {
                             select: {
                                 organizationId: true,
-                                departmentUsers: {
-                                    select: {
-                                        departmentId: true,
-                                    },
-                                },
+                                departments: true
                             },
                         },
                     },
@@ -398,8 +396,8 @@ export class VisitorService {
         }
 
         if (user.role === Role.DEPARTMENT_LEAD) {
-            const hasAccess = onetimeCode.visitor.creator.departmentUsers.some(du =>
-                user.departmentIds?.includes(du.departmentId)
+            const hasAccess = onetimeCode.visitor.creator.departments.some(du =>
+                user.departmentIds?.includes(du.id)
             );
             if (!hasAccess) {
                 throw new ForbiddenException('Access denied to this visitor code');

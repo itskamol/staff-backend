@@ -34,31 +34,39 @@ export class GateRepository extends BaseRepository<
             _count: {
                 select: {
                     devices: true,
-                    gateEmployees: true,
+                    employees: true,
                 },
             },
         });
     }
 
     async findWithDevices(id: number, scope: DataScope) {
-        return this.findById(id, {
-            devices: {
-                where: { isActive: true },
-                orderBy: { name: 'asc' },
+        return this.findById(
+            id,
+            {
+                devices: {
+                    where: { isActive: true },
+                    orderBy: { name: 'asc' },
+                },
             },
-        },scope);
+            scope
+        );
     }
 
     async getGateStatistics(id: number, scope: DataScope) {
-        const gate = await this.findById(id, {
-            devices: true,
-            _count: {
-                select: {
-                    devices: true,
-                    gateEmployees: true,
+        const gate = await this.findById(
+            id,
+            {
+                devices: true,
+                _count: {
+                    select: {
+                        devices: true,
+                        employees: true,
+                    },
                 },
             },
-        }, scope);
+            scope
+        );
 
         if (!gate) {
             return null;
@@ -75,22 +83,21 @@ export class GateRepository extends BaseRepository<
             },
         });
 
-        const totalEmployee = await this.prisma.gateEmployee.groupBy({
-            by: ['employeeId'],
-            where: {
-                gateId: id
-            },
-            _count: {
-                employeeId: true,
-            },
-        });
+        const totalEmployee = await this.prisma.gate
+            .findFirst({
+                where: { id },
+                select: {
+                    employees: true,
+                },
+            })
+            .then(g => g?.employees || []);
 
         return {
             totalDevices: (gate as any)._count.devices,
             activeDevices,
             totalActions: (gate as any)._count.actions,
             todayActions,
-            totalEmployee: totalEmployee.length
+            totalEmployee: totalEmployee.length,
         };
     }
 }

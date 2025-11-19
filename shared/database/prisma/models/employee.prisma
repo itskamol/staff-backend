@@ -23,7 +23,7 @@ model Employee {
   actions       Action[]
   employeeSyncs EmployeeSync[]
   attendances   Attendance[]
-  employeeGates GateEmployee[]
+  gates         Gate[]
 
   @@index([organizationId])
   @@index([organizationId, departmentId])
@@ -58,12 +58,12 @@ model Credential {
 
 model EmployeeSync {
   id             Int        @id @default(autoincrement())
-  employeeId     Int
-  deviceId       Int
-  gateId         Int
+  gateId         Int        @map("gate_id")
+  deviceId       Int        @map("device_id")
+  employeeId     Int        @map("employee_id")
+  organizationId Int?       @map("organization_id")
   status         StatusEnum @default(WAITING)
   message        String?
-  organizationId Int?       @map("organization_id")
   createdAt      DateTime   @default(now())
   updatedAt      DateTime   @updatedAt
 
@@ -71,20 +71,31 @@ model EmployeeSync {
   gate         Gate          @relation(fields: [gateId], references: [id], onDelete: Cascade)
   device       Device        @relation(fields: [deviceId], references: [id], onDelete: Cascade)
   employee     Employee      @relation(fields: [employeeId], references: [id], onDelete: Cascade)
+
+  @@index([organizationId])
+  @@index([gateId])
+  @@index([deviceId])
+  @@index([employeeId])
+  @@index([status])
+  @@map("employee_syncs")
 }
 
 model EmployeePlan {
   id                   Int     @id @default(autoincrement())
+  organizationId       Int?    @map("organization_id")
   name                 String?
-  addadditionalDetails String?
-  startTime            String
-  endTime              String
-  extraTime            String
+  addadditionalDetails String? @map("additional_details")
+  startTime            String  @map("start_time")
+  endTime              String  @map("end_time")
+  extraTime            String  @map("extra_time")
   weekdays             String
   isDefault            Boolean @default(false)
   isActive             Boolean @default(true)
-  organizationId       Int?    @map("organization_id")
 
   organization Organization? @relation(fields: [organizationId], references: [id], onDelete: Cascade)
   employees    Employee[]
+
+  @@index([organizationId])
+  @@index([isActive])
+  @@map("employee_plans")
 }

@@ -104,7 +104,12 @@ export class EmployeeRepository extends BaseRepository<
         userRole?: Role
     ): Promise<EmployeeWithRelations> {
         // For HR role, validate that department belongs to their organization
-        if (userRole === Role.HR && scope?.organizationId && typeof data.department === 'object' && 'connect' in data.department) {
+        if (
+            userRole === Role.HR &&
+            scope?.organizationId &&
+            typeof data.department === 'object' &&
+            'connect' in data.department
+        ) {
             const departmentId = (data.department.connect as { id: number }).id;
 
             const department = await this.prisma.department.findFirst({
@@ -138,7 +143,13 @@ export class EmployeeRepository extends BaseRepository<
         }
 
         // For HR role, validate department change if applicable
-        if (userRole === Role.HR && scope?.organizationId && data.department && typeof data.department === 'object' && 'connect' in data.department) {
+        if (
+            userRole === Role.HR &&
+            scope?.organizationId &&
+            data.department &&
+            typeof data.department === 'object' &&
+            'connect' in data.department
+        ) {
             const departmentId = (data.department.connect as { id: number }).id;
 
             const department = await this.prisma.department.findFirst({
@@ -166,7 +177,13 @@ export class EmployeeRepository extends BaseRepository<
         const scopedWhere = this.applyDataScope(where, scope) as Prisma.EmployeeWhereInput;
 
         // For HR role, prevent department changes to unauthorized departments
-        if (userRole === Role.HR && scope?.organizationId && data.department && typeof data.department === 'object' && 'connect' in data.department) {
+        if (
+            userRole === Role.HR &&
+            scope?.organizationId &&
+            data.department &&
+            typeof data.department === 'object' &&
+            'connect' in data.department
+        ) {
             const departmentId = (data.department.connect as { id: number }).id;
 
             const department = await this.prisma.department.findFirst({
@@ -181,7 +198,7 @@ export class EmployeeRepository extends BaseRepository<
             }
         }
 
-        const updatedCount = await this.prisma.$transaction(async (tx) => {
+        const updatedCount = await this.prisma.$transaction(async tx => {
             // Prisma updateMany cannot modify relations, so update affected employees one by one.
             const employees = await tx.employee.findMany({
                 where: scopedWhere,
@@ -237,13 +254,13 @@ export class EmployeeRepository extends BaseRepository<
                         id: true,
                         name: true,
                         entryType: true,
-                    }
+                    },
                 },
                 gate: {
                     select: {
                         id: true,
                         name: true,
-                    }
+                    },
                 },
             },
         };
@@ -269,21 +286,17 @@ export class EmployeeRepository extends BaseRepository<
         return await this.prisma.computerUser.findMany({
             where: { employeeId },
             include: {
-                usersOnComputers: {
-                    include: {
-                        computer: {
-                            select: {
-                                id: true,
-                                computerUid: true,
-                                os: true,
-                                ipAddress: true,
-                            }
-                        },
-                        userSessions: {
-                            orderBy: { startTime: 'desc' },
-                            take: 5, // Last 5 sessions
-                        },
+                computers: {
+                    select: {
+                        id: true,
+                        computerUid: true,
+                        os: true,
+                        ipAddress: true,
                     },
+                },
+                userSessions: {
+                    orderBy: { startTime: 'desc' },
+                    take: 5, // Last 5 sessions
                 },
             },
         });
@@ -299,33 +312,35 @@ export class EmployeeRepository extends BaseRepository<
         const computerUsers = await this.prisma.computerUser.findMany({
             where: { employeeId },
             include: {
-                usersOnComputers: {
-                    include: {
-                        activeWindows: {
-                            where: dateRange ? {
-                                datetime: {
-                                    gte: dateRange.startDate,
-                                    lte: dateRange.endDate,
-                                }
-                            } : undefined,
-                        },
-                        visitedSites: {
-                            where: dateRange ? {
-                                datetime: {
-                                    gte: dateRange.startDate,
-                                    lte: dateRange.endDate,
-                                }
-                            } : undefined,
-                        },
-                        userSessions: {
-                            where: dateRange ? {
-                                startTime: {
-                                    gte: dateRange.startDate,
-                                    lte: dateRange.endDate,
-                                }
-                            } : undefined,
-                        },
-                    },
+                activeWindows: {
+                    where: dateRange
+                        ? {
+                              datetime: {
+                                  gte: dateRange.startDate,
+                                  lte: dateRange.endDate,
+                              },
+                          }
+                        : undefined,
+                },
+                visitedSites: {
+                    where: dateRange
+                        ? {
+                              datetime: {
+                                  gte: dateRange.startDate,
+                                  lte: dateRange.endDate,
+                              },
+                          }
+                        : undefined,
+                },
+                userSessions: {
+                    where: dateRange
+                        ? {
+                              startTime: {
+                                  gte: dateRange.startDate,
+                                  lte: dateRange.endDate,
+                              },
+                          }
+                        : undefined,
                 },
             },
         });
@@ -335,15 +350,6 @@ export class EmployeeRepository extends BaseRepository<
         let totalSessions = 0;
         let totalActiveWindows = 0;
         let totalVisitedSites = 0;
-
-        computerUsers.forEach(cu => {
-            cu.usersOnComputers.forEach(uoc => {
-                totalSessions += uoc.userSessions.length;
-                totalActiveWindows += uoc.activeWindows.length;
-                totalVisitedSites += uoc.visitedSites.length;
-                totalActiveTime += uoc.activeWindows.reduce((sum, aw) => sum + aw.activeTime, 0);
-            });
-        });
 
         return {
             employeeId,
@@ -446,14 +452,14 @@ export class EmployeeRepository extends BaseRepository<
                     fullName: true,
                     shortName: true,
                     organizationId: true,
-                }
+                },
             },
             policy: {
                 select: {
                     id: true,
                     title: true,
                     organizationId: true,
-                }
+                },
             },
         };
     }

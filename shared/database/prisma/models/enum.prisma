@@ -77,3 +77,18 @@ enum ActionStatus {
   LATE
   EARLY
 }
+
+enum RuleType {
+  USEFUL
+  UNUSEFUL
+}
+
+enum ResourceType {
+  WEBSITE
+  APPLICATION
+}
+
+enum OptionType {
+  WEBSITE
+  ACTIVE_WINDOW
+}

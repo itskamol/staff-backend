@@ -31,7 +31,7 @@ export class GroupService {
             {
                 _count: {
                     select: {
-                        resourceGroups: true,
+                        resources: true,
                     },
                 },
             },
@@ -42,7 +42,7 @@ export class GroupService {
 
     async findOne(id: number, user: UserContext) {
         const group = await this.groupRepository.findById(id, {
-            resourceGroups: {
+            resources: {
                 select: {
                     resource: {
                         select: {
@@ -76,16 +76,16 @@ export class GroupService {
             },
         };
 
-        if (resourceIds && resourceIds.length > 0) {
-            input.resourceGroups = {
-                createMany: {
-                    data: [...resourceIds.map(resourceId => ({ resourceId }))],
-                },
-            };
-        }
+        // if (resourceIds && resourceIds.length > 0) {
+        //     input.resources = {
+        //         connect: {
+
+        //         },
+        //     };
+        // }
 
         if (resources && resources.length > 0) {
-            input.resourceGroups = {
+            input.resources = {
                 create: [
                     ...resources.map(resource => ({
                         resource: {
@@ -105,10 +105,12 @@ export class GroupService {
         return this.groupRepository.create(input, undefined, scope);
     }
 
-    async update(id: number, updateGroupDto: UpdateGroupDto, user: UserContext) {
+    async update(id: number, { resources, ...updateGroupDto }: UpdateGroupDto, user: UserContext) {
         await this.findOne(id, user);
 
-        return this.groupRepository.update(id, updateGroupDto);
+        return this.groupRepository.update(id, {
+            ...updateGroupDto,
+        });
     }
 
     async remove(id: number, scope: DataScope, user: UserContext) {
@@ -128,7 +130,7 @@ export class GroupService {
     async addResources(groupId: number, resourceIds: number[], user: UserContext) {
         await this.findOne(groupId, user);
 
-        const existingConnections = await this.prisma.resourceGroups.findMany({
+        const existingConnections = await this.prisma.resourcesOnGroups.findMany({
             where: {
                 groupId,
                 resourceId: { in: resourceIds },
@@ -142,7 +144,7 @@ export class GroupService {
             throw new BadRequestException('All resources are already in this group');
         }
 
-        await this.prisma.resourceGroups.createMany({
+        await this.prisma.resourcesOnGroups.createMany({
             data: newResourceIds.map(resourceId => ({
                 groupId,
                 resourceId,
@@ -155,16 +157,12 @@ export class GroupService {
     async removeResource(groupId: number, resourceId: number, user: UserContext) {
         await this.findOne(groupId, user);
 
-        const connection = await this.prisma.resourceGroups.findFirst({
+        await this.prisma.resourcesOnGroups.findFirstOrThrow({
             where: { groupId, resourceId },
         });
 
-        if (!connection) {
-            throw new NotFoundException('Resource not found in this group');
-        }
-
-        await this.prisma.resourceGroups.delete({
-            where: { id: connection.id },
+        await this.prisma.resourcesOnGroups.delete({
+            where: { resourceId_groupId: { groupId, resourceId } },
         });
 
         return { message: 'Resource removed from group' };

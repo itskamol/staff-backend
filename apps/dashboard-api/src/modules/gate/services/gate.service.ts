@@ -38,7 +38,7 @@ export class GateService {
                 _count: {
                     select: {
                         devices: true,
-                        gateEmployees: true,
+                        employees: true,
                     },
                 },
             },
@@ -56,15 +56,15 @@ export class GateService {
                     },
                 },
             },
-            gateEmployees: {
+            employees: {
                 select: {
-                    employeeId: true,
+                    id: true,
                 },
             },
             _count: {
                 select: {
                     devices: true,
-                    gateEmployees: true,
+                    employees: true,
                 },
             },
         }, scope);
@@ -88,7 +88,7 @@ export class GateService {
                 _count: {
                     select: {
                         devices: true,
-                        gateEmployees: true,
+                        employees: true,
                     },
                 },
             },
@@ -106,7 +106,7 @@ export class GateService {
                 _count: {
                     select: {
                         devices: true,
-                        gateEmployees: true,
+                        employees: true,
                     },
                 },
             },
@@ -121,7 +121,7 @@ export class GateService {
                 _count: {
                     select: {
                         devices: true,
-                        gateEmployees: true,
+                        employees: true,
                     },
                 },
             },
