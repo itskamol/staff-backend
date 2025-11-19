@@ -85,25 +85,26 @@ export class DepartmentService {
         scope: DataScope
     ): Promise<Department> {
         const orgId = organizationId || scope.organizationId;
+
         const exsists = await this.departmentRepository.findUnique({
             org_dept_shortname_unique: { shortName: data.shortName, organizationId: orgId },
         });
 
-        if (exsists) throw new ConflictException('shortname already exists this organization')
+        if (exsists) throw new ConflictException('shortname already exists this organization');
 
-        return this.departmentRepository.create(
-            {
-                ...data,
-                organization: { connect: { id: organizationId } },
-                ...(parentId && { parent: { connect: { id: parentId } } }),
+        return this.departmentRepository.create({
+            ...data,
+            organization: {
+                connect: { id: orgId },
             },
-            undefined,
-            scope
-        );
+            ...(parentId && { parent: { connect: { id: parentId } } }),
+        });
     }
 
     async updateDepartment(id: number, data: UpdateDepartmentDto, scope?: DataScope) {
-        return this.departmentRepository.update(id, data, undefined, scope);
+        data.organizationId = scope?.organizationId || data?.organizationId;
+    
+        return this.departmentRepository.update(id, data);
     }
 
     async deleteDepartment(id: number, scope?: DataScope) {
