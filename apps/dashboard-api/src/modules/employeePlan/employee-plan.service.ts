@@ -8,7 +8,6 @@ import {
 } from './employee-plan.dto';
 import { DataScope, UserContext } from '@app/shared/auth';
 import { EmployeeService } from '../employee/services/employee.service';
-import { unwatchFile } from 'fs';
 
 @Injectable()
 export class EmployeePlanService {
@@ -58,14 +57,22 @@ export class EmployeePlanService {
         };
     }
 
-    async findById(id: number, scope: DataScope)  {
+    async findById(id: number, scope: DataScope) {
         const plan = await this.repo.findByIdOrThrow(id, { employees: true }, scope);
         return { ...plan, weekdays: plan.weekdays?.split(',') ?? [] };
     }
 
     async update(id: number, dto: UpdateEmployeePlanDto, scope: DataScope) {
         await this.findById(id, scope);
-        return this.repo.update(id, dto, undefined, scope);
+
+        if (scope?.organizationId) {
+            dto.organizationId = scope?.organizationId;
+        }
+
+        const data = await this.repo.update(id, dto, undefined, scope);
+        
+        const result = { ...data, weekdays: data.weekdays?.split(',') ?? [] };
+        return result;
     }
 
     async delete(id: number, scope: DataScope) {
@@ -77,9 +84,14 @@ export class EmployeePlanService {
         const plan = await this.findById(dto.employeePlanId, scope);
 
         if (plan.employees?.length) {
-            const defaultPlan = await this.repo.findFirst({ isDefault: true },{},{},scope);
+            const defaultPlan = await this.repo.findFirst({ isDefault: true }, {}, {}, scope);
             const ids = plan.employees.map(e => e.id);
-            await this.employeeService.updateManyEmployees(ids, { employeePlanId: defaultPlan?.id ?? null },scope, user);
+            await this.employeeService.updateManyEmployees(
+                ids,
+                { employeePlanId: defaultPlan?.id ?? null },
+                scope,
+                user
+            );
         }
 
         const employees = await this.employeeService.findByIds(dto.employeeIds, scope);
@@ -88,6 +100,10 @@ export class EmployeePlanService {
 
         await this.repo.assignEmployees(dto.employeePlanId, validIds);
 
-        return { message: `Assigned ${validIds.length} employees`, successfullyAssigned: employees, invalidIds };
+        return {
+            message: `Assigned ${validIds.length} employees`,
+            successfullyAssigned: employees,
+            invalidIds,
+        };
     }
 }
