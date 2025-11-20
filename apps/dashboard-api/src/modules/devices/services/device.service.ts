@@ -1,7 +1,7 @@
 import { Injectable, NotFoundException, BadRequestException } from '@nestjs/common';
 import { DataScope } from '@app/shared/auth';
 import { QueryDto } from '@app/shared/utils';
-import { AssignEmployeesToGatesDto, CreateDeviceDto, UpdateDeviceDto } from '../dto/device.dto';
+import { AssignEmployeesToGatesDto, CreateDeviceDto, QueryDeviceDto, UpdateDeviceDto } from '../dto/device.dto';
 import { UserContext } from '../../../shared/interfaces';
 import { DeviceRepository } from '../repositories/device.repository';
 import { DeviceType, EntryType, Prisma } from '@prisma/client';
@@ -42,7 +42,7 @@ export class DeviceService {
     }
 
     async findAll(
-        query: QueryDto & { type?: DeviceType; gateId?: number; organizationId?: number },
+        query: QueryDeviceDto,
         scope: DataScope,
         user: UserContext
     ) {
