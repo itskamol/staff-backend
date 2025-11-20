@@ -15,7 +15,7 @@ export class CreateAttendanceDto {
   @IsDateString()
   endTime?: string;
 
-  @ApiProperty({ example: 'ON_TIME' })
+  @ApiProperty({ example: 'ON_TIME', })
   @IsNotEmpty()
   @IsEnum(ActionStatus)
   arrivalStatus: ActionStatus; // ActionStatus enum in prisma

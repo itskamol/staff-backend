@@ -4,8 +4,6 @@ import { ActionQueryDto, CreateActionDto, UpdateActionDto } from '../dto/action.
 import { PrismaService } from '@app/shared/database';
 import { ActionMode, ActionStatus, ActionType, Prisma, VisitorType } from '@prisma/client';
 import { AttendanceService } from '../../attendance/attendance.service';
-import { CreateAttendanceDto } from '../../attendance/dto/attendance.dto';
-import { resourceUsage } from 'process';
 import { LoggerService } from 'apps/dashboard-api/src/core/logger';
 import { DataScope } from '@app/shared/auth';
 
@@ -43,8 +41,6 @@ export class ActionService {
         });
         if (!plan) throw new Error(`Employee plan ${employee.employeePlanId} not found`);
 
-        const { status } = await this.getActionStatus(actionTime, plan.startTime, plan.extraTime);
-
         const dto: CreateActionDto = {
             deviceId,
             gateId: gate.id,
@@ -56,9 +52,9 @@ export class ActionService {
             actionType: ActionType.PHOTO,
             actionResult: null,
             actionMode: eventData.eventState === 'active' ? ActionMode.ONLINE : ActionMode.OFFLINE,
-            status,
             organizationId: gate.organizationId,
         };
+
 
         if (device.entryType === 'BOTH') {
             const lastInfo = await this.getLastActionInfo(employeeId, device.id);
@@ -92,7 +88,7 @@ export class ActionService {
             });
 
             if (existingAttendance) {
-                const result = await this.prisma.attendance.update({
+                await this.prisma.attendance.update({
                     where: { id: existingAttendance.id },
                     data: {
                         endTime: actionTime,
@@ -104,14 +100,45 @@ export class ActionService {
             }
         }
 
-        const attendance: CreateAttendanceDto = {
-            startTime: actionTime,
-            arrivalStatus: status,
-            employeeId,
-            organizationId: gate.organizationId,
-        };
+        console.log(dto.entryType);
+        if (dto.entryType === 'ENTER') {
+            const { status } = await this.getActionStatus(
+                actionTime,
+                plan.startTime,
+                plan.extraTime
+            );
+            console.log(1)
+            const todayStart = new Date(actionTime);
+            todayStart.setHours(0, 0, 0, 0);
 
-        await this.attendanceService.create(attendance);
+            const todayEnd = new Date(actionTime);
+            todayEnd.setHours(23, 59, 59, 999);
+            console.log(2)
+            const existingAttendance = await this.prisma.attendance.findFirst({
+                where: {
+                    employeeId,
+                    organizationId: gate.organizationId,
+                    createdAt: {
+                        gte: todayStart,
+                        lte: todayEnd,
+                    },
+                    OR: [{ arrivalStatus: 'PENDING' }, { arrivalStatus: 'ABSENT' }],
+                },
+                orderBy: { startTime: 'desc' },
+            });
+            
+            if (existingAttendance) {
+                await this.prisma.attendance.update({
+                    where: { id: existingAttendance.id },
+                    data: {
+                        startTime: actionTime,
+                        arrivalStatus: status,
+                        employeeId,
+                        organizationId: gate.organizationId,
+                    },
+                });
+            }
+        }
 
         return this.prisma.action.create({ data: dto });
     }
@@ -124,7 +151,7 @@ export class ActionService {
 
     async findAll(query: ActionQueryDto, scope: DataScope) {
         const where: Prisma.ActionWhereInput = {};
-        
+
         if (query.deviceId) where.deviceId = Number(query.deviceId);
         if (query.employeeId) where.employeeId = Number(query.employeeId);
         if (query.status) where.status = query.status;

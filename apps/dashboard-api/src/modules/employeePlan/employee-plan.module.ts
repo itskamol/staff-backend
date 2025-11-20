@@ -8,5 +8,6 @@ import { EmployeeModule } from '../employee/employee.module';
   imports: [EmployeeModule],
   controllers: [EmployeePlanController],
   providers: [EmployeePlanService, EmployeePlanRepository],
+  exports: [EmployeePlanService, EmployeePlanRepository]
 })
 export class EmployeePlanModule {}

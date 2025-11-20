@@ -1,6 +1,7 @@
-import { ApiPropertyOptional, PartialType } from "@nestjs/swagger";
-import { ActionMode, ActionStatus, ActionType, EntryType, VisitorType } from "@prisma/client";
-import { IsDateString, IsEnum, IsInt, IsOptional, IsString } from "class-validator";
+import { ApiPropertyOptional, PartialType } from '@nestjs/swagger';
+import { ActionMode, ActionStatus, ActionType, EntryType, VisitorType } from '@prisma/client';
+import { Type } from 'class-transformer';
+import { IsDateString, IsEnum, IsInt, IsOptional, IsString } from 'class-validator';
 
 export class CreateActionDto {
     @IsOptional()
@@ -38,26 +39,27 @@ export class CreateActionDto {
     @IsEnum(ActionMode)
     actionMode: ActionMode;
 
+    @IsOptional()
     @IsEnum(ActionStatus)
-    status: ActionStatus
+    status?: ActionStatus;
 
     @IsInt()
-    organizationId: number
+    organizationId: number;
 }
 
-export class UpdateActionDto extends PartialType(CreateActionDto) { }
-
+export class UpdateActionDto extends PartialType(CreateActionDto) {}
 
 export class ActionQueryDto {
     @ApiPropertyOptional()
     @IsOptional()
     @IsInt()
+    @Type(() => Number)
     page?: number;
-
 
     @ApiPropertyOptional()
     @IsOptional()
     @IsInt()
+    @Type(() => Number)
     limit?: number;
 
     @ApiPropertyOptional()
@@ -68,15 +70,17 @@ export class ActionQueryDto {
     @ApiPropertyOptional()
     @IsOptional()
     @IsInt()
+    @Type(() => Number)
     gateId?: number;
 
     @ApiPropertyOptional()
     @IsOptional()
     @IsInt()
+    @Type(() => Number)
     employeeId?: number;
 
-    @ApiPropertyOptional({enum: ActionStatus})
+    @ApiPropertyOptional({ enum: ActionStatus })
     @IsOptional()
     @IsEnum(ActionStatus)
-    status?: ActionStatus
+    status?: ActionStatus;
 }
