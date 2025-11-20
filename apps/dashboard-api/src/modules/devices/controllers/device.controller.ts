@@ -1,7 +1,6 @@
 import { Controller, Get, Post, Put, Delete, Body, Param, Query, Res } from '@nestjs/common';
 import { ApiTags, ApiBearerAuth, ApiExtraModels, ApiResponse } from '@nestjs/swagger';
 import { Roles, Role, DataScope, User, Scope } from '@app/shared/auth';
-import { QueryDto } from '@app/shared/utils';
 import { DeviceService } from '../services/device.service';
 import { UserContext } from 'apps/dashboard-api/src/shared/interfaces';
 import {
@@ -10,6 +9,7 @@ import {
     UpdateDeviceDto,
     TestConnectionDto,
     AssignEmployeesToGatesDto,
+    QueryDeviceDto,
 } from '../dto/device.dto';
 import { ApiCrudOperation } from 'apps/dashboard-api/src/shared/utils';
 
@@ -28,20 +28,9 @@ export class DeviceController {
 
     @Get()
     @ApiCrudOperation(DeviceDto, 'list', {
-        summary: 'Get all devices with pagination',
-        includeQueries: {
-            pagination: true,
-            search: true,
-            sort: true,
-            filters: {
-                type: String,
-                status: String,
-                is_active: Boolean,
-                gateId: Number,
-            },
-        },
+        summary: 'Get all devices with pagination'
     })
-    async findAll(@Query() query: QueryDto, @User() user: UserContext, @Scope() scope: DataScope) {
+    async findAll(@Query() query: QueryDeviceDto, @User() user: UserContext, @Scope() scope: DataScope) {
         return await this.deviceService.findAll(query, scope, user);
     }
 
