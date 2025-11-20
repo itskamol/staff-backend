@@ -157,7 +157,8 @@ export class EmployeeService {
             throw new NotFoundException('Employee not found or access denied');
         }
 
-        const updateData: Prisma.EmployeeUpdateInput = { ...dto };
+        const {departmentId, policyId, ...data} = dto
+        const updateData: Prisma.EmployeeUpdateInput = { ...data };
 
         if (dto.photo !== undefined) {
             const newPhotoKey = await this.normalizeStorageKey(dto.photo);
@@ -172,18 +173,18 @@ export class EmployeeService {
             updateData.photo = newPhotoKey;
         }
 
-        if (dto.departmentId) {
+        if (departmentId) {
             updateData.department = {
-                connect: { id: dto.departmentId },
+                connect: { id: departmentId },
             };
         }
 
-        if (dto.policyId) {
+        if (policyId) {
             updateData.policy = {
-                connect: { id: dto.policyId },
+                connect: { id: policyId },
             };
         }
-
+        
         return await this.employeeRepository.updateWithValidation(id, updateData, scope, user.role);
     }
 

@@ -87,7 +87,7 @@ model Device {
 
 model Attendance {
   id             Int           @id @default(autoincrement())
-  startTime      DateTime      @map("start_time")
+  startTime      DateTime?      @map("start_time")
   endTime        DateTime?     @map("end_time")
   arrivalStatus  ActionStatus  @map("arrival_status") // ON_TIME or LATE
   goneStatus     ActionStatus? @map("gone_status") // ON_TIME or EARLY
