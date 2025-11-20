@@ -53,6 +53,16 @@ export class OrganizationService {
         return this.organizationRepository.findById(id, { departments: true }, scope);
     }
 
+    async getOrganizationDefaultPlan(id: number) {
+        return this.organizationRepository.findById(id, {
+            employeePlans: {
+                where: {
+                    isDefault: true,
+                },
+            },
+        });
+    }
+    
     async getOrganizationsByScope(scope: DataScope) {
         return this.organizationRepository.findWithScope(scope);
     }
@@ -78,7 +88,7 @@ export class OrganizationService {
                 name: 'Default Plan',
                 startTime: '09:00',
                 extraTime: '00:10',
-                weekdays: 'Monday',
+                weekdays: 'Monday,Tuesday,Wednesday,Thursday,Friday',
                 endTime: '18:00',
             },
         };

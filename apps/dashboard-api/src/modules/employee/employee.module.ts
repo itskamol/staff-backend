@@ -1,4 +1,4 @@
-import { Module } from '@nestjs/common';
+import { forwardRef, Module } from '@nestjs/common';
 import { SharedCommonModule } from '@app/shared/common';
 import { EmployeeController } from './controllers/employee.controller';
 import { EmployeeService } from './services/employee.service';
@@ -11,9 +11,11 @@ import { HikvisionService } from '../hikvision/hikvision.service';
 import { ConfigService } from '../../core/config/config.service';
 import { XmlJsonService } from '../../shared/services/xtml-json.service';
 import { EncryptionService } from '../../shared/services/encryption.service';
+import { OrganizationService } from '../organization/organization.service';
+import { OrganizationModule } from '../organization/organization.module';
 
 @Module({
-    imports: [SharedCommonModule],
+    imports: [SharedCommonModule,OrganizationModule],
     controllers: [EmployeeController],
     providers: [
         EmployeeService,
@@ -25,7 +27,7 @@ import { EncryptionService } from '../../shared/services/encryption.service';
         HikvisionService,
         ConfigService,
         XmlJsonService,
-        EncryptionService
+        EncryptionService,
     ],
     exports: [EmployeeService, EmployeeRepository],
 })

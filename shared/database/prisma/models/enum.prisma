@@ -76,6 +76,8 @@ enum ActionStatus {
   ON_TIME
   LATE
   EARLY
+  ABSENT
+  PENDING
 }
 
 enum RuleType {

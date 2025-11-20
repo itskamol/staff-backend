@@ -3,10 +3,38 @@ import { AttendanceRepository } from './attendance.repository';
 import { CreateAttendanceDto, AttendanceQueryDto, UpdateAttendanceDto } from './dto/attendance.dto';
 import { DataScope } from '@app/shared/auth';
 import { Prisma } from '@prisma/client';
+import { InjectQueue } from '@nestjs/bullmq';
+import { JOB } from '../../shared/constants';
+import { Queue } from 'bullmq';
+import { Cron } from '@nestjs/schedule';
+import { LoggerService } from '../../core/logger';
 
 @Injectable()
 export class AttendanceService {
-    constructor(private readonly repo: AttendanceRepository) {}
+    constructor(
+        private readonly repo: AttendanceRepository,
+        @InjectQueue(JOB.ATTENDANCE.NAME) private readonly attendanceQueue: Queue,
+        private readonly logger: LoggerService
+    ) {}
+
+
+    @Cron('0 0 * * *') 
+    async handleDailyAttendance() {
+        this.logger.log('Cron triggered: Adding attendance job to queue...');
+        
+        await this.attendanceQueue.add(
+            JOB.ATTENDANCE.CREATE_DEFAULT, 
+            {},
+            {
+                removeOnComplete: true,
+            }
+        );
+    }
+
+    @Cron('* * * * *')
+    async handleAbsentCheck() {
+        await this.attendanceQueue.add(JOB.ATTENDANCE.MARK_ABSENT, {}, { removeOnComplete: true });
+    }
 
     async create(dto: CreateAttendanceDto) {
         try {
@@ -130,5 +158,28 @@ export class AttendanceService {
     async delete(id: number, scope: DataScope) {
         await this.findById(id, scope);
         return this.repo.delete(id, scope);
+    }
+
+
+     async findManyForJob(
+        where: Prisma.AttendanceWhereInput, 
+        select?: Prisma.AttendanceSelect
+    ) {
+        return this.repo.findMany(
+            where,
+            undefined, 
+            undefined, 
+            undefined, 
+            select,    
+            undefined
+        );
+    }
+
+  
+    async updateManyForJob(
+        where: Prisma.AttendanceWhereInput,
+        data: Prisma.AttendanceUpdateManyMutationInput
+    ) {
+        return this.repo.updateMany(where, data, undefined);
     }
 }

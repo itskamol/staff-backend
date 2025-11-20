@@ -15,6 +15,7 @@ import { EmployeeRepository } from '../repositories/employee.repository';
 import { HikvisionService } from '../../hikvision/hikvision.service';
 import { HikvisionConfig } from '../../hikvision/dto/create-hikvision-user.dto';
 import { PrismaService } from '@app/shared/database';
+import { OrganizationService } from '../../organization/organization.service';
 
 @Injectable()
 export class EmployeeService {
@@ -25,7 +26,8 @@ export class EmployeeService {
         @Inject(FILE_STORAGE_SERVICE)
         private readonly fileStorage: IFileStorageService,
         private readonly hikiService: HikvisionService,
-        private readonly prisma: PrismaService
+        private readonly prisma: PrismaService,
+        private readonly organizationService: OrganizationService
     ) {}
 
     async getEmployees(query: EmployeeQueryDto, scope: DataScope, user: UserContext) {
@@ -111,6 +113,14 @@ export class EmployeeService {
 
         const photoKey = await this.normalizeStorageKey(dto.photo);
 
+        const organization = await this.organizationService.getOrganizationById(department.organizationId);
+
+        if(!organization){
+            throw new NotFoundException('Departmant Organization not found!')
+        }
+
+        const plan = await this.organizationService.getOrganizationDefaultPlan(organization.id)
+
         const createData: Prisma.EmployeeCreateInput = {
             name: dto.name,
             address: dto.address,
@@ -125,6 +135,9 @@ export class EmployeeService {
             organization: {
                 connect: { id: department.organizationId },
             },
+            plan: {
+                connect: {id: plan?.employeePlans[0]?.id}
+            }
         };
 
         if (dto.credentials && dto.credentials.length) {
@@ -157,7 +170,7 @@ export class EmployeeService {
             throw new NotFoundException('Employee not found or access denied');
         }
 
-        const {departmentId, policyId, ...data} = dto
+        const { departmentId, policyId, ...data } = dto;
         const updateData: Prisma.EmployeeUpdateInput = { ...data };
 
         if (dto.photo !== undefined) {
@@ -184,7 +197,7 @@ export class EmployeeService {
                 connect: { id: policyId },
             };
         }
-        
+
         return await this.employeeRepository.updateWithValidation(id, updateData, scope, user.role);
     }
 

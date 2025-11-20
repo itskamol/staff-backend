@@ -36,6 +36,9 @@ export class EmployeePlanService {
                 { addadditionalDetails: { contains: query.search, mode: 'insensitive' } },
             ];
         }
+        if(query.organizationId){
+            where.organizationId = query.organizationId
+        }
 
         const orderBy = { [query.sortBy ?? 'id']: query.sortOrder ?? 'desc' };
 
@@ -105,5 +108,17 @@ export class EmployeePlanService {
             successfullyAssigned: employees,
             invalidIds,
         };
+    }
+
+     async findActivePlansForJob() {
+        // Bu yerda repo.findMany yoki to'g'ridan-to'g'ri prisma so'rovi kerak.
+        // Agar repoizda oddiy findMany bo'lsa:
+        const plans = await this.repo.findMany({ isActive: true },{id:'asc'},{ employees: true } );
+
+        // Weekdays stringini arrayga o'girib qaytaramiz
+        return plans.map(plan => ({
+            ...plan,
+            weekdaysList: plan.weekdays ? plan.weekdays.split(',').map(d => d.trim()) : []
+        }));
     }
 }

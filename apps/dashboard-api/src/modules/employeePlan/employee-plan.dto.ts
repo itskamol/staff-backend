@@ -91,4 +91,10 @@ export class EmployeePlanQueryDto {
     @IsOptional()
     @IsString()
     sortOrder?: 'asc' | 'desc';
+
+    @ApiPropertyOptional()
+    @IsOptional()
+    @IsInt()
+    @Type(() => Number)
+    organizationId: number
 }
