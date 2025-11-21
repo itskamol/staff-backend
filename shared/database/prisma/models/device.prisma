@@ -2,7 +2,8 @@ model Action {
   id             Int           @id @default(autoincrement())
   deviceId       Int?          @map("device_id")
   gateId         Int?          @map("gate_id")
-  actionTime     DateTime      @map("action_time")
+  actionTime     DateTime      @map("action_time") @db.Timestamptz(6)
+  sourceTimeZone String?       @map("source_time_zone")
   employeeId     Int?          @map("employee_id")
   visitorId      Int?          @map("visitor_id")
   organizationId Int?          @map("organization_id")
@@ -36,7 +37,7 @@ model Gate {
   id             Int      @id @default(autoincrement())
   name           String
   organizationId Int?     @map("organization_id")
-  createdAt      DateTime @default(now()) @map("created_at")
+  createdAt      DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
 
   organization  Organization?  @relation(fields: [organizationId], references: [id], onDelete: Cascade)
   devices       Device[]
@@ -68,9 +69,10 @@ model Device {
   welcomePhoto     String?       @map("welcome_photo")
   welcomePhotoType WelcomePhoto? @map("welcome_photo_type")
   organizationId   Int?          @map("organization_id")
+  timeZone         String?       @map("time_zone")
   isActive         Boolean       @default(true) @map("is_active")
-  createdAt        DateTime      @default(now()) @map("created_at")
-  updatedAt        DateTime      @updatedAt @map("updated_at")
+  createdAt        DateTime      @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt        DateTime      @updatedAt @map("updated_at") @db.Timestamptz(6)
 
   gate         Gate?          @relation(fields: [gateId], references: [id], onDelete: SetNull)
   organization Organization?  @relation(fields: [organizationId], references: [id], onDelete: Cascade)
@@ -87,14 +89,15 @@ model Device {
 
 model Attendance {
   id             Int           @id @default(autoincrement())
-  startTime      DateTime?      @map("start_time")
-  endTime        DateTime?     @map("end_time")
+  startTime      DateTime?     @map("start_time") @db.Timestamptz(6)
+  endTime        DateTime?     @map("end_time") @db.Timestamptz(6)
   arrivalStatus  ActionStatus  @map("arrival_status") // ON_TIME or LATE
   goneStatus     ActionStatus? @map("gone_status") // ON_TIME or EARLY
   reason         String?
   employeeId     Int           @map("employee_id")
   organizationId Int?          @map("organization_id")
-  createdAt      DateTime      @default(now()) @map("created_at")
+  timeZone       String?       @map("time_zone")
+  createdAt      DateTime      @default(now()) @map("created_at") @db.Timestamptz(6)
 
   employee     Employee      @relation(fields: [employeeId], references: [id], onDelete: Cascade)
   organization Organization? @relation(fields: [organizationId], references: [id], onDelete: Cascade)

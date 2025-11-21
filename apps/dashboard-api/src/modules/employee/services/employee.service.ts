@@ -86,7 +86,7 @@ export class EmployeeService {
     }
 
     async getEmployeeById(id: number, scope: DataScope, user: UserContext) {
-        return this.employeeRepository.findByIdWithRoleScope(id, undefined, scope, user.role);
+        return this.employeeRepository.findByIdWithRoleScope(id, { plan: true }, scope, user.role);
     }
     async getEmployee(id: number) {
         return this.employeeRepository.findById(id);
@@ -113,13 +113,15 @@ export class EmployeeService {
 
         const photoKey = await this.normalizeStorageKey(dto.photo);
 
-        const organization = await this.organizationService.getOrganizationById(department.organizationId);
+        const organization = await this.organizationService.getOrganizationById(
+            department.organizationId
+        );
 
-        if(!organization){
-            throw new NotFoundException('Departmant Organization not found!')
+        if (!organization) {
+            throw new NotFoundException('Departmant Organization not found!');
         }
 
-        const plan = await this.organizationService.getOrganizationDefaultPlan(organization.id)
+        const plan = await this.organizationService.getOrganizationDefaultPlan(organization.id);
 
         const createData: Prisma.EmployeeCreateInput = {
             name: dto.name,
@@ -136,8 +138,8 @@ export class EmployeeService {
                 connect: { id: department.organizationId },
             },
             plan: {
-                connect: {id: plan?.employeePlans[0]?.id}
-            }
+                connect: { id: plan?.employeePlans[0]?.id },
+            },
         };
 
         if (dto.credentials && dto.credentials.length) {

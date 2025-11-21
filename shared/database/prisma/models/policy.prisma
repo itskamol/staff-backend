@@ -11,8 +11,8 @@ model Policy {
   screenshotIsGrayscale Boolean  @default(false) @map("screenshot_is_grayscale")
   screenshotCaptureAll  Boolean  @default(false) @map("screenshot_capture_all")
   isActive              Boolean  @default(true) @map("is_active")
-  createdAt             DateTime @default(now()) @map("created_at")
-  updatedAt             DateTime @updatedAt @map("updated_at")
+  createdAt             DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt             DateTime @updatedAt @map("updated_at") @db.Timestamptz(6)
 
   organization Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
   employees    Employee[]
@@ -23,17 +23,14 @@ model Policy {
 }
 
 model PolicyRule {
-  id              Int      @id @default(autoincrement())
-  policyId        Int      @map("policy_id")
-  resourceGroupId Int      @map("resource_group_id")
-  type            RuleType // USEFUL, UNUSEFUL
+  id       Int      @id @default(autoincrement())
+  policyId Int      @map("policy_id")
+  type     RuleType // USEFUL, UNUSEFUL
 
-  policy        Policy        @relation(fields: [policyId], references: [id], onDelete: Cascade)
-  resourceGroup ResourceGroup @relation(fields: [resourceGroupId], references: [id], onDelete: Cascade)
+  policy Policy          @relation(fields: [policyId], references: [id], onDelete: Cascade)
+  groups ResourceGroup[]
 
-  @@unique([policyId, resourceGroupId, type])
   @@index([policyId])
-  @@index([resourceGroupId])
   @@map("policy_rules")
 }
 
@@ -43,28 +40,15 @@ model ResourceGroup {
   name           String
   type           ResourceType // WEBSITE, APPLICATION
   isActive       Boolean      @default(true) @map("is_active")
-  createdAt      DateTime     @default(now()) @map("created_at")
-  updatedAt      DateTime     @updatedAt @map("updated_at")
+  createdAt      DateTime     @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt      DateTime     @updatedAt @map("updated_at") @db.Timestamptz(6)
 
   organization Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
-
-  resources   ResourcesOnGroups[]
-  policyRules PolicyRule[]
+  resources    Resource[]
+  rules        PolicyRule[]
 
   @@unique([organizationId, name, type])
   @@map("resource_groups")
-}
-
-model ResourcesOnGroups {
-  resourceId Int      @map("resource_id")
-  groupId    Int      @map("group_id")
-  assignedAt DateTime @default(now()) @map("assigned_at")
-
-  resource Resource      @relation(fields: [resourceId], references: [id], onDelete: Cascade)
-  group    ResourceGroup @relation(fields: [groupId], references: [id], onDelete: Cascade)
-
-  @@id([resourceId, groupId])
-  @@map("resources_on_groups")
 }
 
 model Resource {
@@ -72,10 +56,10 @@ model Resource {
   organizationId Int          @map("organization_id")
   value          String
   type           ResourceType
-  createdAt      DateTime     @default(now()) @map("created_at")
+  createdAt      DateTime     @default(now()) @map("created_at") @db.Timestamptz(6)
 
-  organization Organization        @relation(fields: [organizationId], references: [id], onDelete: Cascade)
-  groups       ResourcesOnGroups[]
+  organization Organization    @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  groups       ResourceGroup[]
 
   @@unique([organizationId, value, type])
   @@map("resources")

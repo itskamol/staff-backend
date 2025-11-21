@@ -10,8 +10,8 @@ model Employee {
   photo             String?
   additionalDetails String?  @map("additional_details")
   isActive          Boolean  @default(true) @map("is_active")
-  createdAt         DateTime @default(now()) @map("created_at")
-  updatedAt         DateTime @updatedAt @map("updated_at")
+  createdAt         DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt         DateTime @updatedAt @map("updated_at") @db.Timestamptz(6)
   employeePlanId    Int?
 
   department    Department     @relation(fields: [departmentId], references: [id])
@@ -40,11 +40,9 @@ model Credential {
   type              ActionType
   additionalDetails String?    @map("additional_details")
   organizationId    Int?       @map("organization_id")
-
-  // --- Standard Fields ---
-  isActive  Boolean  @default(true) @map("is_active")
-  createdAt DateTime @default(now()) @map("created_at")
-  updatedAt DateTime @updatedAt @map("updated_at")
+  isActive          Boolean    @default(true) @map("is_active")
+  createdAt         DateTime   @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt         DateTime   @updatedAt @map("updated_at") @db.Timestamptz(6)
 
   organization Organization? @relation(fields: [organizationId], references: [id], onDelete: Cascade)
   employee     Employee      @relation(fields: [employeeId], references: [id], onDelete: Cascade)
@@ -64,8 +62,8 @@ model EmployeeSync {
   organizationId Int?       @map("organization_id")
   status         StatusEnum @default(WAITING)
   message        String?
-  createdAt      DateTime   @default(now())
-  updatedAt      DateTime   @updatedAt
+  createdAt      DateTime   @default(now()) @db.Timestamptz(6)
+  updatedAt      DateTime   @updatedAt @db.Timestamptz(6)
 
   organization Organization? @relation(fields: [organizationId], references: [id], onDelete: Cascade)
   gate         Gate          @relation(fields: [gateId], references: [id], onDelete: Cascade)

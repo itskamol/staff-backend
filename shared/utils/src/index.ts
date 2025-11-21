@@ -6,6 +6,7 @@ export * from './lib/encryption/encryption.util';
 export * from './lib/database/database.util';
 export * from './lib/query/query-builder.util';
 export * from './lib/sanitization/data-sanitizer.service';
+export * from './lib/time/timezone.helper';
 
 // DTOs
 export * from './lib/dto/api-response.dto';

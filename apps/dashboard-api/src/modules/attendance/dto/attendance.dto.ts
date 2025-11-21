@@ -1,6 +1,5 @@
-// ...existing code...
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
-import { IsDateString, isEnum, IsEnum, IsInt, IsNotEmpty, IsOptional, IsString } from 'class-validator';
+import { IsDateString, IsEnum, IsInt, IsNotEmpty, IsOptional, IsString } from 'class-validator';
 import { Type } from 'class-transformer';
 import { ActionStatus } from '@prisma/client';
 
@@ -39,6 +38,11 @@ export class CreateAttendanceDto {
   @IsOptional()
   @IsInt()
   organizationId?: number;
+
+  @ApiPropertyOptional({ example: 'Asia/Tashkent' })
+  @IsOptional()
+  @IsString()
+  timeZone?: string;
 }
 
 export class UpdateAttendanceDto {
@@ -66,6 +70,11 @@ export class UpdateAttendanceDto {
   @IsOptional()
   @IsString()
   reason?: string;
+
+  @ApiPropertyOptional({ example: 'Asia/Tashkent' })
+  @IsOptional()
+  @IsString()
+  timeZone?: string;
 }
 
 export class AttendanceQueryDto {
@@ -102,6 +111,11 @@ export class AttendanceQueryDto {
   @IsOptional()
   @IsEnum(ActionStatus)
   goneStatus?: ActionStatus;
+
+  @ApiPropertyOptional({ description: 'IANA timezone, e.g., Asia/Tashkent' })
+  @IsOptional()
+  @IsString()
+  timeZone?: string;
 
   @ApiPropertyOptional()
   @IsOptional()

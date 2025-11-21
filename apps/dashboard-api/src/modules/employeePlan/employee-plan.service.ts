@@ -8,6 +8,7 @@ import {
 } from './employee-plan.dto';
 import { DataScope, UserContext } from '@app/shared/auth';
 import { EmployeeService } from '../employee/services/employee.service';
+import { TimezoneUtil } from '@app/shared/utils';
 
 @Injectable()
 export class EmployeePlanService {
@@ -110,15 +111,29 @@ export class EmployeePlanService {
         };
     }
 
-     async findActivePlansForJob() {
-        // Bu yerda repo.findMany yoki to'g'ridan-to'g'ri prisma so'rovi kerak.
-        // Agar repoizda oddiy findMany bo'lsa:
-        const plans = await this.repo.findMany({ isActive: true },{id:'asc'},{ employees: true } );
+    async findActivePlansForJob() {
+        const plans = await this.repo.findMany(
+            { isActive: true },
+            { id: 'asc' },
+            {
+                employees: { select: { id: true } },
+                organization: { select: { id: true, defaultTimeZone: true } },
+            }
+        );
 
-        // Weekdays stringini arrayga o'girib qaytaramiz
-        return plans.map(plan => ({
-            ...plan,
-            weekdaysList: plan.weekdays ? plan.weekdays.split(',').map(d => d.trim()) : []
-        }));
+        return plans.map(plan => {
+            const weekdaysList = plan.weekdays
+                ? plan.weekdays.split(',').map(d => d.trim())
+                : [];
+
+            const timeZone =
+                plan.organization?.defaultTimeZone ?? TimezoneUtil.DEFAULT_TIME_ZONE;
+
+            return {
+                ...plan,
+                weekdaysList,
+                timeZone,
+            };
+        });
     }
 }

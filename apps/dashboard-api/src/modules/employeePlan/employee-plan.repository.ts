@@ -1,11 +1,12 @@
 import { Injectable } from '@nestjs/common';
-import { Prisma, EmployeePlan } from '@prisma/client';
+import { Prisma, EmployeePlan, Organization } from '@prisma/client';
 import { PrismaService } from '@app/shared/database';
 import { BaseRepository } from '../../shared/repositories/base.repository';
 import { DataScope } from '@app/shared/auth';
 
 type EmployeePlanWithEmployees = EmployeePlan & {
     employees?: { id: number; name: string; photo?: string }[];
+    organization?: Pick<Organization, 'id' | 'defaultTimeZone'>;
 };
 
 @Injectable()
@@ -32,7 +33,6 @@ export class EmployeePlanRepository extends BaseRepository<
      * Assign employees to a plan
      */
     async assignEmployees(employeePlanId: number, employeeIds: number[]) {
-
         return this.prisma.employee.updateMany({
             where: { id: { in: employeeIds } },
             data: { employeePlanId },
@@ -50,7 +50,14 @@ export class EmployeePlanRepository extends BaseRepository<
         include?: Prisma.EmployeePlanInclude;
         scope?: DataScope; // DataScope
     }) {
-        const { skip = 0, take = 10, where = {}, orderBy = { id: 'desc' }, include, scope } = params;
+        const {
+            skip = 0,
+            take = 10,
+            where = {},
+            orderBy = { id: 'desc' },
+            include,
+            scope,
+        } = params;
 
         return this.findMany(
             where,

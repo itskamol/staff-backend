@@ -2,12 +2,12 @@ model ActiveWindow {
   id             Int      @id @default(autoincrement())
   computerUserId Int      @map("computer_user_id")
   organizationId Int      @map("organization_id")
-  datetime       DateTime
+  datetime       DateTime @db.Timestamptz(6)
   title          String
   processName    String   @map("process_name")
   icon           String?
   activeTime     Int      @map("active_time") // in seconds
-  createdAt      DateTime @default(now()) @map("created_at")
+  createdAt      DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
 
   organization Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
   computerUser ComputerUser @relation(fields: [computerUserId], references: [id], onDelete: Cascade)
@@ -24,13 +24,13 @@ model VisitedSite {
   id             Int      @id @default(autoincrement())
   computerUserId Int      @map("computer_user_id")
   organizationId Int      @map("organization_id")
-  datetime       DateTime
+  datetime       DateTime @db.Timestamptz(6)
   title          String?
   url            String
   processName    String   @map("process_name")
   icon           String?
   activeTime     Int      @map("active_time") // in seconds
-  createdAt      DateTime @default(now()) @map("created_at")
+  createdAt      DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
 
   organization Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
   computerUser ComputerUser @relation(fields: [computerUserId], references: [id], onDelete: Cascade)
@@ -48,12 +48,12 @@ model Screenshot {
   id             Int      @id @default(autoincrement())
   computerUserId Int      @map("computer_user_id")
   organizationId Int      @map("organization_id")
-  datetime       DateTime
+  datetime       DateTime @db.Timestamptz(6)
   title          String?
   filePath       String   @map("file_path")
   processName    String   @map("process_name")
   icon           String?
-  createdAt      DateTime @default(now()) @map("created_at")
+  createdAt      DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
 
   organization Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
   computerUser ComputerUser @relation(fields: [computerUserId], references: [id], onDelete: Cascade)
@@ -69,8 +69,8 @@ model UserSession {
   id             Int         @id @default(autoincrement())
   organizationId Int         @map("organization_id")
   computerUserId Int         @map("computer_user_id")
-  startTime      DateTime    @map("start_time")
-  endTime        DateTime?   @map("end_time")
+  startTime      DateTime    @map("start_time") @db.Timestamptz(6)
+  endTime        DateTime?   @map("end_time") @db.Timestamptz(6)
   sessionType    SessionType @map("session_type")
 
   organization Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)

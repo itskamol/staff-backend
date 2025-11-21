@@ -44,13 +44,9 @@ export class GroupService {
         const group = await this.groupRepository.findById(id, {
             resources: {
                 select: {
-                    resource: {
-                        select: {
-                            id: true,
-                            type: true,
-                            value: true,
-                        },
-                    },
+                    id: true,
+                    type: true,
+                    value: true,
                 },
             },
         });
@@ -86,19 +82,13 @@ export class GroupService {
 
         if (resources && resources.length > 0) {
             input.resources = {
-                create: [
-                    ...resources.map(resource => ({
-                        resource: {
-                            create: {
-                                type: createGroupDto.type,
-                                value: resource,
-                                organization: {
-                                    connect: { id: organizationId! },
-                                },
-                            },
-                        },
-                    })),
-                ],
+                create: resources.map(res => ({
+                    type: ResourceType.WEBSITE,
+                    value: res,
+                    organization: {
+                        connect: { id: organizationId },
+                    },
+                })),
             };
         }
 
@@ -130,25 +120,33 @@ export class GroupService {
     async addResources(groupId: number, resourceIds: number[], user: UserContext) {
         await this.findOne(groupId, user);
 
-        const existingConnections = await this.prisma.resourcesOnGroups.findMany({
+        const existingConnections = await this.prisma.resourceGroup.findMany({
             where: {
-                groupId,
-                resourceId: { in: resourceIds },
+                id: groupId,
+                resources: { some: { id: { in: resourceIds } } },
+            },
+            select: {
+                resources: { select: { id: true } },
             },
         });
 
-        const existingResourceIds = existingConnections.map(conn => conn.resourceId);
+        const existingResourceIds = existingConnections
+            .map(conn => conn.resources)
+            .flat()
+            .map(r => r.id);
         const newResourceIds = resourceIds.filter(id => !existingResourceIds.includes(id));
 
         if (newResourceIds.length === 0) {
             throw new BadRequestException('All resources are already in this group');
         }
 
-        await this.prisma.resourcesOnGroups.createMany({
-            data: newResourceIds.map(resourceId => ({
-                groupId,
-                resourceId,
-            })),
+        await this.prisma.resourceGroup.update({
+            where: { id: groupId },
+            data: {
+                resources: {
+                    connect: newResourceIds.map(id => ({ id })),
+                },
+            },
         });
 
         return { added: newResourceIds.length };
@@ -157,12 +155,13 @@ export class GroupService {
     async removeResource(groupId: number, resourceId: number, user: UserContext) {
         await this.findOne(groupId, user);
 
-        await this.prisma.resourcesOnGroups.findFirstOrThrow({
-            where: { groupId, resourceId },
-        });
-
-        await this.prisma.resourcesOnGroups.delete({
-            where: { resourceId_groupId: { groupId, resourceId } },
+        await this.prisma.resource.delete({
+            where: {
+                id: resourceId,
+                groups: {
+                    some: { id: groupId },
+                },
+            },
         });
 
         return { message: 'Resource removed from group' };

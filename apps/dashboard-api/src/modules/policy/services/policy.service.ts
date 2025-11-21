@@ -57,7 +57,7 @@ export class PolicyService {
                     select: {
                         type: true,
                         id: true,
-                        resourceGroup: {
+                        groups: {
                             select: { name: true, id: true, type: true },
                         },
                     },
@@ -78,7 +78,7 @@ export class PolicyService {
                 select: {
                     id: true,
                     type: true,
-                    resourceGroup: {
+                    groups: {
                         select: {
                             type: true,
                             id: true,

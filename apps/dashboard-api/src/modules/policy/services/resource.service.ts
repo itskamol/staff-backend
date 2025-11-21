@@ -39,14 +39,10 @@ export class ResourceService {
     async findOne(id: number, user: UserContext) {
         const resource = await this.resourceRepository.findById(id, {
             groups: {
-                include: {
-                    group: {
-                        select: {
-                            id: true,
-                            name: true,
-                            type: true,
-                        },
-                    },
+                select: {
+                    id: true,
+                    name: true,
+                    type: true,
                 },
             },
         });
