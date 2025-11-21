@@ -15,6 +15,7 @@ export type EmployeeWithRelations = Employee & {
         id: number;
         title: string;
     };
+
     credentials?: Array<{
         id: number;
         code: string;
