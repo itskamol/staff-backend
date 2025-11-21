@@ -6,10 +6,10 @@ import { UserContext } from 'apps/dashboard-api/src/shared/interfaces';
 import { CreateGroupDto, GroupDto, UpdateGroupDto, AddResourceToGroupDto, GroupQueryDto } from '../dto/group.dto';
 import { ApiCrudOperation } from 'apps/dashboard-api/src/shared/utils';
 
-@ApiTags('Policy Groups')
-@Controller('policies/groups')
+@ApiTags('Resources')
+@Controller('policies/resources/groups')
 @ApiBearerAuth()
-@ApiExtraModels(GroupDto, )
+@ApiExtraModels(GroupDto)
 @Roles(Role.ADMIN, Role.HR)
 export class GroupController {
     constructor(private readonly groupService: GroupService) {}

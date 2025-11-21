@@ -118,7 +118,7 @@ export class AttendanceProcessor extends WorkerHost {
                 totalMarked += updateResult.count ?? 0;
             }
 
-            this.logger.log(
+            this.logger.debug(
                 `[AttendanceJob] Marked ${totalMarked} employees as ABSENT across active plans.`
             );
 

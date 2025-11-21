@@ -1,13 +1,12 @@
-import { Controller, Get, Post, Put, Delete, Body, Param, Query } from '@nestjs/common';
+import { Controller, Get, Param, Query } from '@nestjs/common';
 import { ApiTags, ApiBearerAuth, ApiExtraModels } from '@nestjs/swagger';
 import { Roles, Role, User as CurrentUser, DataScope, Scope } from '@app/shared/auth';
-import { QueryDto } from '@app/shared/utils';
 import { ResourceService } from '../services/resource.service';
 import { UserContext } from 'apps/dashboard-api/src/shared/interfaces';
-import { CreateResourceDto, ResourceQueryDto, ResourceResponseDto, UpdateResourceDto } from '../dto/resource.dto';
+import { ResourceQueryDto, ResourceResponseDto } from '../dto/resource.dto';
 import { ApiCrudOperation } from 'apps/dashboard-api/src/shared/utils';
 
-@ApiTags('Policy Resources')
+@ApiTags('Resources')
 @Controller('policies/resources')
 @ApiBearerAuth()
 @ApiExtraModels(ResourceResponseDto)
@@ -42,52 +41,4 @@ export class ResourceController {
     async findOne(@Param('id') id: number, @CurrentUser() user: UserContext) {
         return await this.resourceService.findOne(id, user);
     }
-
-    // @Post()
-    // @ApiCrudOperation(ResourceResponseDto, 'create', {
-    //     body: CreateResourceDto,
-    //     summary: 'Create new resource',
-    // })
-    // async create(@Body() createResourceDto: CreateResourceDto, @Scope() scope: DataScope) {
-    //     return await this.resourceService.create(createResourceDto, scope);
-    // }
-
-    // @Post('bulk')
-    // @ApiCrudOperation(null, 'create', {
-    //     summary: 'Bulk create resources',
-    //     errorResponses: { badRequest: true },
-    // })
-    // async bulkCreate(
-    //     @Body() createResourceDtos: CreateResourceDto[],
-    //     @Scope() scope: DataScope
-    // ) {
-    //     return await this.resourceService.bulkCreate(createResourceDtos, scope);
-    // }
-
-    // @Put(':id')
-    // @ApiCrudOperation(ResourceResponseDto, 'update', {
-    //     body: UpdateResourceDto,
-    //     summary: 'Update existing resource',
-    //     errorResponses: { notFound: true, forbidden: true },
-    // })
-    // async update(
-    //     @Param('id') id: number,
-    //     @Body() updateResourceDto: UpdateResourceDto,
-    //     @CurrentUser() user: UserContext
-    // ) {
-    //     return await this.resourceService.update(id, updateResourceDto, user);
-    // }
-
-    // @Delete(':id')
-    // @ApiCrudOperation(null, 'delete', {
-    //     summary: 'Delete resource by ID',
-    //     errorResponses: { notFound: true, forbidden: true },
-    // })
-    // async remove(
-    //     @Param('id') id: number,
-    //     @Scope() scope: DataScope,
-    //     @CurrentUser() user: UserContext
-    // ) {
-    //     await this.resourceService.remove(id, scope, user);
-    // }
 }

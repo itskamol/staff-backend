@@ -72,18 +72,16 @@ export class GroupService {
             },
         };
 
-        // if (resourceIds && resourceIds.length > 0) {
-        //     input.resources = {
-        //         connect: {
-
-        //         },
-        //     };
-        // }
+        if (resourceIds && resourceIds.length > 0) {
+            input.resources = {
+                connect: resourceIds.map(id => ({ id })),
+            };
+        }
 
         if (resources && resources.length > 0) {
             input.resources = {
                 create: resources.map(res => ({
-                    type: ResourceType.WEBSITE,
+                    type: createGroupDto.type,
                     value: res,
                     organization: {
                         connect: { id: organizationId },
