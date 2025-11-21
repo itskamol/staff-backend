@@ -126,7 +126,8 @@ export class ActionService {
                 },
                 orderBy: { startTime: 'desc' },
             });
-            
+
+            console.log({existingAttendance})
             if (existingAttendance) {
                 await this.prisma.attendance.update({
                     where: { id: existingAttendance.id },
