@@ -55,7 +55,6 @@ export class ActionService {
             organizationId: gate.organizationId,
         };
 
-
         if (device.entryType === 'BOTH') {
             const lastInfo = await this.getLastActionInfo(employeeId, device.id);
 
@@ -107,13 +106,28 @@ export class ActionService {
                 plan.startTime,
                 plan.extraTime
             );
-            console.log(1)
-            const todayStart = new Date(actionTime);
+            console.log(1);
+            const date = new Date(actionTime);
+
+            // Toshkent timezone offset’i (millisekundlarda)
+            const tzOffset = 5 * 60 * 60 * 1000;
+
+            // actionTime ni Toshkent vaqtiga o'tkazamiz
+            const tashkentTime = new Date(date.getTime() + tzOffset);
+
+            // Bugun boshi (Toshkent bo‘yicha)
+            const todayStart = new Date(tashkentTime);
             todayStart.setHours(0, 0, 0, 0);
 
-            const todayEnd = new Date(actionTime);
+            // Bugun oxiri (Toshkent bo‘yicha)
+            const todayEnd = new Date(tashkentTime);
             todayEnd.setHours(23, 59, 59, 999);
-            console.log(2)
+
+            // Endi ularni yana UTC ga qaytaramiz (DB uchun)
+            todayStart.setTime(todayStart.getTime() - tzOffset);
+            todayEnd.setTime(todayEnd.getTime() - tzOffset);
+            
+            console.log(2);
             const existingAttendance = await this.prisma.attendance.findFirst({
                 where: {
                     employeeId,
@@ -127,7 +141,7 @@ export class ActionService {
                 orderBy: { startTime: 'desc' },
             });
 
-            console.log({existingAttendance})
+            console.log({ existingAttendance });
             if (existingAttendance) {
                 await this.prisma.attendance.update({
                     where: { id: existingAttendance.id },
