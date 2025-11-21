@@ -126,7 +126,8 @@ export class ActionService {
             // Endi ularni yana UTC ga qaytaramiz (DB uchun)
             todayStart.setTime(todayStart.getTime() - tzOffset);
             todayEnd.setTime(todayEnd.getTime() - tzOffset);
-            
+
+            console.log({todayStart, todayEnd})
             console.log(2);
             const existingAttendance = await this.prisma.attendance.findFirst({
                 where: {
