@@ -107,7 +107,7 @@ export class ActionService {
                 plan.extraTime
             );
 
-            const { todayStart, todayEnd }:any = await this.getTodayRange(actionTime);
+            const { todayStart, todayEnd }: any = await this.getTodayRange(actionTime);
             console.log({ todayStart, todayEnd });
 
             const existingAttendance = await this.prisma.attendance.findFirst({
@@ -118,10 +118,14 @@ export class ActionService {
                         gte: todayStart,
                         lte: todayEnd,
                     },
-                    OR: [{ arrivalStatus: 'PENDING' }, { arrivalStatus: 'ABSENT' }],
+                    AND: {
+                        OR: [{ arrivalStatus: 'PENDING' }, { arrivalStatus: 'ABSENT' }],
+                    },
                 },
                 orderBy: { startTime: 'desc' },
             });
+
+            console.log({gate, orgId: gate.organizationId, employeeId})
 
             console.log({ existingAttendance });
             if (existingAttendance) {
