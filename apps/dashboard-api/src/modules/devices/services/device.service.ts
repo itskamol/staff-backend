@@ -56,10 +56,6 @@ export class DeviceService {
             ];
         }
 
-        // if(scope?.organizationId){
-        //     console.log(scope?.organizationId)
-        //     where.gate.organizationId = scope?.organizationId
-        // }
 
         if (type) {
             where.type = type;

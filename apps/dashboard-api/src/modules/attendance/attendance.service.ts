@@ -6,7 +6,7 @@ import { Prisma } from '@prisma/client';
 import { InjectQueue } from '@nestjs/bullmq';
 import { JOB } from '../../shared/constants';
 import { Queue } from 'bullmq';
-import { Cron } from '@nestjs/schedule';
+import { Cron, CronExpression } from '@nestjs/schedule';
 import { LoggerService } from '../../core/logger';
 
 @Injectable()
@@ -18,7 +18,7 @@ export class AttendanceService {
     ) {}
 
 
-    @Cron('0 0 * * *') 
+    @Cron(CronExpression.EVERY_DAY_AT_MIDNIGHT) 
     async handleDailyAttendance() {
         this.logger.log('Cron triggered: Adding attendance job to queue...');
         
@@ -31,7 +31,7 @@ export class AttendanceService {
         );
     }
 
-    @Cron('* * * * *')
+    @Cron(CronExpression.EVERY_MINUTE)
     async handleAbsentCheck() {
         await this.attendanceQueue.add(JOB.ATTENDANCE.MARK_ABSENT, {}, { removeOnComplete: true });
     }
@@ -48,7 +48,7 @@ export class AttendanceService {
             const where: Prisma.AttendanceWhereInput = {};
 
             where.employeeId = dto.employeeId;
-            where.startTime = { gte: todayStart, lte: todayEnd };
+            where.createdAt = { gte: todayStart, lte: todayEnd };
 
             const existing = await this.repo.findMany(where);
 
@@ -83,7 +83,7 @@ export class AttendanceService {
             const endOfDay = new Date(date);
             endOfDay.setHours(23, 59, 59, 999);
 
-            where.startTime = {
+            where.createdAt = {
                 gte: startOfDay,
                 lte: endOfDay,
             };

@@ -1,11 +1,11 @@
 import { Injectable } from '@nestjs/common';
-import { Prisma, EmployeePlan } from '@prisma/client';
+import { Prisma, EmployeePlan, Employee } from '@prisma/client';
 import { PrismaService } from '@app/shared/database';
 import { BaseRepository } from '../../shared/repositories/base.repository';
 import { DataScope } from '@app/shared/auth';
 
 type EmployeePlanWithEmployees = EmployeePlan & {
-    employees?: { id: number; name: string; photo?: string }[];
+    employees?: Employee[];
 };
 
 @Injectable()

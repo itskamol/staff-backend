@@ -113,7 +113,7 @@ export class EmployeePlanService {
      async findActivePlansForJob() {
         // Bu yerda repo.findMany yoki to'g'ridan-to'g'ri prisma so'rovi kerak.
         // Agar repoizda oddiy findMany bo'lsa:
-        const plans = await this.repo.findMany({ isActive: true },{id:'asc'},{ employees: true } );
+        const plans = await this.repo.findMany({ isActive: true },{id:'asc'},{ employees: {select: {id:true, organizationId:true}} } );
 
         // Weekdays stringini arrayga o'girib qaytaramiz
         return plans.map(plan => ({

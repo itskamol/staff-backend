@@ -38,7 +38,7 @@ export class AttendanceProcessor extends WorkerHost {
                     try {
                         await this.attendanceService.create({
                             employeeId: emp.id,
-                            organizationId: plan.organizationId,
+                            organizationId: emp.organizationId,
                             arrivalStatus: ActionStatus.PENDING,
                         } as any); 
                         
@@ -52,7 +52,6 @@ export class AttendanceProcessor extends WorkerHost {
             this.logger.log(`[AttendanceJob] Finished. Processed ${processedCount} records.`);
             
         } catch (err) {
-            console.log(err)
             this.logger.error(`[AttendanceJob] Fatal Error:`, err);
             throw err;
         }
@@ -64,7 +63,7 @@ export class AttendanceProcessor extends WorkerHost {
             const currentHours = now.getHours().toString().padStart(2, '0');
             const currentMinutes = now.getMinutes().toString().padStart(2, '0');
             const currentTimeString = `${currentHours}:${currentMinutes}`;
-
+            this.logger.log(`[MarkedAttendanceJob] Marked employees starting... (Current Time: ${currentTimeString})`);
             const startOfToday = new Date();
             startOfToday.setHours(0, 0, 0, 0);
             const endOfToday = new Date();
@@ -100,10 +99,10 @@ export class AttendanceProcessor extends WorkerHost {
                 { arrivalStatus: ActionStatus.ABSENT }
             );
 
-            this.logger.log(`[AttendanceJob] Marked ${updateResult.count} employees as ABSENT (Current Time: ${currentTimeString})`);
+            this.logger.log(`[MarkedAttendanceJob] Marked ${updateResult.count} employees as ABSENT (Current Time: ${currentTimeString})`);
 
         } catch (err) {
-            this.logger.error(`[AttendanceJob] Error marking absent employees:`, err);
+            this.logger.error(`[MarkedAttendanceJob] Error marking absent employees:`, err);
         }
     }
 
