@@ -106,29 +106,10 @@ export class ActionService {
                 plan.startTime,
                 plan.extraTime
             );
-            console.log(1);
-            const date = new Date(actionTime);
 
-            // Toshkent timezone offset’i (millisekundlarda)
-            const tzOffset = 5 * 60 * 60 * 1000;
-
-            // actionTime ni Toshkent vaqtiga o'tkazamiz
-            const tashkentTime = new Date(date.getTime() + tzOffset);
-
-            // Bugun boshi (Toshkent bo‘yicha)
-            const todayStart = new Date(tashkentTime);
-            todayStart.setHours(0, 0, 0, 0);
-
-            // Bugun oxiri (Toshkent bo‘yicha)
-            const todayEnd = new Date(tashkentTime);
-            todayEnd.setHours(23, 59, 59, 999);
-
-            // Endi ularni yana UTC ga qaytaramiz (DB uchun)
-            todayStart.setTime(todayStart.getTime() - tzOffset);
-            todayEnd.setTime(todayEnd.getTime() - tzOffset);
-
-            console.log({todayStart, todayEnd})
-            console.log(2);
+            const { todayStart, todayEnd }:any = this.getTodayRange(actionTime);
+            console.log({ todayStart, todayEnd });
+            
             const existingAttendance = await this.prisma.attendance.findFirst({
                 where: {
                     employeeId,
@@ -163,6 +144,29 @@ export class ActionService {
         const action = await this.repo.findById(id, this.repo.getDefaultInclude(), scope);
         if (!action) throw new NotFoundException(`Action ${id} not found`);
         return action;
+    }
+
+    async getTodayRange(actionTime: string) {
+        const date = new Date(actionTime);
+
+        // Asia/Tashkent UTC+5
+        const tzOffset = 5 * 60 * 60 * 1000;
+
+        // actionTime'ni Toshkent vaqtiga o'tkazamiz
+        const local = new Date(date.getTime() + tzOffset);
+
+        // Bugunning boshi va oxiri (Toshkent bo'yicha)
+        const start = new Date(local);
+        start.setHours(0, 0, 0, 0);
+
+        const end = new Date(local);
+        end.setHours(23, 59, 59, 999);
+
+        // Qayta UTC ga qaytaramiz (DB uchun)
+        return {
+            todayStart: new Date(start.getTime() - tzOffset),
+            todayEnd: new Date(end.getTime() - tzOffset),
+        };
     }
 
     async findAll(query: ActionQueryDto, scope: DataScope) {
