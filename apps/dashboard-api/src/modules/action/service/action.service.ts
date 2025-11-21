@@ -107,9 +107,9 @@ export class ActionService {
                 plan.extraTime
             );
 
-            const { todayStart, todayEnd }:any = this.getTodayRange(actionTime);
+            const { todayStart, todayEnd }:any = await this.getTodayRange(actionTime);
             console.log({ todayStart, todayEnd });
-            
+
             const existingAttendance = await this.prisma.attendance.findFirst({
                 where: {
                     employeeId,
