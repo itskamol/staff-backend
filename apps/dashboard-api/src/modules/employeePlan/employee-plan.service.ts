@@ -8,7 +8,8 @@ import {
 } from './employee-plan.dto';
 import { DataScope, UserContext } from '@app/shared/auth';
 import { EmployeeService } from '../employee/services/employee.service';
-import { TimezoneUtil } from '@app/shared/utils';
+import { formatInTimeZone, getUtcDayRange, TimezoneUtil } from '@app/shared/utils';
+import { Prisma } from '@prisma/client';
 
 @Injectable()
 export class EmployeePlanService {
@@ -21,10 +22,36 @@ export class EmployeePlanService {
         try {
             const orgId = dto.organizationId || scope.organizationId;
             dto.organizationId = orgId;
-            return await this.repo.create({ ...dto }, undefined, scope);
+
+            const input: Prisma.EmployeePlanCreateInput = {
+                ...dto,
+                startTimeInSeconds: this.parseTimeFromString(dto.startTime),
+                endTimeInSeconds: this.parseTimeFromString(dto.endTime),
+                extraTimeInSeconds: this.parseTimeFromString(dto.extraTime),
+            };
+
+            console.log(input)
+
+            return await this.repo.create({ ...input }, undefined, scope);
         } catch (error) {
             throw new BadRequestException(error.message);
         }
+    }
+
+    private parseTimeFromString(timeStr?: string): number {
+        const date = new Date();
+        const mills =  this.parseStrToTime(timeStr);
+        console.log(mills)
+        date.setMilliseconds(mills);
+        const dateTime = formatInTimeZone(date, TimezoneUtil.DEFAULT_TIME_ZONE, 'HH:mm');
+
+        return this.parseStrToTime(dateTime);
+    }
+
+    private parseStrToTime(str: string): number {
+        const [hour, minute] = str ? str.split(':').map(Number) : [0, 0];
+
+        return hour * 3600 * 1000 + minute * 60 * 1000;
     }
 
     async findAll(query: EmployeePlanQueryDto, scope: DataScope) {
@@ -37,8 +64,8 @@ export class EmployeePlanService {
                 { addadditionalDetails: { contains: query.search, mode: 'insensitive' } },
             ];
         }
-        if(query.organizationId){
-            where.organizationId = query.organizationId
+        if (query.organizationId) {
+            where.organizationId = query.organizationId;
         }
 
         const orderBy = { [query.sortBy ?? 'id']: query.sortOrder ?? 'desc' };
@@ -74,7 +101,7 @@ export class EmployeePlanService {
         }
 
         const data = await this.repo.update(id, dto, undefined, scope);
-        
+
         const result = { ...data, weekdays: data.weekdays?.split(',') ?? [] };
         return result;
     }
@@ -122,12 +149,9 @@ export class EmployeePlanService {
         );
 
         return plans.map(plan => {
-            const weekdaysList = plan.weekdays
-                ? plan.weekdays.split(',').map(d => d.trim())
-                : [];
+            const weekdaysList = plan.weekdays ? plan.weekdays.split(',').map(d => d.trim()) : [];
 
-            const timeZone =
-                plan.organization?.defaultTimeZone ?? TimezoneUtil.DEFAULT_TIME_ZONE;
+            const timeZone = plan.organization?.defaultTimeZone ?? TimezoneUtil.DEFAULT_TIME_ZONE;
 
             return {
                 ...plan,
