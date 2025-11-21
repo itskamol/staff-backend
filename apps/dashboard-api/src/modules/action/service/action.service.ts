@@ -12,7 +12,6 @@ export class ActionService {
     constructor(
         private readonly repo: ActionRepository,
         private prisma: PrismaService,
-        private attendanceService: AttendanceService,
         private readonly logger: LoggerService
     ) {}
 
@@ -65,14 +64,16 @@ export class ActionService {
             dto.entryType = lastInfo.nextEntryType as any;
         }
 
+        const todayStart = new Date(actionTime);
+        todayStart.setHours(0, 0, 0, 0);
+
+        const todayEnd = new Date(actionTime);
+        todayEnd.setHours(23, 59, 59, 999);
+        
+        console.log({todayStart, todayEnd, action: dto.entryType, employee: employee.name, employeeId})
+
         if (dto.entryType === 'EXIT') {
             const { status: exitStatus } = await this.getExitStatus(actionTime, plan.endTime);
-
-            const todayStart = new Date(actionTime);
-            todayStart.setHours(0, 0, 0, 0);
-
-            const todayEnd = new Date(actionTime);
-            todayEnd.setHours(23, 59, 59, 999);
 
             const existingAttendance = await this.prisma.attendance.findFirst({
                 where: {
@@ -99,7 +100,6 @@ export class ActionService {
             }
         }
 
-        console.log(dto.entryType);
         if (dto.entryType === 'ENTER') {
             const { status } = await this.getActionStatus(
                 actionTime,
@@ -107,8 +107,7 @@ export class ActionService {
                 plan.extraTime
             );
 
-            const { todayStart, todayEnd }: any = await this.getTodayRange(actionTime);
-            console.log({ todayStart, todayEnd });
+            // const { todayStart, todayEnd }: any = await this.getTodayRange(actionTime);
 
             const existingAttendance = await this.prisma.attendance.findFirst({
                 where: {
@@ -125,9 +124,6 @@ export class ActionService {
                 orderBy: { startTime: 'desc' },
             });
 
-            console.log({gate, orgId: gate.organizationId, employeeId})
-
-            console.log({ existingAttendance });
             if (existingAttendance) {
                 await this.prisma.attendance.update({
                     where: { id: existingAttendance.id },
@@ -150,28 +146,28 @@ export class ActionService {
         return action;
     }
 
-    async getTodayRange(actionTime: string) {
-        const date = new Date(actionTime);
+    // async getTodayRange(actionTime: string) {
+    //     const date = new Date(actionTime);
 
-        // Asia/Tashkent UTC+5
-        const tzOffset = 5 * 60 * 60 * 1000;
+    //     // Asia/Tashkent UTC+5
+    //     const tzOffset = 5 * 60 * 60 * 1000;
 
-        // actionTime'ni Toshkent vaqtiga o'tkazamiz
-        const local = new Date(date.getTime() + tzOffset);
+    //     // actionTime'ni Toshkent vaqtiga o'tkazamiz
+    //     const local = new Date(date.getTime() + tzOffset);
 
-        // Bugunning boshi va oxiri (Toshkent bo'yicha)
-        const start = new Date(local);
-        start.setHours(0, 0, 0, 0);
+    //     // Bugunning boshi va oxiri (Toshkent bo'yicha)
+    //     const start = new Date(local);
+    //     start.setHours(0, 0, 0, 0);
 
-        const end = new Date(local);
-        end.setHours(23, 59, 59, 999);
+    //     const end = new Date(local);
+    //     end.setHours(23, 59, 59, 999);
 
-        // Qayta UTC ga qaytaramiz (DB uchun)
-        return {
-            todayStart: new Date(start.getTime() - tzOffset),
-            todayEnd: new Date(end.getTime() - tzOffset),
-        };
-    }
+    //     // Qayta UTC ga qaytaramiz (DB uchun)
+    //     return {
+    //         todayStart: new Date(start.getTime() - tzOffset),
+    //         todayEnd: new Date(end.getTime() - tzOffset),
+    //     };
+    // }
 
     async findAll(query: ActionQueryDto, scope: DataScope) {
         const where: Prisma.ActionWhereInput = {};
