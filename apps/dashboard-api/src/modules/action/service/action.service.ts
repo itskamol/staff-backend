@@ -3,16 +3,15 @@ import { ActionRepository } from '../repositories/action.repository';
 import { ActionQueryDto, CreateActionDto, UpdateActionDto } from '../dto/action.dto';
 import { PrismaService } from '@app/shared/database';
 import { ActionMode, ActionStatus, ActionType, Prisma, VisitorType } from '@prisma/client';
-import { AttendanceService } from '../../attendance/attendance.service';
 import { LoggerService } from 'apps/dashboard-api/src/core/logger';
 import { DataScope } from '@app/shared/auth';
+import { getUtcDayRange, TimezoneUtil } from '@app/shared/utils';
 
 @Injectable()
 export class ActionService {
     constructor(
         private readonly repo: ActionRepository,
         private prisma: PrismaService,
-        private attendanceService: AttendanceService,
         private readonly logger: LoggerService
     ) {}
 
@@ -21,6 +20,7 @@ export class ActionService {
         const employeeId = acEvent.employeeNoString
             ? parseInt(acEvent.employeeNoString)
             : undefined;
+
         const actionTime = eventData.dateTime;
 
         const device = await this.prisma.device.findFirst({ where: { id: deviceId } });
@@ -31,10 +31,6 @@ export class ActionService {
 
         const employee = await this.prisma.employee.findFirst({ where: { id: employeeId } });
         if (!employee) throw new Error(`Employee ${employeeId} not found`);
-
-        if (!employee.employeePlanId) {
-            throw new Error(`EmployeePlan is not found for Employee`);
-        }
 
         const plan = await this.prisma.employeePlan.findFirst({
             where: { id: employee.employeePlanId },
@@ -67,20 +63,15 @@ export class ActionService {
 
         if (dto.entryType === 'EXIT') {
             const { status: exitStatus } = await this.getExitStatus(actionTime, plan.endTime);
-
-            const todayStart = new Date(actionTime);
-            todayStart.setHours(0, 0, 0, 0);
-
-            const todayEnd = new Date(actionTime);
-            todayEnd.setHours(23, 59, 59, 999);
+            const { startUtc, endUtc } = getUtcDayRange(actionTime, TimezoneUtil.DEFAULT_TIME_ZONE);
 
             const existingAttendance = await this.prisma.attendance.findFirst({
                 where: {
                     employeeId,
                     organizationId: gate.organizationId,
                     startTime: {
-                        gte: todayStart,
-                        lte: todayEnd,
+                        gte: startUtc,
+                        lte: endUtc,
                     },
                 },
                 orderBy: { startTime: 'desc' },
@@ -99,7 +90,6 @@ export class ActionService {
             }
         }
 
-        console.log(dto.entryType);
         if (dto.entryType === 'ENTER') {
             const { status } = await this.getActionStatus(
                 actionTime,
@@ -107,23 +97,21 @@ export class ActionService {
                 plan.extraTime
             );
 
-            const { todayStart, todayEnd }:any = await this.getTodayRange(actionTime);
-            console.log({ todayStart, todayEnd });
+            const { startUtc, endUtc } = getUtcDayRange(actionTime, TimezoneUtil.DEFAULT_TIME_ZONE);
 
             const existingAttendance = await this.prisma.attendance.findFirst({
                 where: {
                     employeeId,
                     organizationId: gate.organizationId,
                     createdAt: {
-                        gte: todayStart,
-                        lte: todayEnd,
+                        gte: startUtc,
+                        lte: endUtc,
                     },
                     OR: [{ arrivalStatus: 'PENDING' }, { arrivalStatus: 'ABSENT' }],
                 },
                 orderBy: { startTime: 'desc' },
             });
 
-            console.log({ existingAttendance });
             if (existingAttendance) {
                 await this.prisma.attendance.update({
                     where: { id: existingAttendance.id },
@@ -144,29 +132,6 @@ export class ActionService {
         const action = await this.repo.findById(id, this.repo.getDefaultInclude(), scope);
         if (!action) throw new NotFoundException(`Action ${id} not found`);
         return action;
-    }
-
-    async getTodayRange(actionTime: string) {
-        const date = new Date(actionTime);
-
-        // Asia/Tashkent UTC+5
-        const tzOffset = 5 * 60 * 60 * 1000;
-
-        // actionTime'ni Toshkent vaqtiga o'tkazamiz
-        const local = new Date(date.getTime() + tzOffset);
-
-        // Bugunning boshi va oxiri (Toshkent bo'yicha)
-        const start = new Date(local);
-        start.setHours(0, 0, 0, 0);
-
-        const end = new Date(local);
-        end.setHours(23, 59, 59, 999);
-
-        // Qayta UTC ga qaytaramiz (DB uchun)
-        return {
-            todayStart: new Date(start.getTime() - tzOffset),
-            todayEnd: new Date(end.getTime() - tzOffset),
-        };
     }
 
     async findAll(query: ActionQueryDto, scope: DataScope) {
@@ -198,14 +163,6 @@ export class ActionService {
     async remove(id: number, scope: DataScope) {
         await this.findOne(id, scope);
         return this.repo.delete(id, scope);
-    }
-
-    async toSimpleIso(dateStr: string): Promise<string> {
-        const date = new Date(dateStr);
-        const pad = (n: number) => n.toString().padStart(2, '0');
-        return `${date.getFullYear()}-${pad(date.getMonth() + 1)}-${pad(date.getDate())}T${pad(
-            date.getHours()
-        )}:${pad(date.getMinutes())}:${pad(date.getSeconds())}`;
     }
 
     async getActionStatus(

@@ -84,7 +84,10 @@ model EmployeePlan {
   name                 String?
   addadditionalDetails String? @map("additional_details")
   startTime            String  @map("start_time")
+  startTimeInSeconds   Int     @map("start_time_in_seconds")
   endTime              String  @map("end_time")
+  endTimeInSeconds     Int     @map("end_time_in_seconds")
+  extraTimeInSeconds   Int     @map("extra_time_in_seconds")
   extraTime            String  @map("extra_time")
   weekdays             String
   isDefault            Boolean @default(false)

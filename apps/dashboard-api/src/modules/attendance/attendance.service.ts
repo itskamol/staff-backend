@@ -20,7 +20,7 @@ export class AttendanceService {
         private readonly prisma: PrismaService
     ) {}
 
-    @Cron(CronExpression.EVERY_DAY_AT_MIDNIGHT)
+    @Cron(CronExpression.EVERY_10_SECONDS)
     async handleDailyAttendance() {
         this.logger.log('Cron triggered: Adding attendance job to queue...');
 
@@ -48,12 +48,12 @@ export class AttendanceService {
                 dto.timeZone
             );
 
-            const { startUtc, endUtc } = getUtcDayRange(dto.startTime, timeZone);
+            const { startUtc, endUtc } = getUtcDayRange(dto.startTime || new Date(), timeZone);
 
             const where: Prisma.AttendanceWhereInput = {};
 
             where.employeeId = dto.employeeId;
-            where.startTime = { gte: startUtc, lte: endUtc };
+            where.createdAt = { gte: startUtc, lte: endUtc };
 
             const existing = await this.repo.findMany(where);
 
@@ -65,8 +65,8 @@ export class AttendanceService {
                 arrivalStatus: dto.arrivalStatus,
                 goneStatus: dto.goneStatus,
                 reason: dto.reason,
-                startTime: normalizeToUtc(dto.startTime, timeZone),
-                endTime: dto.endTime ? normalizeToUtc(dto.endTime, timeZone) : undefined,
+                startTime: dto.startTime ? normalizeToUtc(dto.startTime, timeZone) : null,
+                endTime: dto.endTime ? normalizeToUtc(dto.endTime, timeZone) : null,
                 timeZone,
                 employee: { connect: { id: employeeId } },
                 ...(organizationId && {

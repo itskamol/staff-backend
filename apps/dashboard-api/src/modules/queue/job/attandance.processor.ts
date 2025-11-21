@@ -36,7 +36,6 @@ export class AttendanceProcessor extends WorkerHost {
                     continue;
                 }
 
-                const planStartTime = this.buildPlanStartDate(now, timeZone, plan.startTime);
 
                 for (const emp of plan.employees) {
                     try {
@@ -44,12 +43,12 @@ export class AttendanceProcessor extends WorkerHost {
                             employeeId: emp.id,
                             organizationId: plan.organizationId,
                             arrivalStatus: ActionStatus.PENDING,
-                            startTime: planStartTime,
                             timeZone,
                         } as any); 
                         
                         processedCount++;
                     } catch (err) {
+                        console.log(err)
                         this.logger.warn(`[AttendanceJob] Failed for Employee ${emp.id}: ${err.message}`);
                     }
                 }
@@ -91,9 +90,8 @@ export class AttendanceProcessor extends WorkerHost {
 
                 const whereCondition: Prisma.AttendanceWhereInput = {
                     arrivalStatus: ActionStatus.PENDING,
-                    timeZone,
                     employeeId: { in: employeeIds },
-                    startTime: {
+                    createdAt: {
                         gte: startUtc,
                         lte: endUtc,
                     },
@@ -123,6 +121,7 @@ export class AttendanceProcessor extends WorkerHost {
             );
 
         } catch (err) {
+            console.log(err)
             this.logger.error(`[AttendanceJob] Error marking absent employees:`, err);
         }
     }
@@ -138,12 +137,6 @@ export class AttendanceProcessor extends WorkerHost {
             default:
                 break;
         }
-    }
-
-    private buildPlanStartDate(date: Date, zone: string, planStartTime?: string): string {
-        const timePart = this.normalizePlanTime(planStartTime);
-        const localDate = formatInTimeZone(date, zone, 'yyyy-MM-dd');
-        return `${localDate}T${timePart}:00`;
     }
 
     private normalizePlanTime(planTime?: string): string {
