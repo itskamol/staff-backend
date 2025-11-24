@@ -1,5 +1,5 @@
 import { QueryDto } from '@app/shared/utils';
-import { ApiProperty, OmitType, PartialType } from '@nestjs/swagger';
+import { ApiProperty, ApiPropertyOptional, OmitType, PartialType } from '@nestjs/swagger';
 import { ActionType } from '@prisma/client';
 import {
     IsBoolean,
@@ -14,10 +14,12 @@ import {
     IsArray,
 } from 'class-validator';
 import { CreateCredentialDto } from '../../credential/dto/credential.dto';
+import { Type } from 'class-transformer';
 
-class EmployeeCredentialDto extends OmitType(CreateCredentialDto, ['employeeId', 'organizationId']) {
-
-}
+class EmployeeCredentialDto extends OmitType(CreateCredentialDto, [
+    'employeeId',
+    'organizationId',
+]) {}
 
 export class CreateEmployeeDto {
     @ApiProperty({
@@ -125,7 +127,7 @@ export class CreateEmployeeDto {
     @ApiProperty({
         description: 'Employee credentials',
         required: false,
-        type: [EmployeeCredentialDto]
+        type: [EmployeeCredentialDto],
     })
     @IsOptional()
     @IsArray()
@@ -217,7 +219,7 @@ export class UpdateEmployeeDto {
 
     @IsInt()
     @IsOptional()
-    employeePlanId?: number
+    employeePlanId?: number;
 }
 
 export class BulkUpdateEmployees {
@@ -230,9 +232,8 @@ export class BulkUpdateEmployees {
     @IsInt({ each: true })
     employeeIds: number[];
 
-
     @ApiProperty({
-        description: 'Data to update for the specified employees.'
+        description: 'Data to update for the specified employees.',
     })
     @IsNotEmpty()
     policyId?: number;
@@ -356,9 +357,20 @@ export class EmployeeResponseDto {
 export class EmployeeQueryDto extends QueryDto {
     @ApiProperty({
         enum: ActionType,
-        required: false
+        required: false,
     })
     @IsOptional()
     @IsEnum(ActionType)
-    credentialType: ActionType
+    credentialType: ActionType;
+
+    @ApiPropertyOptional()
+    @IsOptional()
+    @IsBoolean()
+    isActive?: boolean;
+
+    @ApiPropertyOptional()
+    @IsOptional()
+    @IsInt()
+    @Type(() => Number)
+    departmentId?: number;
 }
