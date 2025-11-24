@@ -7,7 +7,6 @@ import {
     CreateDeviceDto,
     DeviceDto,
     UpdateDeviceDto,
-    TestConnectionDto,
     AssignEmployeesToGatesDto,
     QueryDeviceDto,
 } from '../dto/device.dto';
@@ -20,11 +19,6 @@ import { ApiCrudOperation } from 'apps/dashboard-api/src/shared/utils';
 @Roles(Role.ADMIN, Role.GUARD, Role.HR)
 export class DeviceController {
     constructor(private readonly deviceService: DeviceService) {}
-
-    @Get('test-config')
-    testSocket() {
-        return this.deviceService.configCheck();
-    }
 
     @Get()
     @ApiCrudOperation(DeviceDto, 'list', {
@@ -74,16 +68,6 @@ export class DeviceController {
     })
     async remove(@Param('id') id: number, @Scope() scope: DataScope, @User() user: UserContext) {
         return await this.deviceService.remove(id, scope, user);
-    }
-
-    @Post(':id/test-connection')
-    @ApiCrudOperation(null, 'create', {
-        body: TestConnectionDto,
-        summary: 'Test device connection',
-        errorResponses: { notFound: true, badRequest: true },
-    })
-    async testConnection(@Param('id') id: number, @Body() testConnectionDto: TestConnectionDto) {
-        return await this.deviceService.testConnection(id, testConnectionDto.timeout);
     }
 
     @Post('assign-employees')

@@ -1,17 +1,18 @@
 import { Injectable, NotFoundException, BadRequestException } from '@nestjs/common';
 import { DataScope } from '@app/shared/auth';
-import { QueryDto } from '@app/shared/utils';
-import { AssignEmployeesToGatesDto, CreateDeviceDto, QueryDeviceDto, UpdateDeviceDto } from '../dto/device.dto';
+import {
+    AssignEmployeesToGatesDto,
+    CreateDeviceDto,
+    QueryDeviceDto,
+    UpdateDeviceDto,
+} from '../dto/device.dto';
 import { UserContext } from '../../../shared/interfaces';
 import { DeviceRepository } from '../repositories/device.repository';
 import { DeviceType, EntryType, Prisma } from '@prisma/client';
 import { GateRepository } from '../../gate/repositories/gate.repository';
 import { HikvisionService } from '../../hikvision/hikvision.service';
 import { HikvisionConfig } from '../../hikvision/dto/create-hikvision-user.dto';
-import { PrismaService } from '@app/shared/database';
 import { Server } from 'socket.io';
-import { StatusEnum } from '@prisma/client';
-import { EventsGateway } from '../../websocket/events.gateway';
 import { ConfigService } from 'apps/dashboard-api/src/core/config/config.service';
 import { InjectQueue } from '@nestjs/bullmq';
 import { Queue } from 'bullmq';
@@ -21,31 +22,16 @@ import { GateDto } from '../../gate/dto/gate.dto';
 
 @Injectable()
 export class DeviceService {
-    private socket: Server;
     constructor(
         @InjectQueue(JOB.DEVICE.NAME) private readonly deviceQueue: Queue,
         private readonly deviceRepository: DeviceRepository,
         private readonly gateRepository: GateRepository,
         private hikvisionService: HikvisionService,
-        private readonly prisma: PrismaService,
-        private readonly gateway: EventsGateway,
         private readonly configService: ConfigService,
         private readonly encryptionService: EncryptionService
-    ) {
-        this.socket = this.gateway.server;
-    }
+    ) {}
 
-    async configCheck() {
-        const port = this.configService.port;
-        const ip = this.configService.hostIp;
-        return { port, ip };
-    }
-
-    async findAll(
-        query: QueryDeviceDto,
-        scope: DataScope,
-        user: UserContext
-    ) {
+    async findAll(query: QueryDeviceDto, scope: DataScope, user: UserContext) {
         const { page, limit, sort = 'createdAt', order = 'desc', search, type, gateId } = query;
         const where: Prisma.DeviceWhereInput = {};
 
@@ -55,7 +41,6 @@ export class DeviceService {
                 { ipAddress: { contains: search, mode: 'insensitive' } },
             ];
         }
-
 
         if (type) {
             where.type = type;
@@ -300,44 +285,6 @@ export class DeviceService {
         return { message: 'Device deleted successfully', ...result };
     }
 
-    async testConnection(id: number, timeout: number = 5) {
-        const device = await this.deviceRepository.findById(id);
-
-        if (!device) {
-            throw new NotFoundException('Device not found');
-        }
-
-        try {
-            const connectionResult = await this.performConnectionTest(device, timeout);
-
-            await this.deviceRepository.updateStatus(id, connectionResult.success);
-
-            return {
-                success: connectionResult.success,
-                message: connectionResult.message,
-                response_time: connectionResult.responseTime,
-                tested_at: new Date(),
-            };
-        } catch (error) {
-            await this.deviceRepository.updateStatus(id, false);
-            throw new BadRequestException(`Connection test failed: ${error.message}`);
-        }
-    }
-
-    private async performConnectionTest(device: any, timeout: number) {
-        // Mock implementation - replace with actual HIKVision SDK
-        return new Promise<{ success: boolean; message: string; responseTime: number }>(resolve => {
-            setTimeout(() => {
-                const success = Math.random() > 0.2; // 80% success rate for demo
-                resolve({
-                    success,
-                    message: success ? 'Connection successful' : 'Connection failed',
-                    responseTime: Math.floor(Math.random() * 1000) + 100,
-                });
-            }, Math.min(timeout * 1000, 2000));
-        });
-    }
-
     async findByType(type: DeviceType) {
         return this.deviceRepository.findByType(type);
     }
@@ -362,232 +309,21 @@ export class DeviceService {
         );
     }
 
-    setSocketServer(socket: Server) {
-        this.socket = socket;
-    }
-
     async assignEmployeesToGates(
         dto: AssignEmployeesToGatesDto,
         scope: DataScope,
         user?: UserContext
     ) {
-        const { gateIds, employeeIds } = dto;
-        const result = {
-            total: 0,
-            success: 0,
-        };
-
-        if (!gateIds?.length || !employeeIds?.length) return;
-
-        const organizationId = dto.organizationId ? dto.organizationId : scope.organizationId;
-
         const port = this.configService.port;
         const ip = this.configService.hostIp;
 
-        const gates = await this.prisma.gate.findMany({
-            where: { id: { in: gateIds } },
-            include: { devices: true },
+        await this.deviceQueue.add(JOB.DEVICE.ASSIGN_EMPLOYEES_TO_GATES, {
+            dto,
+            scope,
+            port,
+            ip,
         });
 
-        if (!gates.length) return;
-
-        const employees = await this.prisma.employee.findMany({
-            where: {
-                id: {
-                    in: employeeIds,
-                },
-            },
-            select: {
-                id: true,
-            },
-        });
-
-        if (!employees.length) return;
-
-        const credentials = await this.prisma.credential.findMany({
-            where: { employeeId: { in: employeeIds }, type: 'PHOTO', isActive: true },
-            select: { employeeId: true },
-        });
-
-        for (const gate of gates) {
-            await this.prisma.gate.update({
-                where: { id: gate.id },
-                data: {
-                    employees: {
-                        connect: employees,
-                    },
-                },
-            });
-        }
-
-        const credMap = new Map(credentials.map(c => [c.employeeId, true]));
-
-        for (const gate of gates) {
-            if (!gate.devices?.length) {
-                this.gateway.server.emit('sync', {
-                    syncId: null,
-                    employee: null,
-                    gate: { id: gate.id, name: gate.name },
-                    device: null,
-                    status: 'FIELD',
-                    message: 'Device is not found this gate!',
-                    step: 'DEVICE_CHECK',
-                    timestamp: new Date().toISOString(),
-                });
-                continue;
-            }
-
-            for (const device of gate.devices) {
-                const caps = (device.capabilities as any) || {};
-
-                if (!caps.isSupportFace) {
-                    this.gateway.server.emit('sync', {
-                        syncId: null,
-                        employee: null,
-                        gate: { id: gate.id, name: gate.name },
-                        device: {
-                            id: device.id,
-                            name: device.name || device.ipAddress,
-                            ip: device.ipAddress,
-                        },
-                        status: 'SKIPPED',
-                        message: 'Face is not supported.',
-                        step: 'DEVICE_CHECK',
-                        timestamp: new Date().toISOString(),
-                    });
-                    continue;
-                }
-
-                for (const empId of employeeIds) {
-                    const employee = await this.prisma.employee.findUnique({
-                        where: { id: empId },
-                        select: { photo: true, name: true },
-                    });
-
-                    const sync = await this.prisma.employeeSync.create({
-                        data: {
-                            employeeId: empId,
-                            deviceId: device.id,
-                            gateId: gate.id,
-                            organizationId,
-                            status: 'WAITING',
-                        },
-                    });
-
-                    const emitBase = {
-                        syncId: sync.id,
-                        employee: { id: empId, name: employee?.name || 'Noma’lum' },
-                        gate: { id: gate.id, name: gate.name },
-                        device: {
-                            id: device.id,
-                            name: device.name || device.ipAddress,
-                            ip: device.ipAddress,
-                        },
-                        timestamp: new Date().toISOString(),
-                    };
-
-                    this.gateway.server.emit('sync', {
-                        ...emitBase,
-                        status: 'IN_PROGRESS',
-                        message: 'Boshlandi',
-                        step: 'VALIDATION',
-                    });
-
-                    try {
-                        if (!credMap.has(empId)) {
-                            throw new Error('Photo credential is not found!');
-                        }
-
-                        await this.hikvisionService.createUser(
-                            {
-                                employeeId: empId.toString(),
-                                userType: 'normal',
-                                beginTime: '2025-01-01T00:00:00',
-                                endTime: '2035-12-31T23:59:59',
-                            },
-                            {
-                                host: device.ipAddress,
-                                port: 80,
-                                protocol: 'http',
-                                username: device.login,
-                                password: device.password,
-                            }
-                        );
-                        await this.updateSync(sync.id, 'PROCESS', 'User created!');
-                        this.gateway.server.emit('sync', {
-                            ...emitBase,
-                            status: 'WAITING',
-                            message: 'User created!',
-                            step: 'USER_CREATION',
-                        });
-
-                        if (!employee?.photo) throw new Error('Foto is not found!');
-
-                        const photoUrl = `http://${ip}:${port}/api/storage/${employee.photo}`;
-                        await this.hikvisionService.addFaceToUserViaURL(
-                            empId.toString(),
-                            photoUrl,
-                            {
-                                host: device.ipAddress,
-                                port: 80,
-                                protocol: 'http',
-                                username: device.login,
-                                password: device.password,
-                            }
-                        );
-
-                        await this.updateSync(sync.id, 'DONE', 'Success!');
-                        result.success++;
-                        this.gateway.server.emit('sync', {
-                            ...emitBase,
-                            status: 'DONE',
-                            message: 'Face successfully added!',
-                            step: 'ADD_FACE',
-                        });
-                    } catch (err: any) {
-                        const msg = err?.message || 'Undifined error';
-                        await this.updateSync(sync.id, 'FIELD', msg);
-                        this.gateway.server.emit('sync', {
-                            ...emitBase,
-                            status: 'FIELD',
-                            message: msg,
-                            step: 'VALIDATION',
-                            error: msg,
-                        });
-                    }
-                }
-            }
-        }
-
-        result.total = result.success;
         return { success: true };
-    }
-
-    private async updateSync(id: number, status: StatusEnum, message?: string) {
-        const updated = await this.prisma.employeeSync.update({
-            where: { id },
-            data: { status, message, updatedAt: new Date() },
-        });
-
-        this.gateway.server.emit('sync', {
-            syncId: id,
-            status,
-            message: message || status,
-            updatedAt: updated.updatedAt,
-        });
-    }
-
-    testSocket() {
-        this.gateway.server.emit('sync', {
-            syncId: 999,
-            status: 'DONE',
-            message: 'BACKEND TEST — SOCKET 100% ISHLAYDI! 🚀 yessss',
-            gateId: 1,
-            deviceId: 1,
-            employeeId: 999,
-            updatedAt: new Date().toISOString(),
-        });
-
-        return { success: true, message: 'Test emit yuborildi!' };
     }
 }
