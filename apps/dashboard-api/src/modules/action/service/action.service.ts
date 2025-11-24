@@ -6,6 +6,7 @@ import { ActionMode, ActionStatus, ActionType, Prisma, VisitorType } from '@pris
 import { AttendanceService } from '../../attendance/attendance.service';
 import { LoggerService } from 'apps/dashboard-api/src/core/logger';
 import { DataScope } from '@app/shared/auth';
+import { accessSync } from 'fs';
 
 @Injectable()
 export class ActionService {
@@ -181,7 +182,7 @@ export class ActionService {
 
         const data = await this.repo.findManyWithPagination(
             where,
-            {},
+            {actionTime: 'desc'},
             this.repo.getDefaultInclude(),
             { page, limit },
             scope
