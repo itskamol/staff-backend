@@ -10,7 +10,7 @@ import { ActionStatus, Prisma } from '@prisma/client';
 export class AttendanceProcessor extends WorkerHost {
     constructor(
         private readonly attendanceService: AttendanceService,
-        private readonly employeePlanService: EmployeePlanService, // Yangi qo'shildi
+        private readonly employeePlanService: EmployeePlanService,
         private readonly logger: LoggerService
     ) {
         super();

@@ -2,7 +2,8 @@ export const JOB = {
     DEVICE: {
         NAME: 'device',
         CREATE: 'device:create',
-        DELETE: 'device:delete'
+        DELETE: 'device:delete',
+        ASSIGN_EMPLOYEES_TO_GATES: 'device:assignEmployees'
     },
     ATTENDANCE: {
         NAME: "attandance",
