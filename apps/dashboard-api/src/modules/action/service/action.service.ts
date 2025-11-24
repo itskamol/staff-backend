@@ -56,7 +56,7 @@ export class ActionService {
         };
 
         if (device.entryType === 'BOTH') {
-            const lastInfo = await this.getLastActionInfo(employeeId, device.id);
+            const lastInfo = await this.getLastActionInfo(employeeId, gate.id);
 
             if (!lastInfo.canCreate) {
                 return;
@@ -70,14 +70,6 @@ export class ActionService {
 
         const todayEnd = new Date(actionTime);
         todayEnd.setHours(23, 59, 59, 999);
-
-        console.log({
-            todayStart,
-            todayEnd,
-            action: dto.entryType,
-            employee: employee.name,
-            employeeId,
-        });
 
         if (dto.entryType === 'EXIT') {
             const { status: exitStatus } = await this.getExitStatus(actionTime, plan.endTime);
@@ -272,9 +264,9 @@ export class ActionService {
         }
     }
 
-    async getLastActionInfo(employeeId: number, deviceId: number) {
+    async getLastActionInfo(employeeId: number, gateId: number) {
         const lastAction = await this.prisma.action.findFirst({
-            where: { employeeId, deviceId },
+            where: { employeeId, gateId },
             orderBy: { actionTime: 'desc' },
         });
 
