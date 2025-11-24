@@ -70,8 +70,14 @@ export class ActionService {
 
         const todayEnd = new Date(actionTime);
         todayEnd.setHours(23, 59, 59, 999);
-        
-        console.log({todayStart, todayEnd, action: dto.entryType, employee: employee.name, employeeId})
+
+        console.log({
+            todayStart,
+            todayEnd,
+            action: dto.entryType,
+            employee: employee.name,
+            employeeId,
+        });
 
         if (dto.entryType === 'EXIT') {
             const { status: exitStatus } = await this.getExitStatus(actionTime, plan.endTime);
@@ -108,8 +114,6 @@ export class ActionService {
                 plan.extraTime
             );
 
-            // const { todayStart, todayEnd }: any = await this.getTodayRange(actionTime);
-
             const existingAttendance = await this.prisma.attendance.findFirst({
                 where: {
                     employeeId,
@@ -136,6 +140,8 @@ export class ActionService {
                     },
                 });
             }
+            
+            await this.updatedGoneStatus(employeeId,gate.organizationId,todayStart,todayEnd)
         }
 
         return this.prisma.action.create({ data: dto });
@@ -182,7 +188,7 @@ export class ActionService {
 
         const data = await this.repo.findManyWithPagination(
             where,
-            {actionTime: 'desc'},
+            { actionTime: 'desc' },
             this.repo.getDefaultInclude(),
             { page, limit },
             scope
@@ -201,12 +207,34 @@ export class ActionService {
         return this.repo.delete(id, scope);
     }
 
-    async toSimpleIso(dateStr: string): Promise<string> {
-        const date = new Date(dateStr);
-        const pad = (n: number) => n.toString().padStart(2, '0');
-        return `${date.getFullYear()}-${pad(date.getMonth() + 1)}-${pad(date.getDate())}T${pad(
-            date.getHours()
-        )}:${pad(date.getMinutes())}:${pad(date.getSeconds())}`;
+    private async updatedGoneStatus(
+        employeeId: number,
+        organizationId: number,
+        gte: Date,
+        lte: Date
+    ) {
+        const existingAttendance = await this.prisma.attendance.findFirst({
+            where: {
+                employeeId,
+                organizationId,
+                createdAt: {
+                    gte,
+                    lte,
+                },
+            },
+            orderBy: { startTime: 'desc' },
+        });
+
+        if (existingAttendance) {
+            await this.prisma.attendance.update({
+                where: { id: existingAttendance.id },
+                data: {
+                    goneStatus: null,
+                    endTime: null,
+                },
+            });
+        }
+        return;
     }
 
     async getActionStatus(
