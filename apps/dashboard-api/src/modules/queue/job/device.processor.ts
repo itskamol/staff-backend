@@ -179,15 +179,27 @@ export class DeviceProcessor extends WorkerHost {
                         select: { photo: true, name: true },
                     });
 
-                    const sync = await this.prisma.employeeSync.create({
-                        data: {
+                    let sync = await this.prisma.employeeSync.findFirst({
+                        where: {
                             employeeId: empId,
                             deviceId: device.id,
                             gateId: gate.id,
-                            organizationId,
-                            status: 'WAITING',
                         },
                     });
+
+                    if (sync.status == 'DONE') continue;
+
+                    if (!sync) {
+                        sync = await this.prisma.employeeSync.create({
+                            data: {
+                                employeeId: empId,
+                                deviceId: device.id,
+                                gateId: gate.id,
+                                organizationId,
+                                status: 'WAITING',
+                            },
+                        });
+                    }
 
                     try {
                         if (!credMap.has(empId)) {
