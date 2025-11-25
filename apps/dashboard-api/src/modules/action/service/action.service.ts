@@ -7,11 +7,13 @@ import { AttendanceService } from '../../attendance/attendance.service';
 import { LoggerService } from 'apps/dashboard-api/src/core/logger';
 import { DataScope } from '@app/shared/auth';
 import { accessSync } from 'fs';
+import { CreateAttendanceDto } from '../../attendance/dto/attendance.dto';
 
 @Injectable()
 export class ActionService {
     constructor(
         private readonly repo: ActionRepository,
+        private readonly attendanceService: AttendanceService,
         private prisma: PrismaService,
         private readonly logger: LoggerService
     ) {}
@@ -121,19 +123,23 @@ export class ActionService {
                 orderBy: { startTime: 'desc' },
             });
 
+            const data: CreateAttendanceDto = {
+                startTime: actionTime,
+                arrivalStatus: status,
+                employeeId,
+                organizationId: gate.organizationId,
+            };
+
             if (existingAttendance) {
                 await this.prisma.attendance.update({
                     where: { id: existingAttendance.id },
-                    data: {
-                        startTime: actionTime,
-                        arrivalStatus: status,
-                        employeeId,
-                        organizationId: gate.organizationId,
-                    },
+                    data,
                 });
+            } else {
+                await this.attendanceService.create(data);
             }
 
-            await this.updatedGoneStatus(employeeId,gate.organizationId,todayStart,todayEnd)
+            await this.updatedGoneStatus(employeeId, gate.organizationId, todayStart, todayEnd);
         }
 
         return this.prisma.action.create({ data: dto });
