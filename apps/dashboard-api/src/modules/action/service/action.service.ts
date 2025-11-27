@@ -70,7 +70,7 @@ export class ActionService {
             todayEnd.setHours(23, 59, 59, 999);
 
             if (device.entryType === 'BOTH') {
-                const lastInfo = await this.getLastActionInfo(employeeId, gate.id,todayStart, todayEnd);
+                const lastInfo = await this.getLastActionInfo(employeeId, gate.organizationId,todayStart, todayEnd);
 
                 if (!lastInfo.canCreate) {
                     return;
@@ -280,9 +280,9 @@ export class ActionService {
         }
     }
 
-    async getLastActionInfo(employeeId: number, gateId: number, gte: Date, lte: Date) {
+    async getLastActionInfo(employeeId: number, organizationId: number, gte: Date, lte: Date) {
         const lastAction = await this.prisma.action.findFirst({
-            where: { employeeId, gateId, actionTime: { gte, lte } },
+            where: { employeeId, organizationId, actionTime: { gte, lte } },
             orderBy: { actionTime: 'desc' },
         });
 
