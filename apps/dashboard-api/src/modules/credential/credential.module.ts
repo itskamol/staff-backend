@@ -4,16 +4,12 @@ import { CredentialController } from './controllers/credential.controller';
 import { CredentialRepository } from './repositories/credential.repository';
 import { CredentialService } from './services/credential.services';
 import { EmployeeModule } from '../employee/employee.module';
+import { HikvisionModule } from '../hikvision/hikvision.module';
 
 @Module({
-    imports: [
-        SharedCommonModule,
-        EmployeeModule
-    ],
+    imports: [SharedCommonModule, EmployeeModule, HikvisionModule],
     controllers: [CredentialController],
-    providers: [
-        CredentialService,
-        CredentialRepository,
-    ],
+    providers: [CredentialService, CredentialRepository],
+    exports: [CredentialService, CredentialRepository],
 })
 export class CredentialModule {}

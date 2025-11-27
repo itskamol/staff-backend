@@ -17,7 +17,7 @@ export class AttendanceProcessor extends WorkerHost {
     }
 
     async createDefaultAttendance(job: Job) {
-        this.logger.log(`[AttendanceJob] Started creating default attendance...`);
+        this.logger.log(`Started creating default attendance...`, 'AttendanceJob');
         try {
             const today = new Date();
             const weekdayName = today.toLocaleDateString('en-US', { weekday: 'long' });
@@ -49,10 +49,10 @@ export class AttendanceProcessor extends WorkerHost {
                 }
             }
 
-            this.logger.log(`[AttendanceJob] Finished. Processed ${processedCount} records.`);
+            this.logger.log(`Finished. Processed ${processedCount} records.`, 'AttendanceJob');
             
         } catch (err) {
-            this.logger.error(`[AttendanceJob] Fatal Error:`, err);
+            this.logger.error(`Fatal Error:`, err, 'AttendanceJob');
             throw err;
         }
     }
@@ -63,7 +63,7 @@ export class AttendanceProcessor extends WorkerHost {
             const currentHours = now.getHours().toString().padStart(2, '0');
             const currentMinutes = now.getMinutes().toString().padStart(2, '0');
             const currentTimeString = `${currentHours}:${currentMinutes}`;
-            this.logger.log(`[MarkedAttendanceJob] Marked employees starting... (Current Time: ${currentTimeString})`);
+            this.logger.log(`Marked employees starting... (Current Time: ${currentTimeString})`,'MarkedAttandanceJob');
             const startOfToday = new Date();
             startOfToday.setHours(0, 0, 0, 0);
             const endOfToday = new Date();
@@ -99,10 +99,10 @@ export class AttendanceProcessor extends WorkerHost {
                 { arrivalStatus: ActionStatus.ABSENT }
             );
 
-            this.logger.log(`[MarkedAttendanceJob] Marked ${updateResult.count} employees as ABSENT (Current Time: ${currentTimeString})`);
+            this.logger.log(`Marked ${updateResult.count} employees as ABSENT (Current Time: ${currentTimeString})`,'MarkedAttendanceJob');
 
         } catch (err) {
-            this.logger.error(`[MarkedAttendanceJob] Error marking absent employees:`, err);
+            this.logger.error(`Error marking absent employees:`, err, 'MarkedAttendanceJob');
         }
     }
 

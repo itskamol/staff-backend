@@ -9,7 +9,7 @@ import { setupSwagger } from '@app/shared/common';
 import { NestExpressApplication } from '@nestjs/platform-express';
 import { join } from 'path';
 import * as bodyParser from 'body-parser';
-import { rawBodyMiddleware } from './modules/hikvision/middleware';
+import { rawBodyMiddleware } from './modules/hikvision/core/middleware';
 
 async function bootstrap() {
     const app = await NestFactory.create<NestExpressApplication>(AppModule);
@@ -24,6 +24,7 @@ async function bootstrap() {
     );
 
     app.use(`${prefix}/hikvision/event`, rawBodyMiddleware);
+    app.use(`${prefix}/hikvision/anpr-event`, rawBodyMiddleware);
 
     const configService = app.get(ConfigService);
     const port = configService.port;

@@ -16,6 +16,19 @@ export type EmployeeWithRelations = Employee & {
         title: string;
     };
 
+    gates?: Array<{
+        id: number;
+        name: string; // Gate nomi (agar kerak bo'lsa)
+        devices?: Array<{
+            id: number;
+            name: string;
+            ipAddress: string;
+            type: string; // Masalan: 'CAR', 'FACE', 'ACCESS_CONTROL'
+            login?: string;
+            password?: string;
+        }>;
+    }>;
+
     credentials?: Array<{
         id: number;
         code: string;

@@ -1,4 +1,4 @@
-import { IsString, IsInt, IsOptional } from 'class-validator';
+import { IsString, IsInt, IsOptional, IsNotEmpty, IsIn } from 'class-validator';
 import { ApiProperty } from '@nestjs/swagger';
 
 export class CreateHikvisionUserDto {
@@ -11,17 +11,17 @@ export class CreateHikvisionUserDto {
 
   @ApiProperty({example: 'normal', description: 'Foydalanuvchi turi'})
   @IsString()
-  userType: string;
+  userType?: string;
 
   @ApiProperty({example: '2025-11-03T00:00:00', description: 'Foydalanuvchi amal qilish boshlanish vaqti'})
   @IsString()
   @IsOptional()
-  beginTime: string;
+  beginTime?: string;
 
   @ApiProperty({example: '2035-12-31T23:59:59', description: 'Foydalanuvchi amal qilish tugash vaqti'})
   @IsString()
   @IsOptional()
-  endTime: string;
+  endTime?: string;
 }
 
 
@@ -64,15 +64,53 @@ export class HikvisionConfig {
 
   @ApiProperty()
   @IsInt()
-  port: number;
+  @IsOptional()
+  port?: number;
 
   @ApiProperty()
   @IsString()
-
   username: string;
 
   @ApiProperty()
   @IsString()
   password: string;
   protocol: 'http' | 'https';
+}
+
+export class CreatePlateDto extends HikvisionConfig {
+  @ApiProperty({ example: '01A777AA', description: 'Avtomobil raqami' })
+  @IsString()
+  @IsNotEmpty()
+  plateNo: string;
+
+  @ApiProperty({ example: '1', description: '"1" - Oq ro‘yxat (Ruxsat), "2" - Qora ro‘yxat (Taqiq)' })
+  @IsString()
+  @IsIn(['1', '2'])
+  listType: string;
+}
+
+// Raqam tahrirlash uchun DTO
+export class EditPlateDto extends HikvisionConfig {
+  @ApiProperty({ example: '01A777AA', description: 'Eski raqam' })
+  @IsString()
+  @IsNotEmpty()
+  oldPlateNo: string;
+
+  @ApiProperty({ example: '01B888BB', description: 'Yangi raqam' })
+  @IsString()
+  @IsNotEmpty()
+  newPlateNo: string;
+
+  @ApiProperty({ example: '1', description: 'Ro‘yxat turi' })
+  @IsString()
+  @IsIn(['1', '2'])
+  listType: string;
+}
+
+// Raqam o'chirish uchun DTO
+export class DeletePlateDto extends HikvisionConfig {
+  @ApiProperty({ example: '01A777AA', description: 'O‘chiriladigan raqam' })
+  @IsString()
+  @IsNotEmpty()
+  plateNo: string;
 }
