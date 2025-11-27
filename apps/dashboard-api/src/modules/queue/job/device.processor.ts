@@ -318,7 +318,7 @@ export class DeviceProcessor extends WorkerHost {
                         await this.updateSync(sync.id, 'DONE', 'Success!');
                     } catch (err: any) {
                         const msg = err?.message || 'Undefined error';
-                        await this.updateSync(sync.id, 'FIELD', msg);
+                        await this.updateSync(sync.id, 'FAILED', msg);
                     }
                 }
             }

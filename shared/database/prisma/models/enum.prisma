@@ -69,7 +69,7 @@ enum StatusEnum {
   WAITING
   PROCESS
   DONE
-  FIELD
+  FAILED
 }
 
 enum ActionStatus {

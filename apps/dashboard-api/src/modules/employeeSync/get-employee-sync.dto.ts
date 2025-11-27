@@ -11,6 +11,12 @@ export class GetEmployeeSyncDto {
   @IsNumber()
   gateId?: number;
 
+  @ApiPropertyOptional()
+  @IsOptional()
+  @Type(() => Number)
+  @IsNumber()
+  employeeId?: number;
+
   @ApiPropertyOptional({ enum: StatusEnum, description: 'Status filter' })
   @IsOptional()
   @IsEnum(StatusEnum)

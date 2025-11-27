@@ -14,14 +14,15 @@ export class EmployeeSyncService {
       throw new NotFoundException('User organizationId not found!')
     }
 
-    const { page = 1, limit = 10, status, gateId, sortBy = 'createdAt', order = 'desc' } = query;
+    const { page = 1, limit = 10, status, gateId,employeeId, sortBy = 'createdAt', order = 'desc' } = query;
 
     const skip = (page - 1) * limit;
 
-    const where: any = {
+    const where: Prisma.EmployeeSyncWhereInput = {
       ...(status && { status }),
       ...(gateId && { gateId }),
-      ...(organizationId && {organizationId})
+      ...(organizationId && {organizationId}),
+      ...(employeeId && {employeeId})
     };
 
     const orderBy: Prisma.EmployeeSyncOrderByWithRelationInput = {
