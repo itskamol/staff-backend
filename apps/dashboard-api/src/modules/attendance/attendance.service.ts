@@ -19,7 +19,7 @@ export class AttendanceService {
 
     @Cron(CronExpression.EVERY_DAY_AT_MIDNIGHT) 
     async handleDailyAttendance() {
-        this.logger.log('Cron triggered: Adding attendance job to queue...');
+        this.logger.log('Cron triggered: Adding attendance job to queue...', 'AttendanceService');
         
         await this.attendanceQueue.add(
             JOB.ATTENDANCE.CREATE_DEFAULT, 

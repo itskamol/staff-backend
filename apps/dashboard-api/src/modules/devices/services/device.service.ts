@@ -10,15 +10,14 @@ import { UserContext } from '../../../shared/interfaces';
 import { DeviceRepository } from '../repositories/device.repository';
 import { DeviceType, EntryType, Prisma } from '@prisma/client';
 import { GateRepository } from '../../gate/repositories/gate.repository';
-import { HikvisionService } from '../../hikvision/hikvision.service';
 import { HikvisionConfig } from '../../hikvision/dto/create-hikvision-user.dto';
-import { Server } from 'socket.io';
 import { ConfigService } from 'apps/dashboard-api/src/core/config/config.service';
 import { InjectQueue } from '@nestjs/bullmq';
 import { Queue } from 'bullmq';
 import { JOB } from 'apps/dashboard-api/src/shared/constants';
 import { EncryptionService } from 'apps/dashboard-api/src/shared/services/encryption.service';
 import { GateDto } from '../../gate/dto/gate.dto';
+import { HikvisionAccessService } from '../../hikvision/services/hikvision.access.service';
 
 @Injectable()
 export class DeviceService {
@@ -26,9 +25,9 @@ export class DeviceService {
         @InjectQueue(JOB.DEVICE.NAME) private readonly deviceQueue: Queue,
         private readonly deviceRepository: DeviceRepository,
         private readonly gateRepository: GateRepository,
-        private hikvisionService: HikvisionService,
+        private hikvisionService: HikvisionAccessService,
         private readonly configService: ConfigService,
-        private readonly encryptionService: EncryptionService
+        private readonly encryptionService: EncryptionService,
     ) {}
 
     async findAll(query: QueryDeviceDto, scope: DataScope, user: UserContext) {
@@ -122,7 +121,6 @@ export class DeviceService {
             protocol: 'http',
         };
 
-        this.hikvisionService.setConfig(hikvisionConfig);
 
         const deviceInfoResult = await this.hikvisionService.getDeviceInfo(hikvisionConfig);
         if (!deviceInfoResult.success) {
@@ -178,7 +176,7 @@ export class DeviceService {
             capabilities,
         };
 
-        const newDevice = await this.deviceRepository.create(
+        const newDevice:CreateDeviceDto = await this.deviceRepository.create(
             {
                 ...device,
                 ...(gateId && {
@@ -205,7 +203,7 @@ export class DeviceService {
 
         const job = await this.deviceQueue.add(JOB.DEVICE.CREATE, {
             hikvisionConfig,
-            newDeviceId: newDevice.id,
+            newDevice: newDevice,
             gateId,
             scope,
         });

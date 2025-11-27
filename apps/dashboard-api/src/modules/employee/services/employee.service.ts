@@ -12,10 +12,10 @@ import { QueryDto } from '@app/shared/utils';
 import { Prisma } from '@prisma/client';
 import { PolicyService } from '../../policy/services/policy.service';
 import { EmployeeRepository } from '../repositories/employee.repository';
-import { HikvisionService } from '../../hikvision/hikvision.service';
 import { HikvisionConfig } from '../../hikvision/dto/create-hikvision-user.dto';
 import { PrismaService } from '@app/shared/database';
 import { OrganizationService } from '../../organization/organization.service';
+import { HikvisionAccessService } from '../../hikvision/services/hikvision.access.service';
 
 @Injectable()
 export class EmployeeService {
@@ -25,7 +25,7 @@ export class EmployeeService {
         private readonly policyService: PolicyService,
         @Inject(FILE_STORAGE_SERVICE)
         private readonly fileStorage: IFileStorageService,
-        private readonly hikiService: HikvisionService,
+        private readonly hikiService: HikvisionAccessService,
         private readonly prisma: PrismaService,
         private readonly organizationService: OrganizationService
     ) {}
@@ -100,6 +100,7 @@ export class EmployeeService {
                 },
                 plan: true,
                 credentials: true,
+                gates: {include: {devices: true}}
             },
             scope,
             user.role

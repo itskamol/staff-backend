@@ -6,7 +6,6 @@ import { ActionMode, ActionStatus, ActionType, Prisma, VisitorType } from '@pris
 import { AttendanceService } from '../../attendance/attendance.service';
 import { LoggerService } from 'apps/dashboard-api/src/core/logger';
 import { DataScope } from '@app/shared/auth';
-import { accessSync } from 'fs';
 import { CreateAttendanceDto } from '../../attendance/dto/attendance.dto';
 
 @Injectable()
@@ -18,131 +17,142 @@ export class ActionService {
         private readonly logger: LoggerService
     ) {}
 
-    async create(eventData: any, deviceId: number) {
-        const acEvent = eventData.AccessControllerEvent || {};
-        const employeeId = acEvent.employeeNoString
-            ? parseInt(acEvent.employeeNoString)
-            : undefined;
-        const actionTime = eventData.dateTime;
+    async create(eventData: any, deviceId: number, employeeId: number) {
+        try {
+            const acEvent =
+                eventData.AccessControllerEvent || eventData.EventNotificationAlert || {};
 
-        const device = await this.prisma.device.findFirst({ where: { id: deviceId } });
-        if (!device) throw new Error(`Device ${deviceId} not found!`);
+            const actionTime = eventData.dateTime || acEvent.dateTime;
 
-        const gate = await this.prisma.gate.findFirst({ where: { id: device.gateId } });
-        if (!gate) throw new Error(`Gate ${device.gateId} not found!`);
+            const device = await this.prisma.device.findFirst({ where: { id: deviceId } });
+            if (!device) throw new Error(`Device ${deviceId} not found!`);
 
-        const employee = await this.prisma.employee.findFirst({ where: { id: employeeId } });
-        if (!employee) throw new Error(`Employee ${employeeId} not found`);
+            const gate = await this.prisma.gate.findFirst({ where: { id: device.gateId } });
+            if (!gate) throw new Error(`Gate ${device.gateId} not found!`);
 
-        if (!employee.employeePlanId) {
-            throw new Error(`EmployeePlan is not found for Employee`);
-        }
+            const employee = await this.prisma.employee.findFirst({ where: { id: employeeId } });
+            if (!employee) throw new Error(`Employee ${employeeId} not found`);
 
-        const plan = await this.prisma.employeePlan.findFirst({
-            where: { id: employee.employeePlanId },
-        });
-        if (!plan) throw new Error(`Employee plan ${employee.employeePlanId} not found`);
-
-        const dto: CreateActionDto = {
-            deviceId,
-            gateId: gate.id,
-            actionTime,
-            employeeId,
-            visitorId: undefined,
-            visitorType: acEvent.userType === 'normal' ? VisitorType.EMPLOYEE : VisitorType.VISITOR,
-            entryType: device.entryType,
-            actionType: ActionType.PHOTO,
-            actionResult: null,
-            actionMode: eventData.eventState === 'active' ? ActionMode.ONLINE : ActionMode.OFFLINE,
-            organizationId: gate.organizationId,
-        };
-
-        if (device.entryType === 'BOTH') {
-            const lastInfo = await this.getLastActionInfo(employeeId, gate.id);
-
-            if (!lastInfo.canCreate) {
-                return;
+            if (!employee.employeePlanId) {
+                throw new Error(`EmployeePlan is not found for Employee`);
             }
 
-            dto.entryType = lastInfo.nextEntryType as any;
-        }
-
-        const todayStart = new Date(actionTime);
-        todayStart.setHours(0, 0, 0, 0);
-
-        const todayEnd = new Date(actionTime);
-        todayEnd.setHours(23, 59, 59, 999);
-
-        if (dto.entryType === 'EXIT') {
-            const { status: exitStatus } = await this.getExitStatus(actionTime, plan.endTime);
-
-            const existingAttendance = await this.prisma.attendance.findFirst({
-                where: {
-                    employeeId,
-                    organizationId: gate.organizationId,
-                    startTime: {
-                        gte: todayStart,
-                        lte: todayEnd,
-                    },
-                },
-                orderBy: { startTime: 'desc' },
+            const plan = await this.prisma.employeePlan.findFirst({
+                where: { id: employee.employeePlanId },
             });
+            if (!plan) throw new Error(`Employee plan ${employee.employeePlanId} not found`);
 
-            if (existingAttendance) {
-                await this.prisma.attendance.update({
-                    where: { id: existingAttendance.id },
-                    data: {
-                        endTime: actionTime,
-                        goneStatus: exitStatus,
-                    },
-                });
-            } else {
-                this.logger.warn(`⚠️ Attendance NOT FOUND (EXIT): employee ${employeeId}`);
-            }
-        }
-
-        if (dto.entryType === 'ENTER') {
-            const { status } = await this.getActionStatus(
+            const dto: CreateActionDto = {
+                deviceId,
+                gateId: gate.id,
                 actionTime,
-                plan.startTime,
-                plan.extraTime
-            );
-
-            const existingAttendance = await this.prisma.attendance.findFirst({
-                where: {
-                    employeeId,
-                    organizationId: gate.organizationId,
-                    createdAt: {
-                        gte: todayStart,
-                        lte: todayEnd,
-                    },
-                    AND: {
-                        OR: [{ arrivalStatus: 'PENDING' }, { arrivalStatus: 'ABSENT' }],
-                    },
-                },
-                orderBy: { startTime: 'desc' },
-            });
-
-            const data: CreateAttendanceDto = {
-                startTime: actionTime,
-                arrivalStatus: status,
                 employeeId,
+                visitorId: undefined,
+                visitorType:
+                    acEvent.userType === 'normal' || device.type === 'CAR'
+                        ? VisitorType.EMPLOYEE
+                        : VisitorType.VISITOR,
+                entryType: device.entryType,
+                actionType: ActionType.PHOTO,
+                actionResult: null,
+                actionMode:
+                    eventData.eventState === 'active' || acEvent.eventState === 'active'
+                        ? ActionMode.ONLINE
+                        : ActionMode.OFFLINE,
                 organizationId: gate.organizationId,
             };
 
-            if (existingAttendance) {
-                await this.prisma.attendance.update({
-                    where: { id: existingAttendance.id },
-                    data,
-                });
-            } else {
-                await this.attendanceService.create(data);
+
+            const todayStart = new Date(actionTime);
+            todayStart.setHours(0, 0, 0, 0);
+
+            const todayEnd = new Date(actionTime);
+            todayEnd.setHours(23, 59, 59, 999);
+
+            if (device.entryType === 'BOTH') {
+                const lastInfo = await this.getLastActionInfo(employeeId, gate.id,todayStart, todayEnd);
+
+                if (!lastInfo.canCreate) {
+                    return;
+                }
+
+                dto.entryType = lastInfo.nextEntryType as any;
             }
 
-            await this.updatedGoneStatus(employeeId, gate.organizationId, todayStart, todayEnd);
-        }
+            if (dto.entryType === 'EXIT') {
+                const { status: exitStatus } = await this.getExitStatus(actionTime, plan.endTime);
 
-        return this.prisma.action.create({ data: dto });
+                const existingAttendance = await this.prisma.attendance.findFirst({
+                    where: {
+                        employeeId,
+                        organizationId: gate.organizationId,
+                        startTime: {
+                            gte: todayStart,
+                            lte: todayEnd,
+                        },
+                    },
+                    orderBy: { startTime: 'desc' },
+                });
+
+                if (existingAttendance) {
+                    await this.prisma.attendance.update({
+                        where: { id: existingAttendance.id },
+                        data: {
+                            endTime: actionTime,
+                            goneStatus: exitStatus,
+                        },
+                    });
+                } else {
+                    this.logger.warn(`⚠️ Attendance NOT FOUND (EXIT): employee ${employeeId}`);
+                }
+            }
+
+            if (dto.entryType === 'ENTER') {
+                const { status } = await this.getActionStatus(
+                    actionTime,
+                    plan.startTime,
+                    plan.extraTime
+                );
+
+                const existingAttendance = await this.prisma.attendance.findFirst({
+                    where: {
+                        employeeId,
+                        organizationId: gate.organizationId,
+                        createdAt: {
+                            gte: todayStart,
+                            lte: todayEnd,
+                        },
+                        AND: {
+                            OR: [{ arrivalStatus: 'PENDING' }, { arrivalStatus: 'ABSENT' }],
+                        },
+                    },
+                    orderBy: { startTime: 'desc' },
+                });
+
+                const data: CreateAttendanceDto = {
+                    startTime: actionTime,
+                    arrivalStatus: status,
+                    employeeId,
+                    organizationId: gate.organizationId,
+                };
+
+                if (existingAttendance) {
+                    await this.prisma.attendance.update({
+                        where: { id: existingAttendance.id },
+                        data,
+                    });
+                } else {
+                    await this.attendanceService.create(data);
+                }
+
+                await this.updatedGoneStatus(employeeId, gate.organizationId, todayStart, todayEnd);
+            }
+
+            return this.prisma.action.create({ data: dto });
+        } catch (error) {
+            console.log(error);
+            throw new Error(error.message);
+        }
     }
 
     async findOne(id: number, scope: DataScope) {
@@ -270,9 +280,9 @@ export class ActionService {
         }
     }
 
-    async getLastActionInfo(employeeId: number, gateId: number) {
+    async getLastActionInfo(employeeId: number, gateId: number, gte: Date, lte: Date) {
         const lastAction = await this.prisma.action.findFirst({
-            where: { employeeId, gateId },
+            where: { employeeId, gateId, actionTime: { gte, lte } },
             orderBy: { actionTime: 'desc' },
         });
 

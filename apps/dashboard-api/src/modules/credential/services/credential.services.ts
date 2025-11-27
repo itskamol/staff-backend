@@ -2,22 +2,39 @@ import { BadRequestException, Injectable, NotFoundException } from '@nestjs/comm
 import { Prisma, Credential } from '@prisma/client';
 import { DataScope, UserContext } from '@app/shared/auth';
 import { EmployeeService } from '../../employee/services/employee.service';
-import { CredentialRepository, CredentialWithRelations } from '../repositories/credential.repository';
-import { CreateCredentialDto, CredentialQueryDto, UpdateCredentialDto } from '../dto/credential.dto';
+import {
+    CredentialRepository,
+    CredentialWithRelations,
+} from '../repositories/credential.repository';
+import {
+    CreateCredentialDto,
+    CredentialQueryDto,
+    UpdateCredentialDto,
+} from '../dto/credential.dto';
+import { HikvisionAnprService } from '../../hikvision/services/hikvision.anpr.service';
+import { HikvisionConfig } from '../../hikvision/dto/create-hikvision-user.dto';
+import { EmployeeWithRelations } from '../../employee/repositories/employee.repository';
 
 @Injectable()
 export class CredentialService {
     constructor(
         private readonly credentialRepository: CredentialRepository,
         private readonly employeeService: EmployeeService,
+        private readonly hikvisionAnprService: HikvisionAnprService
     ) {}
 
-    async getAllCredentials(
-        query: CredentialQueryDto,
-        scope: DataScope,
-        user: UserContext,
-    ) {
-        const { page = 1, limit = 10, sortBy = 'createdAt', sortOrder = 'desc', search, type, employeeId, departmentId, organizationId } = query;
+    async getAllCredentials(query: CredentialQueryDto, scope: DataScope, user: UserContext) {
+        const {
+            page = 1,
+            limit = 10,
+            sortBy = 'createdAt',
+            sortOrder = 'desc',
+            search,
+            type,
+            employeeId,
+            departmentId,
+            organizationId,
+        } = query;
 
         const where: Prisma.CredentialWhereInput = {
             ...(type && { type }),
@@ -52,16 +69,30 @@ export class CredentialService {
         };
     }
 
+    async getEmployeeCredentialCode(code: string) {
+        return this.credentialRepository.findFirst({ code }, undefined, {
+            employee: { select: { id: true } },
+        });
+    }
+
     async getCredentialById(
         id: number,
         scope: DataScope,
-        user: UserContext,
+        user: UserContext
     ): Promise<CredentialWithRelations> {
-        const credential = await this.credentialRepository.findById(id, this.credentialRepository.getDefaultInclude(), scope);
+        const credential = await this.credentialRepository.findById(
+            id,
+            this.credentialRepository.getDefaultInclude(),
+            scope
+        );
 
         if (!credential) throw new NotFoundException(`Credential with ID ${id} not found.`);
 
-        const employee = await this.employeeService.getEmployeeById(credential.employeeId, scope, user);
+        const employee = await this.employeeService.getEmployeeById(
+            credential.employeeId,
+            scope,
+            user
+        );
         if (!employee) throw new NotFoundException('Access to the associated employee is denied.');
 
         return credential;
@@ -70,7 +101,7 @@ export class CredentialService {
     async getCredentialsByEmployeeId(
         employeeId: number,
         scope: DataScope,
-        user: UserContext,
+        user: UserContext
     ): Promise<CredentialWithRelations[]> {
         const employee = await this.employeeService.getEmployeeById(employeeId, scope, user);
         if (!employee) throw new NotFoundException('Employee not found or access denied.');
@@ -81,16 +112,19 @@ export class CredentialService {
     async createCredential(
         dto: CreateCredentialDto,
         scope: DataScope,
-        user: UserContext,
+        user: UserContext
     ): Promise<CredentialWithRelations> {
         const employee = await this.employeeService.getEmployeeById(dto.employeeId, scope, user);
-        if (!employee) throw new NotFoundException(`Employee with ID ${dto.employeeId} not found or access denied.`);
+        if (!employee)
+            throw new NotFoundException(
+                `Employee with ID ${dto.employeeId} not found or access denied.`
+            );
 
         if (dto.type === 'PHOTO' && !employee.photo) {
             throw new BadRequestException('Employee photo is missing.');
         }
 
-        const orgId = scope?.organizationId || dto?.organizationId
+        const orgId = scope?.organizationId || dto?.organizationId;
 
         const data: Prisma.CredentialCreateInput = {
             code: dto.code,
@@ -101,21 +135,33 @@ export class CredentialService {
             organization: { connect: { id: orgId } },
         };
 
-        return this.credentialRepository.create(data, this.credentialRepository.getDefaultInclude(), scope);
+        await this.deleteEditCreateFromDevice(employee, dto, undefined, 'Create');
+
+        return this.credentialRepository.create(
+            data,
+            this.credentialRepository.getDefaultInclude(),
+            scope
+        );
     }
 
     async updateCredential(
         id: number,
         dto: UpdateCredentialDto,
         scope: DataScope,
-        user: UserContext,
+        user: UserContext
     ): Promise<CredentialWithRelations> {
         const existingCredential = await this.getCredentialById(id, scope, user);
-        const employee = await this.employeeService.getEmployeeById(existingCredential.employeeId, scope, user);
+        const employee = await this.employeeService.getEmployeeById(
+            existingCredential.employeeId,
+            scope,
+            user
+        );
 
         if (dto.type === 'PHOTO' && !employee.photo) {
             throw new BadRequestException('Employee photo is missing.');
         }
+
+        await this.deleteEditCreateFromDevice(employee, dto, id, 'Edit');
 
         const updateData: Prisma.CredentialUpdateInput = {
             code: dto.code,
@@ -124,15 +170,68 @@ export class CredentialService {
             isActive: dto.isActive,
         };
 
-        return this.credentialRepository.update(id, updateData, this.credentialRepository.getDefaultInclude(), scope);
+        return this.credentialRepository.update(
+            id,
+            updateData,
+            this.credentialRepository.getDefaultInclude(),
+            scope
+        );
     }
 
-    async deleteCredential(
-        id: number,
-        scope: DataScope,
-        user: UserContext,
-    ): Promise<Credential> {
-        await this.getCredentialById(id, scope, user);
+    private async deleteEditCreateFromDevice(
+        employee: EmployeeWithRelations,
+        dto?: UpdateCredentialDto,
+        id?: number,
+        type?: 'Delete' | 'Edit' | 'Create'
+    ) {
+        const oldCredential = employee.credentials.find(data => data.id === id);
+
+        if (dto?.type === 'CAR' || oldCredential.type === 'CAR') {
+            let devices = [];
+
+            for (let gate of employee.gates) {
+                const found = gate.devices.filter(device => device.type === 'CAR');
+                devices.push(...found);
+            }
+
+            for (let device of devices) {
+                let config: HikvisionConfig = {
+                    host: device.ipAddress,
+                    protocol: 'http',
+                    port: 80,
+                    password: device.password,
+                    username: device.login,
+                };
+
+                switch (type) {
+                    case 'Edit':
+                        await this.hikvisionAnprService.editLicensePlate(oldCredential.code,dto.code,'1',config);
+                        break;
+
+                    case 'Delete':
+                        await this.hikvisionAnprService.deleteLicensePlate(oldCredential.code,config);
+                        break;
+
+                    case 'Create':
+                        await this.hikvisionAnprService.addLicensePlate(dto.code, '1', config);
+                        break;
+
+                    default:
+                        console.warn('Unknown type:', type);
+                        break;
+                }
+            }
+        }
+    }
+
+    async deleteCredential(id: number, scope: DataScope, user: UserContext): Promise<Credential> {
+        const existingCredential = await this.getCredentialById(id, scope, user);
+        const employee = await this.employeeService.getEmployeeById(
+            existingCredential.employeeId,
+            scope,
+            user
+        );
+        this.deleteEditCreateFromDevice(employee, undefined, id, 'Delete');
         return this.credentialRepository.deleteCredential(id, scope);
     }
 }

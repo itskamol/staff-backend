@@ -1,149 +1,34 @@
 import { Injectable, Logger, BadRequestException } from '@nestjs/common';
-import axios, { Method, type AxiosInstance } from 'axios';
-import * as crypto from 'crypto';
+import FormData from 'form-data';
+import { HikvisionCoreService } from '../core/hikvision.core.service';
+import { ConfigService } from 'apps/dashboard-api/src/core/config/config.service';
+import { EmployeeRepository } from '../../employee/repositories/employee.repository';
+import { XmlJsonService } from 'apps/dashboard-api/src/shared/services/xtml-json.service';
 import {
     CreateHikvisionUserDto,
     HikvisionConfig,
     HikvisionUser,
-} from './dto/create-hikvision-user.dto';
+} from '../dto/create-hikvision-user.dto';
 import { XMLParser } from 'fast-xml-parser';
-import FormData from 'form-data';
-import * as xml2js from 'xml2js';
-import { ConfigService } from '../../core/config/config.service';
-import { EmployeeRepository } from '../employee/repositories/employee.repository';
-import { XmlJsonService } from '../../shared/services/xtml-json.service';
-import { EncryptionService } from '../../shared/services/encryption.service';
 
 @Injectable()
-export class HikvisionService {
-    private readonly logger = new Logger(HikvisionService.name);
-    private httpClient: AxiosInstance;
-    private config: HikvisionConfig;
-    private parser: xml2js.Parser;
+export class HikvisionAccessService {
+    private readonly logger = new Logger(HikvisionAccessService.name);
 
     constructor(
+        private readonly coreService: HikvisionCoreService,
         private configService: ConfigService,
         private readonly employeeRepo: EmployeeRepository,
-        private readonly xmlJsonService: XmlJsonService,
-        private readonly ecryptionService: EncryptionService
-    ) {
-        this.parser = new xml2js.Parser({ explicitArray: false });
-        this.logger.log(`HikvisionService initialized`);
-    }
-
-    setConfig(config: HikvisionConfig) {
-        const decryptedPassword = this.ecryptionService.decrypt(config.password);
-
-        this.config = {
-            ...config,
-            password: decryptedPassword,
-        };
-
-        this.httpClient = axios.create({
-            baseURL: `${config.protocol}://${config.host}:${config.port}`,
-            timeout: 30000,
-            headers: {
-                'Content-Type': 'application/xml',
-                Accept: 'application/xml',
-            },
-        });
-    }
-
-    private generateDigestAuth(method: string, uri: string, wwwAuthenticate: string): string {
-        const authDetails = this.parseWWWAuthenticate(wwwAuthenticate);
-
-        const ha1 = crypto
-            .createHash('md5')
-            .update(`${this.config.username}:${authDetails.realm}:${this.config.password}`)
-            .digest('hex');
-
-        const ha2 = crypto.createHash('md5').update(`${method}:${uri}`).digest('hex');
-
-        const response = crypto
-            .createHash('md5')
-            .update(`${ha1}:${authDetails.nonce}:${ha2}`)
-            .digest('hex');
-
-        return `Digest username="${this.config.username}", realm="${authDetails.realm}", nonce="${authDetails.nonce}", uri="${uri}", response="${response}"`;
-    }
-
-    private parseWWWAuthenticate(wwwAuthenticate: string): any {
-        const authDetails: any = {};
-        const regex = /(\w+)="([^"]+)"/g;
-        let match;
-
-        while ((match = regex.exec(wwwAuthenticate)) !== null) {
-            authDetails[match[1]] = match[2];
-        }
-
-        return authDetails;
-    }
-
-    private async makeAuthenticatedRequest(
-        method: string,
-        url: string,
-        data?: any,
-        isFormData = false
-    ): Promise<any> {
-        try {
-            const isXml = typeof data === 'string' && data.trim().startsWith('<');
-            const firstResponse = await this.httpClient.request({
-                method: method as Method,
-                url,
-                data: isFormData ? data.getBuffer() : data,
-                headers: isFormData
-                    ? {
-                          'Content-Type': `multipart/form-data; boundary=${data.getBoundary()}`,
-                          Accept: '*/*',
-                      }
-                    : {
-                          'Content-Type': isXml ? 'application/xml' : 'application/json',
-                          Accept: isXml ? 'application/xml' : 'application/json',
-                      },
-                validateStatus: () => true,
-            });
-
-            if (firstResponse.status === 401 && firstResponse.headers['www-authenticate']) {
-                const authHeader = this.generateDigestAuth(
-                    method.toUpperCase(),
-                    url,
-                    firstResponse.headers['www-authenticate']
-                );
-
-                return await this.httpClient.request({
-                    method: method as Method,
-                    url,
-                    data: isFormData ? data.getBuffer() : data,
-                    headers: {
-                        ...(isFormData
-                            ? {
-                                  'Content-Type': `multipart/form-data; boundary=${data.getBoundary()}`,
-                                  Accept: '*/*',
-                              }
-                            : {
-                                  'Content-Type': isXml ? 'application/xml' : 'application/json',
-                                  Accept: isXml ? 'application/xml' : 'application/json',
-                              }),
-                        Authorization: authHeader,
-                    },
-                });
-            }
-
-            return firstResponse;
-        } catch (error) {
-            this.logger.error(`Authenticated request failed: ${error.message}`);
-            throw error;
-        }
-    }
+        private readonly xmlJsonService: XmlJsonService
+    ) {}
 
     async getDeviceInfo(config: HikvisionConfig): Promise<any> {
         try {
-            // Avvalo configni o‘rnatamiz
-            this.setConfig(config);
+            this.coreService.setConfig(config);
 
-            const response = await this.makeAuthenticatedRequest(
+            const response = await this.coreService.request(
                 'GET',
-                '/ISAPI/System/deviceInfo?format=json'
+                '/ISAPI/System/deviceInfo'
             );
 
             if (response.status !== 200) {
@@ -172,6 +57,7 @@ export class HikvisionService {
                 data: deviceInfo,
             };
         } catch (error) {
+            console.log(error)
             this.logger.error(`Device info olishda xatolik: ${error.message}`);
             return {
                 success: false,
@@ -181,9 +67,9 @@ export class HikvisionService {
     }
 
     async getDeviceCapabilities(config: HikvisionConfig): Promise<any> {
-        this.setConfig(config);
+        this.coreService.setConfig(config);
 
-        const response = await this.makeAuthenticatedRequest('GET', '/ISAPI/System/capabilities');
+        const response = await this.coreService.request('GET', '/ISAPI/System/capabilities');
 
         if (response.status !== 200) {
             this.logger.error(`Capabilities olishda xato: ${response.status}`);
@@ -196,33 +82,9 @@ export class HikvisionService {
         return json;
     }
 
-    async testConnection(config: HikvisionConfig): Promise<{ success: boolean; message: string }> {
-        try {
-            const result = await this.getDeviceInfo(config);
-
-            if (result.success) {
-                return {
-                    success: true,
-                    message: `✅ Hikvision qurilmasiga (${config.host}) ulanish muvaffaqiyatli`,
-                };
-            } else {
-                return {
-                    success: false,
-                    message: `❌ Hikvision qurilmasi (${config.host}) bilan ulanishda xatolik`,
-                };
-            }
-        } catch (error) {
-            this.logger.error('Hikvision connection failed:', error.message);
-            return {
-                success: false,
-                message: `Hikvision bilan ulanishda xatolik: ${error.message}`,
-            };
-        }
-    }
-
     async createUser(dto: CreateHikvisionUserDto, config: HikvisionConfig): Promise<boolean> {
         try {
-            this.setConfig(config);
+            this.coreService.setConfig(config);
 
             const userId = dto.employeeId;
             const checkExisting = await this.getUser(userId, config);
@@ -252,7 +114,7 @@ export class HikvisionService {
                     },
                 },
             };
-            const response = await this.makeAuthenticatedRequest(
+            const response = await this.coreService.request(
                 'POST',
                 `/ISAPI/AccessControl/UserInfo/Record?format=json`,
                 resBody
@@ -274,9 +136,9 @@ export class HikvisionService {
         return user || null;
     }
 
-    async getAllUsers(config:HikvisionConfig): Promise<HikvisionUser[]> {
+    async getAllUsers(config: HikvisionConfig): Promise<HikvisionUser[]> {
         try {
-            this.setConfig(config)
+            this.coreService.setConfig(config);
 
             const body = {
                 UserInfoSearchCond: {
@@ -285,7 +147,7 @@ export class HikvisionService {
                     maxResults: parseInt(process.env.MAX_GET_USERS) || 5000,
                 },
             };
-            const response = await this.makeAuthenticatedRequest(
+            const response = await this.coreService.request(
                 'POST',
                 '/ISAPI/AccessControl/UserInfo/search?format=json',
                 body
@@ -308,7 +170,7 @@ export class HikvisionService {
     }
 
     async deleteUser(employeeNo: string, config?: HikvisionConfig): Promise<boolean> {
-        this.setConfig(config);
+        this.coreService.setConfig(config);
         // this.setConfig({ host: '192.168.100.139', port: 80, protocol: 'http', username: 'admin', password: "!@#Mudofaa@" });
 
         const reqBody = {
@@ -322,7 +184,7 @@ export class HikvisionService {
         };
 
         try {
-            const response = await this.makeAuthenticatedRequest(
+            const response = await this.coreService.request(
                 'PUT',
                 '/ISAPI/AccessControl/UserInfo/Delete?format=json',
                 reqBody
@@ -356,7 +218,7 @@ export class HikvisionService {
                 },
             };
 
-            const response = await this.makeAuthenticatedRequest(
+            const response = await this.coreService.request(
                 'POST',
                 '/ISAPI/AccessControl/CardInfo/Record?format=json',
                 cardData
@@ -387,7 +249,7 @@ export class HikvisionService {
         config: HikvisionConfig
     ): Promise<boolean> {
         try {
-            this.setConfig(config);
+            this.coreService.setConfig(config);
             const formData = new FormData();
             formData.append(
                 'FaceDataRecord',
@@ -399,7 +261,7 @@ export class HikvisionService {
                 })
             );
 
-            const response = await this.makeAuthenticatedRequest(
+            const response = await this.coreService.request(
                 'PUT',
                 '/ISAPI/Intelligent/FDLib/FDSetUp?format=json',
                 formData,
@@ -438,7 +300,7 @@ export class HikvisionService {
                     endTime: '2025-11-04T11:05:22+05:00',
                 },
             };
-            const response = await this.makeAuthenticatedRequest(
+            const response = await this.coreService.request(
                 'POST',
                 '/ISAPI/AccessControl/AcsEvent?format=json',
                 searchCondition
@@ -458,14 +320,6 @@ export class HikvisionService {
         }
     }
 
-    async toSimpleIso(dateStr: string): Promise<string> {
-        const date = new Date(dateStr);
-        const pad = (n: number) => n.toString().padStart(2, '0');
-        return `${date.getFullYear()}-${pad(date.getMonth() + 1)}-${pad(date.getDate())}T${pad(
-            date.getHours()
-        )}:${pad(date.getMinutes())}:${pad(date.getSeconds())}`;
-    }
-
     async configureEventListeningHost(
         config: HikvisionConfig,
         deviceId: number
@@ -475,13 +329,13 @@ export class HikvisionService {
         data?: any;
     }> {
         try {
-            this.setConfig(config);
+            this.coreService.setConfig(config);
 
             const serverHost = this.configService.hostIp;
             const serverPort = this.configService.port;
 
             const eventUrl = `http://${serverHost}:${serverPort}/api/v1/hikvision/event/${deviceId}`;
-            this.logger.log(`Event URL: ${eventUrl}`);
+            this.logger.log(`Event URL: ${eventUrl}`, 'HikvisionService');
 
             const jsonBody = {
                 '@': { xmlns: 'http://www.isapi.org/ver20/XMLSchema', version: '2.0' },
@@ -513,7 +367,7 @@ export class HikvisionService {
                 },
             });
 
-            const response = await this.makeAuthenticatedRequest(
+            const response = await this.coreService.request(
                 'PUT',
                 '/ISAPI/Event/notification/httpHosts/1',
                 xmlBody
@@ -523,7 +377,7 @@ export class HikvisionService {
                 const parser = new XMLParser();
                 const result = parser.parse(response.data);
 
-                this.logger.log('✅ Hikvision event listening host muvaffaqiyatli sozlandi');
+                this.logger.log('✅ Hikvision event listening host muvaffaqiyatli sozlandi', 'HikvisionService');
                 return {
                     success: true,
                     message: `Event host http://${serverHost}:${serverPort}/api/v1/hikvision/event/${deviceId} ga yo‘naltirildi`,
@@ -546,32 +400,4 @@ export class HikvisionService {
             };
         }
     }
-
-    // async syncUsersFromDevice(): Promise<{ synced: number; errors: string[] }> {
-    //   try {
-    //     // const hikvisionUsers = await this.getAllUsers();
-    //     let synced = 0;
-    //     const errors: string[] = [];
-
-    //     for (const hikvisionUser of hikvisionUsers) {
-    //       try {
-    //         // Convert Hikvision user to local format and save
-    //         // This would require integration with UsersService
-    //         synced++;
-    //       } catch (error) {
-    //         errors.push(
-    //           `Error syncing user ${hikvisionUser.employeeNo}: ${error.message}`,
-    //         );
-    //       }
-    //     }
-
-    //     this.logger.log(`Synced ${synced} users from Hikvision device`);
-    //     return { synced, errors };
-    //   } catch (error) {
-    //     this.logger.error('Failed to sync users from Hikvision:', error.message);
-    //     throw new BadRequestException(
-    //       `Hikvision dan userlarni sinxronlashda xatolik: ${error.message}`,
-    //     );
-    //   }
-    // }
 }
