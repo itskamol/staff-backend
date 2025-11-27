@@ -140,6 +140,7 @@ export class HikvisionAnprService {
                 addressingFormatType: 'ipaddress',
                 host: serverHost,
                 portNo: serverPort,
+                ipAddress: serverHost,
                 httpAuthenticationMethod: 'none',
                 eventTypeList: { eventType: ['TrafficVehicleObservation'] },
                 uploadImagesDataType: 'URL',

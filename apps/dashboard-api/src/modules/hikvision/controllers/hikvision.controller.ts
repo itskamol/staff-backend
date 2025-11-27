@@ -57,7 +57,6 @@ export class HikvisionController {
         }
 
         const employeeID = eventData?.AccessControllerEvent?.employeeNoString;
-        console.log({ eventData });
         if (employeeID) {
             await this.actionService.create(eventData, +deviceId, +employeeID);
         }
