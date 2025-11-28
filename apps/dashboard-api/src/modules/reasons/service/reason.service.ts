@@ -25,7 +25,7 @@ export class ReasonService {
         const items = await this.reasonRepository.findMany(
             where,
             { [sort]: order },
-            undefined, // include kerak bo'lmasa undefined
+            undefined,
             { page, limit },
             undefined,
             scope
@@ -57,12 +57,9 @@ export class ReasonService {
         const orgId = scope?.organizationId || dto.organizationId;
 
         if (!orgId) {
-            // Agar scope da ham, dto da ham organizationId bo'lmasa
-            // (Admin bo'lmagan userlar uchun scope da har doim bo'ladi)
             throw new BadRequestException('Organization ID is required');
         }
 
-        // Key takrorlanmasligini tekshirish (organization ichida)
         if (orgId) {
             const existing = await this.reasonRepository.findFirst({
                 key: dto.key,
@@ -90,7 +87,7 @@ export class ReasonService {
         scope: DataScope,
         user: UserContext
     ): Promise<Reasons> {
-        await this.getReasonById(id, scope, user); // Check exists and access
+        await this.getReasonById(id, scope, user);
 
         const updateData: Prisma.ReasonsUpdateInput = {
             key: dto.key,
@@ -101,7 +98,7 @@ export class ReasonService {
     }
 
     async deleteReason(id: number, scope: DataScope, user: UserContext): Promise<Reasons> {
-        await this.getReasonById(id, scope, user); // Check exists and access
+        await this.getReasonById(id, scope, user);
         return this.reasonRepository.delete(id, scope);
     }
 }

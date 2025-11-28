@@ -100,7 +100,8 @@ export class EmployeeService {
                 },
                 plan: true,
                 credentials: true,
-                gates: {include: {devices: true}}
+                gates: { include: { devices: true } },
+                employeeSyncs: true,
             },
             scope,
             user.role

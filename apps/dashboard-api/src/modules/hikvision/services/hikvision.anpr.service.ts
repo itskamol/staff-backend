@@ -86,7 +86,7 @@ export class HikvisionAnprService {
 
         const existingId = await this.findPlateId(plateNo, config);
         if (existingId) {
-            throw new BadRequestException('AVTO Number already exist!');
+            return true;
         }
 
         const body = this.createRecordBody(plateNo, listType, '');

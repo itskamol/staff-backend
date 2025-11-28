@@ -124,6 +124,13 @@ export class CredentialService {
             throw new BadRequestException('Employee photo is missing.');
         }
 
+        if (dto.type === 'CAR' && dto.code) {
+            const avtoNumber = await this.getEmployeeCredentialCode(dto.code);
+            if (avtoNumber) {
+                throw new BadRequestException('This avto number already exists!');
+            }
+        }
+
         const orgId = scope?.organizationId || dto?.organizationId;
 
         const data: Prisma.CredentialCreateInput = {
@@ -134,8 +141,6 @@ export class CredentialService {
             employee: { connect: { id: dto.employeeId } },
             organization: { connect: { id: orgId } },
         };
-
-        await this.deleteEditCreateFromDevice(employee, dto, undefined, 'Create');
 
         return this.credentialRepository.create(
             data,
@@ -205,15 +210,19 @@ export class CredentialService {
 
                 switch (type) {
                     case 'Edit':
-                        await this.hikvisionAnprService.editLicensePlate(oldCredential.code,dto.code,'1',config);
+                        await this.hikvisionAnprService.editLicensePlate(
+                            oldCredential.code,
+                            dto.code,
+                            '1',
+                            config
+                        );
                         break;
 
                     case 'Delete':
-                        await this.hikvisionAnprService.deleteLicensePlate(oldCredential.code,config);
-                        break;
-
-                    case 'Create':
-                        await this.hikvisionAnprService.addLicensePlate(dto.code, '1', config);
+                        await this.hikvisionAnprService.deleteLicensePlate(
+                            oldCredential.code,
+                            config
+                        );
                         break;
 
                     default:

@@ -26,12 +26,12 @@ export class CreateAttendanceDto {
     @ApiProperty({ example: 'ON_TIME' })
     @IsNotEmpty()
     @IsEnum(ActionStatus)
-    arrivalStatus: ActionStatus; // ActionStatus enum in prisma
+    arrivalStatus: ActionStatus;
 
     @ApiPropertyOptional({ example: 'ON_TIME' })
     @IsOptional()
     @IsEnum(ActionStatus)
-    goneStatus?: ActionStatus; // ActionStatus enum in prisma
+    goneStatus?: ActionStatus;
 
     @ApiPropertyOptional({ example: 'Reason for late arrival' })
     @IsOptional()

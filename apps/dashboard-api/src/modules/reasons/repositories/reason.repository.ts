@@ -1,7 +1,7 @@
 import { Injectable } from '@nestjs/common';
 import { Prisma, Reasons } from '@prisma/client';
 import { PrismaService } from '@app/shared/database';
-import { BaseRepository } from 'apps/dashboard-api/src/shared/repositories/base.repository'; // Yo'lni to'g'rilang
+import { BaseRepository } from 'apps/dashboard-api/src/shared/repositories/base.repository';
 
 @Injectable()
 export class ReasonRepository extends BaseRepository<
