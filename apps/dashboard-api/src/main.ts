@@ -13,15 +13,13 @@ import { rawBodyMiddleware } from './modules/hikvision/core/middleware';
 
 async function bootstrap() {
     const app = await NestFactory.create<NestExpressApplication>(AppModule);
-    const prefix = '/api/v1'
+    const prefix = '/api/v1';
     const logger = app.get(LoggerService);
     app.useLogger(logger);
 
     app.useStaticAssets(join(process.cwd(), 'storage'), { prefix: '/api/storage' });
 
-    app.use(
-        bodyParser.raw({ type: ['application/xml', 'text/xml'], limit: '1mb' })
-    );
+    app.use(bodyParser.raw({ type: ['application/xml', 'text/xml'], limit: '1mb' }));
 
     app.use(`${prefix}/hikvision/event`, rawBodyMiddleware);
     app.use(`${prefix}/hikvision/anpr-event`, rawBodyMiddleware);
@@ -60,7 +58,8 @@ async function bootstrap() {
             'Employee-sync',
             'Actions',
             'Schedule',
-            'Attendance'
+            'Attendance',
+            'Reasons',
         ],
         extraModels: [ApiSuccessResponse, ApiErrorResponse, ApiPaginatedResponse],
     });

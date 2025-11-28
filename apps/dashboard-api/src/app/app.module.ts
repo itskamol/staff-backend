@@ -25,6 +25,7 @@ import { EmployeePlanModule } from '../modules/employeePlan/employee-plan.module
 import { AttendanceModule } from '../modules/attendance/attendance.module';
 import { ConfigModule } from '../core/config/config.module';
 import { QueueModule } from '../modules/queue/queue.module';
+import { ReasonModule } from '../modules/reasons/reason.module';
 
 @Module({
     imports: [
@@ -48,7 +49,8 @@ import { QueueModule } from '../modules/queue/queue.module';
         ActionModule,
         EmployeePlanModule,
         AttendanceModule,
-        QueueModule
+        QueueModule,
+        ReasonModule,
     ],
     providers: [
         {
@@ -70,7 +72,7 @@ import { QueueModule } from '../modules/queue/queue.module';
         {
             provide: APP_INTERCEPTOR,
             useClass: TenantContextInterceptor,
-        }
+        },
     ],
 })
 export class AppModule implements NestModule {
@@ -79,6 +81,5 @@ export class AppModule implements NestModule {
             .apply(MorganLoggerMiddleware)
             .exclude('health', 'favicon.ico')
             .forRoutes({ path: '*path', method: RequestMethod.ALL });
-
     }
 }

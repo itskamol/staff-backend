@@ -62,7 +62,7 @@ export class OrganizationService {
             },
         });
     }
-    
+
     async getOrganizationsByScope(scope: DataScope) {
         return this.organizationRepository.findWithScope(scope);
     }
@@ -90,6 +90,25 @@ export class OrganizationService {
                 extraTime: '00:10',
                 weekdays: 'Monday,Tuesday,Wednesday,Thursday,Friday',
                 endTime: '18:00',
+            },
+        };
+
+        input.reasons = {
+            createMany: {
+                data: [
+                    {
+                        key: 'Traffic',
+                        value: 'Delayed due to heavy traffic or road congestion.',
+                    },
+                    {
+                        key: 'Health',
+                        value: 'Late or absent due to health issues or medical appointment.',
+                    },
+                    {
+                        key: 'Weather',
+                        value: 'Delayed due to bad weather conditions.',
+                    },
+                ],
             },
         };
 

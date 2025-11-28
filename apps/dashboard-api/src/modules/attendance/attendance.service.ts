@@ -17,12 +17,12 @@ export class AttendanceService {
         private readonly logger: LoggerService
     ) {}
 
-    @Cron(CronExpression.EVERY_DAY_AT_MIDNIGHT) 
+    @Cron(CronExpression.EVERY_DAY_AT_MIDNIGHT)
     async handleDailyAttendance() {
         this.logger.log('Cron triggered: Adding attendance job to queue...', 'AttendanceService');
-        
+
         await this.attendanceQueue.add(
-            JOB.ATTENDANCE.CREATE_DEFAULT, 
+            JOB.ATTENDANCE.CREATE_DEFAULT,
             {},
             {
                 removeOnComplete: true,
@@ -37,7 +37,7 @@ export class AttendanceService {
 
     async create(dto: CreateAttendanceDto) {
         try {
-            const {employeeId, organizationId, ...dtoData} = dto
+            const { employeeId, organizationId, ...dtoData } = dto;
             const todayStart = new Date();
             todayStart.setHours(0, 0, 0, 0);
 
@@ -117,6 +117,12 @@ export class AttendanceService {
                         },
                     },
                 },
+                reasons: {
+                    select: {
+                        key: true,
+                        value: true,
+                    },
+                },
             },
             { page, limit },
             scope
@@ -142,6 +148,12 @@ export class AttendanceService {
                         },
                     },
                 },
+                reasons: {
+                    select: {
+                        key: true,
+                        value: true,
+                    },
+                },
             },
             scope
         );
@@ -159,22 +171,10 @@ export class AttendanceService {
         return this.repo.delete(id, scope);
     }
 
-
-     async findManyForJob(
-        where: Prisma.AttendanceWhereInput, 
-        select?: Prisma.AttendanceSelect
-    ) {
-        return this.repo.findMany(
-            where,
-            undefined, 
-            undefined, 
-            undefined, 
-            select,    
-            undefined
-        );
+    async findManyForJob(where: Prisma.AttendanceWhereInput, select?: Prisma.AttendanceSelect) {
+        return this.repo.findMany(where, undefined, undefined, undefined, select, undefined);
     }
 
-  
     async updateManyForJob(
         where: Prisma.AttendanceWhereInput,
         data: Prisma.AttendanceUpdateManyMutationInput

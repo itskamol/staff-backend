@@ -33,6 +33,7 @@ model Organization {
   userSessions    UserSession[]
   visitors        Visitor[]
   onetimeCodes    OnetimeCode[]
+  reasons         Reasons[]
 
   @@map("organizations")
 }

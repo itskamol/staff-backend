@@ -87,20 +87,33 @@ model Device {
 
 model Attendance {
   id             Int           @id @default(autoincrement())
-  startTime      DateTime?      @map("start_time")
+  startTime      DateTime?     @map("start_time")
   endTime        DateTime?     @map("end_time")
   arrivalStatus  ActionStatus  @map("arrival_status") // ON_TIME or LATE
   goneStatus     ActionStatus? @map("gone_status") // ON_TIME or EARLY
   reason         String?
+  reasonTypeId   Int?          @map("reason_id")
   employeeId     Int           @map("employee_id")
   organizationId Int?          @map("organization_id")
   createdAt      DateTime      @default(now()) @map("created_at")
 
   employee     Employee      @relation(fields: [employeeId], references: [id], onDelete: Cascade)
   organization Organization? @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  reasons      Reasons?      @relation(fields: [reasonTypeId], references: [id], onDelete: Cascade)
 
   @@index([startTime, endTime])
   @@index([employeeId])
   @@index([organizationId])
   @@map("attendances")
+}
+
+model Reasons {
+  id             Int           @id @default(autoincrement())
+  key            String
+  value          String
+  organizationId Int          @map("organization_id")
+  organization   Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  attendances    Attendance[]
+
+  @@unique([key, organizationId])
 }
