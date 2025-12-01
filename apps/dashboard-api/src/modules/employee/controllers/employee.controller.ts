@@ -23,32 +23,39 @@ import {
     ApiTags,
 } from '@nestjs/swagger';
 import { EmployeeService } from '../services/employee.service';
-import { BulkUpdateEmployees, CreateEmployeeDto, EmployeeQueryDto, EmployeeResponseDto, UpdateEmployeeDto } from '../dto';
+import {
+    BulkUpdateEmployees,
+    CreateEmployeeDto,
+    EmployeeQueryDto,
+    EmployeeResponseDto,
+    UpdateEmployeeDto,
+} from '../dto';
 import { ApiSuccessResponse } from '../../../shared/dto';
 import { ApiCrudOperation, ApiErrorResponses, ApiOkResponseData } from '../../../shared/utils';
 
 // TODO: Move these DTOs to employee/dto/
-export class ActivityReportResponseDto { }
-export class AssignCardDto { }
-export class AssignCarDto { }
-export class ComputerUserResponseDto { }
-export class EntryLogResponseDto { }
-export class LinkComputerUserDto { }
+export class ActivityReportResponseDto {}
+export class AssignCardDto {}
+export class AssignCarDto {}
+export class ComputerUserResponseDto {}
+export class EntryLogResponseDto {}
+export class LinkComputerUserDto {}
 import { DataScope, Roles, Scope, User } from '@app/shared/auth';
 import { UserContext } from '../../../shared/interfaces';
 import { QueryDto } from '@app/shared/utils';
 import { Role } from '@prisma/client';
-import { FILE_STORAGE_SERVICE, IFileStorageService } from '@app/shared/common'; 
+import { FILE_STORAGE_SERVICE, IFileStorageService } from '@app/shared/common';
 
 @ApiTags('Employees')
 @ApiBearerAuth()
 @Controller('employees')
 @ApiExtraModels(ApiSuccessResponse, EmployeeResponseDto)
 export class EmployeeController {
-    constructor(private readonly employeeService: EmployeeService,
-        @Inject(FILE_STORAGE_SERVICE) // Fayl omborini kontrollerga inyeksiya qilamiz
-        private readonly fileStorage: IFileStorageService,
-    ) { }
+    constructor(
+        private readonly employeeService: EmployeeService,
+        @Inject(FILE_STORAGE_SERVICE)
+        private readonly fileStorage: IFileStorageService
+    ) {}
 
     @Get()
     @Roles(Role.ADMIN, Role.HR, Role.DEPARTMENT_LEAD, Role.GUARD)
@@ -59,7 +66,7 @@ export class EmployeeController {
             search: true,
             sort: true,
             filters: { isActive: Boolean, departmentId: Number },
-        }
+        },
     })
     async getAllEmployees(
         @Query() query: EmployeeQueryDto,
@@ -73,7 +80,7 @@ export class EmployeeController {
     @Roles(Role.ADMIN, Role.HR)
     @ApiCrudOperation(EmployeeResponseDto, 'create', {
         body: CreateEmployeeDto,
-        summary: 'Create a new employee'
+        summary: 'Create a new employee',
     })
     async createEmployee(
         @Body() dto: CreateEmployeeDto,
@@ -82,7 +89,6 @@ export class EmployeeController {
     ) {
         return this.employeeService.createEmployee(dto, scope, user);
     }
-
 
     @Post('upload-photo')
     @UseInterceptors(FileInterceptor('file')) // Fayl maydoni 'file' deb ataladi
@@ -115,12 +121,11 @@ export class EmployeeController {
         return { key: result.key };
     }
 
-
     @Get(':id')
     @Roles(Role.ADMIN, Role.HR, Role.DEPARTMENT_LEAD, Role.GUARD)
     @ApiParam({ name: 'id', description: 'Employee ID' })
     @ApiCrudOperation(EmployeeResponseDto, 'get', {
-        summary: 'Get an employee by ID'
+        summary: 'Get an employee by ID',
     })
     async getEmployeeById(
         @Param('id') id: number,
@@ -139,7 +144,7 @@ export class EmployeeController {
     @ApiParam({ name: 'id', description: 'Employee ID' })
     @ApiCrudOperation(EmployeeResponseDto, 'update', {
         body: UpdateEmployeeDto,
-        summary: 'Update an employee'
+        summary: 'Update an employee',
     })
     async updateEmployee(
         @Param('id') id: number,
@@ -154,7 +159,7 @@ export class EmployeeController {
     @Roles(Role.ADMIN, Role.HR)
     @ApiCrudOperation(EmployeeResponseDto, 'update', {
         body: BulkUpdateEmployees,
-        summary: 'Bulk update employees'
+        summary: 'Bulk update employees',
     })
     async bulkUpdateEmployees(
         @Body() dtos: BulkUpdateEmployees,
@@ -168,7 +173,7 @@ export class EmployeeController {
     @Roles(Role.ADMIN, Role.HR)
     @ApiParam({ name: 'id', description: 'Employee ID' })
     @ApiCrudOperation(EmployeeResponseDto, 'delete', {
-        summary: 'Delete an employee'
+        summary: 'Delete an employee',
     })
     async deleteEmployee(
         @Param('id') id: number,
@@ -183,7 +188,7 @@ export class EmployeeController {
     @Roles(Role.ADMIN, Role.HR, Role.DEPARTMENT_LEAD, Role.GUARD)
     @ApiParam({ name: 'id', description: 'Employee ID' })
     @ApiOkResponseData(EntryLogResponseDto, {
-        summary: 'Get employee entry logs'
+        summary: 'Get employee entry logs',
     })
     async getEmployeeEntryLogs(
         @Param('id') id: number,
@@ -198,7 +203,7 @@ export class EmployeeController {
     @Roles(Role.ADMIN, Role.HR, Role.DEPARTMENT_LEAD)
     @ApiParam({ name: 'id', description: 'Employee ID' })
     @ApiOkResponseData(ActivityReportResponseDto, {
-        summary: 'Get employee activity report'
+        summary: 'Get employee activity report',
     })
     async getEmployeeActivityReport(
         @Param('id') id: number,
@@ -213,7 +218,7 @@ export class EmployeeController {
     @Roles(Role.ADMIN, Role.HR, Role.DEPARTMENT_LEAD)
     @ApiParam({ name: 'id', description: 'Employee ID' })
     @ApiOkResponseData(ComputerUserResponseDto, {
-        summary: 'Get employee computer users'
+        summary: 'Get employee computer users',
     })
     async getEmployeeComputerUsers(
         @Param('id') id: number,
@@ -227,7 +232,7 @@ export class EmployeeController {
     @Roles(Role.ADMIN, Role.HR)
     @ApiParam({ name: 'id', description: 'Employee ID' })
     @ApiOkResponseData(Object, {
-        summary: 'Assign card to employee'
+        summary: 'Assign card to employee',
     })
     @ApiErrorResponses({ forbidden: true, notFound: true, badRequest: true })
     async assignCardToEmployee(
@@ -243,7 +248,7 @@ export class EmployeeController {
     @Roles(Role.ADMIN, Role.HR)
     @ApiParam({ name: 'id', description: 'Employee ID' })
     @ApiOkResponseData(Object, {
-        summary: 'Assign car to employee'
+        summary: 'Assign car to employee',
     })
     @ApiErrorResponses({ forbidden: true, notFound: true, badRequest: true })
     async assignCarToEmployee(
@@ -259,7 +264,7 @@ export class EmployeeController {
     @Roles(Role.ADMIN, Role.HR)
     @ApiParam({ name: 'id', description: 'Employee ID' })
     @ApiOkResponseData(Object, {
-        summary: 'Link computer user to employee'
+        summary: 'Link computer user to employee',
     })
     @ApiErrorResponses({ forbidden: true, notFound: true, badRequest: true })
     async linkComputerUserToEmployee(
@@ -276,7 +281,7 @@ export class EmployeeController {
     @ApiParam({ name: 'id', description: 'Employee ID' })
     @ApiParam({ name: 'computer_user_id', description: 'Computer User ID' })
     @ApiOkResponseData(Object, {
-        summary: 'Unlink computer user from employee'
+        summary: 'Unlink computer user from employee',
     })
     async unlinkComputerUserFromEmployee(
         @Param('id') id: number,

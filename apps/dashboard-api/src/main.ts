@@ -75,7 +75,6 @@ async function bootstrap() {
     });
 
     logger.log(`Application is running on: http://localhost:${port}/api/v1`);
-    logger.log('🔌 Socket:  ws://localhost:3001/socket.io');
 }
 
 bootstrap().catch(error => {

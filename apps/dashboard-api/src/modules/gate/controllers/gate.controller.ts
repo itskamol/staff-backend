@@ -1,11 +1,11 @@
 import { Controller, Get, Post, Put, Delete, Body, Param, Query } from '@nestjs/common';
 import { ApiTags, ApiBearerAuth, ApiExtraModels } from '@nestjs/swagger';
 import { Roles, Role, User as CurrentUser, DataScope, Scope } from '@app/shared/auth';
-import { QueryDto } from '@app/shared/utils';
 import { GateService } from '../services/gate.service';
 import { UserContext } from 'apps/dashboard-api/src/shared/interfaces';
 import { CreateGateDto, GateDto, UpdateGateDto } from '../dto/gate.dto';
 import { ApiCrudOperation } from 'apps/dashboard-api/src/shared/utils';
+import { QueryDto } from 'apps/dashboard-api/src/shared/dto';
 
 @ApiTags('Gates')
 @Controller('gates')
@@ -29,13 +29,13 @@ export class GateController {
         @CurrentUser() user: UserContext,
         @Scope() scope: DataScope
     ) {
-        return await this.gateService.findAll(query, scope, user);
+        return this.gateService.findAll(query, scope, user);
     }
 
     @Get(':id')
     @ApiCrudOperation(GateDto, 'get', { summary: 'Get gate by ID' })
     async findOne(@Param('id') id: number, @Scope() scope: DataScope) {
-        return await this.gateService.findOne(id, scope);
+        return this.gateService.findOne(id, scope);
     }
 
     @Get(':id/statistics')
@@ -44,7 +44,7 @@ export class GateController {
         errorResponses: { notFound: true },
     })
     async getStatistics(@Param('id') id: number, @Scope() scope: DataScope) {
-        return await this.gateService.getGateStatistics(id, scope);
+        return this.gateService.getGateStatistics(id, scope);
     }
 
     @Get(':id/devices')
@@ -53,7 +53,7 @@ export class GateController {
         errorResponses: { notFound: true },
     })
     async getWithDevices(@Param('id') id: number, @Scope() scope: DataScope) {
-        return await this.gateService.getGateWithDevices(id, scope);
+        return this.gateService.getGateWithDevices(id, scope);
     }
 
     @Post()
@@ -62,7 +62,7 @@ export class GateController {
         summary: 'Create new gate',
     })
     async create(@Body() createGateDto: CreateGateDto, @Scope() scope: DataScope) {
-        return await this.gateService.create(createGateDto, scope);
+        return this.gateService.create(createGateDto, scope);
     }
 
     @Put(':id')
@@ -76,7 +76,7 @@ export class GateController {
         @Body() updateGateDto: UpdateGateDto,
         @Scope() scope: DataScope
     ) {
-        return await this.gateService.update(id, updateGateDto, scope);
+        return this.gateService.update(id, updateGateDto, scope);
     }
 
     @Delete(':id')
@@ -89,6 +89,6 @@ export class GateController {
         @Scope() scope: DataScope,
         @CurrentUser() user: UserContext
     ) {
-        await this.gateService.remove(id, scope, user);
+        return this.gateService.remove(id, scope, user);
     }
 }

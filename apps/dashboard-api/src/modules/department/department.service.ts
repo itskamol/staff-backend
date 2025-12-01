@@ -18,6 +18,7 @@ export class DepartmentService {
             isActive,
             organizationId,
             parentId,
+            isDeleted,
         } = query;
 
         const filters: Prisma.DepartmentWhereInput = {};
@@ -29,6 +30,10 @@ export class DepartmentService {
         }
         if (parentId) {
             filters.parentId = parentId;
+        }
+
+        if (!isDeleted) {
+            filters.deletedAt = null;
         }
 
         if (typeof isActive === 'boolean') {
@@ -103,11 +108,11 @@ export class DepartmentService {
 
     async updateDepartment(id: number, data: UpdateDepartmentDto, scope?: DataScope) {
         data.organizationId = scope?.organizationId || data?.organizationId;
-    
+
         return this.departmentRepository.update(id, data);
     }
 
     async deleteDepartment(id: number, scope?: DataScope) {
-        return this.departmentRepository.delete(id, scope);
+        return this.departmentRepository.softDelete(id, scope);
     }
 }

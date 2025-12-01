@@ -8,7 +8,7 @@ export type CredentialWithRelations = Credential & {
     employee?: {
         id: number;
         name: string;
-    }
+    };
 };
 
 @Injectable()
@@ -37,12 +37,15 @@ export class CredentialRepository extends BaseRepository<
                 select: {
                     id: true,
                     name: true,
-                }
-            }
+                },
+            },
         };
     }
 
-    async findByEmployeeId(employeeId: number, scope?: DataScope): Promise<CredentialWithRelations[]> {
+    async findByEmployeeId(
+        employeeId: number,
+        scope?: DataScope
+    ): Promise<CredentialWithRelations[]> {
         return this.findMany(
             { employeeId },
             { createdAt: 'desc' },
@@ -56,11 +59,11 @@ export class CredentialRepository extends BaseRepository<
     async findByCodeAndType(code: string, type: string): Promise<CredentialWithRelations | null> {
         return this.getDelegate().findFirst({
             where: { code, type: type as any, isActive: true },
-            include: this.getDefaultInclude()
+            include: this.getDefaultInclude(),
         });
     }
 
     async deleteCredential(id: number, scope?: DataScope): Promise<Credential> {
-        return this.delete(id, scope);
+        return this.softDelete(id, scope);
     }
 }

@@ -1,17 +1,18 @@
 model Employee {
-  id                Int      @id @default(autoincrement())
-  departmentId      Int      @map("department_id")
-  organizationId    Int      @map("organization_id")
-  policyId          Int      @map("policy_id")
+  id                Int       @id @default(autoincrement())
+  departmentId      Int       @map("department_id")
+  organizationId    Int       @map("organization_id")
+  policyId          Int       @map("policy_id")
   name              String
   address           String?
   phone             String?
   email             String?
   photo             String?
-  additionalDetails String?  @map("additional_details")
-  isActive          Boolean  @default(true) @map("is_active")
-  createdAt         DateTime @default(now()) @map("created_at")
-  updatedAt         DateTime @updatedAt @map("updated_at")
+  additionalDetails String?   @map("additional_details")
+  isActive          Boolean   @default(true) @map("is_active")
+  createdAt         DateTime  @default(now()) @map("created_at")
+  updatedAt         DateTime  @updatedAt @map("updated_at")
+  deletedAt         DateTime? @map("deleted_at")
   employeePlanId    Int?
 
   department    Department     @relation(fields: [departmentId], references: [id])
@@ -42,9 +43,10 @@ model Credential {
   organizationId    Int?       @map("organization_id")
 
   // --- Standard Fields ---
-  isActive  Boolean  @default(true) @map("is_active")
-  createdAt DateTime @default(now()) @map("created_at")
-  updatedAt DateTime @updatedAt @map("updated_at")
+  isActive  Boolean   @default(true) @map("is_active")
+  createdAt DateTime  @default(now()) @map("created_at")
+  updatedAt DateTime  @updatedAt @map("updated_at")
+  deletedAt DateTime? @map("deleted_at")
 
   organization Organization? @relation(fields: [organizationId], references: [id], onDelete: Cascade)
   employee     Employee      @relation(fields: [employeeId], references: [id], onDelete: Cascade)
@@ -66,6 +68,7 @@ model EmployeeSync {
   message        String?
   createdAt      DateTime   @default(now())
   updatedAt      DateTime   @updatedAt
+  deletedAt      DateTime?  @map("deleted_at")
 
   organization Organization? @relation(fields: [organizationId], references: [id], onDelete: Cascade)
   gate         Gate          @relation(fields: [gateId], references: [id], onDelete: Cascade)
@@ -81,16 +84,19 @@ model EmployeeSync {
 }
 
 model EmployeePlan {
-  id                   Int     @id @default(autoincrement())
-  organizationId       Int?    @map("organization_id")
+  id                   Int       @id @default(autoincrement())
+  organizationId       Int?      @map("organization_id")
   name                 String?
-  addadditionalDetails String? @map("additional_details")
-  startTime            String  @map("start_time")
-  endTime              String  @map("end_time")
-  extraTime            String  @map("extra_time")
+  addadditionalDetails String?   @map("additional_details")
+  startTime            String    @map("start_time")
+  endTime              String    @map("end_time")
+  extraTime            String    @map("extra_time")
   weekdays             String
-  isDefault            Boolean @default(false)
-  isActive             Boolean @default(true)
+  isDefault            Boolean   @default(false)
+  isActive             Boolean   @default(true)
+  createdAt            DateTime  @default(now()) @map("created_at")
+  updatedAt            DateTime? @updatedAt @map("updated_at")
+  deletedAt            DateTime? @map("deleted_at")
 
   organization Organization? @relation(fields: [organizationId], references: [id], onDelete: Cascade)
   employees    Employee[]

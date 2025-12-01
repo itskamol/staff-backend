@@ -1,11 +1,11 @@
 import { Injectable, NotFoundException, BadRequestException } from '@nestjs/common';
 import { PrismaService } from '@app/shared/database';
 import { DataScope } from '@app/shared/auth';
-import { QueryDto } from '@app/shared/utils';
 import { CreateOnetimeCodeDto, UpdateOnetimeCodeDto } from '../dto/onetime-code.dto';
 import { UserContext } from '../../../shared/interfaces';
 import { OnetimeCodeRepository } from '../repositories/onetime-code.repository';
 import { Prisma, VisitorCodeType } from '@prisma/client';
+import { QueryDto } from 'apps/dashboard-api/src/shared/dto';
 
 @Injectable()
 export class OnetimeCodeService {
@@ -28,6 +28,7 @@ export class OnetimeCodeService {
             visitorId,
             codeType,
             isActive,
+            isDeleted,
         } = query;
         const where: Prisma.OnetimeCodeWhereInput = {};
 
@@ -49,6 +50,10 @@ export class OnetimeCodeService {
 
         if (typeof isActive === 'boolean') {
             where.isActive = isActive;
+        }
+
+        if (!isDeleted) {
+            where.deletedAt = null;
         }
 
         return this.onetimeCodeRepository.findManyWithPagination(
@@ -163,7 +168,7 @@ export class OnetimeCodeService {
             throw new NotFoundException('Onetime code not found');
         }
 
-        return this.onetimeCodeRepository.delete(id, scope);
+        return this.onetimeCodeRepository.softDelete(id, scope);
     }
 
     async activate(id: number, user: UserContext) {

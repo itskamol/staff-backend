@@ -1,11 +1,11 @@
 import { Injectable, NotFoundException, BadRequestException } from '@nestjs/common';
 import { PrismaService } from '@app/shared/database';
 import { DataScope } from '@app/shared/auth';
-import { QueryDto } from '@app/shared/utils';
 import { UpdateComputerUserDto } from '../dto/computer-user.dto';
 import { UserContext } from '../../../shared/interfaces';
 import { ComputerUserRepository } from '../repositories/computer-user.repository';
 import { Prisma } from '@prisma/client';
+import { QueryDto } from 'apps/dashboard-api/src/shared/dto';
 
 @Injectable()
 export class ComputerUserService {
@@ -27,8 +27,13 @@ export class ComputerUserService {
             search,
             linked,
             computerId,
+            isDeleted,
         } = query;
         const where: Prisma.ComputerUserWhereInput = {};
+
+        if (isDeleted) {
+            where.deletedAt = null;
+        }
 
         if (search) {
             where.OR = [
@@ -105,7 +110,7 @@ export class ComputerUserService {
             throw new NotFoundException('Computer user not found');
         }
 
-        return this.computerUserRepository.delete(id, scope);
+        return this.computerUserRepository.softDelete(id, scope);
     }
 
     async findUnlinked(scope: DataScope) {

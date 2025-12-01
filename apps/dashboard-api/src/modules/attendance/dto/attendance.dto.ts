@@ -11,6 +11,7 @@ import {
 } from 'class-validator';
 import { Type } from 'class-transformer';
 import { ActionStatus } from '@prisma/client';
+import { QueryDto } from 'apps/dashboard-api/src/shared/dto';
 
 export class CreateAttendanceDto {
     @ApiProperty({ example: '2025-11-10T09:00:00.000Z' })
@@ -58,26 +59,6 @@ export class CreateAttendanceDto {
 }
 
 export class UpdateAttendanceDto {
-    @ApiPropertyOptional({ example: '2025-11-10T09:00:00.000Z' })
-    @IsOptional()
-    @IsDateString()
-    startTime?: string;
-
-    @ApiPropertyOptional({ example: '2025-11-10T18:00:00.000Z' })
-    @IsOptional()
-    @IsDateString()
-    endTime?: string;
-
-    @ApiPropertyOptional({ enum: ActionStatus })
-    @IsOptional()
-    @IsEnum(ActionStatus)
-    arrivalStatus?: ActionStatus;
-
-    @ApiPropertyOptional({ enum: ActionStatus })
-    @IsOptional()
-    @IsEnum(ActionStatus)
-    goneStatus?: ActionStatus;
-
     @ApiPropertyOptional({ example: 'Updated reason' })
     @IsOptional()
     @IsString()
@@ -90,12 +71,7 @@ export class UpdateAttendanceDto {
     reasonTypeId?: number;
 }
 
-export class AttendanceQueryDto {
-    @ApiPropertyOptional()
-    @IsOptional()
-    @IsString()
-    search?: string;
-
+export class AttendanceQueryDto extends QueryDto {
     @ApiPropertyOptional()
     @IsOptional()
     @Type(() => Number)
@@ -122,14 +98,4 @@ export class AttendanceQueryDto {
     @IsOptional()
     @IsEnum(ActionStatus)
     goneStatus?: ActionStatus;
-
-    @ApiPropertyOptional()
-    @IsOptional()
-    @Type(() => Number)
-    page?: number;
-
-    @ApiPropertyOptional()
-    @IsOptional()
-    @Type(() => Number)
-    limit?: number;
 }

@@ -12,8 +12,8 @@ import {
 } from 'class-validator';
 import { ApiProperty, ApiPropertyOptional, PartialType } from '@nestjs/swagger';
 import { DeviceType, EntryType, WelcomePhoto, WelcomeText } from '@prisma/client';
-import { QueryDto } from '@app/shared/utils';
 import { Type } from 'class-transformer';
+import { QueryDto } from 'apps/dashboard-api/src/shared/dto';
 
 export class CreateDeviceDto {
     @ApiProperty({ example: 'Main Entrance', description: 'Device name', required: false })

@@ -9,17 +9,26 @@ export class ReasonService {
     constructor(private readonly reasonRepository: ReasonRepository) {}
 
     async getAllReasons(query: ReasonQueryDto, scope: DataScope, user: UserContext) {
-        const { page = 1, limit = 10, sort = 'key', order = 'asc', search, organizationId } = query;
+        const {
+            page = 1,
+            limit = 10,
+            sort = 'id',
+            order = 'desc',
+            search,
+            organizationId,
+            isDeleted,
+        } = query;
 
         const where: Prisma.ReasonsWhereInput = {
             ...(organizationId && { organizationId }),
         };
 
         if (search) {
-            where.OR = [
-                { key: { contains: search, mode: 'insensitive' } },
-                { value: { contains: search, mode: 'insensitive' } },
-            ];
+            where.OR = [{ value: { contains: search, mode: 'insensitive' } }];
+        }
+
+        if (!isDeleted) {
+            where.deletedAt = null;
         }
 
         const items = await this.reasonRepository.findMany(
@@ -60,20 +69,7 @@ export class ReasonService {
             throw new BadRequestException('Organization ID is required');
         }
 
-        if (orgId) {
-            const existing = await this.reasonRepository.findFirst({
-                key: dto.key,
-                organizationId: orgId,
-            });
-            if (existing) {
-                throw new BadRequestException(
-                    `Reason with key "${dto.key}" already exists in this organization.`
-                );
-            }
-        }
-
         const data: Prisma.ReasonsCreateInput = {
-            key: dto.key,
             value: dto.value,
             organization: { connect: { id: orgId } },
         };
@@ -90,7 +86,6 @@ export class ReasonService {
         await this.getReasonById(id, scope, user);
 
         const updateData: Prisma.ReasonsUpdateInput = {
-            key: dto.key,
             value: dto.value,
         };
 
@@ -99,6 +94,6 @@ export class ReasonService {
 
     async deleteReason(id: number, scope: DataScope, user: UserContext): Promise<Reasons> {
         await this.getReasonById(id, scope, user);
-        return this.reasonRepository.delete(id, scope);
+        return this.reasonRepository.softDelete(id, scope);
     }
 }

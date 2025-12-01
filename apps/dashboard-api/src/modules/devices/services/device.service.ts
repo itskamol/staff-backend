@@ -27,11 +27,20 @@ export class DeviceService {
         private readonly gateRepository: GateRepository,
         private hikvisionService: HikvisionAccessService,
         private readonly configService: ConfigService,
-        private readonly encryptionService: EncryptionService,
+        private readonly encryptionService: EncryptionService
     ) {}
 
     async findAll(query: QueryDeviceDto, scope: DataScope, user: UserContext) {
-        const { page, limit, sort = 'createdAt', order = 'desc', search, type, gateId } = query;
+        const {
+            page,
+            limit,
+            sort = 'createdAt',
+            order = 'desc',
+            search,
+            type,
+            gateId,
+            isDeleted,
+        } = query;
         const where: Prisma.DeviceWhereInput = {};
 
         if (search) {
@@ -47,6 +56,10 @@ export class DeviceService {
 
         if (gateId) {
             where.gateId = gateId;
+        }
+
+        if (!isDeleted) {
+            where.deletedAt = null;
         }
 
         return this.deviceRepository.findManyWithPagination(
@@ -121,7 +134,6 @@ export class DeviceService {
             protocol: 'http',
         };
 
-
         const deviceInfoResult = await this.hikvisionService.getDeviceInfo(hikvisionConfig);
         if (!deviceInfoResult.success) {
             throw new BadRequestException(
@@ -176,7 +188,7 @@ export class DeviceService {
             capabilities,
         };
 
-        const newDevice:CreateDeviceDto = await this.deviceRepository.create(
+        const newDevice: CreateDeviceDto = await this.deviceRepository.create(
             {
                 ...device,
                 ...(gateId && {
@@ -279,7 +291,7 @@ export class DeviceService {
 
         const job = await this.deviceQueue.add(JOB.DEVICE.DELETE, { device, config });
 
-        const result = await this.deviceRepository.delete(id, scope);
+        const result = await this.deviceRepository.softDelete(id, scope);
         return { message: 'Device deleted successfully', ...result };
     }
 

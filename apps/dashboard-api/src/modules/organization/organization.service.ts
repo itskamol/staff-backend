@@ -10,7 +10,7 @@ export class OrganizationService {
     constructor(private readonly organizationRepository: OrganizationRepository) {}
 
     async getOrganizations(
-        { search, isActive, sort, order, page, limit }: QueryDto,
+        { search, isActive, sort, order, page, limit, isDeleted }: QueryDto,
         scope?: DataScope
     ) {
         const filters: Prisma.OrganizationWhereInput = {};
@@ -23,6 +23,10 @@ export class OrganizationService {
 
         if (typeof isActive === 'boolean') {
             filters.isActive = isActive;
+        }
+
+        if (!isDeleted) {
+            filters.deletedAt = null;
         }
 
         const [data, total] = await Promise.all([
@@ -97,16 +101,13 @@ export class OrganizationService {
             createMany: {
                 data: [
                     {
-                        key: 'Traffic',
-                        value: 'Delayed due to heavy traffic or road congestion.',
+                        value: 'Other',
                     },
                     {
-                        key: 'Health',
                         value: 'Late or absent due to health issues or medical appointment.',
                     },
                     {
-                        key: 'Weather',
-                        value: 'Delayed due to bad weather conditions.',
+                        value: 'Delayed due to heavy traffic or road congestion.',
                     },
                 ],
             },
@@ -122,6 +123,6 @@ export class OrganizationService {
     }
 
     async deleteOrganization(id: number, scope?: DataScope) {
-        return this.organizationRepository.delete(id, scope);
+        return this.organizationRepository.softDelete(id, scope);
     }
 }

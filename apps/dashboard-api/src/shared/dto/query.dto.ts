@@ -1,4 +1,4 @@
-import { IsBoolean, IsOptional, IsString } from 'class-validator';
+import { IsBoolean, IsEmpty, IsOptional, IsString } from 'class-validator';
 import { PaginationDto } from './pagination.dto';
 import { ApiProperty } from '@nestjs/swagger';
 import { Transform } from 'class-transformer';
@@ -13,20 +13,27 @@ export class QueryDto extends PaginationDto {
     })
     search?: string;
 
-    @IsOptional()
-    @IsBoolean()
-    @Transform(({ value }) => {
-        if (value === 'true') return true;
-        if (value === 'false') return false;
-        return value;
-    })
     @ApiProperty({
         description: 'Filter by active status',
         type: Boolean,
         required: false,
-        enum: [true, false],
+        default: false,
     })
+    @IsOptional()
+    @IsBoolean()
+    @Transform(({ value }) => (value === 'true' ? true : value === 'false' ? false : value))
     isActive?: boolean;
+
+    @ApiProperty({
+        description: 'Filter by delete status',
+        type: Boolean,
+        required: false,
+        default: false,
+    })
+    @IsOptional()
+    @IsBoolean()
+    @Transform(({ value }) => (value === 'true' ? true : value === 'false' ? false : value))
+    isDeleted?: boolean;
 
     @IsString()
     @IsOptional()

@@ -180,7 +180,6 @@ export abstract class BaseRepository<
         this.logger.debug(`Finding many ${this.modelName} with conditions:`, where);
 
         const scopedWhere = this.applyDataScope(where, scope);
-
         const options: {
             where: Record<string, unknown>;
             orderBy?: TOrderByInput;
@@ -295,7 +294,7 @@ export abstract class BaseRepository<
 
         const result = await this.update(
             id,
-            { isActive: false } as unknown as TUpdateInput,
+            { deletedAt: new Date(Date.now()) } as unknown as TUpdateInput,
             undefined,
             scope
         );

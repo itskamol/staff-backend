@@ -14,7 +14,7 @@ export class GroupService {
     ) {}
 
     async findAll(query: GroupQueryDto, scope: DataScope, user: UserContext) {
-        const { page, limit, sort = 'createdAt', order = 'desc', search, type } = query;
+        const { page, limit, sort = 'createdAt', order = 'desc', search, type, isDeleted } = query;
         const where: Prisma.ResourceGroupWhereInput = {};
 
         if (search) {
@@ -23,6 +23,10 @@ export class GroupService {
 
         if (type) {
             where.type = type;
+        }
+
+        if (!isDeleted) {
+            where.deletedAt = null;
         }
 
         return this.groupRepository.findManyWithPagination(
@@ -124,7 +128,7 @@ export class GroupService {
             throw new BadRequestException('Cannot delete group that is used in policies');
         }
 
-        return this.groupRepository.delete(id, scope);
+        return this.groupRepository.softDelete(id, scope);
     }
 
     async addResources(groupId: number, resourceIds: number[], user: UserContext) {

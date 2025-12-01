@@ -62,7 +62,6 @@ export class ActionService {
                 organizationId: gate.organizationId,
             };
 
-
             const todayStart = new Date(actionTime);
             todayStart.setHours(0, 0, 0, 0);
 
@@ -70,7 +69,12 @@ export class ActionService {
             todayEnd.setHours(23, 59, 59, 999);
 
             if (device.entryType === 'BOTH') {
-                const lastInfo = await this.getLastActionInfo(employeeId, gate.organizationId,todayStart, todayEnd);
+                const lastInfo = await this.getLastActionInfo(
+                    employeeId,
+                    gate.organizationId,
+                    todayStart,
+                    todayEnd
+                );
 
                 if (!lastInfo.canCreate) {
                     return;
@@ -180,16 +184,6 @@ export class ActionService {
         );
 
         return data;
-    }
-
-    async update(id: number, dto: UpdateActionDto, scope: DataScope) {
-        await this.findOne(id, scope);
-        return this.repo.update(id, dto);
-    }
-
-    async remove(id: number, scope: DataScope) {
-        await this.findOne(id, scope);
-        return this.repo.delete(id, scope);
     }
 
     private async updatedGoneStatus(

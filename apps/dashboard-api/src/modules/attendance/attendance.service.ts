@@ -69,9 +69,10 @@ export class AttendanceService {
 
     async findAll(query: AttendanceQueryDto, scope: DataScope) {
         const where: Prisma.AttendanceWhereInput = {};
+        const { startDate, endDate, employeeId, organizationId } = query;
 
-        if (query.employeeId !== undefined) where.employeeId = query.employeeId;
-        if (query.organizationId !== undefined) where.organizationId = query.organizationId;
+        if (employeeId !== undefined) where.employeeId = employeeId;
+        if (organizationId !== undefined) where.organizationId = organizationId;
         if (query.arrivalStatus) where.arrivalStatus = query.arrivalStatus;
 
         if (query.date) {
@@ -85,6 +86,13 @@ export class AttendanceService {
             where.createdAt = {
                 gte: startOfDay,
                 lte: endOfDay,
+            };
+        }
+
+        if (startDate && endDate) {
+            where.createdAt = {
+                gte: new Date(startDate),
+                lte: new Date(endDate),
             };
         }
 
@@ -119,7 +127,6 @@ export class AttendanceService {
                 },
                 reasons: {
                     select: {
-                        key: true,
                         value: true,
                     },
                 },
@@ -150,7 +157,6 @@ export class AttendanceService {
                 },
                 reasons: {
                     select: {
-                        key: true,
                         value: true,
                     },
                 },
@@ -164,11 +170,6 @@ export class AttendanceService {
     async update(id: number, dto: UpdateAttendanceDto, scope: DataScope) {
         await this.findById(id, scope);
         return this.repo.update(id, dto, {}, scope);
-    }
-
-    async delete(id: number, scope: DataScope) {
-        await this.findById(id, scope);
-        return this.repo.delete(id, scope);
     }
 
     async findManyForJob(where: Prisma.AttendanceWhereInput, select?: Prisma.AttendanceSelect) {

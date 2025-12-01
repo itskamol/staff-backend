@@ -27,13 +27,14 @@ export class CredentialService {
         const {
             page = 1,
             limit = 10,
-            sortBy = 'createdAt',
-            sortOrder = 'desc',
+            sort = 'createdAt',
+            order = 'desc',
             search,
             type,
             employeeId,
             departmentId,
             organizationId,
+            isDeleted,
         } = query;
 
         const where: Prisma.CredentialWhereInput = {
@@ -50,9 +51,13 @@ export class CredentialService {
             ];
         }
 
+        if (!isDeleted) {
+            where.deletedAt = null;
+        }
+
         const items = await this.credentialRepository.findMany(
             where,
-            { [sortBy]: sortOrder },
+            { [sort]: order },
             this.credentialRepository.getDefaultInclude(),
             { page, limit },
             undefined,

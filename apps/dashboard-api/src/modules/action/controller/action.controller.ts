@@ -1,13 +1,4 @@
-import {
-    Controller,
-    Get,
-    Put,
-    Delete,
-    Param,
-    Body,
-    Query,
-    ParseIntPipe,
-} from '@nestjs/common';
+import { Controller, Get, Put, Delete, Param, Body, Query, ParseIntPipe } from '@nestjs/common';
 import { ActionService } from '../service/action.service';
 import { ActionQueryDto, UpdateActionDto } from '../dto/action.dto';
 import { ApiBearerAuth, ApiTags } from '@nestjs/swagger';
@@ -28,19 +19,5 @@ export class ActionController {
     @Get(':id')
     async findOne(@Param('id', ParseIntPipe) id: number, @Scope() scope?: DataScope) {
         return this.service.findOne(id, scope);
-    }
-
-    @Put(':id')
-    async update(
-        @Param('id', ParseIntPipe) id: number,
-        @Body() dto: UpdateActionDto,
-        @Scope() scope?: DataScope
-    ) {
-        return this.service.update(id, dto, scope);
-    }
-
-    @Delete(':id')
-    async remove(@Param('id', ParseIntPipe) id: number, @Scope() scope?: DataScope) {
-        return this.service.remove(id, scope);
     }
 }

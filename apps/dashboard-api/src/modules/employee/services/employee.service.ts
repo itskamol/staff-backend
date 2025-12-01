@@ -31,7 +31,16 @@ export class EmployeeService {
     ) {}
 
     async getEmployees(query: EmployeeQueryDto, scope: DataScope, user: UserContext) {
-        const { page = 1, limit = 10, search, sort, order, credentialType, ...filters } = query;
+        const {
+            page = 1,
+            limit = 10,
+            search,
+            sort,
+            order,
+            credentialType,
+            isDeleted,
+            ...filters
+        } = query;
 
         let whereClause: Prisma.EmployeeWhereInput = {};
         if (search) {
@@ -52,6 +61,10 @@ export class EmployeeService {
                     type: credentialType,
                 },
             };
+        }
+
+        if (!isDeleted) {
+            whereClause.deletedAt = null;
         }
 
         Object.keys(filters).forEach(key => {
@@ -323,14 +336,7 @@ export class EmployeeService {
             await Promise.allSettled(deletePromises);
         }
 
-        if (employee.photo) {
-            const exists = await this.fileStorage.exists(employee.photo);
-            if (exists) {
-                await this.fileStorage.deleteObject(employee.photo);
-            }
-        }
-
-        return await this.employeeRepository.delete(id);
+        return await this.employeeRepository.softDelete(id);
     }
 
     async getEmployeeEntryLogs(id: number, query: QueryDto, scope: DataScope, user: UserContext) {

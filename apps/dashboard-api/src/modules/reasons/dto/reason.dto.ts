@@ -4,12 +4,6 @@ import { ApiProperty, ApiPropertyOptional, PartialType } from '@nestjs/swagger';
 import { QueryDto } from 'apps/dashboard-api/src/shared/dto';
 
 export class CreateReasonDto {
-    @ApiProperty({ description: 'The unique key for the reason', minLength: 1, maxLength: 50 })
-    @IsString()
-    @MinLength(1)
-    @MaxLength(50)
-    key: string;
-
     @ApiProperty({
         description: 'The value or description of the reason',
         minLength: 1,
@@ -34,9 +28,6 @@ export class UpdateReasonDto extends PartialType(CreateReasonDto) {}
 export class ReasonResponseDto {
     @ApiProperty()
     id: number;
-
-    @ApiProperty()
-    key: string;
 
     @ApiProperty()
     value: string;

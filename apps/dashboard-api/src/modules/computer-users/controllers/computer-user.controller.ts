@@ -1,11 +1,16 @@
 import { Controller, Get, Post, Put, Delete, Body, Param, Query } from '@nestjs/common';
 import { ApiTags, ApiBearerAuth } from '@nestjs/swagger';
 import { Roles, Role, User as CurrentUser, DataScope, Scope } from '@app/shared/auth';
-import { QueryDto } from '@app/shared/utils';
 import { ComputerUserService } from '../services/computer-user.service';
 import { UserContext } from 'apps/dashboard-api/src/shared/interfaces';
-import { CreateComputerUserDto, ComputerUserDto, UpdateComputerUserDto, LinkEmployeeDto } from '../dto/computer-user.dto';
+import {
+    CreateComputerUserDto,
+    ComputerUserDto,
+    UpdateComputerUserDto,
+    LinkEmployeeDto,
+} from '../dto/computer-user.dto';
 import { ApiCrudOperation } from 'apps/dashboard-api/src/shared/utils';
+import { QueryDto } from 'apps/dashboard-api/src/shared/dto';
 
 @ApiTags('Computer Users')
 @Controller('computer-users')
@@ -96,10 +101,7 @@ export class ComputerUserController {
         summary: 'Unlink computer user from employee',
         errorResponses: { notFound: true, badRequest: true },
     })
-    async unlinkEmployee(
-        @Param('id') id: number,
-        @CurrentUser() user: UserContext
-    ) {
+    async unlinkEmployee(@Param('id') id: number, @CurrentUser() user: UserContext) {
         return await this.computerUserService.unlinkEmployee(id, user);
     }
 }

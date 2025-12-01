@@ -1,4 +1,3 @@
-import { QueryDto } from '@app/shared/utils';
 import { ApiProperty, ApiPropertyOptional, OmitType, PartialType } from '@nestjs/swagger';
 import { ActionType } from '@prisma/client';
 import {
@@ -15,6 +14,7 @@ import {
 } from 'class-validator';
 import { CreateCredentialDto } from '../../credential/dto/credential.dto';
 import { Type } from 'class-transformer';
+import { QueryDto } from 'apps/dashboard-api/src/shared/dto';
 
 class EmployeeCredentialDto extends OmitType(CreateCredentialDto, [
     'employeeId',

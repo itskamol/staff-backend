@@ -1,17 +1,22 @@
 import { Body, Controller, Delete, Get, Param, Post, Put, Query } from '@nestjs/common';
 import { ApiBearerAuth, ApiOperation, ApiParam, ApiResponse, ApiTags } from '@nestjs/swagger';
 import { DataScope, Roles, Scope, User, UserContext } from '@app/shared/auth';
-import { CreateCredentialDto, UpdateCredentialDto, CredentialResponseDto, CredentialQueryDto } from '../dto/credential.dto';
+import {
+    CreateCredentialDto,
+    UpdateCredentialDto,
+    CredentialResponseDto,
+    CredentialQueryDto,
+} from '../dto/credential.dto';
 import { ActionType, Role } from '@prisma/client';
 import { CredentialService } from '../services/credential.services';
+import { QueryDto } from 'apps/dashboard-api/src/shared/dto';
 
 @ApiTags('Credentials')
 @ApiBearerAuth()
 @Controller('credentials')
 @Roles(Role.ADMIN, Role.HR, Role.DEPARTMENT_LEAD, Role.GUARD)
 export class CredentialController {
-    constructor(private readonly credentialService: CredentialService) { }
-
+    constructor(private readonly credentialService: CredentialService) {}
 
     @Post()
     @ApiOperation({ summary: 'Create a new credential and assign it to an employee' })
@@ -19,7 +24,7 @@ export class CredentialController {
     async create(
         @Body() dto: CreateCredentialDto,
         @User() user: UserContext,
-        @Scope() scope: DataScope,
+        @Scope() scope: DataScope
     ) {
         return this.credentialService.createCredential(dto, scope, user);
     }
@@ -30,11 +35,10 @@ export class CredentialController {
     async getAll(
         @Query() query: CredentialQueryDto,
         @User() user: UserContext,
-        @Scope() scope: DataScope,
+        @Scope() scope: DataScope
     ) {
         return this.credentialService.getAllCredentials(query, scope, user);
     }
-
 
     @Get('/by-employee/:employeeId')
     @ApiParam({ name: 'employeeId', type: Number })
@@ -43,7 +47,7 @@ export class CredentialController {
     async getByEmployeeId(
         @Param('employeeId') employeeId: number,
         @User() user: UserContext,
-        @Scope() scope: DataScope,
+        @Scope() scope: DataScope
     ) {
         return this.credentialService.getCredentialsByEmployeeId(employeeId, scope, user);
     }
@@ -55,19 +59,13 @@ export class CredentialController {
         return ActionType;
     }
 
-
     @Get(':id')
     @ApiParam({ name: 'id', type: Number })
     @ApiOperation({ summary: 'Get a credential by its ID' })
     @ApiResponse({ status: 200, type: CredentialResponseDto })
-    async getById(
-        @Param('id') id: number,
-        @User() user: UserContext,
-        @Scope() scope: DataScope,
-    ) {
+    async getById(@Param('id') id: number, @User() user: UserContext, @Scope() scope: DataScope) {
         return this.credentialService.getCredentialById(id, scope, user);
     }
-
 
     @Put(':id')
     @ApiParam({ name: 'id', type: Number })
@@ -77,21 +75,16 @@ export class CredentialController {
         @Param('id') id: number,
         @Body() dto: UpdateCredentialDto,
         @User() user: UserContext,
-        @Scope() scope: DataScope,
+        @Scope() scope: DataScope
     ) {
         return this.credentialService.updateCredential(id, dto, scope, user);
     }
-
 
     @Delete(':id')
     @ApiParam({ name: 'id', type: Number })
     @ApiOperation({ summary: 'Delete a credential by ID' })
     @ApiResponse({ status: 200, description: 'Credential successfully deleted' })
-    async delete(
-        @Param('id') id: number,
-        @User() user: UserContext,
-        @Scope() scope: DataScope,
-    ) {
+    async delete(@Param('id') id: number, @User() user: UserContext, @Scope() scope: DataScope) {
         return this.credentialService.deleteCredential(id, scope, user);
     }
 }

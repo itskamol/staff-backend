@@ -1,11 +1,17 @@
 import { Controller, Get, Post, Put, Delete, Body, Param, Query } from '@nestjs/common';
 import { ApiTags, ApiBearerAuth } from '@nestjs/swagger';
 import { Roles, Role, User as CurrentUser, DataScope, Scope } from '@app/shared/auth';
-import { QueryDto } from '@app/shared/utils';
 import { VisitorService } from '../services/visitor.service';
 import { UserContext } from 'apps/dashboard-api/src/shared/interfaces';
-import { CreateVisitorDto, VisitorWithRelationsDto, UpdateVisitorDto, GenerateCodeDto, CreateOnetimeCodeDto } from '../dto/visitor.dto';
+import {
+    CreateVisitorDto,
+    VisitorWithRelationsDto,
+    UpdateVisitorDto,
+    GenerateCodeDto,
+    CreateOnetimeCodeDto,
+} from '../dto/visitor.dto';
 import { ApiCrudOperation } from 'apps/dashboard-api/src/shared/utils';
+import { QueryDto } from 'apps/dashboard-api/src/shared/dto';
 
 @ApiTags('Visitors')
 @Controller('visitors')
@@ -38,7 +44,7 @@ export class VisitorController {
     @Get('today')
     @Roles(Role.ADMIN, Role.HR, Role.DEPARTMENT_LEAD, Role.GUARD)
     @ApiCrudOperation(VisitorWithRelationsDto, 'list', {
-        summary: 'Get today\'s visitors',
+        summary: "Get today's visitors",
     })
     async findTodayVisitors() {
         return await this.visitorService.findTodayVisitors();

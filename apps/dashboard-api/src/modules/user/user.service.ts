@@ -129,7 +129,7 @@ export class UserService {
         return this.findById(id);
     }
 
-    async getAllUsers({ search, isActive, sort, order, page, limit }: QueryDto) {
+    async getAllUsers({ search, isActive, sort, order, page, limit, isDeleted }: QueryDto) {
         const filters: Prisma.UserWhereInput = {};
         if (search) {
             filters.OR = [
@@ -139,6 +139,10 @@ export class UserService {
         }
 
         if (isActive) filters.isActive = isActive;
+
+        if (!isDeleted) {
+            filters.deletedAt = null;
+        }
 
         return this.userRepository.findManyWithPagination(
             filters,
@@ -156,7 +160,7 @@ export class UserService {
             throw new NotFoundException('User not found');
         }
 
-        const { password, ...deletedUser } = await this.userRepository.delete(id);
+        const { password, ...deletedUser } = await this.userRepository.softDelete(id);
 
         this.logger.logUserAction(id, 'USER_DELETED', {
             username: deletedUser.username,

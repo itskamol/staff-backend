@@ -1,11 +1,12 @@
 import { Injectable, NotFoundException, ForbiddenException } from '@nestjs/common';
 import { PrismaService } from '@app/shared/database';
-import { DataScope, Role } from '@app/shared/auth';
-import { QueryBuilderUtil, PaginationDto, EncryptionUtil, QueryDto } from '@app/shared/utils';
+import { QueryBuilderUtil, PaginationDto, EncryptionUtil } from '@app/shared/utils';
 import { CreateVisitorDto, UpdateVisitorDto, GenerateCodeDto } from './dto/visitor.dto';
 import { UserContext } from '../../shared/interfaces';
 import { VisitorRepository } from './visitor.repository';
-import { Prisma } from '@prisma/client';
+import { Prisma, Role } from '@prisma/client';
+import { DataScope } from '@app/shared/auth';
+import { QueryDto } from '../../shared/dto';
 // import * as QRCode from 'qrcode'; // TODO: Install qrcode package
 
 @Injectable()
@@ -30,6 +31,10 @@ export class VisitorService {
                     },
                 },
             };
+        }
+
+        if (!query.isDeleted) {
+            where.deletedAt = null;
         }
 
         const select = {
@@ -151,7 +156,7 @@ export class VisitorService {
             data: {
                 ...createVisitorDto,
                 creator: { connect: { id: +user.sub } },
-                organization: { connect: { id: user.organizationId } }
+                organization: { connect: { id: user.organizationId } },
             },
         });
 
@@ -197,13 +202,15 @@ export class VisitorService {
         }
 
         // Delete onetime codes first
-        await this.prisma.onetimeCode.deleteMany({
+        await this.prisma.onetimeCode.updateMany({
+            data: { deletedAt: new Date(Date.now()) },
             where: { visitorId: id },
         });
 
         // Delete visitor
-        await this.prisma.visitor.delete({
+        await this.prisma.visitor.update({
             where: { id },
+            data: { deletedAt: new Date(Date.now()) },
         });
     }
 
@@ -224,7 +231,7 @@ export class VisitorService {
                 startDate: new Date(startDate),
                 endDate: new Date(endDate),
                 additionalDetails,
-                organizationId: user.organizationId
+                organizationId: user.organizationId,
             },
             select: {
                 id: true,
@@ -375,7 +382,7 @@ export class VisitorService {
                         creator: {
                             select: {
                                 organizationId: true,
-                                departments: true
+                                departments: true,
                             },
                         },
                     },

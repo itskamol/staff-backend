@@ -30,7 +30,7 @@
     "@nestjs/swagger": "^11.2.0",
     "@nestjs/websockets": "^11.1.8",
     "@prisma/client": "^6.16.2",
-    "axios": "^0.22.0",
+    "axios": "^1.13.2",
     "bcrypt": "^6.0.0",
     "body-parser": "^2.2.0",
     "bullmq": "^5.63.0",

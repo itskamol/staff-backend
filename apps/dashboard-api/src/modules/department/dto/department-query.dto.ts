@@ -1,24 +1,9 @@
 import { IsBoolean, IsInt, IsOptional } from 'class-validator';
-import { QueryDto } from '../../../shared/dto';
 import { ApiProperty } from '@nestjs/swagger';
 import { Transform, Type } from 'class-transformer';
+import { QueryDto } from 'apps/dashboard-api/src/shared/dto';
 
 export class DepartmentQueryDto extends QueryDto {
-    @IsOptional()
-    @IsBoolean()
-    @Transform(({ value }) => {
-        if (value === 'true') return true;
-        if (value === 'false') return false;
-        return value;
-    })
-    @ApiProperty({
-        description: 'Filter by active status',
-        type: Boolean,
-        required: false,
-        example: true,
-    })
-    isActive?: boolean;
-
     @IsOptional()
     @Type(() => Number)
     @IsInt()
