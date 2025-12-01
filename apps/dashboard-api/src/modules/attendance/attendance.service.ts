@@ -69,7 +69,7 @@ export class AttendanceService {
 
     async findAll(query: AttendanceQueryDto, scope: DataScope) {
         const where: Prisma.AttendanceWhereInput = {};
-        const { startDate, endDate, employeeId, organizationId } = query;
+        const { startDate, endDate, employeeId, organizationId, order, sort } = query;
 
         if (employeeId !== undefined) where.employeeId = employeeId;
         if (organizationId !== undefined) where.organizationId = organizationId;
@@ -110,7 +110,7 @@ export class AttendanceService {
 
         const data = await this.repo.findManyWithPagination(
             where,
-            { startTime: 'desc' },
+            { [sort]: order },
             {
                 employee: {
                     select: {
