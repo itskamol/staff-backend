@@ -26,10 +26,7 @@ export class HikvisionAccessService {
         try {
             this.coreService.setConfig(config);
 
-            const response = await this.coreService.request(
-                'GET',
-                '/ISAPI/System/deviceInfo'
-            );
+            const response = await this.coreService.request('GET', '/ISAPI/System/deviceInfo');
 
             if (response.status !== 200) {
                 this.logger.warn(`Device info: status ${response.status}`);
@@ -57,7 +54,7 @@ export class HikvisionAccessService {
                 data: deviceInfo,
             };
         } catch (error) {
-            console.log(error)
+            console.log(error);
             this.logger.error(`Device info olishda xatolik: ${error.message}`);
             return {
                 success: false,
@@ -287,39 +284,6 @@ export class HikvisionAccessService {
         }
     }
 
-    async getAccessLogs(startTime?: string, endTime?: string): Promise<any[]> {
-        try {
-            const searchCondition = {
-                AcsEventCond: {
-                    searchID: '1',
-                    searchResultPosition: 0,
-                    maxResults: 200,
-                    major: 0,
-                    minor: 0,
-                    startTime: '2025-11-04T00:00:00+05:00',
-                    endTime: '2025-11-04T11:05:22+05:00',
-                },
-            };
-            const response = await this.coreService.request(
-                'POST',
-                '/ISAPI/AccessControl/AcsEvent?format=json',
-                searchCondition
-            );
-
-            if (response.status === 200 && response.data.AcsEvent) {
-                const events = response.data.AcsEvent.InfoList;
-                console.log(response.data.AcsEvent);
-                return events;
-            }
-
-            return [];
-        } catch (error) {
-            if (error.response) console.log(error.response);
-            this.logger.error('Failed to get access logs from Hikvision:', error.message);
-            return [];
-        }
-    }
-
     async configureEventListeningHost(
         config: HikvisionConfig,
         deviceId: number
@@ -377,7 +341,10 @@ export class HikvisionAccessService {
                 const parser = new XMLParser();
                 const result = parser.parse(response.data);
 
-                this.logger.log('✅ Hikvision event listening host muvaffaqiyatli sozlandi', 'HikvisionService');
+                this.logger.log(
+                    '✅ Hikvision event listening host muvaffaqiyatli sozlandi',
+                    'HikvisionService'
+                );
                 return {
                     success: true,
                     message: `Event host http://${serverHost}:${serverPort}/api/v1/hikvision/event/${deviceId} ga yo‘naltirildi`,

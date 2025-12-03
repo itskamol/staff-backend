@@ -105,7 +105,7 @@ export class DeviceService {
             scope
         );
 
-        if (!device) {
+        if (!device || device.deletedAt !== null) {
             throw new NotFoundException('Device not found');
         }
 
@@ -196,11 +196,6 @@ export class DeviceService {
                         connect: { id: gateId },
                     },
                 }),
-                ...(gate && {
-                    organization: {
-                        connect: { id: gate.organizationId },
-                    },
-                }),
             },
             {
                 gate: {
@@ -277,9 +272,15 @@ export class DeviceService {
             scope
         );
 
-        if (!device) {
+        if (!device || device.deletedAt !== null) {
             throw new NotFoundException('Device not found');
         }
+
+        await this.deviceRepository.update(id, {
+            gate: {
+                disconnect: { id: device?.gateId },
+            },
+        });
 
         const config: HikvisionConfig = {
             host: device.ipAddress,
@@ -327,7 +328,7 @@ export class DeviceService {
         const port = this.configService.port;
         const ip = this.configService.hostIp;
 
-        await this.deviceQueue.add(JOB.DEVICE.ASSIGN_EMPLOYEES_TO_GATES, {
+        const job = await this.deviceQueue.add(JOB.DEVICE.ASSIGN_EMPLOYEES_TO_GATES, {
             dto,
             scope,
             port,

@@ -44,16 +44,7 @@ export class DeviceProcessor extends WorkerHost {
             });
             const employeeIds = gate?.employees?.map(e => e.id);
 
-            let effectiveScope = scope || {};
-            if (!effectiveScope.organizationId) {
-                const gate = await this.prisma.gate.findFirst({ where: { id: gateId } });
-                if (gate) effectiveScope.organizationId = gate.organizationId;
-            }
-
-            await this.device.assignEmployeesToGates(
-                { gateIds: [gateId], employeeIds },
-                effectiveScope
-            );
+            await this.device.assignEmployeesToGates({ gateIds: [gateId], employeeIds }, scope);
             this.logger.log(`Device ${newDevice?.id} background tasks completed`, 'DeviceJob');
         } catch (err) {
             this.logger.error(
@@ -64,9 +55,13 @@ export class DeviceProcessor extends WorkerHost {
         }
     }
 
+    async removeGateEmployees(job: Job) {
+        const { gateId, employeeIds } = job.data;
+        return this.removeGateEmployeesToDevices(gateId, employeeIds);
+    }
+
     async removeDeviceUsers(job: Job) {
         const { device, config } = job.data;
-        console.log('device type: ', device?.type);
         try {
             const gate = await this.prisma.gate.findFirstOrThrow({
                 where: { id: device.gateId },
@@ -117,10 +112,7 @@ export class DeviceProcessor extends WorkerHost {
         }
     }
 
-    async removeGateEmployeesByData(data: { gateId: number; employeeIds: number[] }) {
-        const { gateId, employeeIds } = data;
-
-      
+    async removeGateEmployeesToDevices(gateId: number, employeeIds: number[]) {
         const gate = await this.prisma.gate.findFirstOrThrow({
             where: { id: gateId },
             select: {
@@ -131,7 +123,7 @@ export class DeviceProcessor extends WorkerHost {
                         ipAddress: true,
                         login: true,
                         password: true,
-                        type: true,         
+                        type: true,
                         capabilities: true,
                     },
                 },
@@ -148,7 +140,7 @@ export class DeviceProcessor extends WorkerHost {
         });
 
         const carMap = new Map<number, string[]>();
-        carCredentials.forEach((c) => {
+        carCredentials.forEach(c => {
             const list = carMap.get(c.employeeId) || [];
             if (c.code) list.push(c.code);
             carMap.set(c.employeeId, list);
@@ -168,22 +160,27 @@ export class DeviceProcessor extends WorkerHost {
 
             for (const empId of employeeIds) {
                 try {
-                   
                     if (isAnpr) {
                         const plates = carMap.get(empId);
                         if (plates && plates.length > 0) {
                             for (const plate of plates) {
-                                await this.hikvisionAnprService.deleteLicensePlate(plate, config);
-                                this.logger.log(`[DeviceJob] Removed plate ${plate} (User ${empId}) from ANPR ${device.id}`);
+                                const data = await this.hikvisionAnprService.deleteLicensePlate(
+                                    plate,
+                                    config
+                                );
+                                if (data) {
+                                    this.logger.log(
+                                        `[DeviceJob] Removed plate ${plate} (User ${empId}) from ANPR ${device.id}`
+                                    );
+                                }
                             }
                         }
-                    } 
-                    
-                    else {
+                    } else {
                         await this.hikvisionService.deleteUser(String(empId), config);
-                        this.logger.log(`[DeviceJob] Removed user ${empId} from Access Device ${device.id}`);
+                        this.logger.log(
+                            `[DeviceJob] Removed user ${empId} from Access Device ${device.id}`
+                        );
                     }
-
                 } catch (err) {
                     this.logger.warn(
                         `[DeviceJob] Failed to clean up user ${empId} on device ${device.id}: ${err.message}`
@@ -193,7 +190,9 @@ export class DeviceProcessor extends WorkerHost {
         }
 
         this.logger.log(
-            `[DeviceJob] Gate ${gateId} - cleanup completed for employees: ${employeeIds.join(', ')}`
+            `[DeviceJob] Gate ${gateId} - cleanup completed for employees: ${employeeIds.join(
+                ', '
+            )}`
         );
     }
 
@@ -202,8 +201,6 @@ export class DeviceProcessor extends WorkerHost {
         const { gateIds, employeeIds } = dto;
 
         if (!gateIds?.length || !employeeIds?.length) return;
-
-        const organizationId = dto.organizationId ? dto.organizationId : scope.organizationId;
 
         const gates = await this.prisma.gate.findMany({
             where: { id: { in: gateIds } },
@@ -214,11 +211,10 @@ export class DeviceProcessor extends WorkerHost {
 
         const employees = await this.prisma.employee.findMany({
             where: { id: { in: employeeIds } },
-            select: { id: true, name: true, photo: true },
+            select: { id: true, name: true, photo: true, organizationId: true },
         });
 
         if (!employees.length) return;
-
         const employeeMap = new Map(employees.map(e => [e.id, e]));
 
         const credentials = await this.prisma.credential.findMany({
@@ -226,37 +222,29 @@ export class DeviceProcessor extends WorkerHost {
                 employeeId: { in: employeeIds },
                 isActive: true,
                 type: { in: ['PHOTO', 'CAR'] },
+                deletedAt: null,
             },
-            select: { employeeId: true, type: true, code: true },
+            select: { id: true, employeeId: true, type: true, code: true },
         });
 
-        const credMap = new Map<number, { hasPhoto: boolean; cars: string[] }>();
+        const employeeCredsMap = new Map<number, typeof credentials>();
 
-        employeeIds.forEach(id => credMap.set(id, { hasPhoto: false, cars: [] }));
-
-        credentials.forEach(c => {
-            const entry = credMap.get(c.employeeId);
-            if (entry) {
-                if (c.type === 'PHOTO') entry.hasPhoto = true;
-                if (c.type === 'CAR' && c.code) entry.cars.push(c.code);
-            }
+        credentials.forEach(cred => {
+            const list = employeeCredsMap.get(cred.employeeId) || [];
+            list.push(cred);
+            employeeCredsMap.set(cred.employeeId, list);
         });
 
         for (const gate of gates) {
             const syncEmployees = await this.updateGateEmployees(gate.id, employeeIds);
-
             if (syncEmployees.disconnected.length > 0) {
-                await this.removeGateEmployeesByData({
-                    gateId: gate.id,
-                    employeeIds: syncEmployees.disconnected,
-                });
+                await this.removeGateEmployeesToDevices(gate.id, syncEmployees.disconnected);
             }
 
             if (!gate.devices?.length) continue;
 
             for (const device of gate.devices) {
                 const caps = (device.capabilities as any) || {};
-
                 const config: HikvisionConfig = {
                     host: device.ipAddress,
                     port: 80,
@@ -267,58 +255,58 @@ export class DeviceProcessor extends WorkerHost {
 
                 for (const empId of employeeIds) {
                     const employeeData = employeeMap.get(empId);
-                    const empCreds = credMap.get(empId);
+                    const empCredentials = employeeCredsMap.get(empId) || [];
 
                     if (!employeeData) continue;
 
-                    let sync = await this.prisma.employeeSync.findFirst({
-                        where: {
-                            employeeId: empId,
-                            deviceId: device.id,
-                            gateId: gate.id,
-                        },
-                    });
+                    for (const cred of empCredentials) {
+                        const isCarDevice = device.type === 'CAR' || caps.isSupportAnpr;
+                        const isFaceDevice = device.type === 'ACCESS_CONTROL' || caps.isSupportFace;
 
-                    if (sync?.status === 'DONE' && device.type !== 'CAR') continue;
+                        if (isCarDevice && cred.type !== 'CAR') continue;
+                        if (isFaceDevice && cred.type !== 'PHOTO') continue;
 
-                    if (!sync) {
-                        sync = await this.prisma.employeeSync.create({
-                            data: {
+                        let sync = await this.prisma.employeeSync.findFirst({
+                            where: {
                                 employeeId: empId,
                                 deviceId: device.id,
                                 gateId: gate.id,
-                                organizationId,
-                                status: 'WAITING',
+                                credentialId: cred.id,
                             },
                         });
-                    }
 
-                    try {
-                        if (device.type === 'CAR' || caps.isSupportAnpr) {
-                            if (!empCreds?.cars || empCreds.cars.length === 0) {
-                                throw new Error('Xodimga biriktirilgan mashina raqami topilmadi');
-                            }
+                        if (sync?.status === 'DONE') continue;
 
-                            await this.syncCarToDevice(empCreds.cars, config);
-                        } else if (device.type === 'ACCESS_CONTROL' || caps.isSupportFace) {
-                            if (!empCreds?.hasPhoto) {
-                                throw new Error('Xodimda ruxsat uchun rasm (Credential) yo‘q');
-                            }
-                            if (!employeeData.photo) {
-                                throw new Error('Xodimning rasmi (fayl) topilmadi');
-                            }
-
-                            const photoUrl = `http://${ip}:${port}/api/storage/${employeeData.photo}`;
-
-                            await this.syncFaceToDevice(empId.toString(), photoUrl, config);
-                        } else {
-                            continue;
+                        if (!sync) {
+                            sync = await this.prisma.employeeSync.create({
+                                data: {
+                                    employeeId: empId,
+                                    deviceId: device.id,
+                                    gateId: gate.id,
+                                    credentialId: cred.id,
+                                    organizationId: employeeData.organizationId,
+                                    status: 'WAITING',
+                                },
+                            });
                         }
 
-                        await this.updateSync(sync.id, 'DONE', 'Success!');
-                    } catch (err: any) {
-                        const msg = err?.message || 'Undefined error';
-                        await this.updateSync(sync.id, 'FAILED', msg);
+                        try {
+                            if (isCarDevice && cred.type === 'CAR') {
+                                if (!cred.code) throw new Error('Mashina raqami (code) yo‘q');
+                                await this.syncCarToDevice([cred.code], config);
+                            } else if (isFaceDevice && cred.type === 'PHOTO') {
+                                if (!employeeData.photo)
+                                    throw new Error('Xodimning rasmi (fayl) yo‘q');
+
+                                const photoUrl = `http://${ip}:${port}/api/storage/${employeeData.photo}`;
+                                await this.syncFaceToDevice(empId.toString(), photoUrl, config);
+                            }
+
+                            await this.updateSync(sync.id, 'DONE', 'Success!');
+                        } catch (err: any) {
+                            const msg = err?.message || 'Undefined error';
+                            await this.updateSync(sync.id, 'FAILED', msg);
+                        }
                     }
                 }
             }
@@ -347,7 +335,7 @@ export class DeviceProcessor extends WorkerHost {
     private async updateGateEmployees(gateId: number, newEmployeeIds: number[]) {
         const gate = await this.prisma.gate.findUnique({
             where: { id: gateId },
-            select: { employees: { select: { id: true } } },
+            select: { employees: { select: { id: true, organizationId: true } } },
         });
 
         const oldEmployeeIds = gate.employees.map(e => e.id);
@@ -385,6 +373,9 @@ export class DeviceProcessor extends WorkerHost {
 
             case JOB.DEVICE.ASSIGN_EMPLOYEES_TO_GATES:
                 return this.assignEmployeesToGatesJob(job);
+
+            case JOB.DEVICE.REMOVE_GATE_EMPLOYEE_DATA:
+                return this.removeGateEmployees(job);
         }
     }
 }

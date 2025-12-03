@@ -37,6 +37,8 @@ export class ActionService {
                 throw new Error(`EmployeePlan is not found for Employee`);
             }
 
+            const organizationId = employee.organizationId;
+
             const plan = await this.prisma.employeePlan.findFirst({
                 where: { id: employee.employeePlanId },
             });
@@ -59,7 +61,7 @@ export class ActionService {
                     eventData.eventState === 'active' || acEvent.eventState === 'active'
                         ? ActionMode.ONLINE
                         : ActionMode.OFFLINE,
-                organizationId: gate.organizationId,
+                organizationId,
             };
 
             const todayStart = new Date(actionTime);
@@ -71,7 +73,7 @@ export class ActionService {
             if (device.entryType === 'BOTH') {
                 const lastInfo = await this.getLastActionInfo(
                     employeeId,
-                    gate.organizationId,
+                    organizationId,
                     todayStart,
                     todayEnd
                 );
@@ -89,7 +91,7 @@ export class ActionService {
                 const existingAttendance = await this.prisma.attendance.findFirst({
                     where: {
                         employeeId,
-                        organizationId: gate.organizationId,
+                        organizationId,
                         startTime: {
                             gte: todayStart,
                             lte: todayEnd,
@@ -121,7 +123,7 @@ export class ActionService {
                 const existingAttendance = await this.prisma.attendance.findFirst({
                     where: {
                         employeeId,
-                        organizationId: gate.organizationId,
+                        organizationId,
                         createdAt: {
                             gte: todayStart,
                             lte: todayEnd,
@@ -137,7 +139,7 @@ export class ActionService {
                     startTime: actionTime,
                     arrivalStatus: status,
                     employeeId,
-                    organizationId: gate.organizationId,
+                    organizationId,
                 };
 
                 if (existingAttendance) {
@@ -149,7 +151,7 @@ export class ActionService {
                     await this.attendanceService.create(data);
                 }
 
-                await this.updatedGoneStatus(employeeId, gate.organizationId, todayStart, todayEnd);
+                await this.updatedGoneStatus(employeeId, organizationId, todayStart, todayEnd);
             }
 
             return this.prisma.action.create({ data: dto });

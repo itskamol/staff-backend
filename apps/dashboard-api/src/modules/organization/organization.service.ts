@@ -35,7 +35,7 @@ export class OrganizationService {
                 { [sort]: order },
                 {
                     _count: {
-                        select: { departments: true, employees: true },
+                        select: { departments: true, employees: true, gates: true },
                     },
                 },
                 { page, limit },
@@ -54,7 +54,11 @@ export class OrganizationService {
     }
 
     async getOrganizationById(id: number, scope?: DataScope) {
-        return this.organizationRepository.findById(id, { departments: true }, scope);
+        return this.organizationRepository.findById(
+            id,
+            { departments: true, employees: true, gates: true },
+            scope
+        );
     }
 
     async getOrganizationDefaultPlan(id: number) {
@@ -72,7 +76,8 @@ export class OrganizationService {
     }
 
     async createOrganization(data: CreateOrganizationDto): Promise<Organization> {
-        const input: Prisma.OrganizationCreateInput = { ...data };
+        const { gates, ...dto } = data;
+        const input: Prisma.OrganizationCreateInput = { ...dto };
 
         const exsists = await this.organizationRepository.findUnique({ shortName: data.shortName });
 
@@ -113,7 +118,15 @@ export class OrganizationService {
             },
         };
 
-        const organization = await this.organizationRepository.create(input);
+        const organization = await this.organizationRepository.create(
+            {
+                ...input,
+                gates: {
+                    connect: gates?.map((id: number) => ({ id })),
+                },
+            },
+            { gates: true }
+        );
 
         return organization;
     }

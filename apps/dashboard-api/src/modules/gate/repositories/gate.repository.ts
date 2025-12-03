@@ -3,6 +3,7 @@ import { PrismaService } from '@app/shared/database';
 import { Injectable } from '@nestjs/common';
 import { Gate, Prisma } from '@prisma/client';
 import { BaseRepository } from 'apps/dashboard-api/src/shared/repositories/base.repository';
+import { AssignGateWithOrgDto } from '../dto/gate.dto';
 
 @Injectable()
 export class GateRepository extends BaseRepository<

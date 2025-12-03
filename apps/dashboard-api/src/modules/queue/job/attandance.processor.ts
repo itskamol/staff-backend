@@ -40,17 +40,18 @@ export class AttendanceProcessor extends WorkerHost {
                             employeeId: emp.id,
                             organizationId: emp.organizationId,
                             arrivalStatus: ActionStatus.PENDING,
-                        } as any); 
-                        
+                        } as any);
+
                         processedCount++;
                     } catch (err) {
-                        this.logger.warn(`[AttendanceJob] Failed for Employee ${emp.id}: ${err.message}`);
+                        this.logger.warn(
+                            `[AttendanceJob] Failed for Employee ${emp.id}: ${err.message}`
+                        );
                     }
                 }
             }
 
             this.logger.log(`Finished. Processed ${processedCount} records.`, 'AttendanceJob');
-            
         } catch (err) {
             this.logger.error(`Fatal Error:`, err, 'AttendanceJob');
             throw err;
@@ -63,7 +64,10 @@ export class AttendanceProcessor extends WorkerHost {
             const currentHours = now.getHours().toString().padStart(2, '0');
             const currentMinutes = now.getMinutes().toString().padStart(2, '0');
             const currentTimeString = `${currentHours}:${currentMinutes}`;
-            this.logger.log(`Marked employees starting... (Current Time: ${currentTimeString})`,'MarkedAttandanceJob');
+            this.logger.log(
+                `Marked employees starting... (Current Time: ${currentTimeString})`,
+                'MarkedAttandanceJob'
+            );
             const startOfToday = new Date();
             startOfToday.setHours(0, 0, 0, 0);
             const endOfToday = new Date();
@@ -78,15 +82,14 @@ export class AttendanceProcessor extends WorkerHost {
                 employee: {
                     plan: {
                         isActive: true,
-                        startTime: { lte: currentTimeString }
-                    }
-                }
+                        startTime: { lte: currentTimeString },
+                    },
+                },
             };
 
-            const lateRecords = await this.attendanceService.findManyForJob(
-                whereCondition,
-                { id: true } 
-            );
+            const lateRecords = await this.attendanceService.findManyForJob(whereCondition, {
+                id: true,
+            });
 
             if (!lateRecords || lateRecords.length === 0) {
                 return;
@@ -99,8 +102,10 @@ export class AttendanceProcessor extends WorkerHost {
                 { arrivalStatus: ActionStatus.ABSENT }
             );
 
-            this.logger.log(`Marked ${updateResult.count} employees as ABSENT (Current Time: ${currentTimeString})`,'MarkedAttendanceJob');
-
+            this.logger.log(
+                `Marked ${updateResult.count} employees as ABSENT (Current Time: ${currentTimeString})`,
+                'MarkedAttendanceJob'
+            );
         } catch (err) {
             this.logger.error(`Error marking absent employees:`, err, 'MarkedAttendanceJob');
         }
@@ -110,10 +115,10 @@ export class AttendanceProcessor extends WorkerHost {
         switch (job.name) {
             case JOB.ATTENDANCE.CREATE_DEFAULT:
                 return this.createDefaultAttendance(job);
-            
+
             case JOB.ATTENDANCE.MARK_ABSENT:
                 return this.markAbsentEmployees(job);
-                
+
             default:
                 break;
         }

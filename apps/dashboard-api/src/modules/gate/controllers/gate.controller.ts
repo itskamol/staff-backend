@@ -3,13 +3,13 @@ import { ApiTags, ApiBearerAuth, ApiExtraModels } from '@nestjs/swagger';
 import { Roles, Role, User as CurrentUser, DataScope, Scope } from '@app/shared/auth';
 import { GateService } from '../services/gate.service';
 import { UserContext } from 'apps/dashboard-api/src/shared/interfaces';
-import { CreateGateDto, GateDto, UpdateGateDto } from '../dto/gate.dto';
+import { AssignGateWithOrgDto, CreateGateDto, GateDto, UpdateGateDto } from '../dto/gate.dto';
 import { ApiCrudOperation } from 'apps/dashboard-api/src/shared/utils';
 import { QueryDto } from 'apps/dashboard-api/src/shared/dto';
 
 @ApiTags('Gates')
 @Controller('gates')
-@ApiExtraModels(GateDto)
+@ApiExtraModels(GateDto, Boolean)
 @ApiBearerAuth()
 @Roles(Role.ADMIN, Role.GUARD, Role.HR)
 export class GateController {
@@ -39,7 +39,7 @@ export class GateController {
     }
 
     @Get(':id/statistics')
-    @ApiCrudOperation(null, 'get', {
+    @ApiCrudOperation(GateDto, 'get', {
         summary: 'Get gate statistics',
         errorResponses: { notFound: true },
     })
@@ -48,7 +48,7 @@ export class GateController {
     }
 
     @Get(':id/devices')
-    @ApiCrudOperation(null, 'get', {
+    @ApiCrudOperation(GateDto, 'get', {
         summary: 'Get gate with active devices',
         errorResponses: { notFound: true },
     })
@@ -80,7 +80,7 @@ export class GateController {
     }
 
     @Delete(':id')
-    @ApiCrudOperation(null, 'delete', {
+    @ApiCrudOperation(GateDto, 'delete', {
         summary: 'Delete gate by ID',
         errorResponses: { notFound: true, forbidden: true },
     })
@@ -90,5 +90,14 @@ export class GateController {
         @CurrentUser() user: UserContext
     ) {
         return this.gateService.remove(id, scope, user);
+    }
+
+    @Post('assign')
+    @ApiCrudOperation(GateDto, 'create', {
+        body: AssignGateWithOrgDto,
+        summary: 'Assign gates with organizations many to many',
+    })
+    async assignGateWithOrg(@Body() data: AssignGateWithOrgDto) {
+        return this.gateService.assignGateWithOrg(data);
     }
 }

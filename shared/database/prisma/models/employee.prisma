@@ -48,8 +48,9 @@ model Credential {
   updatedAt DateTime  @updatedAt @map("updated_at")
   deletedAt DateTime? @map("deleted_at")
 
-  organization Organization? @relation(fields: [organizationId], references: [id], onDelete: Cascade)
-  employee     Employee      @relation(fields: [employeeId], references: [id], onDelete: Cascade)
+  organization Organization?  @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  employee     Employee       @relation(fields: [employeeId], references: [id], onDelete: Cascade)
+  employeeSync EmployeeSync[]
 
   @@unique([employeeId, code, type], name: "emp_credential_unique")
   @@index([employeeId])
@@ -64,12 +65,14 @@ model EmployeeSync {
   deviceId       Int        @map("device_id")
   employeeId     Int        @map("employee_id")
   organizationId Int?       @map("organization_id")
+  credentialId   Int?       @map("credential_id")
   status         StatusEnum @default(WAITING)
   message        String?
   createdAt      DateTime   @default(now())
   updatedAt      DateTime   @updatedAt
   deletedAt      DateTime?  @map("deleted_at")
 
+  credential   Credential?   @relation(fields: [credentialId], references: [id], onDelete: Cascade)
   organization Organization? @relation(fields: [organizationId], references: [id], onDelete: Cascade)
   gate         Gate          @relation(fields: [gateId], references: [id], onDelete: Cascade)
   device       Device        @relation(fields: [deviceId], references: [id], onDelete: Cascade)

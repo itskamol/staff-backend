@@ -75,7 +75,6 @@ export class VisitorController {
         @Body() createVisitorDto: CreateVisitorDto,
         @CurrentUser() user: UserContext
     ): Promise<ApiResponseDto> {
-        console.log('Current User:', user);
         const visitor = await this.visitorService.create(createVisitorDto, user);
         return ApiResponseDto.success(visitor, 'Visitor created successfully');
     }

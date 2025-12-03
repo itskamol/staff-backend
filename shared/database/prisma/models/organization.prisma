@@ -24,7 +24,6 @@ model Organization {
   actions         Action[]
   gates           Gate[]
   attendances     Attendance[]
-  devices         Device[]
   computerUsers   ComputerUser[]
   computers       Computer[]
   changeHistories ChangeHistory[]

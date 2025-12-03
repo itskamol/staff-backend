@@ -31,6 +31,9 @@ export class OrganizationRepository extends BaseRepository<
             where.id = scope.organizationId;
         }
 
-        return this.prisma.organization.findMany({ where });
+        return this.prisma.organization.findMany({
+            where,
+            include: { departments: true, employees: true, gates: true },
+        });
     }
 }
