@@ -12,6 +12,7 @@ model Action {
   actionType     ActionType
   actionMode     ActionMode
   status         ActionStatus?
+  deletedAt      DateTime?     @map("deleted_at")
 
   organization Organization? @relation(fields: [organizationId], references: [id], onDelete: Cascade)
   device       Device?       @relation(fields: [deviceId], references: [id], onDelete: SetNull)
@@ -94,6 +95,8 @@ model Attendance {
   employeeId     Int           @map("employee_id")
   organizationId Int?          @map("organization_id")
   createdAt      DateTime      @default(now()) @map("created_at")
+  updatedAt      DateTime?     @updatedAt @map("updated_at")
+  deletedAt      DateTime?     @map("deleted_at")
 
   employee     Employee      @relation(fields: [employeeId], references: [id], onDelete: Cascade)
   organization Organization? @relation(fields: [organizationId], references: [id], onDelete: Cascade)

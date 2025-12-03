@@ -22,6 +22,10 @@ export class GateRepository extends BaseRepository<
 
     protected readonly modelName = Prisma.ModelName.Gate;
 
+    protected cascadeRelations = [];
+
+    protected disconnectRelations = ['organizations', 'employees'];
+
     protected getDelegate() {
         return this.prisma.gate;
     }

@@ -16,6 +16,9 @@ import { HikvisionConfig } from '../../hikvision/dto/create-hikvision-user.dto';
 import { PrismaService } from '@app/shared/database';
 import { OrganizationService } from '../../organization/organization.service';
 import { HikvisionAccessService } from '../../hikvision/services/hikvision.access.service';
+import { Queue } from 'bullmq';
+import { InjectQueue } from '@nestjs/bullmq';
+import { JOB } from 'apps/dashboard-api/src/shared/constants';
 
 @Injectable()
 export class EmployeeService {
@@ -25,22 +28,12 @@ export class EmployeeService {
         private readonly policyService: PolicyService,
         @Inject(FILE_STORAGE_SERVICE)
         private readonly fileStorage: IFileStorageService,
-        private readonly hikiService: HikvisionAccessService,
-        private readonly prisma: PrismaService,
-        private readonly organizationService: OrganizationService
+        private readonly organizationService: OrganizationService,
+        @InjectQueue(JOB.DEVICE.NAME) private readonly deviceQueue: Queue
     ) {}
 
     async getEmployees(query: EmployeeQueryDto, scope: DataScope, user: UserContext) {
-        const {
-            page = 1,
-            limit = 10,
-            search,
-            sort,
-            order,
-            credentialType,
-            isDeleted,
-            ...filters
-        } = query;
+        const { page = 1, limit = 10, search, sort, order, credentialType, ...filters } = query;
 
         let whereClause: Prisma.EmployeeWhereInput = {};
         if (search) {
@@ -51,20 +44,12 @@ export class EmployeeService {
             ];
         }
 
-        // if (scope.organizationId) {
-        //     whereClause.organizationId = scope?.organizationId;
-        // }
-
         if (credentialType) {
             whereClause.credentials = {
                 some: {
                     type: credentialType,
                 },
             };
-        }
-
-        if (!isDeleted) {
-            whereClause.deletedAt = null;
         }
 
         Object.keys(filters).forEach(key => {
@@ -300,43 +285,11 @@ export class EmployeeService {
             throw new NotFoundException('Employee not found or access denied');
         }
 
-        const syncRecords = await this.prisma.employeeSync.findMany({
-            where: {
-                employeeId: id,
-                status: 'DONE',
-            },
-            include: {
-                device: true,
-            },
+        await this.deviceQueue.add(JOB.DEVICE.REMOVE_EMPLOYEES, {
+            employeeIds: [id],
         });
 
-        if (syncRecords.length > 0) {
-            const deletePromises = syncRecords.map((record: any) => {
-                const config: HikvisionConfig = {
-                    host: record.device.ipAddress,
-                    port: 80,
-                    username: record.device.login,
-                    password: record.device.password,
-                    protocol: record.device.protocol ?? 'http',
-                };
-
-                return this.hikiService
-                    .deleteUser(employee.id.toString(), config)
-                    .then(() => ({
-                        deviceId: record.deviceId,
-                        success: true,
-                    }))
-                    .catch(err => ({
-                        deviceId: record.deviceId,
-                        success: false,
-                        error: err.message,
-                    }));
-            });
-
-            await Promise.allSettled(deletePromises);
-        }
-
-        return await this.employeeRepository.softDelete(id);
+        return await this.employeeRepository.softDelete(id, scope);
     }
 
     async getEmployeeEntryLogs(id: number, query: QueryDto, scope: DataScope, user: UserContext) {

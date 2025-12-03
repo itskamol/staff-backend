@@ -17,6 +17,12 @@ export class GetEmployeeSyncDto extends QueryDto {
     @IsNumber()
     employeeId?: number;
 
+    @ApiPropertyOptional()
+    @IsOptional()
+    @Type(() => Number)
+    @IsNumber()
+    credentialId?: number;
+
     @ApiPropertyOptional({ enum: StatusEnum, description: 'Status filter' })
     @IsOptional()
     @IsEnum(StatusEnum)

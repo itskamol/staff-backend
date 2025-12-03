@@ -3,10 +3,16 @@ import { DepartmentRepository } from './department.repository';
 import { Department, Prisma } from '@prisma/client';
 import { DataScope } from '@app/shared/auth';
 import { CreateDepartmentDto, DepartmentQueryDto, UpdateDepartmentDto } from './dto';
+import { InjectQueue } from '@nestjs/bullmq';
+import { JOB } from '../../shared/constants';
+import { Queue } from 'bullmq';
 
 @Injectable()
 export class DepartmentService {
-    constructor(private readonly departmentRepository: DepartmentRepository) {}
+    constructor(
+        private readonly departmentRepository: DepartmentRepository,
+        @InjectQueue(JOB.DEVICE.NAME) private readonly deviceQueue: Queue
+    ) {}
 
     async getDepartments(query: DepartmentQueryDto, scope?: DataScope) {
         const {
@@ -18,7 +24,6 @@ export class DepartmentService {
             isActive,
             organizationId,
             parentId,
-            isDeleted,
         } = query;
 
         const filters: Prisma.DepartmentWhereInput = {};
@@ -30,10 +35,6 @@ export class DepartmentService {
         }
         if (parentId) {
             filters.parentId = parentId;
-        }
-
-        if (!isDeleted) {
-            filters.deletedAt = null;
         }
 
         if (typeof isActive === 'boolean') {
@@ -63,8 +64,14 @@ export class DepartmentService {
             {},
             {},
             {
-                childrens: true,
-                _count: { select: { employees: true, childrens: true } },
+                employees: { where: { deletedAt: null } },
+                childrens: { where: { deletedAt: null } },
+                _count: {
+                    select: {
+                        employees: { where: { deletedAt: null } },
+                        childrens: { where: { deletedAt: null } },
+                    },
+                },
             },
             undefined,
             undefined,
@@ -77,9 +84,9 @@ export class DepartmentService {
             id,
             {
                 organization: true,
-                parent: true,
-                childrens: true,
-                employees: true,
+                parent: { where: { deletedAt: null } },
+                childrens: { where: { deletedAt: null } },
+                employees: { where: { deletedAt: null } },
             },
             scope
         );
@@ -113,6 +120,13 @@ export class DepartmentService {
     }
 
     async deleteDepartment(id: number, scope?: DataScope) {
+        const data = await this.getDepartmentById(id, scope);
+
+        const employeeIds = data.employees.map(e => e.id);
+
+        await this.deviceQueue.add(JOB.DEVICE.REMOVE_EMPLOYEES, {
+            employeeIds,
+        });
         return this.departmentRepository.softDelete(id, scope);
     }
 }

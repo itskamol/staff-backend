@@ -115,11 +115,7 @@ export abstract class BaseRepository<
     /**
      * Find a record by unique identifier or throw NotFoundException
      */
-    async findByIdOrThrow(
-        id: number,
-        include?: TInclude,
-        scope?: DataScope
-    ): Promise<TEntity> {
+    async findByIdOrThrow(id: number, include?: TInclude, scope?: DataScope): Promise<TEntity> {
         if (!id) {
             throw new BadRequestException('ID is required');
         }

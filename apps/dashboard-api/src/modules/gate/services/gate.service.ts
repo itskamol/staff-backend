@@ -19,15 +19,11 @@ export class GateService {
     ) {}
 
     async findAll(query: QueryDto, scope: DataScope, user: UserContext) {
-        const { page, limit, sort = 'createdAt', order = 'desc', search, isDeleted } = query;
+        const { page, limit, sort = 'createdAt', order = 'desc', search } = query;
         const where: Prisma.GateWhereInput = {};
 
         if (search) {
             where.name = { contains: search, mode: 'insensitive' };
-        }
-
-        if (!isDeleted) {
-            where.deletedAt = null;
         }
 
         return this.gateRepository.findManyWithPagination(
@@ -41,6 +37,7 @@ export class GateService {
                         isActive: true,
                         entryType: true,
                     },
+                    where: { deletedAt: null },
                 },
                 organizations: {
                     select: {
@@ -49,8 +46,9 @@ export class GateService {
                 },
                 _count: {
                     select: {
-                        devices: true,
-                        employees: true,
+                        devices: { where: { deletedAt: null } },
+                        employees: { where: { deletedAt: null } },
+                        organizations: { where: { deletedAt: null } },
                     },
                 },
             },
@@ -66,7 +64,7 @@ export class GateService {
                 devices: {
                     include: {
                         _count: {
-                            select: { actions: true },
+                            select: { actions: { where: { deletedAt: null } } },
                         },
                     },
                 },
@@ -74,11 +72,15 @@ export class GateService {
                     select: {
                         id: true,
                     },
+                    where: {
+                        deletedAt: null,
+                    },
                 },
                 _count: {
                     select: {
-                        devices: true,
-                        employees: true,
+                        devices: { where: { deletedAt: null } },
+                        employees: { where: { deletedAt: null } },
+                        organizations: { where: { deletedAt: null } },
                     },
                 },
             },
@@ -105,8 +107,7 @@ export class GateService {
             {
                 _count: {
                     select: {
-                        devices: true,
-                        employees: true,
+                        organizations: { where: { deletedAt: null } },
                     },
                 },
             },
@@ -138,8 +139,8 @@ export class GateService {
             {
                 _count: {
                     select: {
-                        devices: true,
-                        employees: true,
+                        devices: { where: { deletedAt: null } },
+                        employees: { where: { deletedAt: null } },
                     },
                 },
             },
@@ -196,7 +197,9 @@ export class GateService {
     private async updateGateOrganization(gateId: number, orgsIds: number[]) {
         const gate = await this.prisma.gate.findUnique({
             where: { id: gateId },
-            select: { organizations: { select: { id: true, employees: true } } },
+            select: {
+                organizations: { select: { id: true, employees: { where: { deletedAt: null } } } },
+            },
         });
 
         const oldOrgIds = gate.organizations.map(e => e.id);

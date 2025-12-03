@@ -14,7 +14,7 @@ export class GroupService {
     ) {}
 
     async findAll(query: GroupQueryDto, scope: DataScope, user: UserContext) {
-        const { page, limit, sort = 'createdAt', order = 'desc', search, type, isDeleted } = query;
+        const { page, limit, sort = 'createdAt', order = 'desc', search, type } = query;
         const where: Prisma.ResourceGroupWhereInput = {};
 
         if (search) {
@@ -23,10 +23,6 @@ export class GroupService {
 
         if (type) {
             where.type = type;
-        }
-
-        if (!isDeleted) {
-            where.deletedAt = null;
         }
 
         return this.groupRepository.findManyWithPagination(

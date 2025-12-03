@@ -19,9 +19,9 @@ export class EmployeeSyncService {
             status,
             gateId,
             employeeId,
+            credentialId,
             sort = 'createdAt',
             order = 'desc',
-            isDeleted,
         } = query;
 
         const skip = (page - 1) * limit;
@@ -31,15 +31,14 @@ export class EmployeeSyncService {
             ...(gateId && { gateId }),
             ...(organizationId && { organizationId }),
             ...(employeeId && { employeeId }),
+            ...(credentialId && { credentialId }),
         };
+
+        where.deletedAt = null;
 
         const orderBy: Prisma.EmployeeSyncOrderByWithRelationInput = {
             [sort]: order,
         };
-
-        if (!isDeleted) {
-            where.deletedAt = null;
-        }
 
         const [data, total] = await Promise.all([
             this.prisma.employeeSync.findMany({
@@ -51,6 +50,7 @@ export class EmployeeSyncService {
                     gate: { select: { id: true, name: true } }, // gate relation
                     employee: { select: { id: true, name: true, photo: true } },
                     organization: { select: { id: true, fullName: true } },
+                    credential: { select: { id: true, type: true } },
                 },
             }),
             this.prisma.employeeSync.count({ where }),

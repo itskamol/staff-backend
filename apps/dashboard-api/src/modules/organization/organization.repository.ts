@@ -20,6 +20,27 @@ export class OrganizationRepository extends BaseRepository<
 
     protected readonly modelName = Prisma.ModelName.Organization;
 
+    protected cascadeRelations = [
+        'policy',
+        'user',
+        'department',
+        'employee',
+        'resourceGroup',
+        'resource',
+        'credential',
+        'employeeSync',
+        'employeePlan',
+        'computerUser',
+        'computer',
+        'visitor',
+        'onetimeCode',
+        'reasons',
+        'action',
+        'attendance',
+    ];
+
+    protected disconnectRelations = ['gates'];
+
     protected getDelegate() {
         return this.prisma.organization;
     }

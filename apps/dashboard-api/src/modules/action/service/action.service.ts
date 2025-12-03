@@ -156,7 +156,7 @@ export class ActionService {
 
             return this.prisma.action.create({ data: dto });
         } catch (error) {
-            console.log(error);
+            this.logger.error(error);
             throw new Error(error.message);
         }
     }

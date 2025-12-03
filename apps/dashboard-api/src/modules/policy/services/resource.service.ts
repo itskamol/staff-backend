@@ -16,7 +16,7 @@ export class ResourceService {
     ) {}
 
     async findAll(query: ResourceQueryDto, scope: DataScope, user: UserContext) {
-        const { page, limit, sort = 'createdAt', order = 'desc', search, type, isDeleted } = query;
+        const { page, limit, sort = 'createdAt', order = 'desc', search, type } = query;
         const where: Prisma.ResourceWhereInput = {};
 
         if (search) {
@@ -25,10 +25,6 @@ export class ResourceService {
 
         if (type) {
             where.type = type;
-        }
-
-        if (!isDeleted) {
-            where.deletedAt = null;
         }
 
         return this.resourceRepository.findManyWithPagination(

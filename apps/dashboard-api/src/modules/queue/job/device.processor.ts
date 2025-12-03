@@ -9,7 +9,7 @@ import { StatusEnum } from '@prisma/client';
 import { HikvisionAccessService } from '../../hikvision/services/hikvision.access.service';
 import { HikvisionAnprService } from '../../hikvision/services/hikvision.anpr.service';
 
-@Processor(JOB.DEVICE.NAME, { concurrency: 1 })
+@Processor(JOB.DEVICE.NAME, { concurrency: 5 })
 export class DeviceProcessor extends WorkerHost {
     constructor(
         private readonly prisma: PrismaService,
@@ -71,10 +71,7 @@ export class DeviceProcessor extends WorkerHost {
                             id: true,
                             credentials: {
                                 where: { isActive: true },
-                                select: {
-                                    code: true,
-                                    type: true,
-                                },
+                                select: { code: true, type: true },
                             },
                         },
                     },
@@ -83,24 +80,7 @@ export class DeviceProcessor extends WorkerHost {
 
             for (const e of gate.employees) {
                 try {
-                    if (device.type === 'CAR') {
-                        const carCreds = e.credentials.filter(c => c.type === 'CAR');
-
-                        if (carCreds.length > 0) {
-                            for (const cred of carCreds) {
-                                if (cred.code) {
-                                    await this.hikvisionAnprService.deleteLicensePlate(
-                                        cred.code,
-                                        config
-                                    );
-                                }
-                            }
-                        }
-                    }
-
-                    if (device?.type === 'ACCESS_CONTROL' || device?.type === 'FACE') {
-                        await this.hikvisionService.deleteUser(String(e.id), config);
-                    }
+                    await this.processRemovalFromDevice(device, config, e.id, e.credentials);
                 } catch (err) {
                     this.logger.warn(`Employee ${e.id} not deleted: ${err.message}`, 'DeviceJob');
                 }
@@ -109,6 +89,99 @@ export class DeviceProcessor extends WorkerHost {
             this.logger.log(`Device ${device.id} users deleted`, 'DeviceJob');
         } catch (err) {
             this.logger.error(`removeDeviceUsers failed:`, err.message, 'DeviceJob');
+        }
+    }
+
+    async removeEmployeesFromDevices(job: Job) {
+        const { employeeIds } = job.data;
+
+        if (!employeeIds || employeeIds.length === 0) return;
+
+        this.logger.log(`Deleting ${employeeIds.length} employees from devices...`, 'DeviceJob');
+
+        try {
+            const syncRecords = await this.prisma.employeeSync.findMany({
+                where: {
+                    employeeId: { in: employeeIds },
+                    status: 'DONE',
+                },
+                include: {
+                    device: true,
+                    employee: {
+                        select: {
+                            id: true,
+                            credentials: {
+                                where: { isActive: true, type: { in: ['CAR'] } },
+                                select: { type: true, code: true },
+                            },
+                        },
+                    },
+                },
+            });
+
+            if (syncRecords.length === 0) return;
+
+            for (const record of syncRecords) {
+                const { device, employee } = record;
+                if (!device || !employee) continue;
+
+                const config: HikvisionConfig = {
+                    host: device.ipAddress,
+                    port: 80,
+                    username: device.login,
+                    password: device.password,
+                    protocol: 'http',
+                };
+
+                try {
+                    await this.processRemovalFromDevice(
+                        device,
+                        config,
+                        employee.id,
+                        employee.credentials
+                    );
+                } catch (err) {
+                    this.logger.warn(
+                        `Failed to delete employee ${employee.id} from device ${device.id}: ${err.message}`,
+                        'DeviceJob'
+                    );
+                }
+            }
+
+            this.logger.log(`Cleanup job finished`, 'DeviceJob');
+        } catch (err) {
+            this.logger.error(`removeEmployeesFromDevices Job Failed:`, err.message, 'DeviceJob');
+            throw err;
+        }
+    }
+
+    private async processRemovalFromDevice(
+        device: any,
+        config: HikvisionConfig,
+        employeeId: number,
+        credentials: { type: string; code: string }[]
+    ) {
+        const caps = (device.capabilities as any) || {};
+        const isAnpr = device.type === 'CAR' || caps.isSupportAnpr;
+        const isAccess =
+            device.type === 'ACCESS_CONTROL' || device.type === 'FACE' || caps.isSupportFace;
+
+        if (isAnpr && credentials?.length) {
+            const carCreds = credentials.filter(c => c.type === 'CAR');
+            for (const cred of carCreds) {
+                if (cred.code) {
+                    await this.hikvisionAnprService.deleteLicensePlate(cred.code, config);
+                    this.logger.log(
+                        `Deleted plate ${cred.code} from Device ${device.id}`,
+                        'DeviceJob'
+                    );
+                }
+            }
+        }
+
+        if (isAccess) {
+            await this.hikvisionService.deleteUser(String(employeeId), config);
+            this.logger.log(`Deleted user ${employeeId} from Device ${device.id}`, 'DeviceJob');
         }
     }
 
@@ -263,8 +336,33 @@ export class DeviceProcessor extends WorkerHost {
                         const isCarDevice = device.type === 'CAR' || caps.isSupportAnpr;
                         const isFaceDevice = device.type === 'ACCESS_CONTROL' || caps.isSupportFace;
 
-                        if (isCarDevice && cred.type !== 'CAR') continue;
-                        if (isFaceDevice && cred.type !== 'PHOTO') continue;
+                        if (isCarDevice && cred.type !== 'CAR') {
+                            await this.prisma.employeeSync.create({
+                                data: {
+                                    employeeId: empId,
+                                    deviceId: device.id,
+                                    gateId: gate.id,
+                                    credentialId: cred.id,
+                                    organizationId: employeeData.organizationId,
+                                    message: 'Employee CAR credetial not found!',
+                                    status: 'FAILED',
+                                },
+                            });
+                            continue;
+                        }
+                        if (isFaceDevice && cred.type !== 'PHOTO') {
+                            await this.prisma.employeeSync.create({
+                                data: {
+                                    employeeId: empId,
+                                    deviceId: device.id,
+                                    gateId: gate.id,
+                                    credentialId: cred.id,
+                                    organizationId: employeeData.organizationId,
+                                    message: 'Employee PHOTO credetial not found!',
+                                    status: 'FAILED',
+                                },
+                            });
+                        }
 
                         let sync = await this.prisma.employeeSync.findFirst({
                             where: {
@@ -289,7 +387,6 @@ export class DeviceProcessor extends WorkerHost {
                                 },
                             });
                         }
-
                         try {
                             if (isCarDevice && cred.type === 'CAR') {
                                 if (!cred.code) throw new Error('Mashina raqami (code) yo‘q');
@@ -376,6 +473,9 @@ export class DeviceProcessor extends WorkerHost {
 
             case JOB.DEVICE.REMOVE_GATE_EMPLOYEE_DATA:
                 return this.removeGateEmployees(job);
+
+            case JOB.DEVICE.REMOVE_EMPLOYEES:
+                return this.removeEmployeesFromDevices(job);
         }
     }
 }

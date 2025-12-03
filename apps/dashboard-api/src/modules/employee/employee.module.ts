@@ -13,9 +13,15 @@ import { EncryptionService } from '../../shared/services/encryption.service';
 import { OrganizationModule } from '../organization/organization.module';
 import { HikvisionAccessService } from '../hikvision/services/hikvision.access.service';
 import { HikvisionCoreService } from '../hikvision/core/hikvision.core.service';
+import { BullModule } from '@nestjs/bullmq';
+import { JOB } from '../../shared/constants';
 
 @Module({
-    imports: [SharedCommonModule,OrganizationModule],
+    imports: [
+        SharedCommonModule,
+        OrganizationModule,
+        BullModule.registerQueue({ name: JOB.DEVICE.NAME }),
+    ],
     controllers: [EmployeeController],
     providers: [
         EmployeeService,
@@ -24,11 +30,6 @@ import { HikvisionCoreService } from '../hikvision/core/hikvision.core.service';
         DepartmentRepository,
         PolicyService,
         PolicyRepository,
-        HikvisionAccessService,
-        HikvisionCoreService,
-        ConfigService,
-        XmlJsonService,
-        EncryptionService,
     ],
     exports: [EmployeeService, EmployeeRepository],
 })

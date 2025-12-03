@@ -4,13 +4,19 @@ import { Organization, Prisma } from '@prisma/client';
 import { DataScope } from '@app/shared/auth';
 import { QueryDto } from '../../shared/dto/query.dto';
 import { CreateOrganizationDto, UpdateOrganizationDto } from './dto';
+import { InjectQueue } from '@nestjs/bullmq';
+import { JOB } from '../../shared/constants';
+import { Queue } from 'bullmq';
 
 @Injectable()
 export class OrganizationService {
-    constructor(private readonly organizationRepository: OrganizationRepository) {}
+    constructor(
+        private readonly organizationRepository: OrganizationRepository,
+        @InjectQueue(JOB.DEVICE.NAME) private readonly deviceQueue: Queue
+    ) {}
 
     async getOrganizations(
-        { search, isActive, sort, order, page, limit, isDeleted }: QueryDto,
+        { search, isActive, sort, order, page, limit }: QueryDto,
         scope?: DataScope
     ) {
         const filters: Prisma.OrganizationWhereInput = {};
@@ -25,17 +31,17 @@ export class OrganizationService {
             filters.isActive = isActive;
         }
 
-        if (!isDeleted) {
-            filters.deletedAt = null;
-        }
-
         const [data, total] = await Promise.all([
             this.organizationRepository.findMany(
                 filters,
                 { [sort]: order },
                 {
                     _count: {
-                        select: { departments: true, employees: true, gates: true },
+                        select: {
+                            departments: { where: { deletedAt: null } },
+                            employees: { where: { deletedAt: null } },
+                            gates: { where: { deletedAt: null } },
+                        },
                     },
                 },
                 { page, limit },
@@ -56,7 +62,11 @@ export class OrganizationService {
     async getOrganizationById(id: number, scope?: DataScope) {
         return this.organizationRepository.findById(
             id,
-            { departments: true, employees: true, gates: true },
+            {
+                departments: { where: { deletedAt: null } },
+                employees: { where: { deletedAt: null } },
+                gates: { where: { deletedAt: null } },
+            },
             scope
         );
     }
@@ -136,6 +146,13 @@ export class OrganizationService {
     }
 
     async deleteOrganization(id: number, scope?: DataScope) {
+        const data = await this.getOrganizationById(id, scope);
+
+        const employeeIds = data.employees.map(e => e.id);
+
+        await this.deviceQueue.add(JOB.DEVICE.REMOVE_EMPLOYEES, {
+            employeeIds,
+        });
         return this.organizationRepository.softDelete(id, scope);
     }
 }

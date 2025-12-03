@@ -31,16 +31,7 @@ export class DeviceService {
     ) {}
 
     async findAll(query: QueryDeviceDto, scope: DataScope, user: UserContext) {
-        const {
-            page,
-            limit,
-            sort = 'createdAt',
-            order = 'desc',
-            search,
-            type,
-            gateId,
-            isDeleted,
-        } = query;
+        const { page, limit, sort = 'createdAt', order = 'desc', search, type, gateId } = query;
         const where: Prisma.DeviceWhereInput = {};
 
         if (search) {
@@ -56,10 +47,6 @@ export class DeviceService {
 
         if (gateId) {
             where.gateId = gateId;
-        }
-
-        if (!isDeleted) {
-            where.deletedAt = null;
         }
 
         return this.deviceRepository.findManyWithPagination(

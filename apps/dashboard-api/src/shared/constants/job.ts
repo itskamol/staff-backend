@@ -5,10 +5,12 @@ export const JOB = {
         DELETE: 'device:delete',
         ASSIGN_EMPLOYEES_TO_GATES: 'device:assignEmployees',
         REMOVE_GATE_EMPLOYEE_DATA: 'device:removeEmployeeData',
+        REMOVE_EMPLOYEES: 'remove-employees-from-devices',
     },
     ATTENDANCE: {
         NAME: 'attandance',
         CREATE_DEFAULT: 'attandance:create_default',
         MARK_ABSENT: 'attandance:mark_absent',
+        MARK_GONE: 'mark-gone',
     },
 };

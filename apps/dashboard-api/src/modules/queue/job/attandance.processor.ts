@@ -6,7 +6,7 @@ import { AttendanceService } from 'apps/dashboard-api/src/modules/attendance/att
 import { EmployeePlanService } from '../../employeePlan/employee-plan.service';
 import { ActionStatus, Prisma } from '@prisma/client';
 
-@Processor(JOB.ATTENDANCE.NAME, { concurrency: 1 })
+@Processor(JOB.ATTENDANCE.NAME, { concurrency: 5 })
 export class AttendanceProcessor extends WorkerHost {
     constructor(
         private readonly attendanceService: AttendanceService,
@@ -107,7 +107,84 @@ export class AttendanceProcessor extends WorkerHost {
                 'MarkedAttendanceJob'
             );
         } catch (err) {
+            console.log(err);
             this.logger.error(`Error marking absent employees:`, err, 'MarkedAttendanceJob');
+        }
+    }
+
+    async markGoneEmployees(job: Job) {
+        this.logger.log(`Auto-closing attendance records...`, 'AttendanceJob');
+
+        try {
+            const startOfPeriod = new Date();
+            startOfPeriod.setDate(startOfPeriod.getDate() - 1);
+            startOfPeriod.setHours(0, 0, 0, 0);
+
+            const endOfPeriod = new Date();
+            endOfPeriod.setDate(endOfPeriod.getDate() - 1);
+            endOfPeriod.setHours(23, 59, 59, 999);
+
+            const whereCondition: Prisma.AttendanceWhereInput = {
+                arrivalStatus: { in: [ActionStatus.ON_TIME, ActionStatus.LATE] },
+                goneStatus: null,
+                createdAt: {
+                    gte: startOfPeriod,
+                    lte: endOfPeriod,
+                },
+                employee: {
+                    plan: { isActive: true, deletedAt: null },
+                },
+            };
+
+            const openRecords = await this.attendanceService.findManyForJob(whereCondition, {
+                id: true,
+                createdAt: true,
+                employee: {
+                    select: {
+                        plan: { select: { endTime: true } },
+                    },
+                },
+            });
+
+            if (!openRecords || openRecords.length === 0) {
+                this.logger.log('No open attendance records found to close.', 'AttendanceJob');
+                return;
+            }
+
+            this.logger.log(`Found ${openRecords.length} records to auto-close.`, 'AttendanceJob');
+
+            let updatedCount = 0;
+
+            for (const record of openRecords) {
+                try {
+                    const planEndTime = (record as any).employee?.plan?.endTime;
+
+                    if (!planEndTime) continue;
+
+                    const recordDate = new Date(record.createdAt);
+                    const [hours, minutes] = planEndTime.split(':').map(Number);
+
+                    const autoEndTime = new Date(recordDate);
+                    autoEndTime.setHours(hours, minutes, 0, 0);
+
+                    await this.attendanceService.update(record.id, {
+                        endTime: autoEndTime,
+                        goneStatus: ActionStatus.ON_TIME,
+                    });
+
+                    updatedCount++;
+                } catch (err) {
+                    this.logger.warn(
+                        `Failed to auto-close attendance ${record.id}: ${err.message}`,
+                        'AttendanceJob'
+                    );
+                }
+            }
+
+            this.logger.log(`Successfully auto-closed ${updatedCount} records.`, 'AttendanceJob');
+        } catch (err) {
+            this.logger.error(`Error in markGoneEmployees:`, err, 'AttendanceJob');
+            throw err;
         }
     }
 
@@ -118,6 +195,9 @@ export class AttendanceProcessor extends WorkerHost {
 
             case JOB.ATTENDANCE.MARK_ABSENT:
                 return this.markAbsentEmployees(job);
+
+            case JOB.ATTENDANCE.MARK_GONE:
+                return this.markGoneEmployees(job);
 
             default:
                 break;

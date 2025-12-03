@@ -40,10 +40,6 @@ export class EmployeePlanService {
             where.organizationId = query.organizationId;
         }
 
-        if (!query.isDeleted) {
-            where.deletedAt = null;
-        }
-
         const orderBy = { [query.sort ?? 'id']: query.order ?? 'desc' };
 
         const data = await this.repo.findManyPlan({
@@ -65,7 +61,16 @@ export class EmployeePlanService {
     }
 
     async findById(id: number, scope: DataScope) {
-        const plan = await this.repo.findByIdOrThrow(id, { employees: true }, scope);
+        const plan = await this.repo.findByIdOrThrow(
+            id,
+            {
+                employees: {
+                    select: { id: true, name: true, photo: true },
+                    where: { deletedAt: null },
+                },
+            },
+            scope
+        );
         return { ...plan, weekdays: plan.weekdays?.split(',') ?? [] };
     }
 
@@ -116,7 +121,7 @@ export class EmployeePlanService {
 
     async findActivePlansForJob() {
         const plans = await this.repo.findMany(
-            { isActive: true },
+            { isActive: true, deletedAt: null },
             { id: 'asc' },
             { employees: { select: { id: true, organizationId: true } } }
         );

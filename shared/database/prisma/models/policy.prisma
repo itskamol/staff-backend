@@ -24,10 +24,11 @@ model Policy {
 }
 
 model PolicyRule {
-  id              Int      @id @default(autoincrement())
-  policyId        Int      @map("policy_id")
-  resourceGroupId Int      @map("resource_group_id")
+  id              Int       @id @default(autoincrement())
+  policyId        Int       @map("policy_id")
+  resourceGroupId Int       @map("resource_group_id")
   type            RuleType // USEFUL, UNUSEFUL
+  deletedAt       DateTime? @map("deleted_at")
 
   policy        Policy        @relation(fields: [policyId], references: [id], onDelete: Cascade)
   resourceGroup ResourceGroup @relation(fields: [resourceGroupId], references: [id], onDelete: Cascade)
@@ -58,9 +59,10 @@ model ResourceGroup {
 }
 
 model ResourcesOnGroups {
-  resourceId Int      @map("resource_id")
-  groupId    Int      @map("group_id")
-  assignedAt DateTime @default(now()) @map("assigned_at")
+  resourceId Int       @map("resource_id")
+  groupId    Int       @map("group_id")
+  assignedAt DateTime  @default(now()) @map("assigned_at")
+  deletedAt  DateTime? @map("deleted_at")
 
   resource Resource      @relation(fields: [resourceId], references: [id], onDelete: Cascade)
   group    ResourceGroup @relation(fields: [groupId], references: [id], onDelete: Cascade)

@@ -75,6 +75,7 @@ model UserSession {
   startTime      DateTime    @map("start_time")
   endTime        DateTime?   @map("end_time")
   sessionType    SessionType @map("session_type")
+  deletedAt      DateTime?   @map("deleted_at")
 
   organization Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
   computerUser ComputerUser @relation(fields: [computerUserId], references: [id], onDelete: Cascade)

@@ -9,15 +9,7 @@ export class ReasonService {
     constructor(private readonly reasonRepository: ReasonRepository) {}
 
     async getAllReasons(query: ReasonQueryDto, scope: DataScope, user: UserContext) {
-        const {
-            page = 1,
-            limit = 10,
-            sort = 'id',
-            order = 'desc',
-            search,
-            organizationId,
-            isDeleted,
-        } = query;
+        const { page = 1, limit = 10, sort = 'id', order = 'desc', search, organizationId } = query;
 
         const where: Prisma.ReasonsWhereInput = {
             ...(organizationId && { organizationId }),
@@ -25,10 +17,6 @@ export class ReasonService {
 
         if (search) {
             where.OR = [{ value: { contains: search, mode: 'insensitive' } }];
-        }
-
-        if (!isDeleted) {
-            where.deletedAt = null;
         }
 
         const items = await this.reasonRepository.findMany(

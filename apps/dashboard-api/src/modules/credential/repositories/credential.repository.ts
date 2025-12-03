@@ -23,6 +23,8 @@ export class CredentialRepository extends BaseRepository<
 > {
     protected readonly modelName = 'Credential';
 
+    protected cascadeRelations = ['employeeSync'];
+
     constructor(protected readonly prisma: PrismaService) {
         super(prisma);
     }

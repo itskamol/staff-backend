@@ -33,10 +33,6 @@ export class VisitorService {
             };
         }
 
-        if (!query.isDeleted) {
-            where.deletedAt = null;
-        }
-
         const select = {
             id: true,
             firstName: true,

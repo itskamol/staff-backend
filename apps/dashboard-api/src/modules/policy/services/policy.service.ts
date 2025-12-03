@@ -25,7 +25,6 @@ export class PolicyService {
             isActiveWindowEnabled,
             isActive,
             isVisitedSitesEnabled,
-            isDeleted,
         } = query;
         const where: Prisma.PolicyWhereInput = {};
 
@@ -47,10 +46,6 @@ export class PolicyService {
 
         if (isActive !== undefined) {
             where.isActive = isActive;
-        }
-
-        if (!isDeleted) {
-            where.deletedAt = null;
         }
 
         return this.policyRepository.findManyWithPagination(

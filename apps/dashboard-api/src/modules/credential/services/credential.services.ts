@@ -14,13 +14,15 @@ import {
 import { HikvisionAnprService } from '../../hikvision/services/hikvision.anpr.service';
 import { HikvisionConfig } from '../../hikvision/dto/create-hikvision-user.dto';
 import { EmployeeWithRelations } from '../../employee/repositories/employee.repository';
+import { HikvisionAccessService } from '../../hikvision/services/hikvision.access.service';
 
 @Injectable()
 export class CredentialService {
     constructor(
         private readonly credentialRepository: CredentialRepository,
         private readonly employeeService: EmployeeService,
-        private readonly hikvisionAnprService: HikvisionAnprService
+        private readonly hikvisionAnprService: HikvisionAnprService,
+        private readonly hikvisionAccessService: HikvisionAccessService
     ) {}
 
     async getAllCredentials(query: CredentialQueryDto, scope: DataScope, user: UserContext) {
@@ -34,7 +36,6 @@ export class CredentialService {
             employeeId,
             departmentId,
             organizationId,
-            isDeleted,
         } = query;
 
         const where: Prisma.CredentialWhereInput = {
@@ -49,10 +50,6 @@ export class CredentialService {
                 { code: { contains: search, mode: 'insensitive' } },
                 { employee: { name: { contains: search, mode: 'insensitive' } } },
             ];
-        }
-
-        if (!isDeleted) {
-            where.deletedAt = null;
         }
 
         const items = await this.credentialRepository.findMany(
@@ -91,7 +88,8 @@ export class CredentialService {
             scope
         );
 
-        if (!credential) throw new NotFoundException(`Credential with ID ${id} not found.`);
+        if (!credential || credential.deletedAt !== null)
+            throw new NotFoundException(`Credential with ID ${id} not found.`);
 
         const employee = await this.employeeService.getEmployeeById(
             credential.employeeId,
@@ -171,6 +169,7 @@ export class CredentialService {
             throw new BadRequestException('Employee photo is missing.');
         }
 
+        // Qurilmalarda yangilash
         await this.deleteEditCreateFromDevice(employee, dto, id, 'Edit');
 
         const updateData: Prisma.CredentialUpdateInput = {
@@ -188,19 +187,33 @@ export class CredentialService {
         );
     }
 
+    async deleteCredential(id: number, scope: DataScope, user: UserContext): Promise<Credential> {
+        const existingCredential = await this.getCredentialById(id, scope, user);
+        const employee = await this.employeeService.getEmployeeById(
+            existingCredential.employeeId,
+            scope,
+            user
+        );
+
+        await this.deleteEditCreateFromDevice(employee, undefined, id, 'Delete');
+
+        return this.credentialRepository.deleteCredential(id, scope);
+    }
+
     private async deleteEditCreateFromDevice(
         employee: EmployeeWithRelations,
         dto?: UpdateCredentialDto,
         id?: number,
         type?: 'Delete' | 'Edit' | 'Create'
     ) {
-        const oldCredential = employee.credentials.find(data => data.id === id);
+        const oldCredential = id ? employee.credentials.find(data => data.id === id) : null;
 
-        if (dto?.type === 'CAR' || oldCredential.type === 'CAR') {
+        const credType = dto?.type || oldCredential?.type;
+
+        if (credType === 'CAR') {
             let devices = [];
-
             for (let gate of employee.gates) {
-                const found = gate.devices.filter(device => device.type === 'CAR');
+                const found = gate.devices.filter(d => d.type === 'CAR');
                 devices.push(...found);
             }
 
@@ -213,39 +226,73 @@ export class CredentialService {
                     username: device.login,
                 };
 
-                switch (type) {
-                    case 'Edit':
-                        await this.hikvisionAnprService.editLicensePlate(
-                            oldCredential.code,
-                            dto.code,
-                            '1',
-                            config
-                        );
-                        break;
+                try {
+                    switch (type) {
+                        case 'Edit':
+                            if (oldCredential && dto?.code) {
+                                await this.hikvisionAnprService.editLicensePlate(
+                                    oldCredential.code,
+                                    dto.code,
+                                    '1',
+                                    config
+                                );
+                            }
+                            break;
 
-                    case 'Delete':
-                        await this.hikvisionAnprService.deleteLicensePlate(
-                            oldCredential.code,
-                            config
-                        );
-                        break;
-
-                    default:
-                        console.warn('Unknown type:', type);
-                        break;
+                        case 'Delete':
+                            if (oldCredential?.code) {
+                                await this.hikvisionAnprService.deleteLicensePlate(
+                                    oldCredential.code,
+                                    config
+                                );
+                            }
+                            break;
+                    }
+                } catch (err) {
+                    console.error(`ANPR Device sync error (${type}):`, err.message);
                 }
             }
         }
-    }
 
-    async deleteCredential(id: number, scope: DataScope, user: UserContext): Promise<Credential> {
-        const existingCredential = await this.getCredentialById(id, scope, user);
-        const employee = await this.employeeService.getEmployeeById(
-            existingCredential.employeeId,
-            scope,
-            user
-        );
-        this.deleteEditCreateFromDevice(employee, undefined, id, 'Delete');
-        return this.credentialRepository.deleteCredential(id, scope);
+        if (credType === 'PHOTO') {
+            let devices = [];
+            for (let gate of employee.gates) {
+                const found = gate.devices.filter(
+                    d => d.type === 'FACE' || d.type === 'ACCESS_CONTROL'
+                );
+                devices.push(...found);
+            }
+
+            for (let device of devices) {
+                let config: HikvisionConfig = {
+                    host: device.ipAddress,
+                    protocol: 'http',
+                    port: 80,
+                    password: device.password,
+                    username: device.login,
+                };
+
+                try {
+                    switch (type) {
+                        case 'Delete':
+                            await this.hikvisionAccessService.deleteUser(
+                                String(employee.id),
+                                config
+                            );
+                            break;
+
+                        case 'Edit':
+                            // Agar PHOTO credential o'zgarsa (masalan code o'zgarmaydi, lekin isActive o'zgarishi mumkin)
+                            // Yoki rasm yangilansa.
+                            // Hikvisionda rasmni yangilash uchun qayta yuklash kerak.
+                            // Hozircha Edit logikasi murakkab bo'lgani uchun, ko'pincha Delete -> Create qilinadi.
+                            // Yoki faqat deleteUser qilib qo'yish mumkin (agar active false bo'lsa).
+                            break;
+                    }
+                } catch (err) {
+                    console.error(`Access Device sync error (${type}):`, err.message);
+                }
+            }
+        }
     }
 }

@@ -20,6 +20,8 @@ export class DeviceRepository extends BaseRepository<
 
     protected readonly modelName = Prisma.ModelName.Device;
 
+    protected cascadeRelations = ['action', 'employeeSync'];
+
     protected getDelegate() {
         return this.prisma.device;
     }
@@ -29,9 +31,8 @@ export class DeviceRepository extends BaseRepository<
     }
 
     async findOneByGateAndIp(gateId: number, ipAddress: string): Promise<Device | null> {
-    return this.prisma.device.findFirst({where: {gateId: gateId,ipAddress: ipAddress,},
-    });
-  }
+        return this.prisma.device.findFirst({ where: { gateId: gateId, ipAddress: ipAddress } });
+    }
 
     async findByType(type: DeviceType, include?: Prisma.DeviceInclude) {
         return this.findMany({ type }, undefined, include);

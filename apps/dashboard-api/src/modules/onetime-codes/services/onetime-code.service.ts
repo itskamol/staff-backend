@@ -28,7 +28,6 @@ export class OnetimeCodeService {
             visitorId,
             codeType,
             isActive,
-            isDeleted,
         } = query;
         const where: Prisma.OnetimeCodeWhereInput = {};
 
@@ -50,10 +49,6 @@ export class OnetimeCodeService {
 
         if (typeof isActive === 'boolean') {
             where.isActive = isActive;
-        }
-
-        if (!isDeleted) {
-            where.deletedAt = null;
         }
 
         return this.onetimeCodeRepository.findManyWithPagination(

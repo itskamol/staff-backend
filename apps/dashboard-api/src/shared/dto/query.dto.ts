@@ -24,17 +24,6 @@ export class QueryDto extends PaginationDto {
     @Transform(({ value }) => (value === 'true' ? true : value === 'false' ? false : value))
     isActive?: boolean;
 
-    @ApiProperty({
-        description: 'Filter by delete status',
-        type: Boolean,
-        required: false,
-        default: false,
-    })
-    @IsOptional()
-    @IsBoolean()
-    @Transform(({ value }) => (value === 'true' ? true : value === 'false' ? false : value))
-    isDeleted?: boolean;
-
     @IsString()
     @IsOptional()
     @ApiProperty({

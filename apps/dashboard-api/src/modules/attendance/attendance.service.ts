@@ -30,9 +30,14 @@ export class AttendanceService {
         );
     }
 
-    @Cron(CronExpression.EVERY_MINUTE)
+    @Cron(CronExpression.EVERY_5_MINUTES)
     async handleAbsentCheck() {
         await this.attendanceQueue.add(JOB.ATTENDANCE.MARK_ABSENT, {}, { removeOnComplete: true });
+    }
+
+    @Cron(CronExpression.EVERY_DAY_AT_1AM)
+    async handleAutoClose() {
+        await this.attendanceQueue.add(JOB.ATTENDANCE.MARK_GONE, {});
     }
 
     async create(dto: CreateAttendanceDto) {
@@ -167,13 +172,20 @@ export class AttendanceService {
         return record;
     }
 
-    async update(id: number, dto: UpdateAttendanceDto, scope: DataScope) {
+    async update(id: number, dto: UpdateAttendanceDto, scope?: DataScope) {
         await this.findById(id, scope);
         return this.repo.update(id, dto, {}, scope);
     }
 
     async findManyForJob(where: Prisma.AttendanceWhereInput, select?: Prisma.AttendanceSelect) {
-        return this.repo.findMany(where, undefined, undefined, undefined, select, undefined);
+        return this.repo.findMany(
+            where,
+            undefined,
+            { employee: { include: { plan: { select: { endTime: true } } } } },
+            undefined,
+            select,
+            undefined
+        );
     }
 
     async updateManyForJob(

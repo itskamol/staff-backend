@@ -69,6 +69,18 @@ export class UpdateAttendanceDto {
     @IsInt()
     @Type(() => Number)
     reasonTypeId?: number;
+
+    @IsOptional()
+    @IsDateString()
+    endTime?: Date;
+
+    @IsOptional()
+    @IsDateString()
+    startTime?: Date;
+
+    @IsOptional()
+    @IsEnum(ActionStatus)
+    goneStatus?: ActionStatus;
 }
 
 export class AttendanceQueryDto extends QueryDto {

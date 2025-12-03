@@ -22,15 +22,7 @@ export class VisitorService {
     ) {}
 
     async findAll(query: QueryDto & { creatorId?: string }, scope: DataScope, user: UserContext) {
-        const {
-            page,
-            limit,
-            sort = 'createdAt',
-            order = 'desc',
-            search,
-            creatorId,
-            isDeleted,
-        } = query;
+        const { page, limit, sort = 'createdAt', order = 'desc', search, creatorId } = query;
         const where: Prisma.VisitorWhereInput = {};
 
         if (search) {
@@ -45,10 +37,6 @@ export class VisitorService {
 
         if (creatorId) {
             where.creatorId = parseInt(creatorId);
-        }
-
-        if (!isDeleted) {
-            where.deletedAt = null;
         }
 
         return this.visitorRepository.findManyWithPagination(

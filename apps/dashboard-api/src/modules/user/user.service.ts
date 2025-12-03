@@ -129,7 +129,7 @@ export class UserService {
         return this.findById(id);
     }
 
-    async getAllUsers({ search, isActive, sort, order, page, limit, isDeleted }: QueryDto) {
+    async getAllUsers({ search, isActive, sort, order, page, limit }: QueryDto) {
         const filters: Prisma.UserWhereInput = {};
         if (search) {
             filters.OR = [
@@ -140,14 +140,10 @@ export class UserService {
 
         if (isActive) filters.isActive = isActive;
 
-        if (!isDeleted) {
-            filters.deletedAt = null;
-        }
-
         return this.userRepository.findManyWithPagination(
             filters,
             { [sort]: order },
-            { departments: { select: { id: true } } },
+            { departments: { select: { id: true }, where: { deletedAt: null } } },
             { page, limit }
         );
     }

@@ -27,13 +27,8 @@ export class ComputerUserService {
             search,
             linked,
             computerId,
-            isDeleted,
         } = query;
         const where: Prisma.ComputerUserWhereInput = {};
-
-        if (isDeleted) {
-            where.deletedAt = null;
-        }
 
         if (search) {
             where.OR = [
@@ -90,7 +85,7 @@ export class ComputerUserService {
             computers: true,
         });
 
-        if (!computerUser) {
+        if (!computerUser || computerUser.deletedAt !== null) {
             throw new NotFoundException('Computer user not found');
         }
 

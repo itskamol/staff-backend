@@ -9,7 +9,7 @@ import { PaginationDto, PaginationResponseDto } from '../dto';
  */
 @Injectable()
 export abstract class BaseRepository<
-    TEntity extends { id: number; createdAt?: Date; isActive?: boolean },
+    TEntity extends { id: number; createdAt?: Date; isActive?: boolean; deletedAt?: Date | null },
     TCreateInput extends Record<string, unknown>,
     TUpdateInput extends Record<string, unknown>,
     TWhereInput extends Record<string, unknown> = Record<string, unknown>,
@@ -20,6 +20,10 @@ export abstract class BaseRepository<
 > {
     protected readonly logger = new Logger(this.constructor.name);
     protected abstract readonly modelName: string;
+
+    protected cascadeRelations: string[] = [];
+
+    protected disconnectRelations: string[] = [];
 
     constructor(protected readonly prisma: PrismaClient) {}
 
@@ -45,6 +49,10 @@ export abstract class BaseRepository<
 
         if (scope?.departments?.length) {
             scopedWhere.departments = scope?.departments;
+        }
+
+        if (scopedWhere.deletedAt === undefined) {
+            scopedWhere.deletedAt = null;
         }
 
         return scopedWhere;
@@ -98,6 +106,10 @@ export abstract class BaseRepository<
         const where: Record<string, unknown> = { id };
         const scopedWhere = this.applyDataScope(where, scope);
 
+        if (!scopedWhere['deletedAt']) {
+            scopedWhere['deletedAt'] = null;
+        }
+
         const result = await this.getDelegate().findFirst({
             where: scopedWhere,
             select,
@@ -140,6 +152,10 @@ export abstract class BaseRepository<
 
         const scopedWhere = this.applyDataScope(where, scope);
 
+        if (!scopedWhere['deletedAt']) {
+            scopedWhere['deletedAt'] = null;
+        }
+
         return await this.getDelegate().findUnique({
             where: scopedWhere,
             include,
@@ -158,6 +174,10 @@ export abstract class BaseRepository<
         this.logger.debug(`Finding first ${this.modelName} with conditions:`, where);
 
         const scopedWhere = this.applyDataScope(where || {}, scope);
+
+        if (!scopedWhere['deletedAt']) {
+            scopedWhere['deletedAt'] = null;
+        }
 
         return await this.getDelegate().findFirst({
             where: scopedWhere,
@@ -180,6 +200,11 @@ export abstract class BaseRepository<
         this.logger.debug(`Finding many ${this.modelName} with conditions:`, where);
 
         const scopedWhere = this.applyDataScope(where, scope);
+
+        if (!scopedWhere['deletedAt']) {
+            scopedWhere['deletedAt'] = null;
+        }
+
         const options: {
             where: Record<string, unknown>;
             orderBy?: TOrderByInput;
@@ -290,17 +315,46 @@ export abstract class BaseRepository<
      * Soft delete a record (if the model supports isActive field)
      */
     async softDelete(id: number, scope?: DataScope): Promise<TEntity> {
-        this.logger.debug(`Soft deleting ${this.modelName} with ID: ${id}`);
+        this.logger.debug(`Soft Deleting ${this.modelName} with ID: ${id}`);
+        await this.findByIdOrThrow(id, undefined, scope);
 
-        const result = await this.update(
-            id,
-            { deletedAt: new Date(Date.now()) } as unknown as TUpdateInput,
-            undefined,
-            scope
-        );
+        const now = new Date();
+        const modelNameLower = this.modelName.toLowerCase();
+        const foreignKey = `${modelNameLower}Id`;
 
-        this.logger.debug(`Soft deleted ${this.modelName} with ID: ${id}`);
-        return result;
+        // @ts-ignore
+        return this.prisma.$transaction(async tx => {
+            if (this.cascadeRelations.length > 0) {
+                for (const relation of this.cascadeRelations) {
+                    if (tx[relation]) {
+                        await tx[relation].updateMany({
+                            where: {
+                                [foreignKey]: id,
+                                deletedAt: null,
+                            },
+                            data: { deletedAt: now },
+                        });
+                        this.logger.debug(`Soft deleted related: ${relation}`);
+                    }
+                }
+            }
+
+            const updateData: any = { deletedAt: now };
+
+            if (this.disconnectRelations.length > 0) {
+                for (const relationField of this.disconnectRelations) {
+                    updateData[relationField] = { set: [] };
+                    this.logger.debug(`Disconnected related: ${relationField}`);
+                }
+            }
+
+            const delegate = tx[this.modelName.charAt(0).toLowerCase() + this.modelName.slice(1)];
+
+            return delegate.update({
+                where: { id },
+                data: updateData,
+            });
+        });
     }
 
     /**
@@ -326,6 +380,10 @@ export abstract class BaseRepository<
         this.logger.debug(`Counting ${this.modelName} with conditions:`, where);
 
         const scopedWhere = this.applyDataScope(where || {}, scope);
+
+        if (!scopedWhere['deletedAt']) {
+            scopedWhere['deletedAt'] = null;
+        }
 
         const count = await this.getDelegate().count({
             where: scopedWhere,
