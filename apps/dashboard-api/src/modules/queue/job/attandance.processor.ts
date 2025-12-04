@@ -134,6 +134,7 @@ export class AttendanceProcessor extends WorkerHost {
                 employee: {
                     plan: { isActive: true, deletedAt: null },
                 },
+                deletedAt: null,
             };
 
             const openRecords = await this.attendanceService.findManyForJob(whereCondition, {

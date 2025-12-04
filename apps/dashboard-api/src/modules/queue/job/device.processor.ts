@@ -301,7 +301,6 @@ export class DeviceProcessor extends WorkerHost {
         });
 
         const employeeCredsMap = new Map<number, typeof credentials>();
-
         credentials.forEach(cred => {
             const list = employeeCredsMap.get(cred.employeeId) || [];
             list.push(cred);
@@ -326,50 +325,64 @@ export class DeviceProcessor extends WorkerHost {
                     password: device.password,
                 };
 
+                const isCarDevice = device.type === 'CAR' || caps.isSupportAnpr;
+                const isFaceDevice =
+                    device.type === 'ACCESS_CONTROL' ||
+                    device.type === 'FACE' ||
+                    caps.isSupportFace;
+
                 for (const empId of employeeIds) {
                     const employeeData = employeeMap.get(empId);
-                    const empCredentials = employeeCredsMap.get(empId) || [];
-
                     if (!employeeData) continue;
 
-                    for (const cred of empCredentials) {
-                        const isCarDevice = device.type === 'CAR' || caps.isSupportAnpr;
-                        const isFaceDevice = device.type === 'ACCESS_CONTROL' || caps.isSupportFace;
+                    const empCredentials = employeeCredsMap.get(empId) || [];
 
-                        if (isCarDevice && cred.type !== 'CAR') {
-                            await this.prisma.employeeSync.create({
-                                data: {
-                                    employeeId: empId,
-                                    deviceId: device.id,
-                                    gateId: gate.id,
-                                    credentialId: cred.id,
-                                    organizationId: employeeData.organizationId,
-                                    message: 'Employee CAR credetial not found!',
-                                    status: 'FAILED',
-                                },
-                            });
-                            continue;
-                        }
-                        if (isFaceDevice && cred.type !== 'PHOTO') {
-                            await this.prisma.employeeSync.create({
-                                data: {
-                                    employeeId: empId,
-                                    deviceId: device.id,
-                                    gateId: gate.id,
-                                    credentialId: cred.id,
-                                    organizationId: employeeData.organizationId,
-                                    message: 'Employee PHOTO credetial not found!',
-                                    status: 'FAILED',
-                                },
-                            });
-                        }
+                    const validCredentials = empCredentials.filter(c => {
+                        if (isCarDevice && c.type === 'CAR') return true;
+                        if (isFaceDevice && c.type === 'PHOTO') return true;
+                        return false;
+                    });
+
+                    if (validCredentials.length === 0) {
+                        let errorMsg = 'Credential not found';
+                        if (isCarDevice) errorMsg = 'AVTO number (CAR credential) not found!';
+                        if (isFaceDevice) errorMsg = 'Photo (PHOTO credential) not found!';
 
                         let sync = await this.prisma.employeeSync.findFirst({
                             where: {
                                 employeeId: empId,
                                 deviceId: device.id,
                                 gateId: gate.id,
+                                credentialId: null,
+                                deletedAt: null,
+                            },
+                        });
+
+                        if (!sync) {
+                            sync = await this.prisma.employeeSync.create({
+                                data: {
+                                    employeeId: empId,
+                                    deviceId: device.id,
+                                    gateId: gate.id,
+                                    credentialId: null,
+                                    organizationId: employeeData.organizationId,
+                                    status: 'WAITING',
+                                },
+                            });
+                        }
+
+                        await this.updateSync(sync.id, 'FAILED', errorMsg);
+                        continue;
+                    }
+
+                    for (const cred of validCredentials) {
+                        let sync = await this.prisma.employeeSync.findFirst({
+                            where: {
+                                employeeId: empId,
+                                deviceId: device.id,
+                                gateId: gate.id,
                                 credentialId: cred.id,
+                                deletedAt: null,
                             },
                         });
 
@@ -387,13 +400,15 @@ export class DeviceProcessor extends WorkerHost {
                                 },
                             });
                         }
+
                         try {
                             if (isCarDevice && cred.type === 'CAR') {
-                                if (!cred.code) throw new Error('Mashina raqami (code) yo‘q');
+                                if (!cred.code)
+                                    throw new Error('AVTO number (code) is not in credential!');
                                 await this.syncCarToDevice([cred.code], config);
                             } else if (isFaceDevice && cred.type === 'PHOTO') {
                                 if (!employeeData.photo)
-                                    throw new Error('Xodimning rasmi (fayl) yo‘q');
+                                    throw new Error('Employee photo (file) is not');
 
                                 const photoUrl = `http://${ip}:${port}/api/storage/${employeeData.photo}`;
                                 await this.syncFaceToDevice(empId.toString(), photoUrl, config);
