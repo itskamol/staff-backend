@@ -110,7 +110,9 @@ model Attendance {
 
 model Reasons {
   id             Int       @id @default(autoincrement())
-  value          String
+  uz             String?
+  eng            String?
+  ru             String?
   organizationId Int       @map("organization_id")
   isActive       Boolean   @default(true) @map("is_active")
   createdAt      DateTime  @default(now()) @map("created_at")

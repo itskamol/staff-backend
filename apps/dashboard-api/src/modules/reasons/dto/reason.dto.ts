@@ -1,18 +1,38 @@
-import { IsString, IsInt, IsOptional, MaxLength, MinLength, IsPositive } from 'class-validator';
+import { IsString, IsInt, IsOptional, MaxLength, MinLength } from 'class-validator';
 import { Type } from 'class-transformer';
 import { ApiProperty, ApiPropertyOptional, PartialType } from '@nestjs/swagger';
 import { QueryDto } from 'apps/dashboard-api/src/shared/dto';
 
 export class CreateReasonDto {
     @ApiProperty({
-        description: 'The value or description of the reason',
+        description: 'The value or description of the reason in Uzbek',
         minLength: 1,
-        maxLength: 255,
+        maxLength: 125,
     })
     @IsString()
     @MinLength(1)
-    @MaxLength(255)
-    value: string;
+    @MaxLength(125)
+    uz: string;
+
+    @ApiProperty({
+        description: 'The value or description of the reason in English',
+        minLength: 1,
+        maxLength: 125,
+    })
+    @IsString()
+    @MinLength(1)
+    @MaxLength(125)
+    eng: string;
+
+    @ApiProperty({
+        description: 'The value or description of the reason in Russian',
+        minLength: 1,
+        maxLength: 125,
+    })
+    @IsString()
+    @MinLength(1)
+    @MaxLength(125)
+    ru: string;
 
     @ApiPropertyOptional({
         description: 'The Organization ID (taken from scope if not provided)',
@@ -29,8 +49,26 @@ export class ReasonResponseDto {
     @ApiProperty()
     id: number;
 
-    @ApiProperty()
-    value: string;
+    @ApiProperty({
+        description: 'The value or description of the reason in Uzbek',
+        minLength: 1,
+        maxLength: 125,
+    })
+    uz: string;
+
+    @ApiProperty({
+        description: 'The value or description of the reason in English',
+        minLength: 1,
+        maxLength: 125,
+    })
+    eng: string;
+
+    @ApiProperty({
+        description: 'The value or description of the reason in Russian',
+        minLength: 1,
+        maxLength: 125,
+    })
+    ru: string;
 
     @ApiProperty()
     organizationId: number;

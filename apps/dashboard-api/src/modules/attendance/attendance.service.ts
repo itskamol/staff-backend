@@ -132,7 +132,9 @@ export class AttendanceService {
                 },
                 reasons: {
                     select: {
-                        value: true,
+                        uz: true,
+                        eng: true,
+                        ru: true,
                     },
                 },
             },
@@ -162,7 +164,9 @@ export class AttendanceService {
                 },
                 reasons: {
                     select: {
-                        value: true,
+                        uz: true,
+                        eng: true,
+                        ru: true,
                     },
                 },
             },

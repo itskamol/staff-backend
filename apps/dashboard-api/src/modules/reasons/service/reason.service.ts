@@ -16,7 +16,11 @@ export class ReasonService {
         };
 
         if (search) {
-            where.OR = [{ value: { contains: search, mode: 'insensitive' } }];
+            where.OR = [
+                { uz: { contains: search, mode: 'insensitive' } },
+                { eng: { contains: search, mode: 'insensitive' } },
+                { ru: { contains: search, mode: 'insensitive' } },
+            ];
         }
 
         const items = await this.reasonRepository.findMany(
@@ -58,7 +62,9 @@ export class ReasonService {
         }
 
         const data: Prisma.ReasonsCreateInput = {
-            value: dto.value,
+            uz: dto.uz,
+            eng: dto.eng,
+            ru: dto.ru,
             organization: { connect: { id: orgId } },
         };
 
@@ -74,7 +80,9 @@ export class ReasonService {
         await this.getReasonById(id, scope, user);
 
         const updateData: Prisma.ReasonsUpdateInput = {
-            value: dto.value,
+            uz: dto.uz,
+            eng: dto.eng,
+            ru: dto.ru,
         };
 
         return this.reasonRepository.update(id, updateData, undefined, scope);
