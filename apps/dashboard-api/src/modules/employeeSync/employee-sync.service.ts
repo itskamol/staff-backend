@@ -51,6 +51,7 @@ export class EmployeeSyncService {
                     employee: { select: { id: true, name: true, photo: true } },
                     organization: { select: { id: true, fullName: true } },
                     credential: { select: { id: true, type: true } },
+                    device: { select: { name: true, type: true } },
                 },
             }),
             this.prisma.employeeSync.count({ where }),
