@@ -19,7 +19,7 @@ import { DataScope, Roles, Scope } from '@app/shared/auth';
 @ApiTags('Attendance')
 @Controller('attendances')
 @ApiBearerAuth()
-@Roles(Role.ADMIN, Role.GUARD, Role.HR)
+@Roles(Role.ADMIN, Role.GUARD, Role.HR, Role.DEPARTMENT_LEAD)
 export class AttendanceController {
     constructor(private readonly service: AttendanceService) {}
 

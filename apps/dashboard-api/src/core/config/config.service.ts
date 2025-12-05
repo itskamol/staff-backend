@@ -2,8 +2,7 @@ import { Injectable } from '@nestjs/common';
 import { ConfigService as NestConfigService } from '@nestjs/config';
 import * as os from 'os';
 import * as path from 'node:path';
-import type { StringValue } from "ms";
-
+import type { StringValue } from 'ms';
 
 @Injectable()
 export class ConfigService {
@@ -17,12 +16,12 @@ export class ConfigService {
         return this.configService.get<number>('PORT', 3000);
     }
 
-    get redisHost(): string{
-        return this.configService.get<string>('REDIS_HOST', 'localhost')
+    get redisHost(): string {
+        return this.configService.get<string>('REDIS_HOST', 'localhost');
     }
 
     get redisPort(): number {
-        return this.configService.get<number>('REDIS_PORT', 6379)
+        return this.configService.get<number>('REDIS_PORT', 6379);
     }
 
     get storageDriver(): string {
@@ -66,7 +65,7 @@ export class ConfigService {
     }
 
     get jwtExpirationTime(): number | StringValue {
-        return this.configService.get<number | StringValue>('JWT_EXPIRATION', '1h');
+        return this.configService.get<number | StringValue>('JWT_EXPIRATION', '30s');
     }
 
     get refreshTokenSecret(): string {
@@ -78,7 +77,7 @@ export class ConfigService {
     }
 
     get refreshTokenExpirationTime(): string {
-        return this.configService.get<string>('REFRESH_TOKEN_EXPIRATION', '7d');
+        return this.configService.get<string>('REFRESH_TOKEN_EXPIRATION', '2m');
     }
 
     get logLevel(): string {

@@ -24,12 +24,12 @@ import { ApiCrudOperation, ApiOkResponseData } from '../../shared/utils';
 @ApiTags('Departments')
 @ApiBearerAuth()
 @Controller('departments')
-@Roles(Role.ADMIN, Role.DEPARTMENT_LEAD, Role.HR)
 @ApiExtraModels(ApiSuccessResponse, DepartmentResponseDto)
 export class DepartmentController {
     constructor(private readonly departmentService: DepartmentService) {}
 
     @Post()
+    @Roles(Role.ADMIN, Role.HR)
     @ApiCrudOperation(DepartmentResponseDto, 'create', {
         body: CreateDepartmentDto,
         summary: 'Create a new department',
@@ -39,6 +39,7 @@ export class DepartmentController {
     }
 
     @Get()
+    @Roles(Role.ADMIN, Role.HR)
     @ApiCrudOperation(DepartmentResponseDto, 'list', {
         summary: 'Get all departments with pagination',
         includeQueries: {
@@ -53,6 +54,7 @@ export class DepartmentController {
     }
 
     @Get('self')
+    @Roles(Role.ADMIN, Role.DEPARTMENT_LEAD, Role.HR)
     @ApiOkResponseData(DepartmentResponseDto, {
         summary: "Get the current authenticated user's department",
     })
@@ -61,6 +63,7 @@ export class DepartmentController {
     }
 
     @Get(':id')
+    @Roles(Role.ADMIN, Role.HR)
     @ApiCrudOperation(DepartmentResponseDto, 'get', {
         summary: 'Get a department by ID',
     })
@@ -73,6 +76,7 @@ export class DepartmentController {
     }
 
     @Put(':id')
+    @Roles(Role.ADMIN, Role.HR)
     @ApiCrudOperation(DepartmentResponseDto, 'update', {
         body: UpdateDepartmentDto,
         summary: 'Update a department by ID',
@@ -86,6 +90,7 @@ export class DepartmentController {
     }
 
     @Delete(':id')
+    @Roles(Role.ADMIN, Role.HR)
     @ApiCrudOperation(DepartmentResponseDto, 'delete', {
         summary: 'Delete a department by ID',
     })

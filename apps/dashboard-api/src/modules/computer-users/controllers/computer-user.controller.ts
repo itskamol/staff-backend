@@ -15,11 +15,11 @@ import { QueryDto } from 'apps/dashboard-api/src/shared/dto';
 @ApiTags('Computer Users')
 @Controller('computer-users')
 @ApiBearerAuth()
-@Roles(Role.ADMIN, Role.HR)
 export class ComputerUserController {
     constructor(private readonly computerUserService: ComputerUserService) {}
 
     @Get()
+    @Roles(Role.ADMIN, Role.HR, Role.DEPARTMENT_LEAD)
     @ApiCrudOperation(ComputerUserDto, 'list', {
         summary: 'Get all computer users with pagination',
         includeQueries: {
@@ -42,6 +42,7 @@ export class ComputerUserController {
     }
 
     @Get('unlinked')
+    @Roles(Role.ADMIN, Role.HR, Role.DEPARTMENT_LEAD)
     @ApiCrudOperation(ComputerUserDto, 'list', {
         summary: 'Get unlinked computer users',
     })
@@ -50,12 +51,14 @@ export class ComputerUserController {
     }
 
     @Get(':id')
+    @Roles(Role.ADMIN, Role.HR)
     @ApiCrudOperation(ComputerUserDto, 'get', { summary: 'Get computer user by ID' })
     async findOne(@Param('id') id: number, @CurrentUser() user: UserContext) {
         return await this.computerUserService.findOne(id, user);
     }
 
     @Put(':id')
+    @Roles(Role.ADMIN, Role.HR)
     @ApiCrudOperation(ComputerUserDto, 'update', {
         body: UpdateComputerUserDto,
         summary: 'Update existing computer user',
@@ -70,6 +73,7 @@ export class ComputerUserController {
     }
 
     @Delete(':id')
+    @Roles(Role.ADMIN, Role.HR)
     @ApiCrudOperation(null, 'delete', {
         summary: 'Delete computer user by ID',
         errorResponses: { notFound: true, forbidden: true },
@@ -83,6 +87,7 @@ export class ComputerUserController {
     }
 
     @Post(':id/link-employee')
+    @Roles(Role.ADMIN, Role.HR)
     @ApiCrudOperation(ComputerUserDto, 'create', {
         body: LinkEmployeeDto,
         summary: 'Link computer user to employee',
@@ -97,6 +102,7 @@ export class ComputerUserController {
     }
 
     @Delete(':id/unlink-employee')
+    @Roles(Role.ADMIN, Role.HR)
     @ApiCrudOperation(ComputerUserDto, 'delete', {
         summary: 'Unlink computer user from employee',
         errorResponses: { notFound: true, badRequest: true },

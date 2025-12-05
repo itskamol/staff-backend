@@ -16,25 +16,31 @@ import { ApiCrudOperation } from 'apps/dashboard-api/src/shared/utils';
 @Controller('devices')
 @ApiExtraModels(DeviceDto)
 @ApiBearerAuth()
-@Roles(Role.ADMIN, Role.GUARD, Role.HR)
 export class DeviceController {
     constructor(private readonly deviceService: DeviceService) {}
 
     @Get()
+    @Roles(Role.ADMIN, Role.GUARD)
     @ApiCrudOperation(DeviceDto, 'list', {
-        summary: 'Get all devices with pagination'
+        summary: 'Get all devices with pagination',
     })
-    async findAll(@Query() query: QueryDeviceDto, @User() user: UserContext, @Scope() scope: DataScope) {
+    async findAll(
+        @Query() query: QueryDeviceDto,
+        @User() user: UserContext,
+        @Scope() scope: DataScope
+    ) {
         return await this.deviceService.findAll(query, scope, user);
     }
 
     @Get(':id')
+    @Roles(Role.ADMIN, Role.GUARD)
     @ApiCrudOperation(DeviceDto, 'get', { summary: 'Get device by ID' })
     async findOne(@Param('id') id: number, @User() scope: DataScope) {
         return await this.deviceService.findOne(id, scope);
     }
 
     @Post()
+    @Roles(Role.ADMIN)
     @ApiCrudOperation(DeviceDto, 'create', {
         body: CreateDeviceDto,
         summary: 'Create new device',
@@ -48,6 +54,7 @@ export class DeviceController {
     }
 
     @Put(':id')
+    @Roles(Role.ADMIN)
     @ApiCrudOperation(DeviceDto, 'update', {
         body: UpdateDeviceDto,
         summary: 'Update existing device',
@@ -62,6 +69,7 @@ export class DeviceController {
     }
 
     @Delete(':id')
+    @Roles(Role.ADMIN)
     @ApiCrudOperation(null, 'delete', {
         summary: 'Delete device by ID',
         errorResponses: { notFound: true, forbidden: true },
@@ -71,6 +79,7 @@ export class DeviceController {
     }
 
     @Post('assign-employees')
+    @Roles(Role.ADMIN)
     @ApiCrudOperation(DeviceDto, 'create', {
         summary: 'Assign employees to gate devices for facial access',
     })

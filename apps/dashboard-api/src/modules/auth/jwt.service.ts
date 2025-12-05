@@ -1,4 +1,4 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, UnauthorizedException } from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
 import { ConfigService } from '../../core/config/config.service';
 import { LoggerService } from '../../core/logger';
@@ -35,15 +35,16 @@ export class CustomJwtService {
      */
     generateAccessToken(payload: Omit<JwtPayload, 'iat' | 'exp'>): string {
         try {
-             const tokenPayload = {
+            const tokenPayload = {
                 ...payload,
                 ...(payload?.organizationId && { organizationId: payload.organizationId }),
                 ...(payload?.departmentIds?.length && { departmentIds: payload.departmentIds }),
-                ...(payload?.departments?.length && { departments: payload.departments })
+                ...(payload?.departments?.length && { departments: payload.departments }),
             };
 
             const token = this.jwtService.sign(tokenPayload, {
-                secret: this.configService.jwtSecret, 
+                secret: this.configService.jwtSecret,
+                expiresIn: this.configService.jwtExpirationTime as any,
             });
             this.logger.log('Access token generated', {
                 userId: payload.sub,
@@ -72,6 +73,7 @@ export class CustomJwtService {
 
             const token = this.jwtService.sign(payload, {
                 secret: this.configService.refreshTokenSecret,
+                expiresIn: this.configService.refreshTokenExpirationTime as any,
             });
 
             this.logger.log('Refresh token generated', {
@@ -105,7 +107,7 @@ export class CustomJwtService {
                 error: error.message,
                 module: 'jwt',
             });
-            throw error;
+            throw new UnauthorizedException('Access token is invalid or expired');
         }
     }
 
@@ -124,7 +126,7 @@ export class CustomJwtService {
                 error: error.message,
                 module: 'jwt',
             });
-            throw error;
+            throw new UnauthorizedException('Refresh token is invalid or expired');
         }
     }
 

@@ -1,13 +1,13 @@
-import { Controller, Get, Put, Delete, Param, Body, Query, ParseIntPipe } from '@nestjs/common';
+import { Controller, Get, Param, Query, ParseIntPipe } from '@nestjs/common';
 import { ActionService } from '../service/action.service';
-import { ActionQueryDto, UpdateActionDto } from '../dto/action.dto';
+import { ActionQueryDto } from '../dto/action.dto';
 import { ApiBearerAuth, ApiTags } from '@nestjs/swagger';
 import { DataScope, Role, Roles, Scope } from '@app/shared/auth';
 
 @ApiTags('Actions')
 @ApiBearerAuth()
 @Controller('action')
-@Roles(Role.ADMIN, Role.GUARD, Role.HR)
+@Roles(Role.ADMIN, Role.GUARD, Role.HR, Role.DEPARTMENT_LEAD)
 export class ActionController {
     constructor(private readonly service: ActionService) {}
 
