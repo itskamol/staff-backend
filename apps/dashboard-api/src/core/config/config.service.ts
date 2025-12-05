@@ -65,7 +65,7 @@ export class ConfigService {
     }
 
     get jwtExpirationTime(): number | StringValue {
-        return this.configService.get<number | StringValue>('JWT_EXPIRATION', '30s');
+        return this.configService.get<number | StringValue>('JWT_EXPIRATION', '15m');
     }
 
     get refreshTokenSecret(): string {
@@ -77,7 +77,7 @@ export class ConfigService {
     }
 
     get refreshTokenExpirationTime(): string {
-        return this.configService.get<string>('REFRESH_TOKEN_EXPIRATION', '2m');
+        return this.configService.get<string>('REFRESH_TOKEN_EXPIRATION', '7d');
     }
 
     get logLevel(): string {
