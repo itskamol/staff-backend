@@ -10,7 +10,7 @@ import { Role } from '@app/shared/auth';
 export class AuthService {
     constructor(
         private readonly userRepository: UserRepository,
-        private readonly jwtService: CustomJwtService,
+        private readonly jwtService: CustomJwtService
     ) {}
 
     /**
@@ -59,7 +59,7 @@ export class AuthService {
     /**
      * Refresh access token using refresh token
      */
-    async refreshToken(refreshTokenDto: RefreshTokenDto): Promise<RefreshTokenResponseDto> {
+    async refreshToken(refreshTokenDto: RefreshTokenDto): Promise<RefreshTokenResponseDto | any> {
         const { refreshToken } = refreshTokenDto;
 
         const payload = this.jwtService.verifyRefreshToken(refreshToken);
@@ -79,12 +79,12 @@ export class AuthService {
             sub: String(user.id),
             role: user.role as Role,
             username: user.username,
-            organizationId: user.organizationId
+            organizationId: user.organizationId,
         };
 
         const newTokens = this.jwtService.generateTokenPair(jwtPayload, payload.tokenVersion + 1);
 
-        return newTokens;
+        return { accessToken: newTokens.accessToken };
     }
 
     /**
