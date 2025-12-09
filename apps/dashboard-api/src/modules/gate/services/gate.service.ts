@@ -41,8 +41,11 @@ export class GateService {
                 },
                 organizations: {
                     select: {
+                        id: true,
                         fullName: true,
+                        shortName: true,
                     },
+                    where: { deletedAt: null },
                 },
                 _count: {
                     select: {
@@ -62,19 +65,28 @@ export class GateService {
             id,
             {
                 devices: {
-                    include: {
-                        _count: {
-                            select: { actions: { where: { deletedAt: null } } },
-                        },
+                    select: {
+                        id: true,
+                        name: true,
+                        isActive: true,
+                        entryType: true,
                     },
+                    where: { deletedAt: null },
+                },
+                organizations: {
+                    select: {
+                        id: true,
+                        fullName: true,
+                        shortName: true,
+                    },
+                    where: { deletedAt: null },
                 },
                 employees: {
                     select: {
                         id: true,
+                        name: true,
                     },
-                    where: {
-                        deletedAt: null,
-                    },
+                    where: { deletedAt: null },
                 },
                 _count: {
                     select: {

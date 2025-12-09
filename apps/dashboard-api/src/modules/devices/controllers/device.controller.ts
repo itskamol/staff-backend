@@ -109,4 +109,13 @@ export class DeviceController {
     ) {
         return await this.deviceService.assignEmployeesToGates(dto, scope, user);
     }
+
+    @Post('openDoor/:id')
+    @Roles(Role.ADMIN, Role.GUARD)
+    @ApiCrudOperation(DeviceDto, 'create', {
+        summary: 'Open door for device by ID',
+    })
+    async openDoor(@Param('id') id: number, @User() user: UserContext, @Scope() scope: DataScope) {
+        return await this.deviceService.unlockDoor(id, 1, scope);
+    }
 }

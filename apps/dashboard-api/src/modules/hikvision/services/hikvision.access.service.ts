@@ -367,4 +367,43 @@ export class HikvisionAccessService {
             };
         }
     }
+
+    // HikvisionAccessService klassi ichida
+    async openDoor(doorNo: number = 1, config: HikvisionConfig): Promise<boolean> {
+        try {
+            this.coreService.setConfig(config);
+
+            // Eshikni ochish uchun JSON body
+            const reqBody = {
+                RemoteControl: {
+                    command: 'open',
+                },
+            };
+
+            const doorIdentifier = doorNo || 1;
+
+            const response = await this.coreService.request(
+                'PUT',
+                `/ISAPI/AccessControl/RemoteControl/door/${doorIdentifier}`,
+                reqBody
+            );
+
+            // Hikvision qurilmalari bu PUT so'roviga odatda 200 OK yoki XML/JSON javob qaytaradi.
+            if (
+                response.status === 200 ||
+                (response.data &&
+                    response.data.ResponseStatus &&
+                    response.data.ResponseStatus.requestURL.includes('/RemoteControl/door'))
+            ) {
+                this.logger.log(`The unlock command for door ${doorNo} was successfully sent.`);
+                return true;
+            }
+
+            this.logger.warn(`Open door warn: ${response.status}`, response.data);
+            return false;
+        } catch (error) {
+            this.logger.error(`Eshikni ochishda xatolik: ${doorNo}:`, error.message);
+            throw new BadRequestException(`Eshikni ochishda xatolik: ${error.message}`);
+        }
+    }
 }
