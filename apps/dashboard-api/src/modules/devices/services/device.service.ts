@@ -312,39 +312,38 @@ export class DeviceService {
         scope: DataScope,
         user?: UserContext
     ) {
-        const port = this.configService.port;
-        const ip = this.configService.hostIp;
-
         const job = await this.deviceQueue.add(JOB.DEVICE.ASSIGN_EMPLOYEES_TO_GATES, {
             dto,
             scope,
-            port,
-            ip,
         });
 
         return { success: true };
     }
 
     async unlockDoor(deviceId: number, doorNo: number = 1, scope?: DataScope) {
-        const device = await this.deviceRepository.findById(deviceId, {}, scope);
+        try {
+            const device = await this.deviceRepository.findById(deviceId, {}, scope);
 
-        if (!device) {
-            throw new NotFoundException('Device not found');
+            if (!device) {
+                throw new NotFoundException('Device not found');
+            }
+
+            const hikvisionConfig: HikvisionConfig = {
+                host: device.ipAddress,
+                port: 80,
+                username: device.login,
+                password: device.password,
+                protocol: device.protocol || 'http',
+            };
+
+            const result = await this.hikvisionService.openDoor(doorNo, hikvisionConfig);
+            if (!result) {
+                throw new BadRequestException('Failed to unlock the door on the device');
+            }
+
+            return { success: true };
+        } catch (error) {
+            throw error;
         }
-
-        const hikvisionConfig: HikvisionConfig = {
-            host: device.ipAddress,
-            port: 80,
-            username: device.login,
-            password: device.password,
-            protocol: device.protocol || 'http',
-        };
-
-        const result = await this.hikvisionService.openDoor(doorNo, hikvisionConfig);
-        if (!result) {
-            throw new BadRequestException('Failed to unlock the door on the device');
-        }
-
-        return { success: true };
     }
 }

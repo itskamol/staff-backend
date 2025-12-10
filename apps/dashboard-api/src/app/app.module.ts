@@ -27,6 +27,7 @@ import { QueueModule } from '../modules/queue/queue.module';
 import { ReasonModule } from '../modules/reasons/reason.module';
 import { SharedAuthModule } from '@app/shared/auth';
 import { DataScopeGuard, JwtAuthGuard, RolesGuard } from '../shared/guards';
+import { JobModule } from '../modules/jobs/job.module';
 
 @Module({
     imports: [
@@ -52,6 +53,7 @@ import { DataScopeGuard, JwtAuthGuard, RolesGuard } from '../shared/guards';
         AttendanceModule,
         QueueModule,
         ReasonModule,
+        JobModule,
     ],
     providers: [
         {

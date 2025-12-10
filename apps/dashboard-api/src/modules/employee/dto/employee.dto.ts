@@ -90,6 +90,15 @@ export class CreateEmployeeDto {
     phone?: string;
 
     @ApiProperty({
+        description: 'The ID of the job assigned to the employee.',
+        example: 1,
+        required: false,
+    })
+    @IsInt()
+    @IsOptional()
+    jobId?: number;
+
+    @ApiProperty({
         description: "The employee's email address.",
         example: 'john.doe@company.com',
         required: false,
@@ -220,6 +229,15 @@ export class UpdateEmployeeDto {
     @IsInt()
     @IsOptional()
     employeePlanId?: number;
+
+    @ApiProperty({
+        description: 'The ID of the job assigned to the employee.',
+        example: 1,
+        required: false,
+    })
+    @IsOptional()
+    @IsInt()
+    jobId?: number;
 }
 
 export class BulkUpdateEmployees {
@@ -297,6 +315,13 @@ export class EmployeeResponseDto {
         required: false,
     })
     photo?: string;
+
+    @ApiProperty({
+        description: 'The ID of the job assigned to the employee.',
+        example: 1,
+        required: false,
+    })
+    jobId?: number;
 
     @ApiProperty({
         description: 'Additional details about the employee.',

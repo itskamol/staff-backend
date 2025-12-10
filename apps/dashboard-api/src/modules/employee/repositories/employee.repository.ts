@@ -34,6 +34,7 @@ export type EmployeeWithRelations = Employee & {
         code: string;
         type: string;
         isActive: boolean;
+        additionalDetails?: string;
     }>;
     computerUsers?: Array<{
         id: number;

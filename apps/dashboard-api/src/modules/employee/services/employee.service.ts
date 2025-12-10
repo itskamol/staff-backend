@@ -96,6 +96,7 @@ export class EmployeeService {
                 organization: {
                     select: { id: true, fullName: true, shortName: true },
                 },
+                job: { select: { id: true, uz: true, eng: true, ru: true } },
                 plan: true,
                 credentials: true,
                 gates: { include: { devices: true } },
@@ -158,6 +159,9 @@ export class EmployeeService {
             },
             plan: {
                 connect: { id: plan?.employeePlans[0]?.id },
+            },
+            job: {
+                connect: dto.jobId ? { id: dto.jobId } : undefined,
             },
         };
 

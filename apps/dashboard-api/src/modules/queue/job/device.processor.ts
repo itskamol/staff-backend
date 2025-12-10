@@ -270,7 +270,7 @@ export class DeviceProcessor extends WorkerHost {
     }
 
     async assignEmployeesToGatesJob(job: Job) {
-        const { port, ip, scope, dto } = job.data;
+        const { scope, dto } = job.data;
         const { gateIds, employeeIds } = dto;
 
         if (!gateIds?.length || !employeeIds?.length) return;
@@ -294,10 +294,10 @@ export class DeviceProcessor extends WorkerHost {
             where: {
                 employeeId: { in: employeeIds },
                 isActive: true,
-                type: { in: ['PHOTO', 'CAR'] },
+                type: { in: ['PHOTO', 'CAR', 'PERSONAL_CODE'] },
                 deletedAt: null,
             },
-            select: { id: true, employeeId: true, type: true, code: true },
+            select: { id: true, employeeId: true, type: true, code: true, additionalDetails: true },
         });
 
         const employeeCredsMap = new Map<number, typeof credentials>();
@@ -340,13 +340,14 @@ export class DeviceProcessor extends WorkerHost {
                     const validCredentials = empCredentials.filter(c => {
                         if (isCarDevice && c.type === 'CAR') return true;
                         if (isFaceDevice && c.type === 'PHOTO') return true;
+                        if (isFaceDevice && c.type === 'PERSONAL_CODE') return true;
                         return false;
                     });
 
                     if (validCredentials.length === 0) {
                         let errorMsg = 'Credential not found';
                         if (isCarDevice) errorMsg = 'AVTO number (CAR credential) not found!';
-                        if (isFaceDevice) errorMsg = 'Photo (PHOTO credential) not found!';
+                        if (isFaceDevice) errorMsg = 'Credential not found!';
 
                         let sync = await this.prisma.employeeSync.findFirst({
                             where: {
@@ -410,8 +411,19 @@ export class DeviceProcessor extends WorkerHost {
                                 if (!employeeData.photo)
                                     throw new Error('Employee photo (file) is not');
 
-                                const photoUrl = `http://${ip}:${port}/api/storage/${employeeData.photo}`;
-                                await this.syncFaceToDevice(empId.toString(), photoUrl, config);
+                                await this.syncFaceToDevice(
+                                    empId.toString(),
+                                    cred.additionalDetails,
+                                    config
+                                );
+                            } else if (isFaceDevice && cred.type === 'PERSONAL_CODE') {
+                                if (!cred.code)
+                                    throw new Error('Personal code is not in credential!');
+                                await this.syncPasswordToDevice(
+                                    empId.toString(),
+                                    cred.code,
+                                    config
+                                );
                             }
 
                             await this.updateSync(sync.id, 'DONE', 'Success!');
@@ -442,6 +454,10 @@ export class DeviceProcessor extends WorkerHost {
         for (const plate of carNumbers) {
             await this.hikvisionAnprService.addLicensePlate(plate, '1', config);
         }
+    }
+
+    private async syncPasswordToDevice(employeeId: string, code: string, config: HikvisionConfig) {
+        await this.hikvisionService.addPasswordToUser(employeeId, code, config);
     }
 
     private async updateGateEmployees(gateId: number, newEmployeeIds: number[]) {

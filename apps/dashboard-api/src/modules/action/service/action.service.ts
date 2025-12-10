@@ -24,6 +24,13 @@ export class ActionService {
 
             const actionTime = eventData.dateTime || acEvent.dateTime;
 
+            const actionType =
+                acEvent.subEventType == 181
+                    ? ActionType.PERSONAL_CODE
+                    : acEvent.subEventType == 75
+                    ? ActionType.PHOTO
+                    : null;
+
             const device = await this.prisma.device.findFirst({ where: { id: deviceId } });
             if (!device) throw new Error(`Device ${deviceId} not found!`);
 
@@ -55,7 +62,7 @@ export class ActionService {
                         ? VisitorType.EMPLOYEE
                         : VisitorType.VISITOR,
                 entryType: device.entryType,
-                actionType: ActionType.PHOTO,
+                actionType,
                 actionResult: null,
                 actionMode:
                     eventData.eventState === 'active' || acEvent.eventState === 'active'

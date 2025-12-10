@@ -123,7 +123,7 @@ export class CredentialService {
                 `Employee with ID ${dto.employeeId} not found or access denied.`
             );
 
-        if (dto.type === 'PHOTO' && !employee.photo) {
+        if (dto.type === 'PHOTO' && !dto.additionalDetails) {
             throw new BadRequestException('Employee photo is missing.');
         }
 
@@ -131,6 +131,13 @@ export class CredentialService {
             const avtoNumber = await this.getEmployeeCredentialCode(dto.code);
             if (avtoNumber) {
                 throw new BadRequestException('This avto number already exists!');
+            }
+        }
+
+        if (dto.type === 'PERSONAL_CODE' && dto.code) {
+            const personalCode = await this.getEmployeeCredentialCode(dto.code);
+            if (personalCode) {
+                throw new BadRequestException('This personal code already exists!');
             }
         }
 
@@ -159,6 +166,9 @@ export class CredentialService {
         user: UserContext
     ): Promise<CredentialWithRelations> {
         const existingCredential = await this.getCredentialById(id, scope, user);
+        if (!existingCredential) {
+            throw new BadRequestException('Credential not found.');
+        }
         const employee = await this.employeeService.getEmployeeById(
             existingCredential.employeeId,
             scope,
@@ -189,6 +199,9 @@ export class CredentialService {
 
     async deleteCredential(id: number, scope: DataScope, user: UserContext): Promise<Credential> {
         const existingCredential = await this.getCredentialById(id, scope, user);
+        if (!existingCredential) {
+            throw new BadRequestException('Credential not found.');
+        }
         const employee = await this.employeeService.getEmployeeById(
             existingCredential.employeeId,
             scope,
@@ -275,18 +288,66 @@ export class CredentialService {
                 try {
                     switch (type) {
                         case 'Delete':
-                            await this.hikvisionAccessService.deleteUser(
+                            // await this.hikvisionAccessService.deleteFaceFromUser(
+                            //     String(employee.id),
+                            //     config
+                            // );
+                            break;
+
+                        case 'Edit':
+                            const faceUrl = dto?.additionalDetails
+                                ? dto.additionalDetails
+                                : oldCredential?.additionalDetails;
+
+                            await this.hikvisionAccessService.addFaceToUserViaURL(
+                                employee.id.toString(),
+                                faceUrl,
+                                config
+                            );
+                            break;
+                    }
+                } catch (err) {
+                    console.error(`Access Device sync error (${type}):`, err.message);
+                }
+            }
+        }
+
+        if (credType === 'PERSONAL_CODE') {
+            let devices = [];
+            for (let gate of employee.gates) {
+                const found = gate.devices.filter(
+                    d => d.type === 'FACE' || d.type === 'ACCESS_CONTROL'
+                );
+                devices.push(...found);
+            }
+
+            for (let device of devices) {
+                let config: HikvisionConfig = {
+                    host: device.ipAddress,
+                    protocol: 'http',
+                    port: 80,
+                    password: device.password,
+                    username: device.login,
+                };
+
+                try {
+                    switch (type) {
+                        case 'Delete':
+                            await this.hikvisionAccessService.addPasswordToUser(
                                 String(employee.id),
+                                '',
                                 config
                             );
                             break;
 
                         case 'Edit':
-                            // Agar PHOTO credential o'zgarsa (masalan code o'zgarmaydi, lekin isActive o'zgarishi mumkin)
-                            // Yoki rasm yangilansa.
-                            // Hikvisionda rasmni yangilash uchun qayta yuklash kerak.
-                            // Hozircha Edit logikasi murakkab bo'lgani uchun, ko'pincha Delete -> Create qilinadi.
-                            // Yoki faqat deleteUser qilib qo'yish mumkin (agar active false bo'lsa).
+                            const personalCode = dto?.code ? dto.code : oldCredential?.code;
+
+                            await this.hikvisionAccessService.addPasswordToUser(
+                                employee.id.toString(),
+                                personalCode,
+                                config
+                            );
                             break;
                     }
                 } catch (err) {
