@@ -161,7 +161,7 @@ export class EmployeeService {
                 connect: { id: plan?.employeePlans[0]?.id },
             },
             job: {
-                connect: dto.jobId ? { id: dto.jobId } : undefined,
+                connect: { id: dto?.jobId },
             },
         };
 
