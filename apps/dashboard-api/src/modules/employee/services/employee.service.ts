@@ -160,8 +160,10 @@ export class EmployeeService {
             plan: {
                 connect: { id: plan?.employeePlans[0]?.id },
             },
-            job: dto.jobId ? { connect: { id: dto.jobId } } : null,
         };
+        if (dto.jobId) {
+            createData.job = { connect: { id: dto.jobId } };
+        }
 
         if (dto.credentials && dto.credentials.length) {
             const credentialsWithOrgId = dto.credentials.map(credential => ({
