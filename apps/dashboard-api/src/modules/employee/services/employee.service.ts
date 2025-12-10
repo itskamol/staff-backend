@@ -160,9 +160,7 @@ export class EmployeeService {
             plan: {
                 connect: { id: plan?.employeePlans[0]?.id },
             },
-            job: {
-                connect: { id: dto?.jobId },
-            },
+            job: dto.jobId ? { connect: { id: dto.jobId } } : null,
         };
 
         if (dto.credentials && dto.credentials.length) {
