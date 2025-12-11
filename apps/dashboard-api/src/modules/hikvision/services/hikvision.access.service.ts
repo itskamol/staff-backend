@@ -291,7 +291,6 @@ export class HikvisionAccessService {
             const ip = this.configService.hostIp;
 
             const photoUrl = `http://${ip}:${port}/api/storage/${url}`;
-            console.log('Photo URL:', photoUrl);
 
             formData.append(
                 'FaceDataRecord',
