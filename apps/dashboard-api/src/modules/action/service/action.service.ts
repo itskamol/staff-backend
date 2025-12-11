@@ -93,7 +93,10 @@ export class ActionService {
             }
 
             if (dto.entryType === 'EXIT') {
-                const { status: exitStatus } = await this.getExitStatus(actionTime, plan.endTime);
+                const { status: exitStatus, diffMinutes } = await this.getExitStatus(
+                    actionTime,
+                    plan.endTime
+                );
 
                 const existingAttendance = await this.prisma.attendance.findFirst({
                     where: {
@@ -113,6 +116,7 @@ export class ActionService {
                         data: {
                             endTime: actionTime,
                             goneStatus: exitStatus,
+                            earlyGoneTime: diffMinutes,
                         },
                     });
                 } else {
@@ -121,7 +125,7 @@ export class ActionService {
             }
 
             if (dto.entryType === 'ENTER') {
-                const { status } = await this.getActionStatus(
+                const { status, diffMinutes } = await this.getEnterStatus(
                     actionTime,
                     plan.startTime,
                     plan.extraTime
@@ -147,6 +151,7 @@ export class ActionService {
                     arrivalStatus: status,
                     employeeId,
                     organizationId,
+                    lateArrivalTime: diffMinutes,
                 };
 
                 if (existingAttendance) {
@@ -225,11 +230,11 @@ export class ActionService {
         return;
     }
 
-    async getActionStatus(
+    async getEnterStatus(
         actionTime: string,
         startTime: string,
         extraTime: string
-    ): Promise<{ status: ActionStatus }> {
+    ): Promise<{ status: ActionStatus; diffMinutes: number }> {
         const [startHour, startMinute] = startTime.split(':').map(Number);
         const [extraHour, extraMinute] = extraTime ? extraTime.split(':').map(Number) : [0, 0];
 
@@ -239,17 +244,40 @@ export class ActionService {
         startDateTime.setHours(startHour, startMinute, 0, 0);
 
         const allowedTime = new Date(startDateTime);
-
         allowedTime.setHours(startDateTime.getHours() + extraHour);
         allowedTime.setMinutes(startDateTime.getMinutes() + extraMinute);
 
+        // kech qolgan vaqt
         const diffMs = eventDate.getTime() - allowedTime.getTime();
+        const diffMinutes = Math.floor(diffMs / (1000 * 60));
 
-        if (diffMs > 0) {
-            return { status: ActionStatus.LATE };
-        } else {
-            return { status: ActionStatus.ON_TIME };
+        if (diffMinutes > 0) {
+            return { status: ActionStatus.LATE, diffMinutes };
         }
+
+        return { status: ActionStatus.ON_TIME, diffMinutes: 0 };
+    }
+
+    async getExitStatus(
+        actionTime: string,
+        endTime: string
+    ): Promise<{ status: ActionStatus; diffMinutes: number }> {
+        const [endHour, endMinute] = endTime.split(':').map(Number);
+
+        const eventDate = new Date(actionTime);
+
+        const endDateTime = new Date(actionTime);
+        endDateTime.setHours(endHour, endMinute, 0, 0);
+
+        // erta ketgan vaqt
+        const diffMs = endDateTime.getTime() - eventDate.getTime();
+        const diffMinutes = Math.floor(diffMs / (1000 * 60));
+
+        if (diffMinutes > 0) {
+            return { status: ActionStatus.EARLY, diffMinutes };
+        }
+
+        return { status: ActionStatus.ON_TIME, diffMinutes: 0 };
     }
 
     parseLocalTime(timeStr: string): Date {
@@ -264,23 +292,6 @@ export class ActionService {
         d.setDate(day);
         d.setHours(hour, minute, second, 0);
         return d;
-    }
-
-    async getExitStatus(actionTime: string, endTime: string): Promise<{ status: ActionStatus }> {
-        const [endHour, endMinute] = endTime.split(':').map(Number);
-
-        const eventDate = new Date(actionTime);
-
-        const endDateTime = new Date(actionTime);
-        endDateTime.setHours(endHour, endMinute, 0, 0);
-
-        const diffMs = eventDate.getTime() - endDateTime.getTime();
-
-        if (diffMs < 0) {
-            return { status: ActionStatus.EARLY };
-        } else {
-            return { status: ActionStatus.ON_TIME };
-        }
     }
 
     async getLastActionInfo(employeeId: number, organizationId: number, gte: Date, lte: Date) {

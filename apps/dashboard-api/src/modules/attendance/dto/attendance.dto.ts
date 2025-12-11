@@ -56,6 +56,14 @@ export class CreateAttendanceDto {
     @IsInt()
     @Type(() => Number)
     reasonTypeId?: number;
+
+    @IsOptional()
+    @IsInt()
+    lateArrivalTime?: number;
+
+    @IsOptional()
+    @IsInt()
+    earlyGoneTime?: number;
 }
 
 export class UpdateAttendanceDto {
