@@ -224,6 +224,7 @@ export class ActionService {
                 data: {
                     goneStatus: null,
                     endTime: null,
+                    earlyGoneTime: null,
                 },
             });
         }
