@@ -65,7 +65,13 @@ export class EmployeePlanService {
             id,
             {
                 employees: {
-                    select: { id: true, name: true, photo: true },
+                    select: {
+                        id: true,
+                        name: true,
+                        photo: true,
+                        department: { select: { fullName: true, shortName: true } },
+                        phone: true,
+                    },
                     where: { deletedAt: null },
                 },
             },
@@ -123,7 +129,12 @@ export class EmployeePlanService {
         const plans = await this.repo.findMany(
             { isActive: true, deletedAt: null },
             { id: 'asc' },
-            { employees: { select: { id: true, organizationId: true } } }
+            {
+                employees: {
+                    select: { id: true, organizationId: true },
+                    where: { deletedAt: null },
+                },
+            }
         );
 
         return plans.map(plan => ({

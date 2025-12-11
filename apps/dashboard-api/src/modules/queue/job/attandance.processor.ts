@@ -84,6 +84,7 @@ export class AttendanceProcessor extends WorkerHost {
                         isActive: true,
                         startTime: { lte: currentTimeString },
                     },
+                    deletedAt: null,
                 },
             };
 

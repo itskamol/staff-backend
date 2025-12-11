@@ -79,12 +79,12 @@ export class HikvisionAccessService {
         return json;
     }
 
-    async createUser(dto: CreateHikvisionUserDto, config: HikvisionConfig): Promise<boolean> {
+    async createUser(employeeId: number, config: HikvisionConfig): Promise<boolean> {
         try {
             this.coreService.setConfig(config);
 
-            const userId = dto.employeeId;
-            const checkExisting = await this.getUser(userId, config);
+            const userId = employeeId;
+            const checkExisting = await this.getUser(userId.toString(), config);
             if (checkExisting) {
                 this.logger.log(`User ${userId} already exists in Hikvision`);
                 return true;
@@ -96,6 +96,10 @@ export class HikvisionAccessService {
                 throw new BadRequestException(`Employee with ID ${userId} not found`);
             }
 
+            const now = new Date(); // hozirgi vaqt
+            const tenYearsLater = new Date();
+            tenYearsLater.setFullYear(now.getFullYear() + 10);
+
             const resBody = {
                 UserInfo: {
                     employeeNo: user.id.toString(),
@@ -106,8 +110,8 @@ export class HikvisionAccessService {
                     Valid: {
                         enable: true,
                         timeType: 'local',
-                        beginTime: '2025-11-03T00:00:00',
-                        endTime: '2035-12-31T23:59:59', // 2030-12-31T23:59:59
+                        beginTime: now.toISOString().slice(0, 19),
+                        endTime: tenYearsLater.toISOString().slice(0, 19),
                     },
                 },
             };
@@ -117,12 +121,12 @@ export class HikvisionAccessService {
                 resBody
             );
             if (response.status === 200) {
-                this.logger.log(`User ${dto.employeeId} successfully created in Hikvision`);
+                this.logger.log(`User ${employeeId} successfully created in Hikvision`);
                 return response.data;
             }
             return false;
         } catch (error) {
-            this.logger.error(`Failed to create user ${dto.employeeId}:`, error.message);
+            this.logger.error(`Failed to create user ${employeeId}:`, error.message);
             throw new BadRequestException(`Hikvision da user yaratishda xatolik: ${error.message}`);
         }
     }

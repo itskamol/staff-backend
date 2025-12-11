@@ -440,13 +440,7 @@ export class DeviceProcessor extends WorkerHost {
     }
 
     private async syncFaceToDevice(employeeId: string, photoUrl: string, config: HikvisionConfig) {
-        await this.hikvisionService.createUser(
-            {
-                employeeId,
-            },
-            config
-        );
-
+        await this.hikvisionService.createUser(+employeeId, config);
         await this.hikvisionService.addFaceToUserViaURL(employeeId, photoUrl, config);
     }
 
@@ -457,6 +451,7 @@ export class DeviceProcessor extends WorkerHost {
     }
 
     private async syncPasswordToDevice(employeeId: string, code: string, config: HikvisionConfig) {
+        await this.hikvisionService.createUser(+employeeId, config);
         await this.hikvisionService.addPasswordToUser(employeeId, code, config);
     }
 
