@@ -184,26 +184,22 @@ export class ReportsService {
         return results;
     }
 
-    // ----------------------------------------
-    // HELPERS
-    // ----------------------------------------
-
     private getWeekdayRange(raw: string): string {
         if (!raw) return '';
-        const arr = raw
-            .split(',')
-            .map(Number)
-            .sort((a, b) => a - b);
-        return `${arr[0]}–${arr[arr.length - 1]}`;
+
+        const array = raw.split(',').map(s => s.trim());
+
+        return `${array[0].slice(0, 3)}–${array[array.length - 1].slice(0, 3)}`;
     }
 
     private toMinutes(time: string): number {
-        const [h, m] = time.split(':').map(Number);
+        const [h, m] = time?.split(':').map(Number);
         return h * 60 + m;
     }
 
     private diffMinutes(d1: Date, d2: Date): number {
-        return Math.floor((d2.getTime() - d1.getTime()) / 60000);
+        if (!d1 || !d2) return 0;
+        return Math.floor((d2?.getTime() - d1?.getTime()) / 60000);
     }
 
     private formatHours(min: number): string {
@@ -211,20 +207,20 @@ export class ReportsService {
     }
 
     private formatTime(d: Date): string {
-        return d.toTimeString().slice(0, 5);
+        return d?.toTimeString().slice(0, 5);
     }
 
     private countPlannedDays(start: string, end: string, raw: string): number {
-        const planDays = raw.split(',').map(Number);
+        const plan = raw.split(',').map(Number);
         let count = 0;
-
         const cur = new Date(start);
-        const last = new Date(end);
 
-        while (cur <= last) {
-            const wd = cur.getDay() === 0 ? 7 : cur.getDay();
-            if (planDays.includes(wd)) count++;
-            cur.setDate(cur.getDate() + 1);
+        const endDate = new Date(end);
+
+        while (cur <= endDate) {
+            const day = cur?.getDay() === 0 ? 7 : cur?.getDay();
+            if (plan.includes(day)) count++;
+            cur?.setDate(cur?.getDate() + 1);
         }
         return count;
     }
