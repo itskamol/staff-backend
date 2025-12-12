@@ -182,16 +182,34 @@ export class ActionService {
     async findAll(query: ActionQueryDto, scope: DataScope) {
         const where: Prisma.ActionWhereInput = {};
 
-        if (query.deviceId) where.deviceId = Number(query.deviceId);
-        if (query.employeeId) where.employeeId = Number(query.employeeId);
-        if (query.status) where.status = query.status;
+        const { startDate, endDate, search, deviceId, employeeId, status, sort, order } = query;
+
+        if (deviceId) where.deviceId = Number(query.deviceId);
+        if (employeeId) where.employeeId = Number(query.employeeId);
+        if (status) where.status = query.status;
+
+        if (query.search) {
+            where.employee = {
+                name: {
+                    contains: query.search,
+                    mode: 'insensitive',
+                },
+            };
+        }
+
+        if (startDate && endDate) {
+            where.actionTime = {
+                gte: new Date(startDate),
+                lte: new Date(endDate),
+            };
+        }
 
         const page = query.page ? Number(query.page) : 1;
         const limit = query.limit ? Number(query.limit) : 10;
 
         const data = await this.repo.findManyWithPagination(
             where,
-            { actionTime: 'desc' },
+            { [sort]: order },
             this.repo.getDefaultInclude(),
             { page, limit },
             scope

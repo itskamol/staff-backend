@@ -2,7 +2,7 @@ import { Controller, Get, Query } from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiResponse, ApiBearerAuth } from '@nestjs/swagger';
 import { Roles, Role, User as CurrentUser } from '@app/shared/auth';
 import { ReportsService } from './reports.service';
-import { AttendanceReportDto } from './dto/reports.dto';
+import { AttendanceReportData, AttendanceReportDto } from './dto/reports.dto';
 import { UserContext } from '../../shared/interfaces';
 
 @ApiTags('Reports')
