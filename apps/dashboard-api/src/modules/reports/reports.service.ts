@@ -184,22 +184,22 @@ export class ReportsService {
         return results;
     }
 
-    // private getWeekdayRange(raw: string): string {
-    //     if (!raw) return '';
-
-    //     const array = raw.split(',').map(s => s.trim());
-
-    //     return `${array[0].slice(0, 3)}–${array[array.length - 1].slice(0, 3)}`;
-    // }
-
     private getWeekdayRange(raw: string): string {
         if (!raw) return '';
-        const arr = raw
-            .split(',')
-            .map(Number)
-            .sort((a, b) => a - b);
-        return `${arr[0].toString().slice(0, 3)}–${arr[arr.length - 1].toString().slice(0, 3)}`;
+
+        const array = raw.split(',').map(s => s.trim());
+
+        return `${array[0].slice(0, 3)}–${array[array.length - 1].slice(0, 3)}`;
     }
+
+    // private getWeekdayRange(raw: string): string {
+    //     if (!raw) return '';
+    //     const arr = raw
+    //         .split(',')
+    //         .map(Number)
+    //         .sort((a, b) => a - b);
+    //     return `${arr[0].toString().slice(0, 3)}–${arr[arr.length - 1].toString().slice(0, 3)}`;
+    // }
 
     private toMinutes(time: string): number {
         const [h, m] = time?.split(':').map(Number);
