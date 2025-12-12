@@ -95,8 +95,11 @@ export class AttendanceService {
         }
 
         if (startDate && endDate) {
+            const start = new Date(startDate);
+            start.setDate(start.getDate() - 1); // 1 kun minus
+
             where.createdAt = {
-                gte: new Date(startDate),
+                gte: start,
                 lte: new Date(endDate),
             };
         }

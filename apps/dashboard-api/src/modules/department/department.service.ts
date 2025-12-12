@@ -50,7 +50,12 @@ export class DepartmentService {
             { [sort]: order },
             {
                 childrens: true,
-                _count: { select: { employees: true, childrens: true } },
+                _count: {
+                    select: {
+                        employees: { where: { deletedAt: null } },
+                        childrens: { where: { deletedAt: null } },
+                    },
+                },
             },
             { page, limit },
             scope
