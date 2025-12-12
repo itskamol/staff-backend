@@ -41,7 +41,7 @@ export class ReportsService {
             where: {
                 ...(departmentId ? { departmentId } : {}),
                 ...(organizationId ? { organizationId } : {}),
-                // deletedAt: null,
+                deletedAt: null,
             },
             include: {
                 department: true,
