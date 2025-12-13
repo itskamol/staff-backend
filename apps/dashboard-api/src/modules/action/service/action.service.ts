@@ -29,7 +29,7 @@ export class ActionService {
                     ? ActionType.PERSONAL_CODE
                     : acEvent.subEventType == 75
                     ? ActionType.PHOTO
-                    : null;
+                    : ActionType.CARD;
 
             const device = await this.prisma.device.findFirst({ where: { id: deviceId } });
             if (!device) throw new Error(`Device ${deviceId} not found!`);
