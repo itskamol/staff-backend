@@ -207,40 +207,40 @@ export class HikvisionAccessService {
         }
     }
 
-    async addCardToUser(data: CardDto): Promise<boolean> {
-        try {
-            const cardData = {
-                CardInfo: {
-                    employeeNo: data.employeeNo,
-                    cardNo: data.cardNo,
-                    cardType: 'normalCard',
-                },
-            };
+    // async addCardToUser(data: CardDto): Promise<boolean> {
+    //     try {
+    //         const cardData = {
+    //             CardInfo: {
+    //                 employeeNo: data.employeeNo,
+    //                 cardNo: data.cardNo,
+    //                 cardType: 'normalCard',
+    //             },
+    //         };
 
-            const response = await this.coreService.request(
-                'POST',
-                '/ISAPI/AccessControl/CardInfo/Record?format=json',
-                cardData
-            );
+    //         const response = await this.coreService.request(
+    //             'POST',
+    //             '/ISAPI/AccessControl/CardInfo/Record?format=json',
+    //             cardData
+    //         );
 
-            if (response.status === 200) {
-                this.logger.log(
-                    `Card ${data.cardNo} successfully added to user ${data.employeeNo} in Hikvision`
-                );
-                return true;
-            }
+    //         if (response.status === 200) {
+    //             this.logger.log(
+    //                 `Card ${data.cardNo} successfully added to user ${data.employeeNo} in Hikvision`
+    //             );
+    //             return true;
+    //         }
 
-            return false;
-        } catch (error) {
-            this.logger.error(
-                `Failed to add card to user ${data.employeeNo} in Hikvision:`,
-                error.message
-            );
-            throw new BadRequestException(
-                `Hikvision da karta qo'shishda xatolik: ${error.message}`
-            );
-        }
-    }
+    //         return false;
+    //     } catch (error) {
+    //         this.logger.error(
+    //             `Failed to add card to user ${data.employeeNo} in Hikvision:`,
+    //             error.message
+    //         );
+    //         throw new BadRequestException(
+    //             `Hikvision da karta qo'shishda xatolik: ${error.message}`
+    //         );
+    //     }
+    // }
 
     async addPasswordToUser(
         employeeNo: string,
@@ -456,53 +456,48 @@ export class HikvisionAccessService {
         }
     }
 
-    //     async addCardToUser(
-    //     employeeNo: string,
-    //     cardNo: string,
-    //     config: HikvisionConfig
-    // ): Promise<boolean> {
-    //     try {
-    //         this.coreService.setConfig(config);
+    async addCardToUser(data: CardDto): Promise<boolean> {
+        try {
+            const { employeeNo, cardNo, config } = data;
+            this.coreService.setConfig(config);
 
-    //         const reqBody = {
-    //             CardInfo: {
-    //                 employeeNo,
-    //                 cardNo,
-    //                 cardType: 'normalCard',
-    //                 leaderCard: false,
-    //                 Valid: {
-    //                     enable: true,
-    //                     timeType: 'local',
-    //                     beginTime: '2025-01-01T00:00:00',
-    //                     endTime: '2035-12-31T23:59:59',
-    //                 },
-    //             },
-    //         };
+            const reqBody = {
+                CardInfo: {
+                    employeeNo,
+                    cardNo,
+                    cardType: 'normalCard',
+                    Valid: {
+                        enable: true,
+                        timeType: 'local',
+                        beginTime: '2025-01-01T00:00:00',
+                        endTime: '2035-12-31T23:59:59',
+                    },
+                },
+            };
 
-    //         const response = await this.coreService.request(
-    //             'POST',
-    //             '/ISAPI/AccessControl/CardInfo/Record?format=json',
-    //             reqBody
-    //         );
+            const response = await this.coreService.request(
+                'POST',
+                '/ISAPI/AccessControl/CardInfo/Record?format=json',
+                reqBody
+            );
 
-    //         if (response.status === 200) {
-    //             this.logger.log(
-    //                 `Card ${cardNo} successfully added to user ${employeeNo} in Hikvision`
-    //             );
-    //             return true;
-    //         }
+            if (response.status === 200) {
+                this.logger.log(
+                    `Card ${cardNo} successfully added to user ${employeeNo} in Hikvision`
+                );
+                return true;
+            }
 
-    //         this.logger.warn(
-    //             `Unexpected status adding card to user ${employeeNo}: ${response.status}`
-    //         );
-    //         return false;
-    //     } catch (error) {
-    //         this.logger.error(
-    //             `Failed to add card to user ${employeeNo}: ${error.message}`
-    //         );
-    //         throw new BadRequestException(
-    //             `Hikvision da karta qo'shishda xatolik: ${error.message}`
-    //         );
-    //     }
-    // }
+            this.logger.warn(
+                `Unexpected status adding card to user ${employeeNo}: ${response.status}`
+            );
+            return false;
+        } catch (error) {
+            console.log(error);
+            this.logger.error(`Failed to add card to user ${data.employeeNo}: ${error.message}`);
+            throw new BadRequestException(
+                `Hikvision da karta qo'shishda xatolik: ${error.message}`
+            );
+        }
+    }
 }

@@ -132,4 +132,8 @@ export class CardDto {
     @IsString()
     @IsNotEmpty()
     cardNo: string;
+
+    @ApiProperty()
+    @IsOptional()
+    config: HikvisionConfig;
 }

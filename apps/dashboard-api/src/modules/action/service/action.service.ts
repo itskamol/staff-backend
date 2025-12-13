@@ -166,7 +166,29 @@ export class ActionService {
                 await this.updatedGoneStatus(employeeId, organizationId, todayStart, todayEnd);
             }
 
-            return this.prisma.action.create({ data: dto });
+            return this.prisma.action.create({
+                data: {
+                    actionTime: dto.actionTime,
+                    visitorType: dto.visitorType,
+                    entryType: dto.entryType,
+                    actionType: dto.actionType,
+                    actionResult: dto.actionResult,
+                    actionMode: dto.actionMode,
+
+                    device: {
+                        connect: { id: deviceId },
+                    },
+                    gate: {
+                        connect: { id: gate.id },
+                    },
+                    employee: {
+                        connect: { id: employeeId },
+                    },
+                    organization: {
+                        connect: { id: organizationId },
+                    },
+                },
+            });
         } catch (error) {
             this.logger.error(error);
             throw new Error(error.message);

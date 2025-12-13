@@ -1,6 +1,7 @@
 import { Controller, Get, Post, Body, Param, Delete, Req, Res } from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiBearerAuth } from '@nestjs/swagger';
 import {
+    CardDto,
     CreatePlateDto,
     DeletePlateDto,
     EditPlateDto,
@@ -32,6 +33,12 @@ export class HikvisionController {
     @ApiOperation({ summary: 'Get hikvision capabilities' })
     async getDeviceCapabilities(@Body() dto: HikvisionConfig) {
         return this.hikvisionAccessService.getDeviceCapabilities(dto);
+    }
+
+    @Post('addCard')
+    @ApiOperation({ summary: 'Add Card User' })
+    async addCard(@Body() dto: CardDto) {
+        return this.hikvisionAccessService.addCardToUser(dto);
     }
 
     @Post('event/:id')
