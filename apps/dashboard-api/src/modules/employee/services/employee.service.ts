@@ -41,6 +41,10 @@ export class EmployeeService {
                 { name: { contains: search, mode: 'insensitive' } },
                 { email: { contains: search, mode: 'insensitive' } },
                 { phone: { contains: search, mode: 'insensitive' } },
+                { department: { fullName: { contains: search, mode: 'insensitive' } } },
+                { department: { shortName: { contains: search, mode: 'insensitive' } } },
+                { organization: { shortName: { contains: search, mode: 'insensitive' } } },
+                { organization: { fullName: { contains: search, mode: 'insensitive' } } },
             ];
         }
 

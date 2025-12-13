@@ -54,7 +54,6 @@ export class HikvisionController {
                 const match = str.match(/name="event_log"\s*\r?\n\r?\n([\s\S]*?)\r?\n--/);
                 if (match) {
                     eventData = JSON.parse(match[1]);
-                    console.log(eventData);
                 }
             } else if (req.headers['content-type']?.includes('application/json')) {
                 eventData = JSON.parse(str);
