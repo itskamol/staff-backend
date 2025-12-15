@@ -12,8 +12,10 @@ model Action {
   actionType     ActionType
   actionMode     ActionMode
   status         ActionStatus?
+  credentialId   Int?          @map("credential_id")
   deletedAt      DateTime?     @map("deleted_at")
 
+  credential   Credential?   @relation(fields: [credentialId], references: [id], onDelete: SetNull)
   organization Organization? @relation(fields: [organizationId], references: [id], onDelete: Cascade)
   device       Device?       @relation(fields: [deviceId], references: [id], onDelete: SetNull)
   gate         Gate?         @relation(fields: [gateId], references: [id], onDelete: SetNull)

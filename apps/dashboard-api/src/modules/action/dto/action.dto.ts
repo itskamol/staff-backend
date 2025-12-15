@@ -46,6 +46,9 @@ export class CreateActionDto {
 
     @IsInt()
     organizationId: number;
+
+    @IsInt()
+    credentialId?: number;
 }
 
 export class UpdateActionDto extends PartialType(CreateActionDto) {}

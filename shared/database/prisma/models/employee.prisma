@@ -70,6 +70,7 @@ model Credential {
   organization Organization?  @relation(fields: [organizationId], references: [id], onDelete: Cascade)
   employee     Employee       @relation(fields: [employeeId], references: [id], onDelete: Cascade)
   employeeSync EmployeeSync[]
+  action       Action[]
 
   @@index([employeeId])
   @@index([code])

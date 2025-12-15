@@ -24,6 +24,8 @@ export class ActionService {
 
             console.log('acEvent:', acEvent);
 
+            // subeventType: 75 - photo, 181 - personal code, 1 - card
+
             const actionTime = eventData.dateTime || acEvent.dateTime;
             const originalLicensePlate = acEvent?.ANPR?.originalLicensePlate || null;
             console.log('originalLicensePlate:', originalLicensePlate);
@@ -33,7 +35,27 @@ export class ActionService {
                 ? ActionType.PERSONAL_CODE
                 : acEvent.subEventType == 75
                 ? ActionType.PHOTO
-                : ActionType.CARD;
+                : acEvent.subEventType == 1
+                ? ActionType.CARD
+                : null;
+
+            let credentialId = null;
+
+            if (actionType == 'CAR' || actionType == 'CARD') {
+                const credential = await this.prisma.credential.findFirst({
+                    where: { code: originalLicensePlate || acEvent?.cardNo, isActive: true },
+                });
+
+                credentialId = credential ? credential.id : null;
+            }
+
+            if (actionType == 'PHOTO' || actionType == 'PERSONAL_CODE') {
+                const credential = await this.prisma.credential.findFirst({
+                    where: { employeeId, type: actionType, isActive: true },
+                });
+
+                credentialId = credential ? credential.id : null;
+            }
 
             const device = await this.prisma.device.findFirst({ where: { id: deviceId } });
             if (!device) throw new Error(`Device ${deviceId} not found!`);
@@ -73,6 +95,7 @@ export class ActionService {
                         ? ActionMode.ONLINE
                         : ActionMode.OFFLINE,
                 organizationId,
+                credentialId,
             };
 
             const todayStart = new Date(actionTime);
