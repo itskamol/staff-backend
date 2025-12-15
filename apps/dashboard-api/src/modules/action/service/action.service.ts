@@ -26,6 +26,7 @@ export class ActionService {
 
             const actionTime = eventData.dateTime || acEvent.dateTime;
             const { originalLicensePlate } = acEvent?.ANPR;
+            console.log('originalLicensePlate:', originalLicensePlate);
             let actionType = originalLicensePlate
                 ? ActionType.CAR
                 : acEvent.subEventType == 181
