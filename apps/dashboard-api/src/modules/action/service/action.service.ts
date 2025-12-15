@@ -41,11 +41,13 @@ export class ActionService {
 
             let credentialId = null;
 
+            console.log('actionType:', actionType);
+
             if (actionType == 'CAR' || actionType == 'CARD') {
                 const credential = await this.prisma.credential.findFirst({
                     where: { code: originalLicensePlate || acEvent?.cardNo, isActive: true },
                 });
-
+                console.log('credential:', credential);
                 credentialId = credential ? credential.id : null;
             }
 
@@ -54,6 +56,7 @@ export class ActionService {
                     where: { employeeId, type: actionType, isActive: true },
                 });
 
+                console.log('credential:', credential);
                 credentialId = credential ? credential.id : null;
             }
 
@@ -214,6 +217,11 @@ export class ActionService {
                     organization: {
                         connect: { id: organizationId },
                     },
+                    credential: credentialId
+                        ? {
+                              connect: { id: credentialId },
+                          }
+                        : undefined,
                 },
             });
         } catch (error) {
