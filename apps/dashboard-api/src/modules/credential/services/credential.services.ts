@@ -141,6 +141,14 @@ export class CredentialService {
             }
         }
 
+        if (dto.type === 'PHOTO' && dto.isActive) {
+            await this.credentialRepository.updateMany(
+                { employeeId: dto.employeeId, type: 'PHOTO' },
+                { isActive: false },
+                {}
+            );
+        }
+
         const orgId = scope?.organizationId || dto?.organizationId;
 
         const data: Prisma.CredentialCreateInput = {
@@ -181,6 +189,23 @@ export class CredentialService {
 
         // Qurilmalarda yangilash
         await this.deleteEditCreateFromDevice(employee, dto, id, 'Edit');
+
+        if (dto.isActive === false) {
+            await this.deleteEditCreateFromDevice(employee, dto, id, 'Delete');
+        }
+
+        if (dto.isActive === true) {
+            await this.deleteEditCreateFromDevice(employee, dto, id, 'Create');
+        }
+
+        if ((existingCredential.type === 'PHOTO' || dto.type === 'PHOTO') && dto.isActive) {
+            const employeeId = existingCredential.employeeId || dto.employeeId;
+            await this.credentialRepository.updateMany(
+                { employeeId: employeeId, type: 'PHOTO', id: { not: id } },
+                { isActive: false },
+                {}
+            );
+        }
 
         const updateData: Prisma.CredentialUpdateInput = {
             code: dto.code,
@@ -260,6 +285,16 @@ export class CredentialService {
                                 );
                             }
                             break;
+
+                        case 'Create':
+                            if (dto?.code) {
+                                await this.hikvisionAnprService.addLicensePlate(
+                                    dto.code,
+                                    '1',
+                                    config
+                                );
+                            }
+                            break;
                     }
                 } catch (err) {
                     console.error(`ANPR Device sync error (${type}):`, err.message);
@@ -288,10 +323,10 @@ export class CredentialService {
                 try {
                     switch (type) {
                         case 'Delete':
-                            // await this.hikvisionAccessService.deleteFaceFromUser(
-                            //     String(employee.id),
-                            //     config
-                            // );
+                            await this.hikvisionAccessService.deleteFaceFromUser(
+                                String(employee.id),
+                                config
+                            );
                             break;
 
                         case 'Edit':
@@ -302,6 +337,18 @@ export class CredentialService {
                             await this.hikvisionAccessService.addFaceToUserViaURL(
                                 employee.id.toString(),
                                 faceUrl,
+                                config
+                            );
+                            break;
+
+                        case 'Create':
+                            const faceUrlCreate = dto?.additionalDetails
+                                ? dto.additionalDetails
+                                : oldCredential?.additionalDetails;
+
+                            await this.hikvisionAccessService.addFaceToUserViaURL(
+                                employee.id.toString(),
+                                faceUrlCreate,
                                 config
                             );
                             break;
@@ -349,6 +396,16 @@ export class CredentialService {
                                 config
                             );
                             break;
+
+                        case 'Create':
+                            const personalCodeCreate = dto?.code ? dto.code : oldCredential?.code;
+
+                            await this.hikvisionAccessService.addPasswordToUser(
+                                employee.id.toString(),
+                                personalCodeCreate,
+                                config
+                            );
+                            break;
                     }
                 } catch (err) {
                     console.error(`Access Device sync error (${type}):`, err.message);
@@ -359,7 +416,9 @@ export class CredentialService {
         if (credType === 'CARD') {
             let devices = [];
             for (let gate of employee.gates) {
-                const found = gate.devices.filter(d => d.type === 'CARD');
+                const found = gate.devices.filter(
+                    d => d.type === 'ACCESS_CONTROL' || d.type === 'FACE'
+                );
                 devices.push(...found);
             }
 
@@ -385,9 +444,20 @@ export class CredentialService {
                         case 'Edit':
                             const personalCode = dto?.code ? dto.code : oldCredential?.code;
 
-                            await this.hikvisionAccessService.updateCard({
+                            await this.hikvisionAccessService.replaceCard(
+                                oldCredential.code,
+                                personalCode,
+                                employee.id.toString(),
+                                config
+                            );
+                            break;
+
+                        case 'Create':
+                            const personalCodeCreate = dto?.code ? dto.code : oldCredential?.code;
+
+                            await this.hikvisionAccessService.addCardToUser({
                                 employeeNo: employee.id.toString(),
-                                cardNo: personalCode,
+                                cardNo: personalCodeCreate,
                                 config,
                             });
                             break;

@@ -4,12 +4,7 @@ import { HikvisionCoreService } from '../core/hikvision.core.service';
 import { ConfigService } from 'apps/dashboard-api/src/core/config/config.service';
 import { EmployeeRepository } from '../../employee/repositories/employee.repository';
 import { XmlJsonService } from 'apps/dashboard-api/src/shared/services/xtml-json.service';
-import {
-    CardDto,
-    CreateHikvisionUserDto,
-    HikvisionConfig,
-    HikvisionUser,
-} from '../dto/create-hikvision-user.dto';
+import { CardDto, HikvisionConfig, HikvisionUser } from '../dto/create-hikvision-user.dto';
 import { XMLParser } from 'fast-xml-parser';
 import * as QRCode from 'qrcode';
 
@@ -208,41 +203,6 @@ export class HikvisionAccessService {
         }
     }
 
-    // async addCardToUser(data: CardDto): Promise<boolean> {
-    //     try {
-    //         const cardData = {
-    //             CardInfo: {
-    //                 employeeNo: data.employeeNo,
-    //                 cardNo: data.cardNo,
-    //                 cardType: 'normalCard',
-    //             },
-    //         };
-
-    //         const response = await this.coreService.request(
-    //             'POST',
-    //             '/ISAPI/AccessControl/CardInfo/Record?format=json',
-    //             cardData
-    //         );
-
-    //         if (response.status === 200) {
-    //             this.logger.log(
-    //                 `Card ${data.cardNo} successfully added to user ${data.employeeNo} in Hikvision`
-    //             );
-    //             return true;
-    //         }
-
-    //         return false;
-    //     } catch (error) {
-    //         this.logger.error(
-    //             `Failed to add card to user ${data.employeeNo} in Hikvision:`,
-    //             error.message
-    //         );
-    //         throw new BadRequestException(
-    //             `Hikvision da karta qo'shishda xatolik: ${error.message}`
-    //         );
-    //     }
-    // }
-
     async addPasswordToUser(
         employeeNo: string,
         password: string,
@@ -367,22 +327,6 @@ export class HikvisionAccessService {
             return false;
         }
     }
-
-    // async deleteFaceFromUser(employeeNo: string, config: HikvisionConfig): Promise<boolean> {
-    //     try {
-    //         this.coreService.setConfig(config);
-
-    //         const response = await this.coreService.request(
-    //             'PUT',
-    //             `/ISAPI/Intelligent/FDLib/FDSearch/Delete?format=json&FDID=1&faceLibType=blackFD`
-    //         );
-
-    //         return response.status === 200;
-    //     } catch (error) {
-    //         this.logger.error('Hikvision delete face error:', error.response?.data || error);
-    //         return false;
-    //     }
-    // }
 
     async configureEventListeningHost(
         config: HikvisionConfig,
@@ -584,50 +528,23 @@ export class HikvisionAccessService {
         }
     }
 
-    async updateCard(data: CardDto): Promise<boolean> {
-        try {
-            const { employeeNo, cardNo, config } = data;
-            this.coreService.setConfig(config);
+    async replaceCard(
+        oldCardNo: string,
+        newCardNo: string,
+        employeeNo: string,
+        config: HikvisionConfig
+    ) {
+        await this.deleteCard({
+            employeeNo,
+            cardNo: oldCardNo,
+            config,
+        });
 
-            const now = new Date();
-            const tenYearsLater = new Date();
-            tenYearsLater.setFullYear(now.getFullYear() + 10);
-
-            // Body xuddi Create dagi kabi bo'ladi
-            const reqBody = {
-                CardInfo: {
-                    employeeNo,
-                    cardNo,
-                    cardType: 'normalCard',
-                    Valid: {
-                        enable: true,
-                        timeType: 'local',
-                        beginTime: now.toISOString().slice(0, 19),
-                        endTime: tenYearsLater.toISOString().slice(0, 19),
-                    },
-                },
-            };
-
-            // Farqi: Endpoint "Modify" va metod "PUT"
-            const response = await this.coreService.request(
-                'PUT',
-                '/ISAPI/AccessControl/CardInfo/Modify?format=json',
-                reqBody
-            );
-
-            if (response.status === 200) {
-                this.logger.log(`Card ${cardNo} successfully updated in Hikvision`);
-                return true;
-            }
-
-            this.logger.warn(`Failed to update card ${cardNo}: ${response.status}`);
-            return false;
-        } catch (error) {
-            this.logger.error(`Error updating card ${data.cardNo}: ${error.message}`);
-            throw new BadRequestException(
-                `Hikvisionda karta tahrirlashda xatolik: ${error.message}`
-            );
-        }
+        await this.addCardToUser({
+            employeeNo,
+            cardNo: newCardNo,
+            config,
+        });
     }
 
     async generateAndAssignQr(employeeId: number, config: HikvisionConfig) {
