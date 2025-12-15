@@ -232,19 +232,19 @@ export class DeviceProcessor extends WorkerHost {
             const isAnpr = device.type === 'CAR' || caps.isSupportAnpr;
 
             for (const empId of employeeIds) {
+                await this.prisma.employeeSync.updateMany({
+                    where: {
+                        employeeId: empId,
+                        deviceId: device.id,
+                        gateId: gate.id,
+                        deletedAt: null,
+                    },
+                    data: { deletedAt: new Date() },
+                });
+
                 try {
                     if (isAnpr) {
                         const plates = carMap.get(empId);
-
-                        await this.prisma.employeeSync.updateMany({
-                            where: {
-                                employeeId: empId,
-                                deviceId: device.id,
-                                gateId: gate.id,
-                                deletedAt: null,
-                            },
-                            data: { deletedAt: new Date() },
-                        });
 
                         if (plates && plates.length > 0) {
                             for (const plate of plates) {
