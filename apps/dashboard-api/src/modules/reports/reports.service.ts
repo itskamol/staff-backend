@@ -1,8 +1,12 @@
-import { Injectable, ForbiddenException, BadRequestException } from '@nestjs/common';
+import { Injectable, BadRequestException } from '@nestjs/common';
 import { PrismaService } from '@app/shared/database';
-import { AttendanceReportData, AttendanceReportDto } from './dto/reports.dto';
+import {
+    AttendanceDateData,
+    AttendanceMainReportData,
+    AttendanceReportData,
+    AttendanceReportDto,
+} from './dto/reports.dto';
 import { UserContext } from '../../shared/interfaces';
-import { Prisma, Role } from '@prisma/client';
 
 @Injectable()
 export class ReportsService {
@@ -11,7 +15,7 @@ export class ReportsService {
     async generateAttendanceReport(
         dto: AttendanceReportDto,
         user: UserContext
-    ): Promise<AttendanceReportData[]> {
+    ): Promise<AttendanceReportData> {
         const { departmentId, startDate, endDate, organizationId } = dto;
 
         if (!organizationId && !user.organizationId) {
@@ -24,9 +28,6 @@ export class ReportsService {
         const end = new Date(endDate);
         end.setHours(23, 59, 59, 999);
 
-        // ----------------------------------------
-        // EMPLOYEE FILTER
-        // ----------------------------------------
         const employees = await this.prisma.employee.findMany({
             where: {
                 ...(departmentId ? { departmentId } : {}),
@@ -40,11 +41,19 @@ export class ReportsService {
             },
         });
 
-        const results: AttendanceReportData[] = [];
+        const results: AttendanceMainReportData[] = [];
 
-        // ----------------------------------------
-        // EMPLOYEE LOOP
-        // ----------------------------------------
+        const dateData: AttendanceDateData[] = [];
+
+        const cursor = new Date(startDate);
+        while (cursor <= end) {
+            dateData.push({
+                date: cursor.toISOString().slice(5, 10),
+                weekday: cursor.toLocaleDateString('en-EN', { weekday: 'short' }),
+            });
+            cursor.setDate(cursor.getDate() + 1);
+        }
+
         for (const emp of employees) {
             const plan = emp.plan;
             const planStart = plan?.startTime;
@@ -128,7 +137,6 @@ export class ReportsService {
                         });
                     }
                 } else {
-                    // ➤ Fakten ishlagan kunlar
                     totalDays++;
 
                     const startT = att.startTime;
@@ -136,20 +144,29 @@ export class ReportsService {
                     const worked = this.diffMinutes(startT, endT);
 
                     totalWorked += worked;
-                    totalLate += att.lateArrivalTime || 0;
-                    totalEarly += att.earlyGoneTime || 0;
 
-                    // Rejaga nisbatan ortiqcha vaqt
-                    if (worked > planDailyMinutes) {
-                        overtime += worked - planDailyMinutes;
-                    }
+                    const late = att.lateArrivalTime || 0;
+                    const early = att.earlyGoneTime || 0;
 
-                    // ➤ Dam olish kuni → overtimePlan
-                    if (!isWorkingDay) {
-                        // console.log('overtimePlan added:', worked);
-                        overtimePlan += worked;
-                    } else {
+                    totalLate += late;
+                    totalEarly += early;
+
+                    if (isWorkingDay) {
+                        const absentMinutes = Math.max(planDailyMinutes - worked, 0);
+
+                        if (att.reasonTypeId || att.reason) {
+                            reasonableAbsent += absentMinutes;
+                        } else {
+                            unreasonableAbsent += absentMinutes;
+                        }
+
                         onTimeMinutes += Math.min(worked, planDailyMinutes);
+
+                        if (worked > planDailyMinutes) {
+                            overtime += worked - planDailyMinutes;
+                        }
+                    } else {
+                        overtimePlan += worked;
                     }
 
                     daysStatistics.push({
@@ -164,9 +181,7 @@ export class ReportsService {
                 cursor.setDate(cursor.getDate() + 1);
             }
 
-            // ----------------------------------------
-            // YAKUN — REPORTGA PUSH QILISH
-            // ----------------------------------------
+            // Yakuniy natijani qo‘shish
             results.push({
                 fio: emp.name,
                 position: emp.job?.eng,
@@ -193,7 +208,7 @@ export class ReportsService {
             });
         }
 
-        return results;
+        return { dateData, reportData: results };
     }
 
     private getWeekdayRange(raw: string): string {
@@ -203,15 +218,6 @@ export class ReportsService {
 
         return `${array[0].slice(0, 3)}–${array[array.length - 1].slice(0, 3)}`;
     }
-
-    // private getWeekdayRange(raw: string): string {
-    //     if (!raw) return '';
-    //     const arr = raw
-    //         .split(',')
-    //         .map(Number)
-    //         .sort((a, b) => a - b);
-    //     return `${arr[0].toString().slice(0, 3)}–${arr[arr.length - 1].toString().slice(0, 3)}`;
-    // }
 
     private toMinutes(time: string): number {
         const [h, m] = time?.split(':').map(Number);
@@ -232,7 +238,6 @@ export class ReportsService {
     }
 
     private countPlannedDays(start: string, end: string, raw: string): number {
-        // Hafta kunlari mapping
         const map: Record<string, number> = {
             Monday: 1,
             Tuesday: 2,
@@ -243,7 +248,6 @@ export class ReportsService {
             Sunday: 7,
         };
 
-        // Raw string -> raqam kunlar
         const plan = raw.split(',').map(w => map[w.trim()]);
 
         let count = 0;
@@ -253,7 +257,7 @@ export class ReportsService {
 
         while (cur <= endDate) {
             const jsDay = cur.getDay();
-            const day = jsDay === 0 ? 7 : jsDay; // Sunday → 7
+            const day = jsDay === 0 ? 7 : jsDay;
 
             if (plan.includes(day)) count++;
 

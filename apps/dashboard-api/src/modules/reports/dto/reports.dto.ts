@@ -43,7 +43,7 @@ export class AttendanceReportDto {
     organizationId?: number;
 }
 
-export interface AttendanceReportData {
+export interface AttendanceMainReportData {
     fio?: string;
     position?: string;
     department?: string;
@@ -66,4 +66,14 @@ export interface AttendanceReportData {
     unresaonableAbsentHours?: string;
     total?: string; // ontimeHours + overtimeHours + overtimePlanHours
     totalDays?: number;
+}
+
+export interface AttendanceDateData {
+    date?: string; // DD/MM
+    weekday?: string; // Mon, Tue, Wed
+}
+
+export interface AttendanceReportData {
+    dateData?: AttendanceDateData[];
+    reportData?: AttendanceMainReportData[];
 }
