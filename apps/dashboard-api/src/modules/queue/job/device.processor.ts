@@ -235,6 +235,17 @@ export class DeviceProcessor extends WorkerHost {
                 try {
                     if (isAnpr) {
                         const plates = carMap.get(empId);
+
+                        await this.prisma.employeeSync.updateMany({
+                            where: {
+                                employeeId: empId,
+                                deviceId: device.id,
+                                gateId: gate.id,
+                                deletedAt: null,
+                            },
+                            data: { deletedAt: new Date() },
+                        });
+
                         if (plates && plates.length > 0) {
                             for (const plate of plates) {
                                 const data = await this.hikvisionAnprService.deleteLicensePlate(
@@ -250,6 +261,7 @@ export class DeviceProcessor extends WorkerHost {
                         }
                     } else {
                         await this.hikvisionService.deleteUser(String(empId), config);
+
                         this.logger.log(
                             `[DeviceJob] Removed user ${empId} from Access Device ${device.id}`
                         );
@@ -294,7 +306,6 @@ export class DeviceProcessor extends WorkerHost {
             where: {
                 employeeId: { in: employeeIds },
                 isActive: true,
-                type: { in: ['PHOTO', 'CAR', 'PERSONAL_CODE'] },
                 deletedAt: null,
             },
             select: { id: true, employeeId: true, type: true, code: true, additionalDetails: true },

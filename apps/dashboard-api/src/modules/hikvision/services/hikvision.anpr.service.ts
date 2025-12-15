@@ -90,6 +90,10 @@ export class HikvisionAnprService {
         }
 
         const body = this.createRecordBody(plateNo, listType, '');
+
+        this.logger.log(
+            `Adding license plate: ${plateNo} to ${listType === '2' ? 'blacklist' : 'whitelist'}`
+        );
         return this.sendRecordRequest(body);
     }
 
