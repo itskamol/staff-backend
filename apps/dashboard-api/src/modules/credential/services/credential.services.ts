@@ -355,5 +355,47 @@ export class CredentialService {
                 }
             }
         }
+
+        if (credType === 'CARD') {
+            let devices = [];
+            for (let gate of employee.gates) {
+                const found = gate.devices.filter(d => d.type === 'CARD');
+                devices.push(...found);
+            }
+
+            for (let device of devices) {
+                let config: HikvisionConfig = {
+                    host: device.ipAddress,
+                    protocol: 'http',
+                    port: 80,
+                    password: device.password,
+                    username: device.login,
+                };
+
+                try {
+                    switch (type) {
+                        case 'Delete':
+                            await this.hikvisionAccessService.deleteCard({
+                                employeeNo: String(employee.id),
+                                cardNo: oldCredential.code,
+                                config,
+                            });
+                            break;
+
+                        case 'Edit':
+                            const personalCode = dto?.code ? dto.code : oldCredential?.code;
+
+                            await this.hikvisionAccessService.updateCard({
+                                employeeNo: employee.id.toString(),
+                                cardNo: personalCode,
+                                config,
+                            });
+                            break;
+                    }
+                } catch (err) {
+                    console.error(`Access Device sync error (${type}):`, err.message);
+                }
+            }
+        }
     }
 }

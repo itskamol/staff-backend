@@ -22,13 +22,11 @@ export class ActionService {
             const acEvent =
                 eventData.AccessControllerEvent || eventData.EventNotificationAlert || {};
 
-            console.log('acEvent:', acEvent);
-
             // subeventType: 75 - photo, 181 - personal code, 1 - card
 
             const actionTime = eventData.dateTime || acEvent.dateTime;
             const originalLicensePlate = acEvent?.ANPR?.originalLicensePlate || null;
-            console.log('originalLicensePlate:', originalLicensePlate);
+
             let actionType = originalLicensePlate
                 ? ActionType.CAR
                 : acEvent.subEventType == 181
@@ -41,13 +39,10 @@ export class ActionService {
 
             let credentialId = null;
 
-            console.log('actionType:', actionType);
-
             if (actionType == 'CAR' || actionType == 'CARD') {
                 const credential = await this.prisma.credential.findFirst({
                     where: { code: originalLicensePlate || acEvent?.cardNo, isActive: true },
                 });
-                console.log('credential:', credential);
                 credentialId = credential ? credential.id : null;
             }
 
@@ -56,7 +51,6 @@ export class ActionService {
                     where: { employeeId, type: actionType, isActive: true },
                 });
 
-                console.log('credential:', credential);
                 credentialId = credential ? credential.id : null;
             }
 

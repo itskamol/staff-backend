@@ -341,6 +341,8 @@ export class DeviceProcessor extends WorkerHost {
                         if (isCarDevice && c.type === 'CAR') return true;
                         if (isFaceDevice && c.type === 'PHOTO') return true;
                         if (isFaceDevice && c.type === 'PERSONAL_CODE') return true;
+                        if (isFaceDevice && c.type === 'CARD') return true;
+                        if (isFaceDevice && c.type === 'QR') return true;
                         return false;
                     });
 
@@ -424,6 +426,10 @@ export class DeviceProcessor extends WorkerHost {
                                     cred.code,
                                     config
                                 );
+                            } else if (isFaceDevice && cred.type === 'CARD') {
+                                if (!cred.code)
+                                    throw new Error('Card number is not in credential!');
+                                await this.syncCardToDevice(empId.toString(), cred.code, config);
                             }
 
                             await this.updateSync(sync.id, 'DONE', 'Success!');
@@ -453,6 +459,11 @@ export class DeviceProcessor extends WorkerHost {
     private async syncPasswordToDevice(employeeId: string, code: string, config: HikvisionConfig) {
         await this.hikvisionService.createUser(+employeeId, config);
         await this.hikvisionService.addPasswordToUser(employeeId, code, config);
+    }
+
+    private async syncCardToDevice(employeeId: string, cardNo: string, config: HikvisionConfig) {
+        await this.hikvisionService.createUser(+employeeId, config);
+        await this.hikvisionService.addCardToUser({ employeeNo: employeeId, cardNo, config });
     }
 
     private async updateGateEmployees(gateId: number, newEmployeeIds: number[]) {

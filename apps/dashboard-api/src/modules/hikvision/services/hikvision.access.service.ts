@@ -11,6 +11,7 @@ import {
     HikvisionUser,
 } from '../dto/create-hikvision-user.dto';
 import { XMLParser } from 'fast-xml-parser';
+import * as QRCode from 'qrcode';
 
 @Injectable()
 export class HikvisionAccessService {
@@ -332,17 +333,56 @@ export class HikvisionAccessService {
         try {
             this.coreService.setConfig(config);
 
+            // Hikvision talabi bo'yicha body strukturasi
+            const reqBody = {
+                FPID: [
+                    {
+                        value: employeeNo,
+                    },
+                ],
+            };
+
+            // URL parametrlari muhim: FDID=1 (Asosiy kutubxona), faceLibType=blackFD
             const response = await this.coreService.request(
                 'PUT',
-                `/ISAPI/Intelligent/FDLib/FDSearch/Delete?format=json&FDID=1&faceLibType=blackFD`
+                '/ISAPI/Intelligent/FDLib/FDSearch/Delete?format=json&FDID=1&faceLibType=blackFD',
+                reqBody
             );
 
+            if (
+                response.status === 200 &&
+                (response.data?.statusCode === 1 || response.data?.statusString === 'OK')
+            ) {
+                this.logger.log(`Face data removed for user ${employeeNo}, but user kept active.`);
+                return true;
+            }
+
+            // Ba'zi hollarda, agar yuz avvalroq o'chirilgan bo'lsa, xato berishi mumkin.
+            // Buni "muvaffaqiyatli" deb hisoblash mumkin.
+            this.logger.warn(`Hikvision delete face response: ${JSON.stringify(response.data)}`);
             return response.status === 200;
         } catch (error) {
-            this.logger.error('Hikvision delete face error:', error.response?.data || error);
+            this.logger.error(`Failed to delete face for ${employeeNo}: ${error.message}`);
+            // Agar rasm yo'q bo'lsa ham true qaytarishimiz mumkin (biznes logikaga qarab)
             return false;
         }
     }
+
+    // async deleteFaceFromUser(employeeNo: string, config: HikvisionConfig): Promise<boolean> {
+    //     try {
+    //         this.coreService.setConfig(config);
+
+    //         const response = await this.coreService.request(
+    //             'PUT',
+    //             `/ISAPI/Intelligent/FDLib/FDSearch/Delete?format=json&FDID=1&faceLibType=blackFD`
+    //         );
+
+    //         return response.status === 200;
+    //     } catch (error) {
+    //         this.logger.error('Hikvision delete face error:', error.response?.data || error);
+    //         return false;
+    //     }
+    // }
 
     async configureEventListeningHost(
         config: HikvisionConfig,
@@ -461,6 +501,10 @@ export class HikvisionAccessService {
             const { employeeNo, cardNo, config } = data;
             this.coreService.setConfig(config);
 
+            const now = new Date(); // hozirgi vaqt
+            const tenYearsLater = new Date();
+            tenYearsLater.setFullYear(now.getFullYear() + 10);
+
             const reqBody = {
                 CardInfo: {
                     employeeNo,
@@ -469,8 +513,8 @@ export class HikvisionAccessService {
                     Valid: {
                         enable: true,
                         timeType: 'local',
-                        beginTime: '2025-01-01T00:00:00',
-                        endTime: '2035-12-31T23:59:59',
+                        beginTime: now.toISOString().slice(0, 19),
+                        endTime: tenYearsLater.toISOString().slice(0, 19),
                     },
                 },
             };
@@ -499,5 +543,110 @@ export class HikvisionAccessService {
                 `Hikvision da karta qo'shishda xatolik: ${error.message}`
             );
         }
+    }
+
+    async deleteCard(data: CardDto): Promise<boolean> {
+        try {
+            const { cardNo, config } = data; // employeeNo o'chirish uchun shart emas, karta raqami yetarli
+            this.coreService.setConfig(config);
+
+            const reqBody = {
+                CardInfoDelCond: {
+                    CardNoList: [
+                        {
+                            cardNo: cardNo,
+                        },
+                    ],
+                },
+            };
+
+            // Hikvisionda o'chirish uchun DELETE metodi emas,
+            // PUT metodi va Delete endpointi ishlatiladi
+            const response = await this.coreService.request(
+                'PUT',
+                '/ISAPI/AccessControl/CardInfo/Delete?format=json',
+                reqBody
+            );
+
+            if (response.status === 200) {
+                this.logger.log(`Card ${cardNo} successfully deleted from Hikvision`);
+                return true;
+            }
+
+            this.logger.warn(`Failed to delete card ${cardNo}: ${response.status}`);
+            return false;
+        } catch (error) {
+            this.logger.error(`Error deleting card ${data.cardNo}: ${error.message}`);
+            // Agar karta topilmasa ham success qaytarish kerak bo'lsa, shu yerni boshqarasiz
+            throw new BadRequestException(
+                `Hikvisiondan karta o'chirishda xatolik: ${error.message}`
+            );
+        }
+    }
+
+    async updateCard(data: CardDto): Promise<boolean> {
+        try {
+            const { employeeNo, cardNo, config } = data;
+            this.coreService.setConfig(config);
+
+            const now = new Date();
+            const tenYearsLater = new Date();
+            tenYearsLater.setFullYear(now.getFullYear() + 10);
+
+            // Body xuddi Create dagi kabi bo'ladi
+            const reqBody = {
+                CardInfo: {
+                    employeeNo,
+                    cardNo,
+                    cardType: 'normalCard',
+                    Valid: {
+                        enable: true,
+                        timeType: 'local',
+                        beginTime: now.toISOString().slice(0, 19),
+                        endTime: tenYearsLater.toISOString().slice(0, 19),
+                    },
+                },
+            };
+
+            // Farqi: Endpoint "Modify" va metod "PUT"
+            const response = await this.coreService.request(
+                'PUT',
+                '/ISAPI/AccessControl/CardInfo/Modify?format=json',
+                reqBody
+            );
+
+            if (response.status === 200) {
+                this.logger.log(`Card ${cardNo} successfully updated in Hikvision`);
+                return true;
+            }
+
+            this.logger.warn(`Failed to update card ${cardNo}: ${response.status}`);
+            return false;
+        } catch (error) {
+            this.logger.error(`Error updating card ${data.cardNo}: ${error.message}`);
+            throw new BadRequestException(
+                `Hikvisionda karta tahrirlashda xatolik: ${error.message}`
+            );
+        }
+    }
+
+    async generateAndAssignQr(employeeId: number, config: HikvisionConfig) {
+        // 1. Unikal kod yaratish
+        const qrContent = `QR-${employeeId}-${Date.now()}`;
+
+        // 2. Hikvisionga karta sifatida qo'shish
+        await this.addCardToUser({
+            employeeNo: employeeId.toString(),
+            cardNo: qrContent,
+            config,
+        });
+
+        // 3. QR rasmini yasash (Base64)
+        const qrImage = await QRCode.toDataURL(qrContent);
+
+        return {
+            code: qrContent,
+            image: qrImage, // Bu rasmni clientga yuborasiz
+        };
     }
 }
