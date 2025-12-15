@@ -23,10 +23,12 @@ export class CreateCredentialDto {
             'The unique code associated with the credential (e.g., card number, license plate)',
         minLength: 1,
         maxLength: 50,
+        required: false,
     })
     @IsString()
     @MinLength(1)
     @MaxLength(50)
+    @IsOptional()
     code: string;
 
     @ApiProperty({ enum: ActionType, description: 'The type of credential being created' })
