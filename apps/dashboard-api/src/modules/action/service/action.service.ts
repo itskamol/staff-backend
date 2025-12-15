@@ -22,14 +22,17 @@ export class ActionService {
             const acEvent =
                 eventData.AccessControllerEvent || eventData.EventNotificationAlert || {};
 
-            const actionTime = eventData.dateTime || acEvent.dateTime;
+            console.log('acEvent:', acEvent);
 
-            const actionType =
-                acEvent.subEventType == 181
-                    ? ActionType.PERSONAL_CODE
-                    : acEvent.subEventType == 75
-                    ? ActionType.PHOTO
-                    : ActionType.CARD;
+            const actionTime = eventData.dateTime || acEvent.dateTime;
+            const { originalLicensePlate } = acEvent?.ANPR;
+            let actionType = originalLicensePlate
+                ? ActionType.CAR
+                : acEvent.subEventType == 181
+                ? ActionType.PERSONAL_CODE
+                : acEvent.subEventType == 75
+                ? ActionType.PHOTO
+                : ActionType.CARD;
 
             const device = await this.prisma.device.findFirst({ where: { id: deviceId } });
             if (!device) throw new Error(`Device ${deviceId} not found!`);
@@ -210,7 +213,7 @@ export class ActionService {
         if (employeeId) where.employeeId = Number(query.employeeId);
         if (status) where.status = query.status;
 
-        if (query.search) {
+        if (search) {
             where.employee = {
                 name: {
                     contains: query.search,
@@ -220,9 +223,15 @@ export class ActionService {
         }
 
         if (startDate && endDate) {
+            const start = new Date(startDate);
+            start.setHours(0, 0, 0, 0);
+
+            const end = new Date(endDate);
+            end.setHours(23, 59, 59, 999);
+
             where.actionTime = {
-                gte: new Date(startDate),
-                lte: new Date(endDate),
+                gte: start,
+                lte: end,
             };
         }
 
