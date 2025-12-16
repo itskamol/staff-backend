@@ -24,6 +24,7 @@ export class DepartmentService {
             isActive,
             organizationId,
             parentId,
+            isSubDepartment,
         } = query;
 
         const filters: Prisma.DepartmentWhereInput = {};
@@ -35,6 +36,14 @@ export class DepartmentService {
         }
         if (parentId) {
             filters.parentId = parentId;
+        }
+
+        if (isSubDepartment === true) {
+            filters.parentId = { not: null };
+        }
+
+        if (isSubDepartment === false) {
+            filters.parentId = null;
         }
 
         if (typeof isActive === 'boolean') {

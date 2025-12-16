@@ -27,4 +27,15 @@ export class DepartmentQueryDto extends QueryDto {
         example: 1,
     })
     parentId?: number;
+
+    @ApiProperty({
+        description: 'Filter by SubDepartment',
+        type: Boolean,
+        required: false,
+        default: false,
+    })
+    @IsOptional()
+    @IsBoolean()
+    @Transform(({ value }) => (value === 'true' ? true : value === 'false' ? false : value))
+    isSubDepartment?: boolean;
 }

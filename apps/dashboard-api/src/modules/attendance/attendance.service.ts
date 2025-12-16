@@ -74,11 +74,21 @@ export class AttendanceService {
 
     async findAll(query: AttendanceQueryDto, scope: DataScope) {
         const where: Prisma.AttendanceWhereInput = {};
-        const { startDate, endDate, employeeId, organizationId, order, sort } = query;
+        const {
+            startDate,
+            endDate,
+            employeeId,
+            organizationId,
+            order,
+            sort,
+            arrivalStatus,
+            goneStatus,
+        } = query;
 
         if (employeeId !== undefined) where.employeeId = employeeId;
         if (organizationId !== undefined) where.organizationId = organizationId;
-        if (query.arrivalStatus) where.arrivalStatus = query.arrivalStatus;
+        if (arrivalStatus) where.arrivalStatus = arrivalStatus;
+        if (goneStatus) where.goneStatus = arrivalStatus;
 
         if (query.date) {
             const date = new Date(query.date);
