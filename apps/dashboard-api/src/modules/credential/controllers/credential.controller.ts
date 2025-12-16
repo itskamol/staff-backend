@@ -1,6 +1,5 @@
 import { Body, Controller, Delete, Get, Param, Post, Put, Query } from '@nestjs/common';
 import { ApiBearerAuth, ApiOperation, ApiParam, ApiResponse, ApiTags } from '@nestjs/swagger';
-import { DataScope, Roles, Scope, User, UserContext } from '@app/shared/auth';
 import {
     CreateCredentialDto,
     UpdateCredentialDto,
@@ -10,6 +9,10 @@ import {
 import { ActionType, Role } from '@prisma/client';
 import { CredentialService } from '../services/credential.services';
 import { QueryDto } from 'apps/dashboard-api/src/shared/dto';
+import { Roles } from 'apps/dashboard-api/src/shared/guards';
+import { DataScope, UserContext } from 'apps/dashboard-api/src/shared/interfaces';
+import { User } from 'apps/dashboard-api/src/shared/decorators';
+import { Scope } from '@app/shared/auth';
 
 @ApiTags('Credentials')
 @ApiBearerAuth()
@@ -37,7 +40,7 @@ export class CredentialController {
         @User() user: UserContext,
         @Scope() scope: DataScope
     ) {
-        return this.credentialService.getAllCredentials(query, scope, user);
+        return this.credentialService.getAllCredentials(query, scope);
     }
 
     @Get('/by-employee/:employeeId')
@@ -49,7 +52,7 @@ export class CredentialController {
         @User() user: UserContext,
         @Scope() scope: DataScope
     ) {
-        return this.credentialService.getCredentialsByEmployeeId(employeeId, scope, user);
+        return this.credentialService.getCredentialByEmployeeId(employeeId, scope, user);
     }
 
     @Get('/get-action-type')

@@ -49,7 +49,7 @@ export class CredentialRepository extends BaseRepository<
         scope?: DataScope
     ): Promise<CredentialWithRelations[]> {
         return this.findMany(
-            { employeeId },
+            { employeeId, deletedAt: null },
             { createdAt: 'desc' },
             this.getDefaultInclude(),
             undefined,

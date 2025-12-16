@@ -41,6 +41,12 @@ export class HikvisionController {
         return this.hikvisionAccessService.addCardToUser(dto);
     }
 
+    @Post('genereteQR')
+    @ApiOperation({ summary: 'Generete QR Code for user' })
+    async genereteQR(@Body() dto: CardDto) {
+        return this.hikvisionAccessService.generateAndAssignQr(+dto.employeeNo, dto.config);
+    }
+
     @Post('event/:id')
     @Public()
     async receiveEvent(@Req() req: Request, @Res() res: Response, @Param('id') deviceId: string) {
