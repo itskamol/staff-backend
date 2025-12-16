@@ -232,47 +232,81 @@ export class ActionService {
 
     async findAll(query: ActionQueryDto, scope: DataScope) {
         const where: Prisma.ActionWhereInput = {};
-
         const { startDate, endDate, search, deviceId, employeeId, status, sort, order } = query;
 
-        if (deviceId) where.deviceId = Number(query.deviceId);
-        if (employeeId) where.employeeId = Number(query.employeeId);
-        if (status) where.status = query.status;
+        if (deviceId) where.deviceId = Number(deviceId);
+        if (employeeId) where.employeeId = Number(employeeId);
+        if (status) where.status = status;
 
         if (search) {
             where.employee = {
                 name: {
-                    contains: query.search,
+                    contains: search,
                     mode: 'insensitive',
                 },
             };
         }
 
+        let start: Date;
+        let end: Date;
+
         if (startDate && endDate) {
-            const start = new Date(startDate);
+            start = new Date(startDate);
             start.setHours(0, 0, 0, 0);
 
-            const end = new Date(endDate);
+            end = new Date(endDate);
             end.setHours(23, 59, 59, 999);
+        } else {
+            start = new Date();
+            start.setHours(0, 0, 0, 0);
 
-            where.actionTime = {
-                gte: start,
-                lte: end,
-            };
+            end = new Date();
+            end.setHours(23, 59, 59, 999);
         }
 
-        const page = query.page ? Number(query.page) : 1;
-        const limit = query.limit ? Number(query.limit) : 10;
+        where.actionTime = {
+            gte: start,
+            lte: end,
+        };
 
-        const data = await this.repo.findManyWithPagination(
+        const actions = await this.repo.findMany(
             where,
-            { [sort]: order },
+            { [sort || 'actionTime']: order || 'asc' },
             this.repo.getDefaultInclude(),
-            { page, limit },
+            undefined,
+            undefined,
             scope
         );
 
-        return data;
+        const dates = this.getDateRange(start, end);
+
+        return dates.map(date => {
+            const dateWithOffset = new Date(date);
+            dateWithOffset.setDate(dateWithOffset.getDate() + 1);
+
+            const dateStr = dateWithOffset.toISOString().split('T')[0];
+            console.log('dateStr', dateStr);
+
+            return {
+                date: dateStr,
+                dayName: date.toLocaleDateString('en-US', { weekday: 'long' }),
+                actions: actions.filter(
+                    action => new Date(action.actionTime).toISOString().split('T')[0] === dateStr
+                ),
+            };
+        });
+    }
+
+    private getDateRange(start: Date, end: Date): Date[] {
+        const dates: Date[] = [];
+        const current = new Date(start);
+
+        while (current <= end) {
+            dates.push(new Date(current));
+            current.setDate(current.getDate() + 1);
+        }
+
+        return dates;
     }
 
     private async updatedGoneStatus(

@@ -43,6 +43,34 @@ export class AttendanceReportDto {
     organizationId?: number;
 }
 
+export class AttendanceReportByEmployeeDto {
+    @ApiPropertyOptional({
+        description: 'Start date for attendance report',
+        example: '2025-11-30',
+    })
+    @IsOptional()
+    @IsDateString()
+    startDate?: string;
+
+    @ApiPropertyOptional({
+        description: 'End date for attendance report',
+        example: '2025-12-15',
+    })
+    @IsOptional()
+    @IsDateString()
+    endDate?: string;
+
+    @ApiPropertyOptional({
+        description: 'EmployeeId ID to filter by',
+        example: 1,
+    })
+    @IsOptional()
+    @Type(() => Number)
+    @IsInt()
+    @Min(1)
+    employeeId?: number;
+}
+
 export interface AttendanceMainReportData {
     fio?: string;
     position?: string;
@@ -76,4 +104,22 @@ export interface AttendanceDateData {
 export interface AttendanceReportData {
     dateData?: AttendanceDateData[];
     reportData?: AttendanceMainReportData[];
+}
+
+export interface AttendanceStats {
+    averageArrivalTime: string; // "08:58 AM"
+
+    // KELISH (Arrival) statistikasi
+    avgArrivalEarlyMinutes: number; // Rejadan qancha erta keldi (minut). Agar kechiksa 0 bo'ladi.
+    avgArrivalLateMinutes: number; // Rejadan qancha kech keldi (minut). Agar vaqtli kelsa 0 bo'ladi.
+
+    averageLeaveTime: string; // "06:05 PM"
+
+    // KETISH (Leave) statistikasi
+    avgLeaveEarlyMinutes: number; // Rejadan qancha erta ketib qoldi (minut).
+    avgLeaveOvertimeMinutes: number; // Rejadan qancha ko'p ishladi (minut).
+
+    totalTrackedHours: number; // 45.5
+    lateArrivalsCount: number; // 2
+    earlyLeavesCount: number; // 1
 }
