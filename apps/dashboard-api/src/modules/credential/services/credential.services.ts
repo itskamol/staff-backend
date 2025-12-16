@@ -125,12 +125,16 @@ export class CredentialService {
 
         await this.syncDevices(employee, existing, dto);
 
-        if (dto.isActive && this.shouldDeactivate(dto.type)) {
-            await this.deactivateOld(employee.id, dto.type, id);
-        }
-
         if (dto.isActive === false) {
             await this.syncDevices(employee, existing, dto, 'Delete');
+        }
+
+        if (dto.isActive === true) {
+            await this.syncDevices(employee, existing, dto, 'Create');
+        }
+
+        if (dto.isActive && this.shouldDeactivate(dto.type)) {
+            await this.deactivateOld(employee.id, dto.type, id);
         }
 
         return this.credentialRepository.update(
