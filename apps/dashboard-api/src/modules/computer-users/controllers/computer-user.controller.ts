@@ -1,8 +1,7 @@
 import { Controller, Get, Post, Put, Delete, Body, Param, Query } from '@nestjs/common';
 import { ApiTags, ApiBearerAuth } from '@nestjs/swagger';
-import { Roles, Role, User as CurrentUser, DataScope, Scope } from '@app/shared/auth';
+import { Roles, Role, User as CurrentUser, DataScope, Scope, UserContext } from '@app/shared/auth';
 import { ComputerUserService } from '../services/computer-user.service';
-import { UserContext } from 'apps/dashboard-api/src/shared/interfaces';
 import {
     CreateComputerUserDto,
     ComputerUserDto,

@@ -6,7 +6,7 @@ import { CreateUserDto, UpdateCurrentUserDto, UpdateUserDto } from './dto';
 import { PasswordUtil } from '../../shared/utils';
 import { QueryDto } from '../../shared/dto/query.dto';
 import { PrismaService } from '@app/shared/database';
-import { UserContext } from '../../shared/interfaces';
+import { UserContext } from '@app/shared/auth';
 
 @Injectable()
 export class UserService {

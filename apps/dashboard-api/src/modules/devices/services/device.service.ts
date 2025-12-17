@@ -1,12 +1,11 @@
 import { Injectable, NotFoundException, BadRequestException } from '@nestjs/common';
-import { DataScope } from '@app/shared/auth';
+import { DataScope, UserContext } from '@app/shared/auth';
 import {
     AssignEmployeesToGatesDto,
     CreateDeviceDto,
     QueryDeviceDto,
     UpdateDeviceDto,
 } from '../dto/device.dto';
-import { UserContext } from '../../../shared/interfaces';
 import { DeviceRepository } from '../repositories/device.repository';
 import { DeviceType, EntryType, Prisma } from '@prisma/client';
 import { GateRepository } from '../../gate/repositories/gate.repository';

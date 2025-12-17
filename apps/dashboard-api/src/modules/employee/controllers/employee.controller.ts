@@ -40,8 +40,7 @@ export class AssignCarDto {}
 export class ComputerUserResponseDto {}
 export class EntryLogResponseDto {}
 export class LinkComputerUserDto {}
-import { DataScope, Roles, Scope, User } from '@app/shared/auth';
-import { UserContext } from '../../../shared/interfaces';
+import { DataScope, Roles, Scope, User, UserContext } from '@app/shared/auth';
 import { QueryDto } from '@app/shared/utils';
 import { Role } from '@prisma/client';
 import { FILE_STORAGE_SERVICE, IFileStorageService } from '@app/shared/common';

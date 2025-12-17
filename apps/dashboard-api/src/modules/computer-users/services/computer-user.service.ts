@@ -1,8 +1,7 @@
 import { Injectable, NotFoundException, BadRequestException } from '@nestjs/common';
 import { PrismaService } from '@app/shared/database';
-import { DataScope } from '@app/shared/auth';
+import { DataScope, UserContext } from '@app/shared/auth';
 import { UpdateComputerUserDto } from '../dto/computer-user.dto';
-import { UserContext } from '../../../shared/interfaces';
 import { ComputerUserRepository } from '../repositories/computer-user.repository';
 import { Prisma } from '@prisma/client';
 import { QueryDto } from 'apps/dashboard-api/src/shared/dto';

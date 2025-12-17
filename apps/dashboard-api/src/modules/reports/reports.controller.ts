@@ -1,13 +1,12 @@
 import { Controller, Get, Query } from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiResponse, ApiBearerAuth } from '@nestjs/swagger';
-import { Roles, Role, User as CurrentUser } from '@app/shared/auth';
+import { Roles, Role, User as CurrentUser, Scope, UserContext, DataScope } from '@app/shared/auth';
 import { ReportsService } from './reports.service';
 import {
     AttendanceReportByEmployeeDto,
     AttendanceReportData,
     AttendanceReportDto,
 } from './dto/reports.dto';
-import { UserContext } from '../../shared/interfaces';
 
 @ApiTags('Reports')
 @ApiBearerAuth()
@@ -24,11 +23,13 @@ export class ReportsController {
     })
     async getAttendanceReport(
         @Query() attendanceReportDto: AttendanceReportDto,
-        @CurrentUser() user: UserContext
+        @CurrentUser() user: UserContext,
+        @Scope() scope: DataScope
     ) {
         const report = await this.reportsService.generateAttendanceReport(
             attendanceReportDto,
-            user
+            user,
+            scope
         );
         return report;
     }

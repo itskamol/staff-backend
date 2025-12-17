@@ -1,13 +1,12 @@
 import { Injectable, NotFoundException, BadRequestException } from '@nestjs/common';
 import { PrismaService } from '@app/shared/database';
-import { DataScope } from '@app/shared/auth';
+import { DataScope, UserContext } from '@app/shared/auth';
 import {
     CreateVisitorDto,
     UpdateVisitorDto,
     CreateOnetimeCodeDto,
     GenerateCodeDto,
 } from '../dto/visitor.dto';
-import { UserContext } from '../../../shared/interfaces';
 import { VisitorRepository } from '../repositories/visitor.repository';
 import { OnetimeCode, Prisma, Visitor, VisitorCodeType } from '@prisma/client';
 import { OnetimeCodeRepository } from '../../onetime-codes/repositories/onetime-code.repository';

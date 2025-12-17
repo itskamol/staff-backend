@@ -1,9 +1,8 @@
 import { Injectable, NotFoundException, BadRequestException } from '@nestjs/common';
 import { PrismaService } from '@app/shared/database';
-import { DataScope } from '@app/shared/auth';
+import { DataScope, UserContext } from '@app/shared/auth';
 import { CreateGroupDto, GroupQueryDto, UpdateGroupDto } from '../dto/group.dto';
 import { ResourceType, Prisma } from '@prisma/client';
-import { UserContext } from '../../../shared/interfaces';
 import { GroupRepository } from '../repositories/group.repository';
 
 @Injectable()

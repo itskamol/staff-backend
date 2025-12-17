@@ -1,9 +1,8 @@
 import { Injectable, NotFoundException, BadRequestException } from '@nestjs/common';
 import { PrismaService } from '@app/shared/database';
-import { DataScope } from '@app/shared/auth';
+import { DataScope, UserContext } from '@app/shared/auth';
 import { CreateResourceDto, ResourceQueryDto, UpdateResourceDto } from '../dto/resource.dto';
 import { ResourceType } from '@prisma/client';
-import { UserContext } from '../../../shared/interfaces';
 import { ResourceRepository } from '../repositories/resource.repository';
 import { Prisma } from '@prisma/client';
 

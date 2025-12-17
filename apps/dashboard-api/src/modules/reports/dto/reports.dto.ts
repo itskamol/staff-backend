@@ -107,19 +107,17 @@ export interface AttendanceReportData {
 }
 
 export interface AttendanceStats {
-    averageArrivalTime: string; // "08:58 AM"
+    averageArrivalTime: string; 
 
-    // KELISH (Arrival) statistikasi
-    avgArrivalEarlyMinutes: number; // Rejadan qancha erta keldi (minut). Agar kechiksa 0 bo'ladi.
-    avgArrivalLateMinutes: number; // Rejadan qancha kech keldi (minut). Agar vaqtli kelsa 0 bo'ladi.
+    avgArrivalEarlyMinutes: number; 
+    avgArrivalLateMinutes: number; 
 
-    averageLeaveTime: string; // "06:05 PM"
+    averageLeaveTime: string;
 
-    // KETISH (Leave) statistikasi
-    avgLeaveEarlyMinutes: number; // Rejadan qancha erta ketib qoldi (minut).
-    avgLeaveOvertimeMinutes: number; // Rejadan qancha ko'p ishladi (minut).
+    avgLeaveEarlyMinutes: number; 
+    avgLeaveOvertimeMinutes: number;
 
-    totalTrackedHours: number; // 45.5
-    lateArrivalsCount: number; // 2
-    earlyLeavesCount: number; // 1
+    totalTrackedHours: number;
+    lateArrivalsCount: number;
+    earlyLeavesCount: number; 
 }

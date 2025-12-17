@@ -29,6 +29,7 @@ import { SharedAuthModule } from '@app/shared/auth';
 import { DataScopeGuard, JwtAuthGuard, RolesGuard } from '../shared/guards';
 import { JobModule } from '../modules/jobs/job.module';
 import { ReportsModule } from '../modules/reports/reports.module';
+import { DashboardModule } from '../modules/dashboard/dashboard.module';
 
 @Module({
     imports: [
@@ -56,6 +57,7 @@ import { ReportsModule } from '../modules/reports/reports.module';
         ReasonModule,
         JobModule,
         ReportsModule,
+        DashboardModule,
     ],
     providers: [
         {

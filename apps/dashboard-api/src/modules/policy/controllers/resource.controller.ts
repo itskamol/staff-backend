@@ -1,10 +1,9 @@
-import { Controller, Get, Post, Put, Delete, Body, Param, Query } from '@nestjs/common';
+import { Controller, Get, Param, Query } from '@nestjs/common';
 import { ApiTags, ApiBearerAuth, ApiExtraModels } from '@nestjs/swagger';
 import { Roles, Role, User as CurrentUser, DataScope, Scope } from '@app/shared/auth';
-import { QueryDto } from '@app/shared/utils';
 import { ResourceService } from '../services/resource.service';
 import { UserContext } from 'apps/dashboard-api/src/shared/interfaces';
-import { CreateResourceDto, ResourceQueryDto, ResourceResponseDto, UpdateResourceDto } from '../dto/resource.dto';
+import { ResourceQueryDto, ResourceResponseDto } from '../dto/resource.dto';
 import { ApiCrudOperation } from 'apps/dashboard-api/src/shared/utils';
 
 @ApiTags('Policy Resources')

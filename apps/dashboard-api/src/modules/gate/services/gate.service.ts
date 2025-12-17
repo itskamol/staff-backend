@@ -1,6 +1,5 @@
 import { Injectable, NotFoundException, BadRequestException } from '@nestjs/common';
-import { DataScope } from '@app/shared/auth';
-import { UserContext } from '../../../shared/interfaces';
+import { DataScope, UserContext } from '@app/shared/auth';
 import { GateRepository } from '../repositories/gate.repository';
 import { Prisma } from '@prisma/client';
 import { AssignGateWithOrgDto, CreateGateDto, UpdateGateDto } from '../dto/gate.dto';

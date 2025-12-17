@@ -10,7 +10,7 @@ import {
     ParseIntPipe,
 } from '@nestjs/common';
 import { ApiTags, ApiBearerAuth } from '@nestjs/swagger';
-import { Roles, Role, User as CurrentUser, DataScope, Scope } from '@app/shared/auth';
+import { Roles, Role, User as CurrentUser, DataScope, Scope, UserContext } from '@app/shared/auth';
 import { PaginationDto } from '@app/shared/utils';
 import { VisitorService } from './visitor.service';
 import {
@@ -20,9 +20,7 @@ import {
     ApiResponseDto,
 } from './dto/visitor.dto';
 import { ApiCrudOperation } from '../../shared/utils';
-import { UserContext } from '../../shared/interfaces';
 import { Action, OnetimeCode } from '@prisma/client';
-import { query } from 'winston';
 import { QueryDto } from '../../shared/dto';
 
 @ApiTags('Visitors')

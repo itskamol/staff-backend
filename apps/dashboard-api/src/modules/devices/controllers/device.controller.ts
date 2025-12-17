@@ -1,8 +1,7 @@
 import { Controller, Get, Post, Put, Delete, Body, Param, Query, Res } from '@nestjs/common';
 import { ApiTags, ApiBearerAuth, ApiExtraModels, ApiResponse } from '@nestjs/swagger';
-import { Roles, Role, DataScope, User, Scope } from '@app/shared/auth';
+import { Roles, Role, DataScope, User, Scope, UserContext } from '@app/shared/auth';
 import { DeviceService } from '../services/device.service';
-import { UserContext } from 'apps/dashboard-api/src/shared/interfaces';
 import {
     CreateDeviceDto,
     DeviceDto,

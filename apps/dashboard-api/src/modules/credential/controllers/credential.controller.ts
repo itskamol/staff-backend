@@ -8,11 +8,8 @@ import {
 } from '../dto/credential.dto';
 import { ActionType, Role } from '@prisma/client';
 import { CredentialService } from '../services/credential.services';
-import { QueryDto } from 'apps/dashboard-api/src/shared/dto';
 import { Roles } from 'apps/dashboard-api/src/shared/guards';
-import { DataScope, UserContext } from 'apps/dashboard-api/src/shared/interfaces';
-import { User } from 'apps/dashboard-api/src/shared/decorators';
-import { Scope } from '@app/shared/auth';
+import { DataScope, Scope, User, UserContext } from '@app/shared/auth';
 
 @ApiTags('Credentials')
 @ApiBearerAuth()
@@ -40,6 +37,7 @@ export class CredentialController {
         @User() user: UserContext,
         @Scope() scope: DataScope
     ) {
+        console.log({ user, scope });
         return this.credentialService.getAllCredentials(query, scope);
     }
 

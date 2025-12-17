@@ -8,7 +8,7 @@ import {
     AttendanceReportDto,
     AttendanceStats,
 } from './dto/reports.dto';
-import { UserContext } from '../../shared/interfaces';
+import { DataScope, UserContext } from '@app/shared/auth';
 
 @Injectable()
 export class ReportsService {
@@ -16,11 +16,15 @@ export class ReportsService {
 
     async generateAttendanceReport(
         dto: AttendanceReportDto,
-        user: UserContext
+        user: UserContext,
+        scope: DataScope
     ): Promise<AttendanceReportData> {
         const { departmentId, startDate, endDate, organizationId } = dto;
 
-        if (!organizationId && !user.organizationId) {
+        const depId = (scope?.departmentIds ?? [departmentId]).filter(Boolean);
+        const orgId = scope?.organizationId ?? organizationId;
+
+        if (!orgId) {
             throw new BadRequestException('Please enter organizationId');
         }
 
@@ -32,8 +36,8 @@ export class ReportsService {
 
         const employees = await this.prisma.employee.findMany({
             where: {
-                ...(departmentId ? { departmentId } : {}),
-                ...(organizationId ? { organizationId } : {}),
+                ...(depId.length > 0 ? { departmentId: { in: depId } } : {}),
+                organizationId: orgId,
                 deletedAt: null,
             },
             include: {

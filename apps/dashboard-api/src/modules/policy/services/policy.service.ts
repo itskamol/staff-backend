@@ -1,12 +1,11 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
-import { DataScope } from '@app/shared/auth';
+import { DataScope, UserContext } from '@app/shared/auth';
 import {
     CreatePolicyDto,
     CreatePolicyOptionDto,
     PolicyQueryDto,
     UpdatePolicyDto,
 } from '../dto/policy.dto';
-import { UserContext } from '../../../shared/interfaces';
 import { PolicyRepository } from '../repositories/policy.repository';
 import { Policy, Prisma, RuleType } from '@prisma/client';
 

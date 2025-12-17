@@ -13,8 +13,8 @@ import {
     CredentialWithRelations,
 } from '../repositories/credential.repository';
 import { ActionType, Prisma } from '@prisma/client';
-import { DataScope, UserContext } from 'apps/dashboard-api/src/shared/interfaces';
 import { BadRequestException, Injectable, NotFoundException } from '@nestjs/common';
+import { DataScope, UserContext } from '@app/shared/auth';
 
 @Injectable()
 export class CredentialService {

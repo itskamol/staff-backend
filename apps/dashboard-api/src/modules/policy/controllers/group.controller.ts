@@ -1,15 +1,20 @@
 import { Controller, Get, Post, Put, Delete, Body, Param, Query } from '@nestjs/common';
 import { ApiTags, ApiBearerAuth, ApiExtraModels } from '@nestjs/swagger';
-import { Roles, Role, User as CurrentUser, DataScope, Scope } from '@app/shared/auth';
+import { Roles, Role, User as CurrentUser, DataScope, Scope, UserContext } from '@app/shared/auth';
 import { GroupService } from '../services/group.service';
-import { UserContext } from 'apps/dashboard-api/src/shared/interfaces';
-import { CreateGroupDto, GroupDto, UpdateGroupDto, AddResourceToGroupDto, GroupQueryDto } from '../dto/group.dto';
+import {
+    CreateGroupDto,
+    GroupDto,
+    UpdateGroupDto,
+    AddResourceToGroupDto,
+    GroupQueryDto,
+} from '../dto/group.dto';
 import { ApiCrudOperation } from 'apps/dashboard-api/src/shared/utils';
 
 @ApiTags('Policy Groups')
 @Controller('policies/groups')
 @ApiBearerAuth()
-@ApiExtraModels(GroupDto, )
+@ApiExtraModels(GroupDto)
 @Roles(Role.ADMIN, Role.HR)
 export class GroupController {
     constructor(private readonly groupService: GroupService) {}
