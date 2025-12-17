@@ -6,7 +6,6 @@ import { EmployeeRepository } from '../../employee/repositories/employee.reposit
 import { XmlJsonService } from 'apps/dashboard-api/src/shared/services/xtml-json.service';
 import { CardDto, HikvisionConfig, HikvisionUser } from '../dto/create-hikvision-user.dto';
 import { XMLParser } from 'fast-xml-parser';
-import * as QRCode from 'qrcode';
 
 @Injectable()
 export class HikvisionAccessService {
@@ -545,25 +544,5 @@ export class HikvisionAccessService {
             cardNo: newCardNo,
             config,
         });
-    }
-
-    async generateAndAssignQr(employeeId: number, config: HikvisionConfig) {
-        // 1. Unikal kod yaratish
-        const qrContent = `QR-${employeeId}-${Date.now()}`;
-
-        // 2. Hikvisionga karta sifatida qo'shish
-        await this.addCardToUser({
-            employeeNo: employeeId.toString(),
-            cardNo: qrContent,
-            config,
-        });
-
-        // 3. QR rasmini yasash (Base64)
-        const qrImage = await QRCode.toDataURL(qrContent);
-
-        return {
-            code: qrContent,
-            image: qrImage, // Bu rasmni clientga yuborasiz
-        };
     }
 }

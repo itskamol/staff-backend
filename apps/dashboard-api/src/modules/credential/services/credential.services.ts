@@ -170,9 +170,9 @@ export class CredentialService {
         }
     }
 
-    private async validateUniqueCode(type: string, code?: string, excludeId?: number) {
+    private async validateUniqueCode(type: ActionType, code?: string, excludeId?: number) {
         if (!code) return;
-        if (!['CAR', 'PERSONAL_CODE'].includes(type)) return;
+        if (!['CAR', 'PERSONAL_CODE', 'QR', 'CARD'].includes(type)) return;
 
         const exists = await this.credentialRepository.findFirst(
             { code, ...(excludeId && { id: { not: excludeId } }) },
@@ -237,12 +237,13 @@ export class CredentialService {
             PHOTO: ['FACE', 'ACCESS_CONTROL'],
             PERSONAL_CODE: ['FACE', 'ACCESS_CONTROL'],
             CARD: ['FACE', 'ACCESS_CONTROL'],
+            QR: ['FACE', 'ACCESS_CONTROL'],
         };
         return map[credType]?.includes(deviceType);
     }
 
     private async handleDeviceAction(
-        type: string,
+        type: ActionType,
         action: string,
         employee: EmployeeWithRelations,
         code: string,
@@ -250,6 +251,10 @@ export class CredentialService {
         config: HikvisionConfig,
         oldCredential?: CreateCredentialDto
     ) {
+        if (type == 'QR') {
+            type = 'CARD';
+        }
+
         switch (type) {
             case 'CAR':
                 if (action === 'Delete')

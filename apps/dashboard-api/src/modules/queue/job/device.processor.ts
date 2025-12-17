@@ -346,16 +346,7 @@ export class DeviceProcessor extends WorkerHost {
                     const employeeData = employeeMap.get(empId);
                     if (!employeeData) continue;
 
-                    const empCredentials = employeeCredsMap.get(empId) || [];
-
-                    const validCredentials = empCredentials.filter(c => {
-                        if (isCarDevice && c.type === 'CAR') return true;
-                        if (isFaceDevice && c.type === 'PHOTO') return true;
-                        if (isFaceDevice && c.type === 'PERSONAL_CODE') return true;
-                        if (isFaceDevice && c.type === 'CARD') return true;
-                        if (isFaceDevice && c.type === 'QR') return true;
-                        return false;
-                    });
+                    const validCredentials = employeeCredsMap.get(empId) || [];
 
                     if (validCredentials.length === 0) {
                         let errorMsg = 'Credential not found';
@@ -440,6 +431,9 @@ export class DeviceProcessor extends WorkerHost {
                             } else if (isFaceDevice && cred.type === 'CARD') {
                                 if (!cred.code)
                                     throw new Error('Card number is not in credential!');
+                                await this.syncCardToDevice(empId.toString(), cred.code, config);
+                            } else if (isFaceDevice && cred.type === 'QR') {
+                                if (!cred.code) throw new Error('QR Code is not in credential!');
                                 await this.syncCardToDevice(empId.toString(), cred.code, config);
                             }
 
