@@ -47,8 +47,10 @@ export abstract class BaseRepository<
             scopedWhere.organizationId = scope.organizationId;
         }
 
-        if (scope?.departments?.length) {
-            scopedWhere.departments = scope?.departments;
+        if (scope?.departmentIds?.length) {
+            scopedWhere.id = {
+                in: scope.departmentIds,
+            };
         }
 
         // if (scopedWhere.deletedAt === undefined) {
@@ -195,14 +197,17 @@ export abstract class BaseRepository<
         include?: TInclude,
         pagination?: PaginationDto,
         select?: TSelect,
-        scope?: DataScope
+        scope?: DataScope,
+        isDeleted: boolean = false
     ): Promise<TEntity[]> {
         this.logger.debug(`Finding many ${this.modelName} with conditions:`, where);
 
         const scopedWhere = this.applyDataScope(where, scope);
 
-        if (!scopedWhere['deletedAt']) {
-            scopedWhere['deletedAt'] = null;
+        if (!isDeleted) {
+            if (!scopedWhere['deletedAt']) {
+                scopedWhere['deletedAt'] = null;
+            }
         }
 
         const options: {

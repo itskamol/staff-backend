@@ -58,7 +58,7 @@ export class DepartmentController {
     @ApiOkResponseData(DepartmentResponseDto, {
         summary: "Get the current authenticated user's department",
     })
-    async getCurrentDepartment(@Scope() scope: DataScope) {
+    async getCurrentDepartment(@Scope() scope: DataScope, @User() user: UserContext) {
         return this.departmentService.getDepartmentsWithScope(scope);
     }
 

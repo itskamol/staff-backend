@@ -36,8 +36,8 @@ export class JwtStrategy extends PassportStrategy(Strategy) {
                 sub: payload.sub,
                 role: payload.role,
                 username: payload.username,
-                ...(payload?.organizationId ? { organizationId: payload.organizationId } : {}),
-                ...(payload?.departments?.length ? { departments: payload.departments } : {}),
+                organizationId: payload.organizationId,
+                departmentIds: payload.departmentIds || payload.departments || [],
             };
 
             this.logger.debug('JWT validation successful', {

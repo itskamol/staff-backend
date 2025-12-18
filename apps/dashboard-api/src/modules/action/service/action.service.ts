@@ -275,7 +275,8 @@ export class ActionService {
             this.repo.getDefaultInclude(),
             undefined,
             undefined,
-            scope
+            scope,
+            true
         );
 
         const dates = this.getDateRange(start, end);

@@ -1,4 +1,9 @@
-import { ConflictException, Injectable, NotFoundException } from '@nestjs/common';
+import {
+    BadRequestException,
+    ConflictException,
+    Injectable,
+    NotFoundException,
+} from '@nestjs/common';
 import { Prisma, Role, User } from '@prisma/client';
 import { UserRepository } from './user.repository';
 import { LoggerService } from '../../core/logger';
@@ -20,22 +25,38 @@ export class UserService {
      * Create a new user
      */
     async createUser(createUserDto: CreateUserDto): Promise<Omit<User, 'password'>> {
-        // Check if username already exists
-        const existingUser = await this.userRepository.findFirst({
-            username: createUserDto.username,
-        });
+        const { departmentIds, organizationId, password, ...userData } = createUserDto;
 
+        const existingUser = await this.userRepository.findFirst({
+            username: userData.username,
+        });
         if (existingUser) {
             throw new ConflictException('Username already exists');
         }
-        // Hash password
-        const passwordHash = await this.validateAndHashPassword(createUserDto.password);
 
-        // Create user
-        const { password, ...user } = await this.userRepository.create({
-            ...createUserDto,
+        const passwordHash = await this.validateAndHashPassword(password);
+
+        if (userData.role === 'DEPARTMENT_LEAD' && (!departmentIds || departmentIds.length === 0)) {
+            throw new BadRequestException('departmentIds is required for DEPARTMENT_LEAD');
+        }
+
+        const createInput: Prisma.UserCreateInput = {
+            ...userData,
             password: passwordHash,
-        });
+            organization: organizationId
+                ? {
+                      connect: { id: organizationId },
+                  }
+                : undefined,
+            departments:
+                userData.role === 'DEPARTMENT_LEAD' && departmentIds?.length
+                    ? {
+                          connect: departmentIds.map(id => ({ id })),
+                      }
+                    : undefined,
+        };
+
+        const user = await this.userRepository.create(createInput);
 
         this.logger.logUserAction(user.id, 'USER_CREATED', {
             username: user.username,
@@ -70,12 +91,37 @@ export class UserService {
         const existingUser = await this.userRepository.findById(id);
         if (!existingUser) throw new NotFoundException('User not found');
 
-        if (+user.sub === id) throw new ConflictException('You can only update your own profile');
+        if (+user.sub === id) {
+            throw new ConflictException('You cannot update your own profile via admin panel');
+        }
 
-        if (updateUserDto.password)
-            updateUserDto.password = await this.validateAndHashPassword(updateUserDto.password);
+        const { departmentIds, ...dataToUpdate } = updateUserDto;
 
-        const { password, ...updatedUser } = await this.userRepository.update(id, updateUserDto);
+        if (dataToUpdate.password) {
+            dataToUpdate.password = await this.validateAndHashPassword(dataToUpdate.password);
+        }
+
+        let departmentUpdate: Prisma.DepartmentUpdateManyWithoutUsersNestedInput | undefined =
+            undefined;
+        const finalRole = dataToUpdate.role || existingUser.role;
+
+        if (finalRole === 'DEPARTMENT_LEAD') {
+            if (departmentIds) {
+                if (departmentIds.length === 0) {
+                    throw new BadRequestException('departmentIds is required for DEPARTMENT_LEAD');
+                }
+                departmentUpdate = {
+                    set: departmentIds.map(id => ({ id })),
+                };
+            }
+        } else {
+            departmentUpdate = { set: [] };
+        }
+
+        const updatedUser = await this.userRepository.update(id, {
+            ...dataToUpdate,
+            departments: departmentUpdate,
+        });
 
         this.logger.logUserAction(id, 'USER_UPDATED', {
             changes: updateUserDto,
