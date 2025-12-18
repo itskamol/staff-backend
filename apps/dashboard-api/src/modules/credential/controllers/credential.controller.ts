@@ -37,7 +37,6 @@ export class CredentialController {
         @User() user: UserContext,
         @Scope() scope: DataScope
     ) {
-        console.log({ user, scope });
         return this.credentialService.getAllCredentials(query, scope);
     }
 

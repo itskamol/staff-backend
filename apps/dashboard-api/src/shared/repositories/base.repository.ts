@@ -51,9 +51,9 @@ export abstract class BaseRepository<
             scopedWhere.departments = scope?.departments;
         }
 
-        if (scopedWhere.deletedAt === undefined) {
-            scopedWhere.deletedAt = null;
-        }
+        // if (scopedWhere.deletedAt === undefined) {
+        //     scopedWhere.deletedAt = null;
+        // }
 
         return scopedWhere;
     }

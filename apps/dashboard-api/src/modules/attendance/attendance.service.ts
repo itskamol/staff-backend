@@ -88,7 +88,7 @@ export class AttendanceService {
         if (employeeId !== undefined) where.employeeId = employeeId;
         if (organizationId !== undefined) where.organizationId = organizationId;
         if (arrivalStatus) where.arrivalStatus = arrivalStatus;
-        if (goneStatus) where.goneStatus = arrivalStatus;
+        if (goneStatus) where.goneStatus = goneStatus;
 
         if (query.date) {
             const date = new Date(query.date);

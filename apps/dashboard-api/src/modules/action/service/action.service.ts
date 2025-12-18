@@ -285,7 +285,6 @@ export class ActionService {
             dateWithOffset.setDate(dateWithOffset.getDate() + 1);
 
             const dateStr = dateWithOffset.toISOString().split('T')[0];
-            console.log('dateStr', dateStr);
 
             return {
                 date: dateStr,

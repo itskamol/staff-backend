@@ -38,6 +38,7 @@ export class ReportsService {
             where: {
                 ...(depId.length > 0 ? { departmentId: { in: depId } } : {}),
                 organizationId: orgId,
+                id: 16,
                 deletedAt: null,
             },
             include: {
@@ -85,7 +86,6 @@ export class ReportsService {
                 },
                 orderBy: { createdAt: 'asc' },
             });
-
             // Statistika yig‘iladigan joy
             let totalWorked = 0;
             let totalLate = 0;
@@ -121,9 +121,14 @@ export class ReportsService {
                 const weekday = cursor.getDay() === 0 ? 7 : cursor.getDay();
                 const isWorkingDay = plannedDays.includes(weekday);
 
-                const att = attendances.find(
-                    a => a.startTime && a.startTime.toISOString().slice(0, 10) === dateStr
-                );
+                const att = attendances.find(a => {
+                    if (!a.startTime) return false;
+
+                    const localDate = new Date(a.startTime);
+                    localDate.setHours(localDate.getHours() + 5);
+
+                    return localDate.toISOString().slice(0, 10) === dateStr;
+                });
 
                 if (!att) {
                     // ➤ Ish kuni – lekin yo‘q → ABSENT

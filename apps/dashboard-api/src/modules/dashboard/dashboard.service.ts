@@ -1,7 +1,12 @@
 import { Injectable, BadRequestException } from '@nestjs/common';
 import { PrismaService } from '@app/shared/database';
 
-import { DashboardStats } from './dto/dashboard.dto';
+import {
+    AttendanceChartDataDto,
+    AttendanceChartStatsDto,
+    ChartStatsQueryDto,
+    DashboardStats,
+} from './dto/dashboard.dto';
 import { DataScope, UserContext } from '@app/shared/auth';
 
 @Injectable()
@@ -14,15 +19,12 @@ export class DashboardService {
 
         const now = new Date();
 
-        // end → bugun 23:59:59
         const end = new Date(now);
         end.setHours(23, 59, 59, 999);
 
-        // start → 1 oy oldin 00:00:00
         const start = new Date(new Date(now).setMonth(now.getMonth() - 1));
         start.setHours(0, 0, 0, 0);
 
-        // 🔹 Base where (hamma query uchun umumiy)
         const baseWhere: any = {
             organizationId: orgId,
             ...(depId.length > 0 ? { departmentId: { in: depId } } : {}),
@@ -109,5 +111,104 @@ export class DashboardService {
         };
 
         return result;
+    }
+
+    async generateChartStats(
+        query: ChartStatsQueryDto,
+        user: UserContext,
+        scope: DataScope
+    ): Promise<AttendanceChartStatsDto> {
+        const { startDate = new Date(), endDate = new Date() } = query;
+        const { orgId, depIds } = {
+            orgId: scope?.organizationId,
+            depIds: scope?.departmentIds ?? [],
+        };
+
+        const start = new Date(startDate);
+        start.setHours(0, 0, 0, 0);
+        const end = new Date(endDate);
+        end.setHours(23, 59, 59, 999);
+
+        const [employees, attendances] = await Promise.all([
+            this.prisma.employee.findMany({
+                where: {
+                    organizationId: orgId,
+                    ...(depIds.length && { departmentId: { in: depIds } }),
+                    deletedAt: null,
+                },
+                select: { id: true },
+            }),
+
+            this.prisma.attendance.findMany({
+                where: {
+                    organizationId: orgId,
+                    createdAt: { gte: start, lte: end },
+                    employee: {
+                        ...(depIds.length && { departmentId: { in: depIds } }),
+                        deletedAt: null,
+                    },
+                },
+                select: {
+                    startTime: true,
+                    arrivalStatus: true,
+                    lateArrivalTime: true,
+                    createdAt: true,
+                },
+            }),
+        ]);
+
+        const dailyStatsMap = new Map<string, { onTime: number; late: number; absent: number }>();
+
+        for (const att of attendances) {
+            const dateKey = this.getTashkentDate(att.createdAt);
+
+            if (!dailyStatsMap.has(dateKey)) {
+                dailyStatsMap.set(dateKey, { onTime: 0, late: 0, absent: 0 });
+            }
+            const entry = dailyStatsMap.get(dateKey);
+
+            if (att.arrivalStatus === 'ABSENT') {
+                entry.absent++;
+            } else if (att.arrivalStatus === 'LATE' || (att.lateArrivalTime || 0) > 0) {
+                entry.late++;
+            } else {
+                entry.onTime++;
+            }
+        }
+
+        const dailyData: AttendanceChartDataDto[] = [];
+        const cursor = new Date(start);
+
+        while (cursor <= end) {
+            const dateKey = this.getTashkentDate(cursor);
+
+            const stats = dailyStatsMap.get(dateKey) || { onTime: 0, late: 0, absent: 0 };
+
+            dailyData.push({
+                date: this.formatDisplayDate(cursor),
+                onTime: stats.onTime,
+                late: stats.late,
+                absent: stats.absent,
+            });
+
+            cursor.setDate(cursor.getDate() + 1);
+        }
+
+        return {
+            employeeCount: employees.length,
+            data: dailyData,
+        };
+    }
+
+    private getTashkentDate(date: Date): string {
+        return new Date(date).toLocaleDateString('en-CA', { timeZone: 'Asia/Tashkent' });
+    }
+
+    private formatDisplayDate(date: Date): string {
+        const d = new Date(date.toLocaleString('en-US', { timeZone: 'Asia/Tashkent' }));
+        return `${String(d.getDate()).padStart(2, '0')}.${String(d.getMonth() + 1).padStart(
+            2,
+            '0'
+        )}.${d.getFullYear()}`;
     }
 }
