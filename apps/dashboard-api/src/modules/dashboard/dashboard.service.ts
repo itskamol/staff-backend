@@ -26,9 +26,9 @@ export class DashboardService {
         start.setHours(0, 0, 0, 0);
 
         const baseWhere: any = {
-            organizationId: orgId,
-            ...(depId.length > 0 ? { departmentId: { in: depId } } : {}),
             deletedAt: null,
+            ...(orgId ? { organizationId: orgId } : {}),
+            ...(depId.length > 0 ? { departmentId: { in: depId } } : {}),
         };
 
         const [
@@ -54,14 +54,14 @@ export class DashboardService {
 
             this.prisma.department.count({
                 where: {
-                    organizationId: orgId,
+                    ...(orgId ? { organizationId: orgId } : {}),
                     deletedAt: null,
                 },
             }),
 
             this.prisma.department.count({
                 where: {
-                    organizationId: orgId,
+                    ...(orgId ? { organizationId: orgId } : {}),
                     createdAt: { gte: start, lte: end },
                     deletedAt: null,
                 },
@@ -82,14 +82,14 @@ export class DashboardService {
 
             this.prisma.organization.count({
                 where: {
-                    id: orgId,
+                    ...(orgId ? { id: orgId } : {}),
                     deletedAt: null,
                 },
             }),
 
             this.prisma.organization.count({
                 where: {
-                    id: orgId,
+                    ...(orgId ? { id: orgId } : {}),
                     createdAt: { gte: start, lte: end },
                     deletedAt: null,
                 },
@@ -132,7 +132,7 @@ export class DashboardService {
         const [employees, attendances] = await Promise.all([
             this.prisma.employee.findMany({
                 where: {
-                    organizationId: orgId,
+                    ...(orgId ? { organizationId: orgId } : {}),
                     ...(depIds.length && { departmentId: { in: depIds } }),
                     deletedAt: null,
                 },
@@ -141,7 +141,7 @@ export class DashboardService {
 
             this.prisma.attendance.findMany({
                 where: {
-                    organizationId: orgId,
+                    ...(orgId ? { organizationId: orgId } : {}),
                     createdAt: { gte: start, lte: end },
                     employee: {
                         ...(depIds.length && { departmentId: { in: depIds } }),
