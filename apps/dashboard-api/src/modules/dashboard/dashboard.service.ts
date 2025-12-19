@@ -185,7 +185,7 @@ export class DashboardService {
             const stats = dailyStatsMap.get(dateKey) || { onTime: 0, late: 0, absent: 0 };
 
             dailyData.push({
-                date: this.formatDisplayDate(cursor),
+                date: this.formatDisplayDate(cursor).slice(0, 5).replace('.', '/'),
                 onTime: stats.onTime,
                 late: stats.late,
                 absent: stats.absent,
