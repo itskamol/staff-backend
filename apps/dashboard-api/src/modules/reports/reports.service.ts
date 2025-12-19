@@ -38,7 +38,6 @@ export class ReportsService {
             where: {
                 ...(depId.length > 0 ? { departmentId: { in: depId } } : {}),
                 organizationId: orgId,
-                id: 16,
                 deletedAt: null,
             },
             include: {
