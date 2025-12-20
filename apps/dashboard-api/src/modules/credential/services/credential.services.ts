@@ -12,12 +12,17 @@ import {
     CredentialRepository,
     CredentialWithRelations,
 } from '../repositories/credential.repository';
-import { ActionType, Prisma } from '@prisma/client';
+import { ActionType, DeviceType, Prisma } from '@prisma/client';
 import { BadRequestException, Injectable, NotFoundException } from '@nestjs/common';
 import { DataScope, UserContext } from '@app/shared/auth';
 
 @Injectable()
 export class CredentialService {
+    private readonly CAR = ActionType.CAR;
+    private readonly CARD = ActionType.CARD;
+    private readonly PHOTO = ActionType.PHOTO;
+    private readonly QR = ActionType.QR;
+    private readonly PERSONAL_CODE = ActionType.PERSONAL_CODE;
     constructor(
         private readonly credentialRepository: CredentialRepository,
         private readonly employeeService: EmployeeService,
@@ -165,14 +170,16 @@ export class CredentialService {
     }
 
     private validatePhoto(type: string, details?: string) {
-        if (type === 'PHOTO' && !details) {
+        if (type === this.PHOTO && !details) {
             throw new BadRequestException('Employee photo is missing.');
         }
     }
 
     private async validateUniqueCode(type: ActionType, code?: string, excludeId?: number) {
         if (!code) return;
-        if (!['CAR', 'PERSONAL_CODE', 'QR', 'CARD'].includes(type)) return;
+        if (!([this.CAR, this.PERSONAL_CODE, this.QR, this.CARD] as ActionType[]).includes(type)) {
+            return;
+        }
 
         const exists = await this.credentialRepository.findFirst(
             { code, ...(excludeId && { id: { not: excludeId } }) },
@@ -184,8 +191,8 @@ export class CredentialService {
         }
     }
 
-    private shouldDeactivate(type: string, isActive = true) {
-        return isActive && ['PHOTO', 'PERSONAL_CODE'].includes(type);
+    private shouldDeactivate(type: ActionType, isActive = true) {
+        return isActive && ([this.PHOTO, this.PERSONAL_CODE] as ActionType[]).includes(type);
     }
 
     private async deactivateOld(employeeId: number, type: ActionType, excludeId?: number) {
@@ -232,12 +239,13 @@ export class CredentialService {
     }
 
     private isDeviceCompatible(credType: string, deviceType: string) {
+        const { CAR, ACCESS_CONTROL, FACE } = DeviceType;
         const map = {
-            CAR: ['CAR'],
-            PHOTO: ['FACE', 'ACCESS_CONTROL'],
-            PERSONAL_CODE: ['FACE', 'ACCESS_CONTROL'],
-            CARD: ['FACE', 'ACCESS_CONTROL'],
-            QR: ['FACE', 'ACCESS_CONTROL'],
+            CAR: [CAR],
+            PHOTO: [FACE, ACCESS_CONTROL],
+            PERSONAL_CODE: [FACE, ACCESS_CONTROL],
+            CARD: [FACE, ACCESS_CONTROL],
+            QR: [FACE, ACCESS_CONTROL],
         };
         return map[credType]?.includes(deviceType);
     }
@@ -251,19 +259,19 @@ export class CredentialService {
         config: HikvisionConfig,
         oldCredential?: CreateCredentialDto
     ) {
-        if (type == 'QR') {
-            type = 'CARD';
+        if (type == this.QR) {
+            type = this.CARD;
         }
 
         switch (type) {
-            case 'CAR':
+            case this.CAR:
                 if (action === 'Delete')
                     return this.hikvisionAnprService.deleteLicensePlate(code, config);
                 if (action === 'Create')
                     return this.hikvisionAnprService.addLicensePlate(code, '1', config);
                 return this.hikvisionAnprService.editLicensePlate(code, code, '1', config);
 
-            case 'PHOTO':
+            case this.PHOTO:
                 if (action === 'Delete')
                     return this.hikvisionAccessService.deleteFaceFromUser(
                         String(employee.id),
@@ -275,14 +283,14 @@ export class CredentialService {
                     config
                 );
 
-            case 'PERSONAL_CODE':
+            case this.PERSONAL_CODE:
                 return this.hikvisionAccessService.addPasswordToUser(
                     String(employee.id),
                     action === 'Delete' ? '' : code,
                     config
                 );
 
-            case 'CARD':
+            case this.CARD:
                 if (action === 'Delete')
                     return this.hikvisionAccessService.deleteCard({
                         employeeNo: String(employee.id),

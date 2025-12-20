@@ -1,5 +1,5 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
-import { PrismaClient, Prisma } from '@prisma/client';
+import { PrismaClient, Prisma, Role } from '@prisma/client';
 import { GetEmployeeSyncDto } from './get-employee-sync.dto';
 import { DataScope, UserContext } from '@app/shared/auth';
 
@@ -9,7 +9,7 @@ export class EmployeeSyncService {
 
     async findAll(query: GetEmployeeSyncDto, scope: DataScope, user: UserContext) {
         let organizationId = scope?.organizationId;
-        if (!organizationId && user.role != 'ADMIN') {
+        if (!organizationId && user.role != Role.ADMIN) {
             throw new NotFoundException('User organizationId not found!');
         }
 
