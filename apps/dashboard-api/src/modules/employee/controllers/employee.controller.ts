@@ -227,38 +227,6 @@ export class EmployeeController {
         return this.employeeService.getEmployeeComputerUsers(id, scope, user);
     }
 
-    @Post(':id/assign-card')
-    @Roles(Role.ADMIN, Role.HR)
-    @ApiParam({ name: 'id', description: 'Employee ID' })
-    @ApiOkResponseData(Object, {
-        summary: 'Assign card to employee',
-    })
-    @ApiErrorResponses({ forbidden: true, notFound: true, badRequest: true })
-    async assignCardToEmployee(
-        @Param('id') id: number,
-        @Body() dto: AssignCardDto,
-        @Scope() scope: DataScope,
-        @User() user: UserContext
-    ) {
-        return this.employeeService.assignCardToEmployee(id, dto, scope, user);
-    }
-
-    @Post(':id/assign-car')
-    @Roles(Role.ADMIN, Role.HR)
-    @ApiParam({ name: 'id', description: 'Employee ID' })
-    @ApiOkResponseData(Object, {
-        summary: 'Assign car to employee',
-    })
-    @ApiErrorResponses({ forbidden: true, notFound: true, badRequest: true })
-    async assignCarToEmployee(
-        @Param('id') id: number,
-        @Body() dto: AssignCarDto,
-        @Scope() scope: DataScope,
-        @User() user: UserContext
-    ) {
-        return this.employeeService.assignCarToEmployee(id, dto, scope, user);
-    }
-
     @Post(':id/link-computer-user')
     @Roles(Role.ADMIN, Role.HR)
     @ApiParam({ name: 'id', description: 'Employee ID' })

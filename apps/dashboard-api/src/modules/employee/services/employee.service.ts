@@ -34,15 +34,7 @@ export class EmployeeService {
 
         let whereClause: Prisma.EmployeeWhereInput = {};
         if (search) {
-            whereClause.OR = [
-                { name: { contains: search, mode: 'insensitive' } },
-                { email: { contains: search, mode: 'insensitive' } },
-                { phone: { contains: search, mode: 'insensitive' } },
-                { department: { fullName: { contains: search, mode: 'insensitive' } } },
-                { department: { shortName: { contains: search, mode: 'insensitive' } } },
-                { organization: { shortName: { contains: search, mode: 'insensitive' } } },
-                { organization: { fullName: { contains: search, mode: 'insensitive' } } },
-            ];
+            whereClause.OR = [{ name: { contains: search, mode: 'insensitive' } }];
         }
 
         if (credentialType) {
@@ -374,56 +366,6 @@ export class EmployeeService {
         return {
             employeeId: id,
             data: computerUsers,
-        };
-    }
-
-    async assignCardToEmployee(id: number, dto: any, scope: DataScope, user: UserContext) {
-        // Verify access to employee
-        const employee = await this.employeeRepository.findByIdWithRoleScope(
-            id,
-            undefined,
-            scope,
-            user.role
-        );
-        if (!employee) {
-            throw new NotFoundException('Employee not found or access denied');
-        }
-
-        const credential = await this.employeeRepository.assignCredential(id, {
-            code: dto.cardId,
-            type: 'CARD',
-            additionalDetails: dto.additionalDetails,
-        });
-
-        return {
-            employeeId: id,
-            credential,
-            message: 'Card assigned successfully',
-        };
-    }
-
-    async assignCarToEmployee(id: number, dto: any, scope: DataScope, user: UserContext) {
-        // Verify access to employee
-        const employee = await this.employeeRepository.findByIdWithRoleScope(
-            id,
-            undefined,
-            scope,
-            user.role
-        );
-        if (!employee) {
-            throw new NotFoundException('Employee not found or access denied');
-        }
-
-        const credential = await this.employeeRepository.assignCredential(id, {
-            code: dto.carId,
-            type: 'CAR',
-            additionalDetails: dto.additionalDetails,
-        });
-
-        return {
-            employeeId: id,
-            credential,
-            message: 'Car assigned successfully',
         };
     }
 
