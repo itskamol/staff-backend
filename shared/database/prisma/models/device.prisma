@@ -57,7 +57,7 @@ model Device {
   gateId           Int?          @map("gate_id")
   name             String?
   entryType        EntryType?    @map("entry_type")
-  type             DeviceType?   @map("type")
+  type             ActionType[]  @default([]) @map("types")
   manufacturer     String?
   model            String?
   firmware         String?
@@ -98,9 +98,11 @@ model Attendance {
   organizationId  Int?          @map("organization_id")
   lateArrivalTime Int?          @map("late_arrival_time") // in minutes
   earlyGoneTime   Int?          @map("early_gone_time") // in minutes
-  createdAt       DateTime      @default(now()) @map("created_at")
-  updatedAt       DateTime?     @updatedAt @map("updated_at")
-  deletedAt       DateTime?     @map("deleted_at")
+
+  //Standart fields
+  createdAt DateTime  @default(now()) @map("created_at")
+  updatedAt DateTime? @updatedAt @map("updated_at")
+  deletedAt DateTime? @map("deleted_at")
 
   employee     Employee      @relation(fields: [employeeId], references: [id], onDelete: Cascade)
   organization Organization? @relation(fields: [organizationId], references: [id], onDelete: Cascade)

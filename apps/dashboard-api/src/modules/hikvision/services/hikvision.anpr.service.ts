@@ -94,7 +94,8 @@ export class HikvisionAnprService {
         this.logger.log(
             `Adding license plate: ${plateNo} to ${listType === '2' ? 'blacklist' : 'whitelist'}`
         );
-        return this.sendRecordRequest(body);
+        const result = await this.sendRecordRequest(body);
+        return result;
     }
 
     // EDIT

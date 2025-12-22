@@ -90,7 +90,7 @@ export class ActionService {
                 employeeId,
                 visitorId: undefined,
                 visitorType:
-                    acEvent.userType === 'normal' || device.type === DeviceType.CAR
+                    acEvent.userType === 'normal' || device.type.includes(DeviceType.CAR)
                         ? VisitorType.EMPLOYEE
                         : VisitorType.VISITOR,
                 entryType: device.entryType,

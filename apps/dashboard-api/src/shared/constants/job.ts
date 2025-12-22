@@ -6,6 +6,7 @@ export const JOB = {
         ASSIGN_EMPLOYEES_TO_GATES: 'device:assignEmployees',
         REMOVE_GATE_EMPLOYEE_DATA: 'device:removeEmployeeData',
         REMOVE_EMPLOYEES: 'remove-employees-from-devices',
+        CLEAR_ALL_USERS_FROM_DEVICE: 'clear-all-users-from-device',
     },
     ATTENDANCE: {
         NAME: 'attandance',

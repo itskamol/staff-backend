@@ -56,7 +56,7 @@ model Job {
 model Credential {
   id                Int        @id @default(autoincrement())
   employeeId        Int        @map("employee_id")
-  code              String
+  code              String?
   type              ActionType
   additionalDetails String?    @map("additional_details")
   organizationId    Int?       @map("organization_id")
