@@ -15,6 +15,10 @@ import { LoggerService } from 'apps/dashboard-api/src/core/logger';
 import { InjectQueue } from '@nestjs/bullmq';
 import { JOB } from 'apps/dashboard-api/src/shared/constants';
 import { Queue } from 'bullmq';
+import { EmployeeWithRelations } from '../../employee/repositories/employee.repository';
+import { HikvisionConfig } from '../../hikvision/dto/create-hikvision-user.dto';
+import { HikvisionAnprService } from '../../hikvision/services/hikvision.anpr.service';
+import { HikvisionAccessService } from '../../hikvision/services/hikvision.access.service';
 
 @Injectable()
 export class CredentialService {
@@ -27,6 +31,8 @@ export class CredentialService {
         @InjectQueue(JOB.DEVICE.NAME) private readonly deviceQueue: Queue,
         private readonly credentialRepository: CredentialRepository,
         private readonly employeeService: EmployeeService,
+        private readonly hikvisionAnprService: HikvisionAnprService,
+        private readonly hikvisionAccessService: HikvisionAccessService,
         private readonly logger: LoggerService
     ) {}
 
@@ -129,23 +135,23 @@ export class CredentialService {
         const finalCode = dto.code ?? existing.code;
         const finalDetails = dto.additionalDetails ?? existing.additionalDetails;
 
+        // Validatsiyalar
         this.validatePhoto(finalType, finalDetails);
         await this.validateUniqueCode(finalCode ? finalType : null, finalCode, id);
 
+        // Sinxronizatsiya logikasi
         if (dto.isActive === false && existing.isActive === true) {
-            await this.syncDevices(employee.id, existing.id, 'Delete');
+            // Bloklandi -> Qurilmadan o'chiramiz
+            await this.syncDevices(employee, existing, dto, 'Delete');
         } else if (dto.isActive === true && existing.isActive === false) {
-            await this.syncDevices(employee.id, existing.id, 'Create');
+            // Faollashdi -> Qurilmaga yuboramiz
+            await this.syncDevices(employee, existing, dto, 'Create');
         } else if (existing.isActive) {
-            const isCodeChanged = dto.code && dto.code !== existing.code;
-            const isPhotoChanged =
-                dto.additionalDetails && dto.additionalDetails !== existing.additionalDetails;
-
-            if (isCodeChanged || isPhotoChanged) {
-                await this.syncDevices(employee.id, existing.id, 'Edit', existing.code);
-            }
+            // Shunchaki ma'lumot o'zgardi (Masalan, moshina raqami o'zgardi)
+            await this.syncDevices(employee, existing, dto, 'Edit');
         }
 
+        // "Faqat bitta faol foto/parol" qoidasi
         if (dto.isActive && this.shouldDeactivate(finalType)) {
             await this.deactivateOld(employee.id, finalType, id);
         }
@@ -162,7 +168,7 @@ export class CredentialService {
         const credential = await this.getCredentialById(id, scope, user);
         const employee = await this.getEmployee(credential.employeeId, scope, user);
 
-        await this.syncDevices(employee.id, credential.id, 'Delete');
+        await this.syncDevices(employee, credential, undefined, 'Delete');
         return this.credentialRepository.deleteCredential(id, scope);
     }
 
@@ -211,16 +217,113 @@ export class CredentialService {
     }
 
     private async syncDevices(
-        employeeId: number,
-        credentialId: number,
-        action: 'Create' | 'Edit' | 'Delete' = 'Edit',
-        oldCode?: string
+        employee: EmployeeWithRelations,
+        oldCredential: CreateCredentialDto, // Faqat kerakli maydonlar
+        dto?: UpdateCredentialDto,
+        action: 'Create' | 'Edit' | 'Delete' = 'Edit'
     ) {
-        await this.deviceQueue.add(JOB.DEVICE.SYNC_SINGLE_CREDENTIAL, {
-            employeeId,
-            credentialId,
-            action,
-            oldCode,
-        });
+        const type = dto?.type ?? oldCredential.type;
+        const code = dto?.code ?? oldCredential.code;
+        const faceUrl = dto?.additionalDetails ?? oldCredential.additionalDetails;
+
+        // Qurilmalarni filtrlaymiz
+        const devices = employee.gates.flatMap(
+            g => g.devices.filter(d => d.type.includes(type)) // To'g'ridan-to'g'ri massivni tekshiramiz
+        );
+
+        for (const device of devices) {
+            const config: HikvisionConfig = {
+                host: device.ipAddress,
+                protocol: 'http',
+                port: 80,
+                username: device.login,
+                password: device.password,
+            };
+
+            try {
+                await this.handleDeviceAction(
+                    type,
+                    action,
+                    employee,
+                    code,
+                    faceUrl,
+                    config,
+                    oldCredential
+                );
+            } catch (e) {
+                this.logger.error(
+                    `[${type}] device sync error on Device ${device.id}: ${e.message}`
+                );
+            }
+        }
+    }
+
+    private async handleDeviceAction(
+        type: ActionType,
+        action: string,
+        employee: EmployeeWithRelations,
+        code: string,
+        faceUrl: string,
+        config: HikvisionConfig,
+        oldCredential?: CreateCredentialDto
+    ) {
+        // Agar QR bo'lsa, Hikvision ISAPI interfeysida u Card ID sifatida yuboriladi
+        const effectiveType = type === ActionType.QR ? ActionType.CARD : type;
+
+        switch (effectiveType) {
+            case ActionType.CAR:
+                if (action === 'Delete')
+                    return this.hikvisionAnprService.deleteLicensePlate(code, config);
+                if (action === 'Create')
+                    return this.hikvisionAnprService.addLicensePlate(code, '1', config);
+                return this.hikvisionAnprService.editLicensePlate(
+                    oldCredential?.code || code,
+                    code,
+                    '1',
+                    config
+                );
+
+            case ActionType.PHOTO:
+                if (action === 'Delete')
+                    return this.hikvisionAccessService.deleteFaceFromUser(
+                        String(employee.id),
+                        config
+                    );
+
+                // Yuz qo'shishdan oldin foydalanuvchi borligini tekshirish/yaratish HikvisionAccessService ichida bo'lishi kerak
+                return this.hikvisionAccessService.addFaceToUserViaURL(
+                    String(employee.id),
+                    faceUrl,
+                    config
+                );
+
+            case ActionType.PERSONAL_CODE:
+                return this.hikvisionAccessService.addPasswordToUser(
+                    String(employee.id),
+                    action === 'Delete' ? '' : code,
+                    config
+                );
+
+            case ActionType.CARD:
+                if (action === 'Delete')
+                    return this.hikvisionAccessService.deleteCard({
+                        employeeNo: String(employee.id),
+                        cardNo: code,
+                        config,
+                    });
+                if (action === 'Create')
+                    return this.hikvisionAccessService.addCardToUser({
+                        employeeNo: String(employee.id),
+                        cardNo: code,
+                        config,
+                    });
+
+                return this.hikvisionAccessService.replaceCard(
+                    oldCredential?.code || code,
+                    code,
+                    String(employee.id),
+                    config
+                );
+        }
     }
 }
