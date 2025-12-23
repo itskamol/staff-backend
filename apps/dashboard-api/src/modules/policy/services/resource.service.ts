@@ -1,9 +1,8 @@
 import { Injectable, NotFoundException, BadRequestException } from '@nestjs/common';
 import { PrismaService } from '@app/shared/database';
-import { DataScope } from '@app/shared/auth';
+import { DataScope, UserContext } from '@app/shared/auth';
 import { CreateResourceDto, ResourceQueryDto, UpdateResourceDto } from '../dto/resource.dto';
 import { ResourceType } from '@prisma/client';
-import { UserContext } from '../../../shared/interfaces';
 import { ResourceRepository } from '../repositories/resource.repository';
 import { Prisma } from '@prisma/client';
 
@@ -122,7 +121,7 @@ export class ResourceService {
             throw new BadRequestException('Cannot delete resource that is used in groups');
         }
 
-        return this.resourceRepository.delete(id, scope);
+        return this.resourceRepository.softDelete(id, scope);
     }
 
     async findByType(type: ResourceType) {

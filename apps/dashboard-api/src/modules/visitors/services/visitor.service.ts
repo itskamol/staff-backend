@@ -1,17 +1,16 @@
 import { Injectable, NotFoundException, BadRequestException } from '@nestjs/common';
 import { PrismaService } from '@app/shared/database';
-import { DataScope } from '@app/shared/auth';
-import { QueryDto } from '@app/shared/utils';
+import { DataScope, UserContext } from '@app/shared/auth';
 import {
     CreateVisitorDto,
     UpdateVisitorDto,
     CreateOnetimeCodeDto,
     GenerateCodeDto,
 } from '../dto/visitor.dto';
-import { UserContext } from '../../../shared/interfaces';
 import { VisitorRepository } from '../repositories/visitor.repository';
 import { OnetimeCode, Prisma, Visitor, VisitorCodeType } from '@prisma/client';
 import { OnetimeCodeRepository } from '../../onetime-codes/repositories/onetime-code.repository';
+import { QueryDto } from 'apps/dashboard-api/src/shared/dto';
 
 @Injectable()
 export class VisitorService {
@@ -171,9 +170,9 @@ export class VisitorService {
                 creator: {
                     connect: { id: createVisitorDto.creatorId },
                 },
-                organization:{
-                    connect: { id: scope?.organizationId }
-                }
+                organization: {
+                    connect: { id: scope?.organizationId },
+                },
             },
             undefined,
             scope
@@ -226,7 +225,7 @@ export class VisitorService {
             return this.visitorRepository.update(id, { isActive: false });
         }
 
-        return this.visitorRepository.delete(id, scope);
+        return this.visitorRepository.softDelete(id, scope);
     }
 
     async generateCode(id: number, generateCodeDto: GenerateCodeDto, user: UserContext) {

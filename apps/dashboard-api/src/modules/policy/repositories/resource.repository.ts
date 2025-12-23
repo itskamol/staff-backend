@@ -18,6 +18,10 @@ export class ResourceRepository extends BaseRepository<
         super(prisma);
     }
 
+    protected cascadeRelations = ['resourcesOnGroups'];
+
+    protected disconnectRelations = [];
+
     protected readonly modelName = Prisma.ModelName.Resource;
 
     protected getDelegate() {
@@ -35,7 +39,7 @@ export class ResourceRepository extends BaseRepository<
     async bulkCreate(resources: Prisma.ResourceCreateManyInput[]) {
         return this.prisma.resource.createMany({
             data: resources,
-            skipDuplicates: true
+            skipDuplicates: true,
         });
     }
 
@@ -43,9 +47,9 @@ export class ResourceRepository extends BaseRepository<
         return this.findMany(where, undefined, {
             _count: {
                 select: {
-                    groups: true
-                }
-            }
+                    groups: true,
+                },
+            },
         });
     }
 }

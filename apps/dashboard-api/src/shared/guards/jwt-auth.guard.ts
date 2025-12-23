@@ -6,10 +6,7 @@ import { LoggerService } from '../../core/logger';
 
 @Injectable()
 export class JwtAuthGuard extends AuthGuard('jwt') {
-    constructor(
-        private readonly reflector: Reflector,
-        private readonly logger: LoggerService
-    ) {
+    constructor(private readonly reflector: Reflector, private readonly logger: LoggerService) {
         super();
     }
 
@@ -26,33 +23,32 @@ export class JwtAuthGuard extends AuthGuard('jwt') {
         return super.canActivate(context);
     }
 
-    handleRequest(err: Error, user: any, info: any, context: ExecutionContext) {
+    handleRequest(err: any, user: any, info: any, context: ExecutionContext) {
         const request = context.switchToHttp().getRequest();
 
         if (err || !user) {
-            const errorMessage = err?.message || info?.message || 'Authentication failed';
+            let message = 'Unauthorized';
+
+            if (info?.message === 'No auth token') {
+                message = 'Access token is missing';
+            } else if (info?.name === 'TokenExpiredError') {
+                message = 'Access token has expired';
+            } else if (info?.name === 'JsonWebTokenError') {
+                message = 'Access token is invalid';
+            } else if (info?.message) {
+                message = info.message;
+            }
 
             this.logger.logUserAction(undefined, 'JWT_AUTH_FAILED', {
-                error: errorMessage,
+                error: info?.message || err?.message,
                 url: request.url,
                 method: request.method,
                 userAgent: request.headers['user-agent'],
                 ip: request.ip,
             });
 
-            throw err || new UnauthorizedException(errorMessage);
+            throw new UnauthorizedException(message);
         }
-
-        // Log successful authentication
-        this.logger.debug('JWT authentication successful', {
-            userId: user.sub,
-            organizationId: user.organizationId,
-            roles: user.roles,
-            url: request.url,
-            method: request.method,
-            correlationId: request.correlationId,
-            module: 'jwt-auth-guard',
-        });
 
         return user;
     }

@@ -1,11 +1,14 @@
 import { Controller, Get, Post, Put, Delete, Body, Param, Query } from '@nestjs/common';
 import { ApiTags, ApiBearerAuth } from '@nestjs/swagger';
-import { Roles, Role, User as CurrentUser, DataScope, Scope } from '@app/shared/auth';
-import { QueryDto } from '@app/shared/utils';
+import { Roles, Role, User as CurrentUser, DataScope, Scope, UserContext } from '@app/shared/auth';
 import { OnetimeCodeService } from '../services/onetime-code.service';
-import { UserContext } from 'apps/dashboard-api/src/shared/interfaces';
-import { CreateOnetimeCodeDto, OnetimeCodeWithRelationsDto, UpdateOnetimeCodeDto, ActivateCodeDto } from '../dto/onetime-code.dto';
+import {
+    CreateOnetimeCodeDto,
+    OnetimeCodeWithRelationsDto,
+    UpdateOnetimeCodeDto,
+} from '../dto/onetime-code.dto';
 import { ApiCrudOperation } from 'apps/dashboard-api/src/shared/utils';
+import { QueryDto } from 'apps/dashboard-api/src/shared/dto';
 
 @ApiTags('Onetime Codes')
 @Controller('onetime-codes')
@@ -120,10 +123,7 @@ export class OnetimeCodeController {
         summary: 'Activate onetime code',
         errorResponses: { notFound: true },
     })
-    async activate(
-        @Param('id') id: number,
-        @CurrentUser() user: UserContext
-    ) {
+    async activate(@Param('id') id: number, @CurrentUser() user: UserContext) {
         return await this.onetimeCodeService.activate(id, user);
     }
 
@@ -133,10 +133,7 @@ export class OnetimeCodeController {
         summary: 'Deactivate onetime code',
         errorResponses: { notFound: true },
     })
-    async deactivate(
-        @Param('id') id: number,
-        @CurrentUser() user: UserContext
-    ) {
+    async deactivate(@Param('id') id: number, @CurrentUser() user: UserContext) {
         return await this.onetimeCodeService.deactivate(id, user);
     }
 }

@@ -20,6 +20,10 @@ export class GroupRepository extends BaseRepository<
 
     protected readonly modelName = Prisma.ModelName.ResourceGroup;
 
+    protected cascadeRelations = ['resourcesOnGroups', 'policyRule'];
+
+    protected disconnectRelations = [];
+
     protected getDelegate() {
         return this.prisma.resourceGroup;
     }
@@ -34,8 +38,8 @@ export class GroupRepository extends BaseRepository<
                 select: {
                     policyRules: true,
                     resources: true,
-                }
-            }
+                },
+            },
         });
     }
 }

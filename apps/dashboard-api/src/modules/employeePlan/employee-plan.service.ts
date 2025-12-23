@@ -36,11 +36,11 @@ export class EmployeePlanService {
                 { addadditionalDetails: { contains: query.search, mode: 'insensitive' } },
             ];
         }
-        if(query.organizationId){
-            where.organizationId = query.organizationId
+        if (query.organizationId) {
+            where.organizationId = query.organizationId;
         }
 
-        const orderBy = { [query.sortBy ?? 'id']: query.sortOrder ?? 'desc' };
+        const orderBy = { [query.sort ?? 'id']: query.order ?? 'desc' };
 
         const data = await this.repo.findManyPlan({
             skip: ((query.page ?? 1) - 1) * (query.limit ?? 10),
@@ -61,7 +61,22 @@ export class EmployeePlanService {
     }
 
     async findById(id: number, scope: DataScope) {
-        const plan = await this.repo.findByIdOrThrow(id, { employees: true }, scope);
+        const plan = await this.repo.findByIdOrThrow(
+            id,
+            {
+                employees: {
+                    select: {
+                        id: true,
+                        name: true,
+                        photo: true,
+                        department: { select: { fullName: true, shortName: true } },
+                        phone: true,
+                    },
+                    where: { deletedAt: null },
+                },
+            },
+            scope
+        );
         return { ...plan, weekdays: plan.weekdays?.split(',') ?? [] };
     }
 
@@ -73,14 +88,14 @@ export class EmployeePlanService {
         }
 
         const data = await this.repo.update(id, dto, undefined, scope);
-        
+
         const result = { ...data, weekdays: data.weekdays?.split(',') ?? [] };
         return result;
     }
 
     async delete(id: number, scope: DataScope) {
         await this.findById(id, scope);
-        return this.repo.delete(id, scope);
+        return this.repo.softDelete(id, scope);
     }
 
     async assignEmployees(dto: AssignEmployeesDto, scope: DataScope, user: UserContext) {
@@ -110,15 +125,21 @@ export class EmployeePlanService {
         };
     }
 
-     async findActivePlansForJob() {
-        // Bu yerda repo.findMany yoki to'g'ridan-to'g'ri prisma so'rovi kerak.
-        // Agar repoizda oddiy findMany bo'lsa:
-        const plans = await this.repo.findMany({ isActive: true },{id:'asc'},{ employees: {select: {id:true, organizationId:true}} } );
+    async findActivePlansForJob() {
+        const plans = await this.repo.findMany(
+            { isActive: true, deletedAt: null },
+            { id: 'asc' },
+            {
+                employees: {
+                    select: { id: true, organizationId: true },
+                    where: { deletedAt: null },
+                },
+            }
+        );
 
-        // Weekdays stringini arrayga o'girib qaytaramiz
         return plans.map(plan => ({
             ...plan,
-            weekdaysList: plan.weekdays ? plan.weekdays.split(',').map(d => d.trim()) : []
+            weekdaysList: plan.weekdays ? plan.weekdays.split(',').map(d => d.trim()) : [],
         }));
     }
 }

@@ -1,18 +1,20 @@
 model Employee {
-  id                Int      @id @default(autoincrement())
-  departmentId      Int      @map("department_id")
-  organizationId    Int      @map("organization_id")
-  policyId          Int      @map("policy_id")
+  id                Int       @id @default(autoincrement())
+  departmentId      Int       @map("department_id")
+  organizationId    Int       @map("organization_id")
+  policyId          Int       @map("policy_id")
   name              String
   address           String?
   phone             String?
   email             String?
   photo             String?
-  additionalDetails String?  @map("additional_details")
-  isActive          Boolean  @default(true) @map("is_active")
-  createdAt         DateTime @default(now()) @map("created_at")
-  updatedAt         DateTime @updatedAt @map("updated_at")
+  additionalDetails String?   @map("additional_details")
+  isActive          Boolean   @default(true) @map("is_active")
+  createdAt         DateTime  @default(now()) @map("created_at")
+  updatedAt         DateTime  @updatedAt @map("updated_at")
+  deletedAt         DateTime? @map("deleted_at")
   employeePlanId    Int?
+  jobId             Int?
 
   department    Department     @relation(fields: [departmentId], references: [id])
   policy        Policy         @relation(fields: [policyId], references: [id])
@@ -24,6 +26,7 @@ model Employee {
   employeeSyncs EmployeeSync[]
   attendances   Attendance[]
   gates         Gate[]
+  job           Job?           @relation(fields: [jobId], references: [id])
 
   @@index([organizationId])
   @@index([organizationId, departmentId])
@@ -33,23 +36,42 @@ model Employee {
   @@map("employees")
 }
 
+model Job {
+  id             Int          @id @default(autoincrement())
+  uz             String?
+  ru             String?
+  eng            String?
+  description    String?
+  createdAt      DateTime     @default(now()) @map("created_at")
+  updatedAt      DateTime     @updatedAt @map("updated_at")
+  deletedAt      DateTime?    @map("deleted_at")
+  organizationId Int          @map("organization_id")
+  organization   Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  employees      Employee[]
+
+  @@index([uz, ru, eng])
+  @@map("jobs")
+}
+
 model Credential {
   id                Int        @id @default(autoincrement())
   employeeId        Int        @map("employee_id")
-  code              String
+  code              String?
   type              ActionType
   additionalDetails String?    @map("additional_details")
   organizationId    Int?       @map("organization_id")
 
   // --- Standard Fields ---
-  isActive  Boolean  @default(true) @map("is_active")
-  createdAt DateTime @default(now()) @map("created_at")
-  updatedAt DateTime @updatedAt @map("updated_at")
+  isActive  Boolean   @default(true) @map("is_active")
+  createdAt DateTime  @default(now()) @map("created_at")
+  updatedAt DateTime  @updatedAt @map("updated_at")
+  deletedAt DateTime? @map("deleted_at")
 
-  organization Organization? @relation(fields: [organizationId], references: [id], onDelete: Cascade)
-  employee     Employee      @relation(fields: [employeeId], references: [id], onDelete: Cascade)
+  organization Organization?  @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  employee     Employee       @relation(fields: [employeeId], references: [id], onDelete: Cascade)
+  employeeSync EmployeeSync[]
+  action       Action[]
 
-  @@unique([employeeId, code, type], name: "emp_credential_unique")
   @@index([employeeId])
   @@index([code])
   @@index([type])
@@ -62,11 +84,14 @@ model EmployeeSync {
   deviceId       Int        @map("device_id")
   employeeId     Int        @map("employee_id")
   organizationId Int?       @map("organization_id")
+  credentialId   Int?       @map("credential_id")
   status         StatusEnum @default(WAITING)
   message        String?
   createdAt      DateTime   @default(now())
   updatedAt      DateTime   @updatedAt
+  deletedAt      DateTime?  @map("deleted_at")
 
+  credential   Credential?   @relation(fields: [credentialId], references: [id], onDelete: Cascade)
   organization Organization? @relation(fields: [organizationId], references: [id], onDelete: Cascade)
   gate         Gate          @relation(fields: [gateId], references: [id], onDelete: Cascade)
   device       Device        @relation(fields: [deviceId], references: [id], onDelete: Cascade)
@@ -81,16 +106,19 @@ model EmployeeSync {
 }
 
 model EmployeePlan {
-  id                   Int     @id @default(autoincrement())
-  organizationId       Int?    @map("organization_id")
+  id                   Int       @id @default(autoincrement())
+  organizationId       Int?      @map("organization_id")
   name                 String?
-  addadditionalDetails String? @map("additional_details")
-  startTime            String  @map("start_time")
-  endTime              String  @map("end_time")
-  extraTime            String  @map("extra_time")
+  addadditionalDetails String?   @map("additional_details")
+  startTime            String    @map("start_time")
+  endTime              String    @map("end_time")
+  extraTime            String    @map("extra_time")
   weekdays             String
-  isDefault            Boolean @default(false)
-  isActive             Boolean @default(true)
+  isDefault            Boolean   @default(false)
+  isActive             Boolean   @default(true)
+  createdAt            DateTime  @default(now()) @map("created_at")
+  updatedAt            DateTime? @updatedAt @map("updated_at")
+  deletedAt            DateTime? @map("deleted_at")
 
   organization Organization? @relation(fields: [organizationId], references: [id], onDelete: Cascade)
   employees    Employee[]

@@ -1,115 +1,120 @@
-// ...existing code...
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
-import { IsDateString, isEnum, IsEnum, IsInt, IsNotEmpty, IsOptional, IsString } from 'class-validator';
+import {
+    IsDateString,
+    isEnum,
+    IsEnum,
+    IsInt,
+    IsNotEmpty,
+    IsOptional,
+    IsString,
+} from 'class-validator';
 import { Type } from 'class-transformer';
 import { ActionStatus } from '@prisma/client';
+import { QueryDto } from 'apps/dashboard-api/src/shared/dto';
 
 export class CreateAttendanceDto {
-  @ApiProperty({ example: '2025-11-10T09:00:00.000Z' })
-  @IsNotEmpty()
-  @IsDateString()
-  startTime: string;
+    @ApiProperty({ example: '2025-11-10T09:00:00.000Z' })
+    @IsNotEmpty()
+    @IsDateString()
+    startTime: string;
 
-  @ApiPropertyOptional({ example: '2025-11-10T18:00:00.000Z' })
-  @IsOptional()
-  @IsDateString()
-  endTime?: string;
+    @ApiPropertyOptional({ example: '2025-11-10T18:00:00.000Z' })
+    @IsOptional()
+    @IsDateString()
+    endTime?: string;
 
-  @ApiProperty({ example: 'ON_TIME', })
-  @IsNotEmpty()
-  @IsEnum(ActionStatus)
-  arrivalStatus: ActionStatus; // ActionStatus enum in prisma
+    @ApiProperty({ example: 'ON_TIME' })
+    @IsNotEmpty()
+    @IsEnum(ActionStatus)
+    arrivalStatus: ActionStatus;
 
-  @ApiPropertyOptional({ example: 'ON_TIME' })
-  @IsOptional()
-  @IsEnum(ActionStatus)
-  goneStatus?: ActionStatus; // ActionStatus enum in prisma
+    @ApiPropertyOptional({ example: 'ON_TIME' })
+    @IsOptional()
+    @IsEnum(ActionStatus)
+    goneStatus?: ActionStatus;
 
-  @ApiPropertyOptional({ example: 'Reason for late arrival' })
-  @IsOptional()
-  @IsString()
-  reason?: string;
+    @ApiPropertyOptional({ example: 'Reason for late arrival' })
+    @IsOptional()
+    @IsString()
+    reason?: string;
 
-  @ApiProperty({ example: 1 })
-  @IsNotEmpty()
-  @IsInt()
-  employeeId: number;
+    @ApiProperty({ example: 1 })
+    @IsNotEmpty()
+    @IsInt()
+    @Type(() => Number)
+    employeeId: number;
 
-  @ApiProperty({ example: 1 })
-  @IsOptional()
-  @IsInt()
-  organizationId?: number;
+    @ApiProperty({ example: 1 })
+    @IsOptional()
+    @IsInt()
+    @Type(() => Number)
+    organizationId?: number;
+
+    @ApiProperty({ example: 1 })
+    @IsOptional()
+    @IsInt()
+    @Type(() => Number)
+    reasonTypeId?: number;
+
+    @IsOptional()
+    @IsInt()
+    lateArrivalTime?: number;
+
+    @IsOptional()
+    @IsInt()
+    earlyGoneTime?: number;
 }
 
 export class UpdateAttendanceDto {
-  @ApiPropertyOptional({ example: '2025-11-10T09:00:00.000Z' })
-  @IsOptional()
-  @IsDateString()
-  startTime?: string;
+    @ApiPropertyOptional({ example: 'Updated reason' })
+    @IsOptional()
+    @IsString()
+    reason?: string;
 
-  @ApiPropertyOptional({ example: '2025-11-10T18:00:00.000Z' })
-  @IsOptional()
-  @IsDateString()
-  endTime?: string;
+    @ApiProperty({ example: 1 })
+    @IsOptional()
+    @IsInt()
+    @Type(() => Number)
+    reasonTypeId?: number;
 
-  @ApiPropertyOptional({ enum: ActionStatus })
-  @IsOptional()
-  @IsEnum(ActionStatus)
-  arrivalStatus?: ActionStatus;
+    @IsOptional()
+    @IsDateString()
+    endTime?: Date;
 
-  @ApiPropertyOptional({ enum: ActionStatus })
-  @IsOptional()
-  @IsEnum(ActionStatus)
-  goneStatus?: ActionStatus;
+    @IsOptional()
+    @IsDateString()
+    startTime?: Date;
 
-  @ApiPropertyOptional({ example: 'Updated reason' })
-  @IsOptional()
-  @IsString()
-  reason?: string;
+    @IsOptional()
+    @IsEnum(ActionStatus)
+    goneStatus?: ActionStatus;
 }
 
-export class AttendanceQueryDto {
+export class AttendanceQueryDto extends QueryDto {
+    @ApiPropertyOptional()
+    @IsOptional()
+    @Type(() => Number)
+    employeeId?: number;
 
-  @ApiPropertyOptional()
-  @IsOptional()
-  @IsString()
-  search?: string
+    @ApiPropertyOptional()
+    @IsOptional()
+    @Type(() => Number)
+    organizationId?: number;
 
-  @ApiPropertyOptional()
-  @IsOptional()
-  @Type(() => Number)
-  employeeId?: number;
+    @ApiPropertyOptional({
+        description: 'Specific date (e.g. 2025-11-11)',
+    })
+    @IsOptional()
+    @IsDateString()
+    date?: string;
 
-  @ApiPropertyOptional()
-  @IsOptional()
-  @Type(() => Number)
-  organizationId?: number;
+    @ApiPropertyOptional({ enum: ActionStatus })
+    @IsOptional()
+    @IsEnum(ActionStatus)
+    arrivalStatus?: ActionStatus;
 
-  @ApiPropertyOptional({
-    description: 'Specific date (e.g. 2025-11-11)'
-  })
-  @IsOptional()
-  @IsDateString()
-  date?: string;
-
-
-  @ApiPropertyOptional({ enum: ActionStatus })
-  @IsOptional()
-  @IsEnum(ActionStatus)
-  arrivalStatus?: ActionStatus;
-
-  @ApiPropertyOptional({ enum: ActionStatus })
-  @IsOptional()
-  @IsEnum(ActionStatus)
-  goneStatus?: ActionStatus;
-
-  @ApiPropertyOptional()
-  @IsOptional()
-  @Type(() => Number)
-  page?: number;
-
-  @ApiPropertyOptional()
-  @IsOptional()
-  @Type(() => Number)
-  limit?: number;
+    @ApiPropertyOptional({ enum: ActionStatus })
+    @IsOptional()
+    @IsEnum(ActionStatus)
+    goneStatus?: ActionStatus;
 }

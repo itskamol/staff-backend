@@ -4,11 +4,7 @@ import { HikvisionCoreService } from '../core/hikvision.core.service';
 import { ConfigService } from 'apps/dashboard-api/src/core/config/config.service';
 import { EmployeeRepository } from '../../employee/repositories/employee.repository';
 import { XmlJsonService } from 'apps/dashboard-api/src/shared/services/xtml-json.service';
-import {
-    CreateHikvisionUserDto,
-    HikvisionConfig,
-    HikvisionUser,
-} from '../dto/create-hikvision-user.dto';
+import { CardDto, HikvisionConfig, HikvisionUser } from '../dto/create-hikvision-user.dto';
 import { XMLParser } from 'fast-xml-parser';
 
 @Injectable()
@@ -26,10 +22,7 @@ export class HikvisionAccessService {
         try {
             this.coreService.setConfig(config);
 
-            const response = await this.coreService.request(
-                'GET',
-                '/ISAPI/System/deviceInfo'
-            );
+            const response = await this.coreService.request('GET', '/ISAPI/System/deviceInfo');
 
             if (response.status !== 200) {
                 this.logger.warn(`Device info: status ${response.status}`);
@@ -57,7 +50,6 @@ export class HikvisionAccessService {
                 data: deviceInfo,
             };
         } catch (error) {
-            console.log(error)
             this.logger.error(`Device info olishda xatolik: ${error.message}`);
             return {
                 success: false,
@@ -82,12 +74,12 @@ export class HikvisionAccessService {
         return json;
     }
 
-    async createUser(dto: CreateHikvisionUserDto, config: HikvisionConfig): Promise<boolean> {
+    async createUser(employeeId: number, config: HikvisionConfig): Promise<boolean> {
         try {
             this.coreService.setConfig(config);
 
-            const userId = dto.employeeId;
-            const checkExisting = await this.getUser(userId, config);
+            const userId = employeeId;
+            const checkExisting = await this.getUser(userId.toString(), config);
             if (checkExisting) {
                 this.logger.log(`User ${userId} already exists in Hikvision`);
                 return true;
@@ -99,6 +91,10 @@ export class HikvisionAccessService {
                 throw new BadRequestException(`Employee with ID ${userId} not found`);
             }
 
+            const now = new Date(); // hozirgi vaqt
+            const tenYearsLater = new Date();
+            tenYearsLater.setFullYear(now.getFullYear() + 10);
+
             const resBody = {
                 UserInfo: {
                     employeeNo: user.id.toString(),
@@ -109,8 +105,8 @@ export class HikvisionAccessService {
                     Valid: {
                         enable: true,
                         timeType: 'local',
-                        beginTime: '2025-11-03T00:00:00',
-                        endTime: '2035-12-31T23:59:59', // 2030-12-31T23:59:59
+                        beginTime: now.toISOString().slice(0, 19),
+                        endTime: tenYearsLater.toISOString().slice(0, 19),
                     },
                 },
             };
@@ -120,12 +116,12 @@ export class HikvisionAccessService {
                 resBody
             );
             if (response.status === 200) {
-                this.logger.log(`User ${dto.employeeId} successfully created in Hikvision`);
+                this.logger.log(`User ${employeeId} successfully created in Hikvision`);
                 return response.data;
             }
             return false;
         } catch (error) {
-            this.logger.error(`Failed to create user ${dto.employeeId}:`, error.message);
+            this.logger.error(`Failed to create user ${employeeId}:`, error.message);
             throw new BadRequestException(`Hikvision da user yaratishda xatolik: ${error.message}`);
         }
     }
@@ -136,7 +132,7 @@ export class HikvisionAccessService {
         return user || null;
     }
 
-    async getAllUsers(config: HikvisionConfig): Promise<HikvisionUser[]> {
+    async getAllUsers(config?: HikvisionConfig): Promise<HikvisionUser[]> {
         try {
             this.coreService.setConfig(config);
 
@@ -163,7 +159,6 @@ export class HikvisionAccessService {
 
             return [];
         } catch (error) {
-            console.log(error);
             this.logger.error('Failed to get all users from Hikvision:', error.message);
             return [];
         }
@@ -171,7 +166,6 @@ export class HikvisionAccessService {
 
     async deleteUser(employeeNo: string, config?: HikvisionConfig): Promise<boolean> {
         this.coreService.setConfig(config);
-        // this.setConfig({ host: '192.168.100.139', port: 80, protocol: 'http', username: 'admin', password: "!@#Mudofaa@" });
 
         const reqBody = {
             UserInfoDelCond: {
@@ -208,56 +202,63 @@ export class HikvisionAccessService {
         }
     }
 
-    async addCardToUser(employeeNo: string, cardNo: string): Promise<boolean> {
+    async addPasswordToUser(
+        employeeNo: string,
+        password: string,
+        config: HikvisionConfig
+    ): Promise<boolean> {
         try {
-            const cardData = {
-                CardInfo: {
+            this.coreService.setConfig(config);
+
+            const reqBody = {
+                UserInfo: {
                     employeeNo,
-                    cardNo,
-                    cardType: 'normalCard',
+                    passWord: password,
                 },
             };
 
             const response = await this.coreService.request(
-                'POST',
-                '/ISAPI/AccessControl/CardInfo/Record?format=json',
-                cardData
+                'PUT',
+                '/ISAPI/AccessControl/UserInfo/Modify?format=json',
+                reqBody
             );
 
             if (response.status === 200) {
-                this.logger.log(
-                    `Card ${cardNo} successfully added to user ${employeeNo} in Hikvision`
-                );
+                this.logger.log(`Password successfully added to user ${employeeNo}`);
                 return true;
             }
 
+            this.logger.warn(
+                `Unexpected status while adding password to user ${employeeNo}: ${response.status}`
+            );
             return false;
         } catch (error) {
-            this.logger.error(
-                `Failed to add card to user ${employeeNo} in Hikvision:`,
-                error.message
-            );
-            throw new BadRequestException(
-                `Hikvision da karta qo'shishda xatolik: ${error.message}`
-            );
+            this.logger.error(`Error adding password to user ${employeeNo}: ${error.message}`);
+            throw new BadRequestException(`Hikvision parol o'rnatishda xatolik: ${error.message}`);
         }
     }
 
     async addFaceToUserViaURL(
         employeeNo: string,
-        faceURL: string,
+        url: string,
         config: HikvisionConfig
     ): Promise<boolean> {
         try {
             this.coreService.setConfig(config);
             const formData = new FormData();
+
+            const port = this.configService.port;
+            const ip = this.configService.hostIp;
+
+            const photoUrl = `http://${ip}:${port}/api/storage/${url}`;
+
             formData.append(
                 'FaceDataRecord',
                 JSON.stringify({
                     faceLibType: 'blackFD',
                     FDID: '1',
                     FPID: employeeNo,
-                    faceURL,
+                    faceURL: photoUrl,
                 })
             );
 
@@ -287,36 +288,42 @@ export class HikvisionAccessService {
         }
     }
 
-    async getAccessLogs(startTime?: string, endTime?: string): Promise<any[]> {
+    async deleteFaceFromUser(employeeNo: string, config: HikvisionConfig): Promise<boolean> {
         try {
-            const searchCondition = {
-                AcsEventCond: {
-                    searchID: '1',
-                    searchResultPosition: 0,
-                    maxResults: 200,
-                    major: 0,
-                    minor: 0,
-                    startTime: '2025-11-04T00:00:00+05:00',
-                    endTime: '2025-11-04T11:05:22+05:00',
-                },
+            this.coreService.setConfig(config);
+
+            // Hikvision talabi bo'yicha body strukturasi
+            const reqBody = {
+                FPID: [
+                    {
+                        value: employeeNo,
+                    },
+                ],
             };
+
+            // URL parametrlari muhim: FDID=1 (Asosiy kutubxona), faceLibType=blackFD
             const response = await this.coreService.request(
-                'POST',
-                '/ISAPI/AccessControl/AcsEvent?format=json',
-                searchCondition
+                'PUT',
+                '/ISAPI/Intelligent/FDLib/FDSearch/Delete?format=json&FDID=1&faceLibType=blackFD',
+                reqBody
             );
 
-            if (response.status === 200 && response.data.AcsEvent) {
-                const events = response.data.AcsEvent.InfoList;
-                console.log(response.data.AcsEvent);
-                return events;
+            if (
+                response.status === 200 &&
+                (response.data?.statusCode === 1 || response.data?.statusString === 'OK')
+            ) {
+                this.logger.log(`Face data removed for user ${employeeNo}, but user kept active.`);
+                return true;
             }
 
-            return [];
+            // Ba'zi hollarda, agar yuz avvalroq o'chirilgan bo'lsa, xato berishi mumkin.
+            // Buni "muvaffaqiyatli" deb hisoblash mumkin.
+            this.logger.warn(`Hikvision delete face response: ${JSON.stringify(response.data)}`);
+            return response.status === 200;
         } catch (error) {
-            if (error.response) console.log(error.response);
-            this.logger.error('Failed to get access logs from Hikvision:', error.message);
-            return [];
+            this.logger.error(`Failed to delete face for ${employeeNo}: ${error.message}`);
+            // Agar rasm yo'q bo'lsa ham true qaytarishimiz mumkin (biznes logikaga qarab)
+            return false;
         }
     }
 
@@ -377,7 +384,10 @@ export class HikvisionAccessService {
                 const parser = new XMLParser();
                 const result = parser.parse(response.data);
 
-                this.logger.log('✅ Hikvision event listening host muvaffaqiyatli sozlandi', 'HikvisionService');
+                this.logger.log(
+                    '✅ Hikvision event listening host muvaffaqiyatli sozlandi',
+                    'HikvisionService'
+                );
                 return {
                     success: true,
                     message: `Event host http://${serverHost}:${serverPort}/api/v1/hikvision/event/${deviceId} ga yo‘naltirildi`,
@@ -399,5 +409,140 @@ export class HikvisionAccessService {
                 message: `Event host sozlashda xatolik: ${error.message}`,
             };
         }
+    }
+
+    async openDoor(doorNo: number = 1, config: HikvisionConfig): Promise<boolean> {
+        try {
+            this.coreService.setConfig(config);
+
+            const xmlBody = this.xmlJsonService.jsonToXml(
+                {
+                    '@': {
+                        version: '1.0',
+                        xmlns: 'http://www.hikvision.com/ver10/XMLSchema',
+                    },
+                    cmd: 'open',
+                },
+                'RemoteControlDoor'
+            );
+
+            const response = await this.coreService.request(
+                'PUT',
+                `/ISAPI/AccessControl/RemoteControl/door/${doorNo}`,
+                xmlBody
+            );
+
+            return response.status === 200;
+        } catch (error) {
+            this.logger.error(`Eshikni ochishda xatolik: ${doorNo}:`, error.message);
+            throw new BadRequestException(`Eshikni ochishda xatolik: ${error.message}`);
+        }
+    }
+
+    async addCardToUser(data: CardDto): Promise<boolean> {
+        try {
+            const { employeeNo, cardNo, config } = data;
+            this.coreService.setConfig(config);
+
+            const now = new Date(); // hozirgi vaqt
+            const tenYearsLater = new Date();
+            tenYearsLater.setFullYear(now.getFullYear() + 10);
+
+            const reqBody = {
+                CardInfo: {
+                    employeeNo,
+                    cardNo,
+                    cardType: 'normalCard',
+                    Valid: {
+                        enable: true,
+                        timeType: 'local',
+                        beginTime: now.toISOString().slice(0, 19),
+                        endTime: tenYearsLater.toISOString().slice(0, 19),
+                    },
+                },
+            };
+
+            const response = await this.coreService.request(
+                'POST',
+                '/ISAPI/AccessControl/CardInfo/Record?format=json',
+                reqBody
+            );
+
+            if (response.status === 200) {
+                this.logger.log(
+                    `Card ${cardNo} successfully added to user ${employeeNo} in Hikvision`
+                );
+                return true;
+            }
+
+            this.logger.warn(
+                `Unexpected status adding card to user ${employeeNo}: ${response.status}`
+            );
+            return false;
+        } catch (error) {
+            console.log(error);
+            this.logger.error(`Failed to add card to user ${data.employeeNo}: ${error.message}`);
+            throw new BadRequestException(
+                `Hikvision da karta qo'shishda xatolik: ${error.message}`
+            );
+        }
+    }
+
+    async deleteCard(data: CardDto): Promise<boolean> {
+        try {
+            const { cardNo, config } = data; // employeeNo o'chirish uchun shart emas, karta raqami yetarli
+            this.coreService.setConfig(config);
+
+            const reqBody = {
+                CardInfoDelCond: {
+                    CardNoList: [
+                        {
+                            cardNo: cardNo,
+                        },
+                    ],
+                },
+            };
+
+            // Hikvisionda o'chirish uchun DELETE metodi emas,
+            // PUT metodi va Delete endpointi ishlatiladi
+            const response = await this.coreService.request(
+                'PUT',
+                '/ISAPI/AccessControl/CardInfo/Delete?format=json',
+                reqBody
+            );
+
+            if (response.status === 200) {
+                this.logger.log(`Card ${cardNo} successfully deleted from Hikvision`);
+                return true;
+            }
+
+            this.logger.warn(`Failed to delete card ${cardNo}: ${response.status}`);
+            return false;
+        } catch (error) {
+            this.logger.error(`Error deleting card ${data.cardNo}: ${error.message}`);
+            // Agar karta topilmasa ham success qaytarish kerak bo'lsa, shu yerni boshqarasiz
+            throw new BadRequestException(
+                `Hikvisiondan karta o'chirishda xatolik: ${error.message}`
+            );
+        }
+    }
+
+    async replaceCard(
+        oldCardNo: string,
+        newCardNo: string,
+        employeeNo: string,
+        config: HikvisionConfig
+    ) {
+        await this.deleteCard({
+            employeeNo,
+            cardNo: oldCardNo,
+            config,
+        });
+
+        await this.addCardToUser({
+            employeeNo,
+            cardNo: newCardNo,
+            config,
+        });
     }
 }

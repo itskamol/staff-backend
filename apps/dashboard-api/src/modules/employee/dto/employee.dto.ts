@@ -1,4 +1,3 @@
-import { QueryDto } from '@app/shared/utils';
 import { ApiProperty, ApiPropertyOptional, OmitType, PartialType } from '@nestjs/swagger';
 import { ActionType } from '@prisma/client';
 import {
@@ -15,6 +14,7 @@ import {
 } from 'class-validator';
 import { CreateCredentialDto } from '../../credential/dto/credential.dto';
 import { Type } from 'class-transformer';
+import { QueryDto } from 'apps/dashboard-api/src/shared/dto';
 
 class EmployeeCredentialDto extends OmitType(CreateCredentialDto, [
     'employeeId',
@@ -88,6 +88,15 @@ export class CreateEmployeeDto {
     @IsOptional()
     @IsString()
     phone?: string;
+
+    @ApiProperty({
+        description: 'The ID of the job assigned to the employee.',
+        example: 1,
+        required: false,
+    })
+    @IsInt()
+    @IsOptional()
+    jobId?: number;
 
     @ApiProperty({
         description: "The employee's email address.",
@@ -220,6 +229,15 @@ export class UpdateEmployeeDto {
     @IsInt()
     @IsOptional()
     employeePlanId?: number;
+
+    @ApiProperty({
+        description: 'The ID of the job assigned to the employee.',
+        example: 1,
+        required: false,
+    })
+    @IsOptional()
+    @IsInt()
+    jobId?: number;
 }
 
 export class BulkUpdateEmployees {
@@ -297,6 +315,13 @@ export class EmployeeResponseDto {
         required: false,
     })
     photo?: string;
+
+    @ApiProperty({
+        description: 'The ID of the job assigned to the employee.',
+        example: 1,
+        required: false,
+    })
+    jobId?: number;
 
     @ApiProperty({
         description: 'Additional details about the employee.',

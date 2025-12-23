@@ -86,11 +86,16 @@ export class HikvisionAnprService {
 
         const existingId = await this.findPlateId(plateNo, config);
         if (existingId) {
-            throw new BadRequestException('AVTO Number already exist!');
+            return true;
         }
 
         const body = this.createRecordBody(plateNo, listType, '');
-        return this.sendRecordRequest(body);
+
+        this.logger.log(
+            `Adding license plate: ${plateNo} to ${listType === '2' ? 'blacklist' : 'whitelist'}`
+        );
+        const result = await this.sendRecordRequest(body);
+        return result;
     }
 
     // EDIT

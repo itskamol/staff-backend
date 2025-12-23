@@ -17,12 +17,12 @@ export class AttendanceService {
         private readonly logger: LoggerService
     ) {}
 
-    @Cron(CronExpression.EVERY_DAY_AT_MIDNIGHT) 
+    @Cron(CronExpression.EVERY_DAY_AT_MIDNIGHT)
     async handleDailyAttendance() {
         this.logger.log('Cron triggered: Adding attendance job to queue...', 'AttendanceService');
-        
+
         await this.attendanceQueue.add(
-            JOB.ATTENDANCE.CREATE_DEFAULT, 
+            JOB.ATTENDANCE.CREATE_DEFAULT,
             {},
             {
                 removeOnComplete: true,
@@ -30,14 +30,19 @@ export class AttendanceService {
         );
     }
 
-    @Cron(CronExpression.EVERY_MINUTE)
+    @Cron(CronExpression.EVERY_5_MINUTES)
     async handleAbsentCheck() {
         await this.attendanceQueue.add(JOB.ATTENDANCE.MARK_ABSENT, {}, { removeOnComplete: true });
     }
 
+    @Cron(CronExpression.EVERY_DAY_AT_1AM)
+    async handleAutoClose() {
+        await this.attendanceQueue.add(JOB.ATTENDANCE.MARK_GONE, {});
+    }
+
     async create(dto: CreateAttendanceDto) {
         try {
-            const {employeeId, organizationId, ...dtoData} = dto
+            const { employeeId, organizationId, ...dtoData } = dto;
             const todayStart = new Date();
             todayStart.setHours(0, 0, 0, 0);
 
@@ -69,10 +74,21 @@ export class AttendanceService {
 
     async findAll(query: AttendanceQueryDto, scope: DataScope) {
         const where: Prisma.AttendanceWhereInput = {};
+        const {
+            startDate,
+            endDate,
+            employeeId,
+            organizationId,
+            order,
+            sort,
+            arrivalStatus,
+            goneStatus,
+        } = query;
 
-        if (query.employeeId !== undefined) where.employeeId = query.employeeId;
-        if (query.organizationId !== undefined) where.organizationId = query.organizationId;
-        if (query.arrivalStatus) where.arrivalStatus = query.arrivalStatus;
+        if (employeeId !== undefined) where.employeeId = employeeId;
+        if (organizationId !== undefined) where.organizationId = organizationId;
+        if (arrivalStatus) where.arrivalStatus = arrivalStatus;
+        if (goneStatus) where.goneStatus = goneStatus;
 
         if (query.date) {
             const date = new Date(query.date);
@@ -85,6 +101,19 @@ export class AttendanceService {
             where.createdAt = {
                 gte: startOfDay,
                 lte: endOfDay,
+            };
+        }
+
+        if (startDate && endDate) {
+            const start = new Date(startDate);
+            start.setHours(0, 0, 0, 0);
+
+            const end = new Date(endDate);
+            end.setHours(23, 59, 59, 999);
+
+            where.createdAt = {
+                gte: start,
+                lte: end,
             };
         }
 
@@ -102,7 +131,7 @@ export class AttendanceService {
 
         const data = await this.repo.findManyWithPagination(
             where,
-            { startTime: 'desc' },
+            { [sort]: order },
             {
                 employee: {
                     select: {
@@ -115,6 +144,13 @@ export class AttendanceService {
                                 fullName: true,
                             },
                         },
+                    },
+                },
+                reasons: {
+                    select: {
+                        uz: true,
+                        eng: true,
+                        ru: true,
                     },
                 },
             },
@@ -142,6 +178,13 @@ export class AttendanceService {
                         },
                     },
                 },
+                reasons: {
+                    select: {
+                        uz: true,
+                        eng: true,
+                        ru: true,
+                    },
+                },
             },
             scope
         );
@@ -149,32 +192,22 @@ export class AttendanceService {
         return record;
     }
 
-    async update(id: number, dto: UpdateAttendanceDto, scope: DataScope) {
+    async update(id: number, dto: UpdateAttendanceDto, scope?: DataScope) {
         await this.findById(id, scope);
         return this.repo.update(id, dto, {}, scope);
     }
 
-    async delete(id: number, scope: DataScope) {
-        await this.findById(id, scope);
-        return this.repo.delete(id, scope);
-    }
-
-
-     async findManyForJob(
-        where: Prisma.AttendanceWhereInput, 
-        select?: Prisma.AttendanceSelect
-    ) {
+    async findManyForJob(where: Prisma.AttendanceWhereInput, select?: Prisma.AttendanceSelect) {
         return this.repo.findMany(
             where,
-            undefined, 
-            undefined, 
-            undefined, 
-            select,    
+            undefined,
+            { employee: { include: { plan: { select: { endTime: true } } } } },
+            undefined,
+            select,
             undefined
         );
     }
 
-  
     async updateManyForJob(
         where: Prisma.AttendanceWhereInput,
         data: Prisma.AttendanceUpdateManyMutationInput

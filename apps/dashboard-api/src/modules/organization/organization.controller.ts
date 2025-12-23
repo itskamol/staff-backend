@@ -11,15 +11,10 @@ import {
 } from '@nestjs/common';
 import { ApiBearerAuth, ApiExtraModels, ApiTags } from '@nestjs/swagger';
 import { OrganizationService } from './organization.service';
-import { ApiSuccessResponse } from '../../shared/dto';
-import {
-    CreateOrganizationDto,
-    OrganizationResponseDto,
-    UpdateOrganizationDto,
-} from './dto';
+import { ApiSuccessResponse, QueryDto } from '../../shared/dto';
+import { CreateOrganizationDto, OrganizationResponseDto, UpdateOrganizationDto } from './dto';
 import { DataScope, NoScoping, Role, Roles, Scope } from '@app/shared/auth';
 import { ApiCrudOperation } from '../../shared/utils';
-import { QueryDto } from '@app/shared/utils';
 
 @ApiTags('Organizations')
 @ApiBearerAuth()

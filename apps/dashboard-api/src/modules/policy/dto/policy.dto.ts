@@ -10,7 +10,7 @@ import {
 } from 'class-validator';
 import { ApiProperty, PartialType } from '@nestjs/swagger';
 import { OptionType } from '@prisma/client';
-import { QueryDto } from '@app/shared/utils';
+import { QueryDto } from 'apps/dashboard-api/src/shared/dto';
 
 class RuleTypeDto {
     @ApiProperty({

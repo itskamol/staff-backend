@@ -12,7 +12,10 @@ model Action {
   actionType     ActionType
   actionMode     ActionMode
   status         ActionStatus?
+  credentialId   Int?          @map("credential_id")
+  deletedAt      DateTime?     @map("deleted_at")
 
+  credential   Credential?   @relation(fields: [credentialId], references: [id], onDelete: SetNull)
   organization Organization? @relation(fields: [organizationId], references: [id], onDelete: Cascade)
   device       Device?       @relation(fields: [deviceId], references: [id], onDelete: SetNull)
   gate         Gate?         @relation(fields: [gateId], references: [id], onDelete: SetNull)
@@ -33,19 +36,19 @@ model Action {
 }
 
 model Gate {
-  id             Int      @id @default(autoincrement())
-  name           String
-  organizationId Int?     @map("organization_id")
-  createdAt      DateTime @default(now()) @map("created_at")
+  id        Int       @id @default(autoincrement())
+  name      String
+  isActive  Boolean   @default(true) @map("is_active")
+  deletedAt DateTime? @map("deleted_at")
+  createdAt DateTime  @default(now()) @map("created_at")
 
-  organization  Organization?  @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  organizations Organization[]
   devices       Device[]
   actions       Action[]
   employeeSyncs EmployeeSync[]
   employees     Employee[]
 
   @@index([name])
-  @@index([organizationId])
   @@map("gates")
 }
 
@@ -54,7 +57,7 @@ model Device {
   gateId           Int?          @map("gate_id")
   name             String?
   entryType        EntryType?    @map("entry_type")
-  type             DeviceType?   @map("type")
+  type             ActionType[]  @default([]) @map("types")
   manufacturer     String?
   model            String?
   firmware         String?
@@ -67,13 +70,12 @@ model Device {
   welcomeTextType  WelcomeText?  @map("welcome_text_type")
   welcomePhoto     String?       @map("welcome_photo")
   welcomePhotoType WelcomePhoto? @map("welcome_photo_type")
-  organizationId   Int?          @map("organization_id")
   isActive         Boolean       @default(true) @map("is_active")
   createdAt        DateTime      @default(now()) @map("created_at")
   updatedAt        DateTime      @updatedAt @map("updated_at")
+  deletedAt        DateTime?     @map("deleted_at")
 
   gate         Gate?          @relation(fields: [gateId], references: [id], onDelete: SetNull)
-  organization Organization?  @relation(fields: [organizationId], references: [id], onDelete: Cascade)
   actions      Action[]
   EmployeeSync EmployeeSync[]
 
@@ -81,26 +83,47 @@ model Device {
   @@index([ipAddress])
   @@index([serialNumber])
   @@index([isActive])
-  @@index([organizationId])
   @@map("devices")
 }
 
 model Attendance {
-  id             Int           @id @default(autoincrement())
-  startTime      DateTime?      @map("start_time")
-  endTime        DateTime?     @map("end_time")
-  arrivalStatus  ActionStatus  @map("arrival_status") // ON_TIME or LATE
-  goneStatus     ActionStatus? @map("gone_status") // ON_TIME or EARLY
-  reason         String?
-  employeeId     Int           @map("employee_id")
-  organizationId Int?          @map("organization_id")
-  createdAt      DateTime      @default(now()) @map("created_at")
+  id              Int           @id @default(autoincrement())
+  startTime       DateTime?     @map("start_time")
+  endTime         DateTime?     @map("end_time")
+  arrivalStatus   ActionStatus  @map("arrival_status") // ON_TIME or LATE
+  goneStatus      ActionStatus? @map("gone_status") // ON_TIME or EARLY
+  reason          String?
+  reasonTypeId    Int?          @map("reason_id")
+  employeeId      Int           @map("employee_id")
+  organizationId  Int?          @map("organization_id")
+  lateArrivalTime Int?          @map("late_arrival_time") // in minutes
+  earlyGoneTime   Int?          @map("early_gone_time") // in minutes
+
+  //Standart fields
+  createdAt DateTime  @default(now()) @map("created_at")
+  updatedAt DateTime? @updatedAt @map("updated_at")
+  deletedAt DateTime? @map("deleted_at")
 
   employee     Employee      @relation(fields: [employeeId], references: [id], onDelete: Cascade)
   organization Organization? @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  reasons      Reasons?      @relation(fields: [reasonTypeId], references: [id], onDelete: Cascade)
 
   @@index([startTime, endTime])
   @@index([employeeId])
   @@index([organizationId])
   @@map("attendances")
+}
+
+model Reasons {
+  id             Int       @id @default(autoincrement())
+  uz             String?
+  eng            String?
+  ru             String?
+  organizationId Int       @map("organization_id")
+  isActive       Boolean   @default(true) @map("is_active")
+  createdAt      DateTime  @default(now()) @map("created_at")
+  deletedAt      DateTime? @map("deleted_at")
+
+  organization Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  attendances  Attendance[]
 }

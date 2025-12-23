@@ -1,7 +1,7 @@
 import { Controller, Get, Post, Body, Param, Delete, Req, Res } from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiBearerAuth } from '@nestjs/swagger';
 import {
-    CreateHikvisionUserDto,
+    CardDto,
     CreatePlateDto,
     DeletePlateDto,
     EditPlateDto,
@@ -33,6 +33,12 @@ export class HikvisionController {
     @ApiOperation({ summary: 'Get hikvision capabilities' })
     async getDeviceCapabilities(@Body() dto: HikvisionConfig) {
         return this.hikvisionAccessService.getDeviceCapabilities(dto);
+    }
+
+    @Post('addCard')
+    @ApiOperation({ summary: 'Add Card User' })
+    async addCard(@Body() dto: CardDto) {
+        return this.hikvisionAccessService.addCardToUser(dto);
     }
 
     @Post('event/:id')
@@ -100,20 +106,24 @@ export class HikvisionController {
                     try {
                         eventData = await this.xmlJsonService.xmlToJson(xmlString);
 
-                        const { originalLicensePlate, licensePlate, vehicleListName } = eventData?.EventNotificationAlert?.ANPR;
+                        const { originalLicensePlate, licensePlate, vehicleListName } =
+                            eventData?.EventNotificationAlert?.ANPR;
 
                         const plateNo = originalLicensePlate || licensePlate;
                         console.log('number: ', plateNo);
 
                         if (plateNo && vehicleListName == 'whiteList') {
-                            this.logger.log(`Successfully enter: ${plateNo}`,"HikvisionService")
-                            const emp = await this.credentailsService.findFirst({code: plateNo});
+                            this.logger.log(`Successfully enter: ${plateNo}`, 'HikvisionService');
+                            const emp = await this.credentailsService.findFirst({ code: plateNo });
                             if (emp?.employeeId) {
-                                await this.actionService.create(eventData,+deviceId,emp?.employeeId);
+                                await this.actionService.create(
+                                    eventData,
+                                    +deviceId,
+                                    emp?.employeeId
+                                );
                             }
                         }
                     } catch (err) {
-                        console.log(err);
                         this.logger.error('XML parse error:', err.message, 'ANPRService');
                     }
                     break;

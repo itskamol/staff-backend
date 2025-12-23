@@ -20,6 +20,27 @@ export class OrganizationRepository extends BaseRepository<
 
     protected readonly modelName = Prisma.ModelName.Organization;
 
+    protected cascadeRelations = [
+        'policy',
+        'user',
+        'department',
+        'employee',
+        'resourceGroup',
+        'resource',
+        'credential',
+        'employeeSync',
+        'employeePlan',
+        'computerUser',
+        'computer',
+        'visitor',
+        'onetimeCode',
+        'reasons',
+        'action',
+        'attendance',
+    ];
+
+    protected disconnectRelations = ['gates'];
+
     protected getDelegate() {
         return this.prisma.organization;
     }
@@ -31,6 +52,9 @@ export class OrganizationRepository extends BaseRepository<
             where.id = scope.organizationId;
         }
 
-        return this.prisma.organization.findMany({ where });
+        return this.prisma.organization.findMany({
+            where,
+            include: { departments: true, employees: true, gates: true },
+        });
     }
 }

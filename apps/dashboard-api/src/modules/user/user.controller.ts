@@ -12,8 +12,8 @@ import {
 import { ApiBearerAuth, ApiExtraModels, ApiParam, ApiTags } from '@nestjs/swagger';
 import { UserService } from './user.service';
 import { User as UserModel } from '@prisma/client';
-import { NoScoping, Role, Roles, User } from '@app/shared/auth';
-import { ApiSuccessResponse } from '../../shared/dto';
+import { NoScoping, Role, Roles, User, UserContext } from '@app/shared/auth';
+import { ApiSuccessResponse, QueryDto } from '../../shared/dto';
 import {
     AssignUserToDepartmentDto,
     CreateUserDto,
@@ -21,8 +21,7 @@ import {
     UpdateUserDto,
     UserResponseDto,
 } from './dto';
-import { UserContext } from '../../shared/interfaces';
-import { QueryDto, ApiCrudOperation } from '@app/shared/utils';
+import { ApiCrudOperation } from '@app/shared/utils';
 
 @ApiTags('Users')
 @ApiBearerAuth()

@@ -34,6 +34,7 @@ export type EmployeeWithRelations = Employee & {
         code: string;
         type: string;
         isActive: boolean;
+        additionalDetails?: string;
     }>;
     computerUsers?: Array<{
         id: number;
@@ -55,6 +56,16 @@ export class EmployeeRepository extends BaseRepository<
 > {
     protected readonly modelName = 'Employee';
 
+    protected cascadeRelations = [
+        'credential',
+        'computerUser',
+        'action',
+        'employeeSync',
+        'attendance',
+    ];
+
+    protected disconnectRelations = ['gates'];
+
     constructor(prisma: PrismaService) {
         super(prisma);
     }
@@ -75,6 +86,9 @@ export class EmployeeRepository extends BaseRepository<
         userRole?: Role
     ): Promise<EmployeeWithRelations[]> {
         const scopedWhere = this.applyDataScope(where || {}, scope) as Prisma.EmployeeWhereInput;
+        if (!scopedWhere['deletedAt']) {
+            scopedWhere['deletedAt'] = null;
+        }
 
         const options: Prisma.EmployeeFindManyArgs = {
             where: scopedWhere,
@@ -102,6 +116,9 @@ export class EmployeeRepository extends BaseRepository<
     ): Promise<EmployeeWithRelations | null> {
         const where = { id };
         const scopedWhere = this.applyDataScope(where, scope) as Prisma.EmployeeWhereInput;
+        if (!scopedWhere['deletedAt']) {
+            scopedWhere['deletedAt'] = null;
+        }
 
         return await this.getDelegate().findFirst({
             where: scopedWhere,
@@ -487,7 +504,7 @@ export class EmployeeRepository extends BaseRepository<
         pagination?: { page: number; limit: number }
     ): Promise<EmployeeWithRelations[]> {
         return await this.findMany(
-            { departmentId },
+            { departmentId, deletedAt: null },
             { name: 'asc' },
             include || this.getDefaultInclude(),
             pagination
@@ -501,6 +518,7 @@ export class EmployeeRepository extends BaseRepository<
         return await this.count({
             departmentId,
             isActive: true,
+            deletedAt: null,
         });
     }
 }

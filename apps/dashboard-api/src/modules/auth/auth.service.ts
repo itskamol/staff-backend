@@ -10,7 +10,7 @@ import { Role } from '@app/shared/auth';
 export class AuthService {
     constructor(
         private readonly userRepository: UserRepository,
-        private readonly jwtService: CustomJwtService,
+        private readonly jwtService: CustomJwtService
     ) {}
 
     /**
@@ -19,8 +19,11 @@ export class AuthService {
     async login(loginDto: LoginDto): Promise<LoginResponseDto> {
         const { username, password } = loginDto;
 
-        const user: User = await this.userRepository.findFirst({ username }, undefined, {
-            organization: { select: { id: true, isActive: true } },
+        const user = await this.userRepository.findFirst({ username }, undefined, {
+            organization: {
+                select: { id: true, isActive: true },
+            },
+            departments: { select: { id: true, isActive: true } },
         });
 
         if (!user) {
@@ -41,6 +44,9 @@ export class AuthService {
             username: user.username,
             role: user.role as Role,
             organizationId: user.organizationId || undefined,
+            departmentIds: (user as any).departments
+                ? (user as any).departments.map((d: any) => d.id)
+                : [],
         };
 
         const tokens = this.jwtService.generateTokenPair(jwtPayload);
@@ -59,7 +65,7 @@ export class AuthService {
     /**
      * Refresh access token using refresh token
      */
-    async refreshToken(refreshTokenDto: RefreshTokenDto): Promise<RefreshTokenResponseDto> {
+    async refreshToken(refreshTokenDto: RefreshTokenDto): Promise<RefreshTokenResponseDto | any> {
         const { refreshToken } = refreshTokenDto;
 
         const payload = this.jwtService.verifyRefreshToken(refreshToken);
@@ -79,12 +85,13 @@ export class AuthService {
             sub: String(user.id),
             role: user.role as Role,
             username: user.username,
-            organizationId: user.organizationId
+            organizationId: user.organizationId,
+            departmentIds: user.departments ? user.departments.map((d: any) => d.id) : [],
         };
 
         const newTokens = this.jwtService.generateTokenPair(jwtPayload, payload.tokenVersion + 1);
 
-        return newTokens;
+        return { accessToken: newTokens.accessToken };
     }
 
     /**
@@ -92,7 +99,7 @@ export class AuthService {
      */
     async validateUser(userId: number): Promise<User | null> {
         const user = await this.userRepository.findById(userId);
-        if (!user || !user.isActive) {
+        if (!user || !user.isActive || user.deletedAt !== null) {
             return null;
         }
         return user;

@@ -1,6 +1,6 @@
-import { QueryDto } from '@app/shared/utils';
 import { ApiProperty, PartialType } from '@nestjs/swagger';
 import { ResourceType } from '@prisma/client';
+import { QueryDto } from 'apps/dashboard-api/src/shared/dto';
 import { IsEnum, IsInt, IsNotEmpty, IsOptional, IsString } from 'class-validator';
 
 export class CreateResourceDto {

@@ -2,7 +2,14 @@ import { Injectable, NotFoundException } from '@nestjs/common';
 import { ActionRepository } from '../repositories/action.repository';
 import { ActionQueryDto, CreateActionDto, UpdateActionDto } from '../dto/action.dto';
 import { PrismaService } from '@app/shared/database';
-import { ActionMode, ActionStatus, ActionType, Prisma, VisitorType } from '@prisma/client';
+import {
+    ActionMode,
+    ActionStatus,
+    ActionType,
+    EntryType,
+    Prisma,
+    VisitorType,
+} from '@prisma/client';
 import { AttendanceService } from '../../attendance/attendance.service';
 import { LoggerService } from 'apps/dashboard-api/src/core/logger';
 import { DataScope } from '@app/shared/auth';
@@ -22,7 +29,38 @@ export class ActionService {
             const acEvent =
                 eventData.AccessControllerEvent || eventData.EventNotificationAlert || {};
 
+            // subeventType: 75 - photo, 181 - personal code, 1 - card+
+            const { CAR, CARD, PERSONAL_CODE, PHOTO } = ActionType;
+
             const actionTime = eventData.dateTime || acEvent.dateTime;
+            const originalLicensePlate = acEvent?.ANPR?.originalLicensePlate || null;
+
+            let actionType = originalLicensePlate
+                ? CAR
+                : acEvent.subEventType == 181
+                ? PERSONAL_CODE
+                : acEvent.subEventType == 75
+                ? PHOTO
+                : acEvent.subEventType == 1
+                ? CARD
+                : null;
+
+            let credentialId = null;
+
+            if (actionType == CAR || actionType == CARD) {
+                const credential = await this.prisma.credential.findFirst({
+                    where: { code: originalLicensePlate || acEvent?.cardNo, isActive: true },
+                });
+                credentialId = credential ? credential.id : null;
+            }
+
+            if (actionType == PHOTO || actionType == PERSONAL_CODE) {
+                const credential = await this.prisma.credential.findFirst({
+                    where: { employeeId, type: actionType, isActive: true },
+                });
+
+                credentialId = credential ? credential.id : null;
+            }
 
             const device = await this.prisma.device.findFirst({ where: { id: deviceId } });
             if (!device) throw new Error(`Device ${deviceId} not found!`);
@@ -37,6 +75,8 @@ export class ActionService {
                 throw new Error(`EmployeePlan is not found for Employee`);
             }
 
+            const organizationId = employee.organizationId;
+
             const plan = await this.prisma.employeePlan.findFirst({
                 where: { id: employee.employeePlanId },
             });
@@ -49,19 +89,19 @@ export class ActionService {
                 employeeId,
                 visitorId: undefined,
                 visitorType:
-                    acEvent.userType === 'normal' || device.type === 'CAR'
+                    acEvent.userType === 'normal' || device.type.includes(ActionType.CAR)
                         ? VisitorType.EMPLOYEE
                         : VisitorType.VISITOR,
                 entryType: device.entryType,
-                actionType: ActionType.PHOTO,
+                actionType,
                 actionResult: null,
                 actionMode:
                     eventData.eventState === 'active' || acEvent.eventState === 'active'
                         ? ActionMode.ONLINE
                         : ActionMode.OFFLINE,
-                organizationId: gate.organizationId,
+                organizationId,
+                credentialId,
             };
-
 
             const todayStart = new Date(actionTime);
             todayStart.setHours(0, 0, 0, 0);
@@ -69,8 +109,13 @@ export class ActionService {
             const todayEnd = new Date(actionTime);
             todayEnd.setHours(23, 59, 59, 999);
 
-            if (device.entryType === 'BOTH') {
-                const lastInfo = await this.getLastActionInfo(employeeId, gate.organizationId,todayStart, todayEnd);
+            if (device.entryType === EntryType.BOTH) {
+                const lastInfo = await this.getLastActionInfo(
+                    employeeId,
+                    organizationId,
+                    todayStart,
+                    todayEnd
+                );
 
                 if (!lastInfo.canCreate) {
                     return;
@@ -79,13 +124,16 @@ export class ActionService {
                 dto.entryType = lastInfo.nextEntryType as any;
             }
 
-            if (dto.entryType === 'EXIT') {
-                const { status: exitStatus } = await this.getExitStatus(actionTime, plan.endTime);
+            if (dto.entryType === EntryType.EXIT) {
+                const { status: exitStatus, diffMinutes } = await this.getExitStatus(
+                    actionTime,
+                    plan.endTime
+                );
 
                 const existingAttendance = await this.prisma.attendance.findFirst({
                     where: {
                         employeeId,
-                        organizationId: gate.organizationId,
+                        organizationId,
                         startTime: {
                             gte: todayStart,
                             lte: todayEnd,
@@ -100,6 +148,7 @@ export class ActionService {
                         data: {
                             endTime: actionTime,
                             goneStatus: exitStatus,
+                            earlyGoneTime: diffMinutes,
                         },
                     });
                 } else {
@@ -107,8 +156,8 @@ export class ActionService {
                 }
             }
 
-            if (dto.entryType === 'ENTER') {
-                const { status } = await this.getActionStatus(
+            if (dto.entryType === EntryType.ENTER) {
+                const { status, diffMinutes } = await this.getEnterStatus(
                     actionTime,
                     plan.startTime,
                     plan.extraTime
@@ -117,13 +166,16 @@ export class ActionService {
                 const existingAttendance = await this.prisma.attendance.findFirst({
                     where: {
                         employeeId,
-                        organizationId: gate.organizationId,
+                        organizationId,
                         createdAt: {
                             gte: todayStart,
                             lte: todayEnd,
                         },
                         AND: {
-                            OR: [{ arrivalStatus: 'PENDING' }, { arrivalStatus: 'ABSENT' }],
+                            OR: [
+                                { arrivalStatus: ActionStatus.PENDING },
+                                { arrivalStatus: ActionStatus.ABSENT },
+                            ],
                         },
                     },
                     orderBy: { startTime: 'desc' },
@@ -133,7 +185,8 @@ export class ActionService {
                     startTime: actionTime,
                     arrivalStatus: status,
                     employeeId,
-                    organizationId: gate.organizationId,
+                    organizationId,
+                    lateArrivalTime: diffMinutes,
                 };
 
                 if (existingAttendance) {
@@ -145,12 +198,39 @@ export class ActionService {
                     await this.attendanceService.create(data);
                 }
 
-                await this.updatedGoneStatus(employeeId, gate.organizationId, todayStart, todayEnd);
+                await this.updatedGoneStatus(employeeId, organizationId, todayStart, todayEnd);
             }
 
-            return this.prisma.action.create({ data: dto });
+            return this.prisma.action.create({
+                data: {
+                    actionTime: dto.actionTime,
+                    visitorType: dto.visitorType,
+                    entryType: dto.entryType,
+                    actionType: dto.actionType,
+                    actionResult: dto.actionResult,
+                    actionMode: dto.actionMode,
+
+                    device: {
+                        connect: { id: deviceId },
+                    },
+                    gate: {
+                        connect: { id: gate.id },
+                    },
+                    employee: {
+                        connect: { id: employeeId },
+                    },
+                    organization: {
+                        connect: { id: organizationId },
+                    },
+                    credential: credentialId
+                        ? {
+                              connect: { id: credentialId },
+                          }
+                        : undefined,
+                },
+            });
         } catch (error) {
-            console.log(error);
+            this.logger.error(error);
             throw new Error(error.message);
         }
     }
@@ -163,33 +243,81 @@ export class ActionService {
 
     async findAll(query: ActionQueryDto, scope: DataScope) {
         const where: Prisma.ActionWhereInput = {};
+        const { startDate, endDate, search, deviceId, employeeId, status, sort, order } = query;
 
-        if (query.deviceId) where.deviceId = Number(query.deviceId);
-        if (query.employeeId) where.employeeId = Number(query.employeeId);
-        if (query.status) where.status = query.status;
+        if (deviceId) where.deviceId = Number(deviceId);
+        if (employeeId) where.employeeId = Number(employeeId);
+        if (status) where.status = status;
 
-        const page = query.page ? Number(query.page) : 1;
-        const limit = query.limit ? Number(query.limit) : 10;
+        if (search) {
+            where.employee = {
+                name: {
+                    contains: search,
+                    mode: 'insensitive',
+                },
+            };
+        }
 
-        const data = await this.repo.findManyWithPagination(
+        let start: Date;
+        let end: Date;
+
+        if (startDate && endDate) {
+            start = new Date(startDate);
+            start.setHours(0, 0, 0, 0);
+
+            end = new Date(endDate);
+            end.setHours(23, 59, 59, 999);
+        } else {
+            start = new Date();
+            start.setHours(0, 0, 0, 0);
+
+            end = new Date();
+            end.setHours(23, 59, 59, 999);
+        }
+
+        where.actionTime = {
+            gte: start,
+            lte: end,
+        };
+
+        const actions = await this.repo.findMany(
             where,
-            { actionTime: 'desc' },
+            { [sort || 'actionTime']: order || 'asc' },
             this.repo.getDefaultInclude(),
-            { page, limit },
-            scope
+            undefined,
+            undefined,
+            scope,
+            true
         );
 
-        return data;
+        const dates = this.getDateRange(start, end);
+
+        return dates.map(date => {
+            const dateWithOffset = new Date(date);
+            dateWithOffset.setDate(dateWithOffset.getDate() + 1);
+
+            const dateStr = dateWithOffset.toISOString().split('T')[0];
+
+            return {
+                date: dateStr,
+                dayName: date.toLocaleDateString('en-US', { weekday: 'long' }),
+                actions: actions.filter(
+                    action => new Date(action.actionTime).toISOString().split('T')[0] === dateStr
+                ),
+            };
+        });
     }
 
-    async update(id: number, dto: UpdateActionDto, scope: DataScope) {
-        await this.findOne(id, scope);
-        return this.repo.update(id, dto);
-    }
+    private getDateRange(start: Date, end: Date): Date[] {
+        const dates: Date[] = [];
+        const current = new Date(start);
 
-    async remove(id: number, scope: DataScope) {
-        await this.findOne(id, scope);
-        return this.repo.delete(id, scope);
+        while (current <= end) {
+            dates.push(new Date(current));
+            current.setDate(current.getDate() + 1);
+        }
+
+        return dates;
     }
 
     private async updatedGoneStatus(
@@ -216,17 +344,18 @@ export class ActionService {
                 data: {
                     goneStatus: null,
                     endTime: null,
+                    earlyGoneTime: null,
                 },
             });
         }
         return;
     }
 
-    async getActionStatus(
+    async getEnterStatus(
         actionTime: string,
         startTime: string,
         extraTime: string
-    ): Promise<{ status: ActionStatus }> {
+    ): Promise<{ status: ActionStatus; diffMinutes: number }> {
         const [startHour, startMinute] = startTime.split(':').map(Number);
         const [extraHour, extraMinute] = extraTime ? extraTime.split(':').map(Number) : [0, 0];
 
@@ -236,17 +365,40 @@ export class ActionService {
         startDateTime.setHours(startHour, startMinute, 0, 0);
 
         const allowedTime = new Date(startDateTime);
-
         allowedTime.setHours(startDateTime.getHours() + extraHour);
         allowedTime.setMinutes(startDateTime.getMinutes() + extraMinute);
 
+        // kech qolgan vaqt
         const diffMs = eventDate.getTime() - allowedTime.getTime();
+        const diffMinutes = Math.floor(diffMs / (1000 * 60));
 
-        if (diffMs > 0) {
-            return { status: ActionStatus.LATE };
-        } else {
-            return { status: ActionStatus.ON_TIME };
+        if (diffMinutes > 0) {
+            return { status: ActionStatus.LATE, diffMinutes };
         }
+
+        return { status: ActionStatus.ON_TIME, diffMinutes: 0 };
+    }
+
+    async getExitStatus(
+        actionTime: string,
+        endTime: string
+    ): Promise<{ status: ActionStatus; diffMinutes: number }> {
+        const [endHour, endMinute] = endTime.split(':').map(Number);
+
+        const eventDate = new Date(actionTime);
+
+        const endDateTime = new Date(actionTime);
+        endDateTime.setHours(endHour, endMinute, 0, 0);
+
+        // erta ketgan vaqt
+        const diffMs = endDateTime.getTime() - eventDate.getTime();
+        const diffMinutes = Math.floor(diffMs / (1000 * 60));
+
+        if (diffMinutes > 0) {
+            return { status: ActionStatus.EARLY, diffMinutes };
+        }
+
+        return { status: ActionStatus.ON_TIME, diffMinutes: 0 };
     }
 
     parseLocalTime(timeStr: string): Date {
@@ -263,34 +415,18 @@ export class ActionService {
         return d;
     }
 
-    async getExitStatus(actionTime: string, endTime: string): Promise<{ status: ActionStatus }> {
-        const [endHour, endMinute] = endTime.split(':').map(Number);
-
-        const eventDate = new Date(actionTime);
-
-        const endDateTime = new Date(actionTime);
-        endDateTime.setHours(endHour, endMinute, 0, 0);
-
-        const diffMs = eventDate.getTime() - endDateTime.getTime();
-
-        if (diffMs < 0) {
-            return { status: ActionStatus.EARLY };
-        } else {
-            return { status: ActionStatus.ON_TIME };
-        }
-    }
-
     async getLastActionInfo(employeeId: number, organizationId: number, gte: Date, lte: Date) {
         const lastAction = await this.prisma.action.findFirst({
             where: { employeeId, organizationId, actionTime: { gte, lte } },
             orderBy: { actionTime: 'desc' },
         });
+        const { EXIT, ENTER } = EntryType;
 
         if (!lastAction) {
             return {
                 canCreate: true,
                 lastEntryType: null,
-                nextEntryType: 'ENTER',
+                nextEntryType: ENTER,
                 minutesSinceLast: null,
             };
         }
@@ -309,11 +445,7 @@ export class ActionService {
         }
 
         const nextEntryType =
-            lastAction.entryType === 'ENTER'
-                ? 'EXIT'
-                : lastAction.entryType === 'EXIT'
-                ? 'ENTER'
-                : 'ENTER';
+            lastAction.entryType === ENTER ? EXIT : lastAction.entryType === EXIT ? ENTER : ENTER;
 
         return {
             canCreate: true,

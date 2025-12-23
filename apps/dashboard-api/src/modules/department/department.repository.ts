@@ -17,6 +17,10 @@ export class DepartmentRepository extends BaseRepository<
         super(prisma);
     }
 
+    protected cascadeRelations = ['employee', 'credentials'];
+
+    protected disconnectRelations = ['users'];
+
     protected readonly modelName = Prisma.ModelName.Department;
 
     protected getDelegate() {

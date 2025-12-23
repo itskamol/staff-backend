@@ -1,5 +1,6 @@
 import { ApiPropertyOptional, PartialType } from '@nestjs/swagger';
 import { ActionMode, ActionStatus, ActionType, EntryType, VisitorType } from '@prisma/client';
+import { QueryDto } from 'apps/dashboard-api/src/shared/dto';
 import { Type } from 'class-transformer';
 import { IsDateString, IsEnum, IsInt, IsOptional, IsString } from 'class-validator';
 
@@ -45,23 +46,14 @@ export class CreateActionDto {
 
     @IsInt()
     organizationId: number;
+
+    @IsInt()
+    credentialId?: number;
 }
 
 export class UpdateActionDto extends PartialType(CreateActionDto) {}
 
-export class ActionQueryDto {
-    @ApiPropertyOptional()
-    @IsOptional()
-    @IsInt()
-    @Type(() => Number)
-    page?: number;
-
-    @ApiPropertyOptional()
-    @IsOptional()
-    @IsInt()
-    @Type(() => Number)
-    limit?: number;
-
+export class ActionQueryDto extends QueryDto {
     @ApiPropertyOptional()
     @IsOptional()
     @IsInt()

@@ -1,5 +1,14 @@
-import { ApiProperty, PartialType } from '@nestjs/swagger';
-import { IsEmail, IsNotEmpty, IsOptional, IsPhoneNumber, IsString, MaxLength } from 'class-validator';
+import { ApiProperty, OmitType, PartialType } from '@nestjs/swagger';
+import {
+    IsArray,
+    IsEmail,
+    IsInt,
+    IsNotEmpty,
+    IsOptional,
+    IsPhoneNumber,
+    IsString,
+    MaxLength,
+} from 'class-validator';
 
 export class CreateOrganizationDto {
     @ApiProperty({
@@ -56,9 +65,17 @@ export class CreateOrganizationDto {
     @IsOptional()
     @IsString()
     additionalDetails?: string;
+
+    @ApiProperty({ example: [1, 2, 3], description: 'Gates Ids' })
+    @IsArray()
+    @IsOptional()
+    @IsInt({ each: true })
+    gates: number[];
 }
 
-export class UpdateOrganizationDto extends PartialType(CreateOrganizationDto) {}
+export class UpdateOrganizationDto extends PartialType(
+    OmitType(CreateOrganizationDto, ['gates'] as const)
+) {}
 
 export class OrganizationResponseDto {
     @ApiProperty({

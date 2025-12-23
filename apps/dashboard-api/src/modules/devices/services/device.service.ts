@@ -1,14 +1,13 @@
 import { Injectable, NotFoundException, BadRequestException } from '@nestjs/common';
-import { DataScope } from '@app/shared/auth';
+import { DataScope, UserContext } from '@app/shared/auth';
 import {
     AssignEmployeesToGatesDto,
     CreateDeviceDto,
     QueryDeviceDto,
     UpdateDeviceDto,
 } from '../dto/device.dto';
-import { UserContext } from '../../../shared/interfaces';
 import { DeviceRepository } from '../repositories/device.repository';
-import { DeviceType, EntryType, Prisma } from '@prisma/client';
+import { ActionType, EntryType, Prisma } from '@prisma/client';
 import { GateRepository } from '../../gate/repositories/gate.repository';
 import { HikvisionConfig } from '../../hikvision/dto/create-hikvision-user.dto';
 import { ConfigService } from 'apps/dashboard-api/src/core/config/config.service';
@@ -27,11 +26,19 @@ export class DeviceService {
         private readonly gateRepository: GateRepository,
         private hikvisionService: HikvisionAccessService,
         private readonly configService: ConfigService,
-        private readonly encryptionService: EncryptionService,
+        private readonly encryptionService: EncryptionService
     ) {}
 
     async findAll(query: QueryDeviceDto, scope: DataScope, user: UserContext) {
-        const { page, limit, sort = 'createdAt', order = 'desc', search, type, gateId } = query;
+        const {
+            page,
+            limit,
+            sort = 'createdAt',
+            order = 'desc',
+            search,
+            deviceTypes,
+            gateId,
+        } = query;
         const where: Prisma.DeviceWhereInput = {};
 
         if (search) {
@@ -41,8 +48,8 @@ export class DeviceService {
             ];
         }
 
-        if (type) {
-            where.type = type;
+        if (deviceTypes) {
+            where.type = { hasSome: deviceTypes };
         }
 
         if (gateId) {
@@ -92,7 +99,7 @@ export class DeviceService {
             scope
         );
 
-        if (!device) {
+        if (!device || device.deletedAt !== null) {
             throw new NotFoundException('Device not found');
         }
 
@@ -120,7 +127,6 @@ export class DeviceService {
             password: dtoData.password,
             protocol: 'http',
         };
-
 
         const deviceInfoResult = await this.hikvisionService.getDeviceInfo(hikvisionConfig);
         if (!deviceInfoResult.success) {
@@ -166,7 +172,7 @@ export class DeviceService {
             ipAddress: ipAddress,
             login: dtoData.login,
             password: dtoData.password,
-            type: dtoData.type,
+            type: dtoData.deviceTypes,
             entryType: dtoData.entryType || EntryType.BOTH,
             welcomeText: dtoData.welcomeText || null,
             welcomeTextType: dtoData.welcomeTextType || null,
@@ -176,7 +182,7 @@ export class DeviceService {
             capabilities,
         };
 
-        const newDevice:CreateDeviceDto = await this.deviceRepository.create(
+        const newDevice: CreateDeviceDto = await this.deviceRepository.create(
             {
                 ...device,
                 ...(gateId && {
@@ -184,11 +190,6 @@ export class DeviceService {
                         connect: { id: gateId },
                     },
                 }),
-                ...(gate && {
-                    organization: {
-                        connect: { id: gate.organizationId },
-                    },
-                }),
             },
             {
                 gate: {
@@ -201,57 +202,97 @@ export class DeviceService {
             scope
         );
 
-        const job = await this.deviceQueue.add(JOB.DEVICE.CREATE, {
-            hikvisionConfig,
-            newDevice: newDevice,
-            gateId,
-            scope,
-        });
+        if (gateId) {
+            await this.deviceQueue.add(JOB.DEVICE.CREATE, {
+                hikvisionConfig,
+                newDevice: newDevice,
+                gateId,
+                scope,
+            });
+        }
 
         return newDevice;
     }
 
     async update(id: number, updateDeviceDto: UpdateDeviceDto, scope: DataScope) {
-        await this.findOne(id, scope);
+        // 1. Amaldagi qurilmani bazadan olamiz (Solishtirish uchun)
+        const currentDevice = await this.findOne(id, scope);
 
-        const { gateId, ipAddress, ...dtoData } = updateDeviceDto;
+        const { gateId, ipAddress, deviceTypes, ...dtoData } = updateDeviceDto;
 
-        if (gateId && ipAddress) {
-            const existing = await this.deviceRepository.findOneByGateAndIp(gateId, ipAddress);
-            if (existing && existing.id !== id) {
-                throw new BadRequestException(
-                    'This gate already has a device with the same IP address'
+        // 2. IP manzili va Gate kombinatsiyasi band emasligini tekshirish
+        if (gateId || ipAddress) {
+            const checkIp = ipAddress || currentDevice.ipAddress;
+            const checkGate = gateId !== undefined ? gateId : currentDevice.gateId;
+
+            if (checkIp && checkGate) {
+                const collision = await this.deviceRepository.findOneByGateAndIp(
+                    checkGate,
+                    checkIp
                 );
+                if (collision && collision.id !== id) {
+                    throw new BadRequestException(
+                        'This gate already has a device with the same IP address'
+                    );
+                }
             }
         }
 
+        // 3. Yangi Gate mavjudligini tekshirish
         if (gateId) {
             const gate = await this.gateRepository.findById(gateId, {}, scope);
-            if (!gate) {
-                throw new NotFoundException('Gate not found');
-            }
+            if (!gate) throw new NotFoundException('Gate not found');
         }
 
-        return this.deviceRepository.update(
+        // 4. Bazada yangilash
+        const updatedDevice = await this.deviceRepository.update(
             id,
             {
                 ...dtoData,
-                ...(updateDeviceDto.gateId !== undefined && {
+                type: deviceTypes,
+                ...(gateId !== undefined && {
                     gate: gateId ? { connect: { id: gateId } } : { disconnect: true },
                 }),
             },
             {
-                gate: {
-                    select: {
-                        id: true,
-                        name: true,
-                    },
-                },
+                gate: { select: { id: true, name: true } },
             },
             scope
         );
-    }
 
+        if (gateId !== undefined && gateId !== currentDevice.gateId) {
+            if (currentDevice.gateId) {
+                const oldGate = await this.gateRepository.findById(currentDevice.gateId, {
+                    employees: true,
+                });
+
+                if (oldGate?.employees?.length) {
+                    await this.deviceQueue.add(JOB.DEVICE.CLEAR_ALL_USERS_FROM_DEVICE, {
+                        deviceId: id,
+                    });
+                }
+            }
+
+            if (gateId) {
+                const hikvisionConfig: HikvisionConfig = {
+                    host: updatedDevice.ipAddress,
+                    port: 80,
+                    username: updatedDevice.login,
+                    password: updatedDevice.password,
+                    protocol: 'http',
+                };
+
+                await this.deviceQueue.add(JOB.DEVICE.CREATE, {
+                    hikvisionConfig,
+                    newDevice: updatedDevice,
+                    gateId,
+                    scope,
+                });
+            }
+        }
+
+        return updatedDevice;
+    }
     async remove(id: number, scope: DataScope, user: UserContext) {
         const device = await this.deviceRepository.findById(
             id,
@@ -265,9 +306,15 @@ export class DeviceService {
             scope
         );
 
-        if (!device) {
+        if (!device || device.deletedAt !== null) {
             throw new NotFoundException('Device not found');
         }
+
+        await this.deviceRepository.update(id, {
+            gate: {
+                disconnect: { id: device?.gateId },
+            },
+        });
 
         const config: HikvisionConfig = {
             host: device.ipAddress,
@@ -279,11 +326,11 @@ export class DeviceService {
 
         const job = await this.deviceQueue.add(JOB.DEVICE.DELETE, { device, config });
 
-        const result = await this.deviceRepository.delete(id, scope);
+        const result = await this.deviceRepository.softDelete(id, scope);
         return { message: 'Device deleted successfully', ...result };
     }
 
-    async findByType(type: DeviceType) {
+    async findByType(type: ActionType) {
         return this.deviceRepository.findByType(type);
     }
 
@@ -312,16 +359,38 @@ export class DeviceService {
         scope: DataScope,
         user?: UserContext
     ) {
-        const port = this.configService.port;
-        const ip = this.configService.hostIp;
-
-        await this.deviceQueue.add(JOB.DEVICE.ASSIGN_EMPLOYEES_TO_GATES, {
+        const job = await this.deviceQueue.add(JOB.DEVICE.ASSIGN_EMPLOYEES_TO_GATES, {
             dto,
             scope,
-            port,
-            ip,
         });
 
         return { success: true };
+    }
+
+    async unlockDoor(deviceId: number, doorNo: number = 1, scope?: DataScope) {
+        try {
+            const device = await this.deviceRepository.findById(deviceId, {}, scope);
+
+            if (!device) {
+                throw new NotFoundException('Device not found');
+            }
+
+            const hikvisionConfig: HikvisionConfig = {
+                host: device.ipAddress,
+                port: 80,
+                username: device.login,
+                password: device.password,
+                protocol: device.protocol || 'http',
+            };
+
+            const result = await this.hikvisionService.openDoor(doorNo, hikvisionConfig);
+            if (!result) {
+                throw new BadRequestException('Failed to unlock the door on the device');
+            }
+
+            return { success: true };
+        } catch (error) {
+            throw error;
+        }
     }
 }

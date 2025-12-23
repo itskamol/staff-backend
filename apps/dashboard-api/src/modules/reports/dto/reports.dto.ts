@@ -1,100 +1,14 @@
 import { IsOptional, IsDateString, IsEnum, IsInt, Min, IsArray, IsString } from 'class-validator';
-import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
-import { Transform, Type } from 'class-transformer';
-
-export enum ReportType {
-    ATTENDANCE = 'ATTENDANCE',
-    PRODUCTIVITY = 'PRODUCTIVITY',
-    DEVICE_USAGE = 'DEVICE_USAGE',
-    VISITOR_ACTIVITY = 'VISITOR_ACTIVITY',
-    SECURITY_EVENTS = 'SECURITY_EVENTS',
-}
-
-export enum ExportFormat {
-    PDF = 'PDF',
-    EXCEL = 'EXCEL',
-    CSV = 'CSV',
-}
-
-export enum TimeRange {
-    TODAY = 'TODAY',
-    YESTERDAY = 'YESTERDAY',
-    THIS_WEEK = 'THIS_WEEK',
-    LAST_WEEK = 'LAST_WEEK',
-    THIS_MONTH = 'THIS_MONTH',
-    LAST_MONTH = 'LAST_MONTH',
-    CUSTOM = 'CUSTOM',
-}
-
-export class GenerateReportDto {
-    @ApiProperty({
-        description: 'Type of report to generate',
-        enum: ReportType,
-        example: ReportType.ATTENDANCE,
-    })
-    @IsEnum(ReportType)
-    reportType: ReportType;
-
-    @ApiProperty({
-        description: 'Time range for the report',
-        enum: TimeRange,
-        example: TimeRange.THIS_MONTH,
-    })
-    @IsEnum(TimeRange)
-    timeRange: TimeRange;
-
-    @ApiPropertyOptional({
-        description: 'Start date for custom time range (ISO string)',
-        example: '2024-01-01T00:00:00Z',
-    })
-    @IsOptional()
-    @IsDateString()
-    startDate?: string;
-
-    @ApiPropertyOptional({
-        description: 'End date for custom time range (ISO string)',
-        example: '2024-01-31T23:59:59Z',
-    })
-    @IsOptional()
-    @IsDateString()
-    endDate?: string;
-
-    @ApiPropertyOptional({
-        description: 'Department IDs to filter by',
-        type: [Number],
-        example: [1, 2, 3],
-    })
-    @IsOptional()
-    @IsArray()
-    @Type(() => Number)
-    @IsInt({ each: true })
-    departmentIds?: number[];
-
-    @ApiPropertyOptional({
-        description: 'Employee IDs to filter by',
-        type: [Number],
-        example: [1, 2, 3],
-    })
-    @IsOptional()
-    @IsArray()
-    @Type(() => Number)
-    @IsInt({ each: true })
-    employeeIds?: number[];
-
-    @ApiPropertyOptional({
-        description: 'Export format for the report',
-        enum: ExportFormat,
-        example: ExportFormat.PDF,
-    })
-    @IsOptional()
-    @IsEnum(ExportFormat)
-    exportFormat?: ExportFormat;
-}
+import { ApiPropertyOptional } from '@nestjs/swagger';
+import { Type } from 'class-transformer';
+import { EmployeeResponseDto } from '../../employee/dto';
+import { EmployeePlanRepository } from '../../employeePlan/employee-plan.repository';
+import { CreateEmployeePlanDto } from '../../employeePlan/employee-plan.dto';
 
 export class AttendanceReportDto {
     @ApiPropertyOptional({
         description: 'Start date for attendance report',
-        example: '2024-01-01',
+        example: '2025-11-30',
     })
     @IsOptional()
     @IsDateString()
@@ -102,7 +16,7 @@ export class AttendanceReportDto {
 
     @ApiPropertyOptional({
         description: 'End date for attendance report',
-        example: '2024-01-31',
+        example: '2025-12-15',
     })
     @IsOptional()
     @IsDateString()
@@ -117,124 +31,93 @@ export class AttendanceReportDto {
     @IsInt()
     @Min(1)
     departmentId?: number;
+
+    @ApiPropertyOptional({
+        description: 'Organization ID to filter by',
+        example: 1,
+    })
+    @IsOptional()
+    @Type(() => Number)
+    @IsInt()
+    @Min(1)
+    organizationId?: number;
 }
 
-export class ProductivityReportDto {
+export class AttendanceReportByEmployeeDto {
     @ApiPropertyOptional({
-        description: 'Start date for productivity report',
-        example: '2024-01-01',
+        description: 'Start date for attendance report',
+        example: '2025-11-30',
     })
     @IsOptional()
     @IsDateString()
     startDate?: string;
 
     @ApiPropertyOptional({
-        description: 'End date for productivity report',
-        example: '2024-01-31',
+        description: 'End date for attendance report',
+        example: '2025-12-15',
     })
     @IsOptional()
     @IsDateString()
     endDate?: string;
 
     @ApiPropertyOptional({
-        description: 'Employee IDs to include in report',
-        type: [Number],
-        example: [1, 2, 3],
+        description: 'EmployeeId ID to filter by',
+        example: 1,
     })
     @IsOptional()
-    @IsArray()
     @Type(() => Number)
-    @IsInt({ each: true })
-    employeeIds?: number[];
+    @IsInt()
+    @Min(1)
+    employeeId?: number;
 }
 
-export class DeviceUsageReportDto {
-    @ApiPropertyOptional({
-        description: 'Start date for device usage report',
-        example: '2024-01-01',
-    })
-    @IsOptional()
-    @IsDateString()
-    startDate?: string;
+export interface AttendanceMainReportData {
+    fio?: string;
+    position?: string;
+    department?: string;
+    workSchedule?: string;
+    daysStatistics?: {
+        weekDay?: string;
+        status?: 'ON_TIME' | 'ABSENT' | 'LATE' | 'WEEKEND';
+        startTime?: string;
+        endTime?: string;
+        totalHours?: string;
+    }[]; // har bir kunlik statistikalar
+    totalHoursPlan?: string;
+    totalHoursLate?: string;
+    totalHoursEarly?: string;
+    totalWorkedHours?: string;
+    ontimeHours?: string;
+    overtimeHours?: string;
+    overtimePlanHours?: string; // plandan tashqari dam olish kunlari ishlagan soatlar
+    resonableAbsentHours?: string;
+    unresaonableAbsentHours?: string;
+    total?: string; // ontimeHours + overtimeHours + overtimePlanHours
+    totalDays?: number;
+}
 
-    @ApiPropertyOptional({
-        description: 'End date for device usage report',
-        example: '2024-01-31',
-    })
-    @IsOptional()
-    @IsDateString()
-    endDate?: string;
-
-    @ApiPropertyOptional({
-        description: 'Gate IDs to filter by',
-        type: [Number],
-        example: [1, 2],
-    })
-    @IsOptional()
-    @IsArray()
-    @Type(() => Number)
-    @IsInt({ each: true })
-    gateIds?: number[];
+export interface AttendanceDateData {
+    date?: string; // DD/MM
+    weekday?: string; // Mon, Tue, Wed
 }
 
 export interface AttendanceReportData {
-    employeeId: number;
-    employeeName: string;
-    department: string;
-    totalWorkingDays: number;
-    presentDays: number;
-    absentDays: number;
-    lateArrivals: number;
-    earlyDepartures: number;
-    totalWorkingHours: number;
-    averageWorkingHours: number;
-    attendancePercentage: number;
+    dateData?: AttendanceDateData[];
+    reportData?: AttendanceMainReportData[];
 }
 
-export interface ProductivityReportData {
-    employeeId: number;
-    employeeName: string;
-    department: string;
-    totalActiveTime: number;
-    productiveTime: number;
-    unproductiveTime: number;
-    idleTime: number;
-    productivityPercentage: number;
-    topApplications: Array<{
-        name: string;
-        timeSpent: number;
-        percentage: number;
-    }>;
-    topWebsites: Array<{
-        url: string;
-        timeSpent: number;
-        percentage: number;
-    }>;
-}
+export interface AttendanceStats {
+    averageArrivalTime: string; 
 
-export interface DeviceUsageReportData {
-    deviceId: number;
-    deviceName: string;
-    gateName: string;
-    totalEntries: number;
-    totalExits: number;
-    peakUsageHour: string;
-    averageEntriesPerDay: number;
-    mostActiveDay: string;
-    usageByHour: Array<{
-        hour: number;
-        entries: number;
-        exits: number;
-    }>;
-}
+    avgArrivalEarlyMinutes: number; 
+    avgArrivalLateMinutes: number; 
 
-export interface VisitorActivityReportData {
-    visitorId: number;
-    visitorName: string;
-    totalVisits: number;
-    totalDuration: number;
-    averageVisitDuration: number;
-    lastVisitDate: Date;
-    createdBy: string;
-    organization: string;
+    averageLeaveTime: string;
+
+    avgLeaveEarlyMinutes: number; 
+    avgLeaveOvertimeMinutes: number;
+
+    totalTrackedHours: number;
+    lateArrivalsCount: number;
+    earlyLeavesCount: number; 
 }

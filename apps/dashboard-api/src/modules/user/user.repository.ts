@@ -20,6 +20,10 @@ export class UserRepository extends BaseRepository<
         super(prisma);
     }
 
+    protected cascadeRelations = [];
+
+    protected disconnectRelations = ['departments'];
+
     protected getDelegate() {
         return this.prisma.user;
     }

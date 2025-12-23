@@ -1,9 +1,9 @@
 import { ApiProperty, ApiPropertyOptional, PartialType } from '@nestjs/swagger';
 import { Transform, Type } from 'class-transformer';
 import { IsBoolean, IsNotEmpty, IsOptional, IsString, IsInt, IsArray } from 'class-validator';
+import { QueryDto } from '../../shared/dto';
 
 export class CreateEmployeePlanDto {
-
     @ApiProperty({ example: 'Schedule Name' })
     @IsNotEmpty()
     @IsString()
@@ -32,7 +32,7 @@ export class CreateEmployeePlanDto {
     @ApiProperty({ example: ['Mon', 'Fri'] })
     @IsNotEmpty()
     @IsString({ each: true })
-    @Transform(({ value }) => Array.isArray(value) ? value.join(',') : value)
+    @Transform(({ value }) => (Array.isArray(value) ? value.join(',') : value))
     weekdays: string; // ← bazaga string sifatida ketadi
 
     @ApiProperty({ example: true })
@@ -43,11 +43,10 @@ export class CreateEmployeePlanDto {
     @ApiProperty({ example: 1 })
     @IsOptional()
     @IsInt()
-    organizationId?: number
-
+    organizationId?: number;
 }
 
-export class UpdateEmployeePlanDto extends PartialType(CreateEmployeePlanDto) { }
+export class UpdateEmployeePlanDto extends PartialType(CreateEmployeePlanDto) {}
 
 export class AssignEmployeesDto {
     @ApiProperty({ example: 1 })
@@ -61,40 +60,10 @@ export class AssignEmployeesDto {
     employeeIds: number[];
 }
 
-export class EmployeePlanQueryDto {
-    @ApiPropertyOptional()
-    @IsOptional()
-    @IsString()
-    search?: string;
-
-    @ApiPropertyOptional()
-    @IsOptional()
-    @Type(() => Number)
-    page?: number;
-
-    @ApiPropertyOptional()
-    @IsOptional()
-    @Type(() => Number)
-    limit?: number;
-
-    @ApiPropertyOptional()
-    @IsOptional()
-    @IsBoolean()
-    isActive?: boolean;
-
-    @ApiPropertyOptional()
-    @IsOptional()
-    @IsString()
-    sortBy?: string; // e.g., 'startTime', 'endTime'
-
-    @ApiPropertyOptional()
-    @IsOptional()
-    @IsString()
-    sortOrder?: 'asc' | 'desc';
-
+export class EmployeePlanQueryDto extends QueryDto {
     @ApiPropertyOptional()
     @IsOptional()
     @IsInt()
     @Type(() => Number)
-    organizationId: number
+    organizationId: number;
 }

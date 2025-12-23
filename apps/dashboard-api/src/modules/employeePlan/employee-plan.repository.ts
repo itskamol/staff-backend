@@ -20,6 +20,8 @@ export class EmployeePlanRepository extends BaseRepository<
 > {
     protected readonly modelName = Prisma.ModelName.EmployeePlan;
 
+    protected disconnectRelations = ['employees'];
+
     constructor(protected readonly prisma: PrismaService) {
         super(prisma);
     }
@@ -32,7 +34,6 @@ export class EmployeePlanRepository extends BaseRepository<
      * Assign employees to a plan
      */
     async assignEmployees(employeePlanId: number, employeeIds: number[]) {
-
         return this.prisma.employee.updateMany({
             where: { id: { in: employeeIds } },
             data: { employeePlanId },
@@ -50,13 +51,23 @@ export class EmployeePlanRepository extends BaseRepository<
         include?: Prisma.EmployeePlanInclude;
         scope?: DataScope; // DataScope
     }) {
-        const { skip = 0, take = 10, where = {}, orderBy = { id: 'desc' }, include, scope } = params;
+        const {
+            skip = 0,
+            take = 10,
+            where = {},
+            orderBy = { id: 'desc' },
+            include,
+            scope,
+        } = params;
 
         return this.findMany(
             where,
             orderBy,
             include ?? {
-                employees: { select: { id: true, name: true, photo: true } },
+                employees: {
+                    select: { id: true, name: true, photo: true },
+                    where: { deletedAt: null },
+                },
                 organization: { select: { fullName: true } },
             },
             { page: Math.floor(skip / take) + 1, limit: take },

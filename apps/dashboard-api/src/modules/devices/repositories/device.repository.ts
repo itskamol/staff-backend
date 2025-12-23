@@ -1,6 +1,6 @@
 import { PrismaService } from '@app/shared/database';
 import { Injectable } from '@nestjs/common';
-import { Device, DeviceType, Prisma } from '@prisma/client';
+import { ActionType, Device, Prisma } from '@prisma/client';
 import { BaseRepository } from 'apps/dashboard-api/src/shared/repositories/base.repository';
 
 @Injectable()
@@ -20,6 +20,8 @@ export class DeviceRepository extends BaseRepository<
 
     protected readonly modelName = Prisma.ModelName.Device;
 
+    protected cascadeRelations = ['action', 'employeeSync'];
+
     protected getDelegate() {
         return this.prisma.device;
     }
@@ -29,12 +31,11 @@ export class DeviceRepository extends BaseRepository<
     }
 
     async findOneByGateAndIp(gateId: number, ipAddress: string): Promise<Device | null> {
-    return this.prisma.device.findFirst({where: {gateId: gateId,ipAddress: ipAddress,},
-    });
-  }
+        return this.prisma.device.findFirst({ where: { gateId: gateId, ipAddress: ipAddress } });
+    }
 
-    async findByType(type: DeviceType, include?: Prisma.DeviceInclude) {
-        return this.findMany({ type }, undefined, include);
+    async findByType(type: ActionType, include?: Prisma.DeviceInclude) {
+        return this.findMany({ type: { has: type } }, undefined, include);
     }
 
     async findOnlineDevices() {

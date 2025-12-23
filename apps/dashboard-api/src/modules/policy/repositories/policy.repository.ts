@@ -20,6 +20,10 @@ export class PolicyRepository extends BaseRepository<
 
     protected readonly modelName = Prisma.ModelName.Policy;
 
+    protected cascadeRelations = ['policyRule'];
+
+    protected disconnectRelations = [];
+
     protected getDelegate() {
         return this.prisma.policy;
     }

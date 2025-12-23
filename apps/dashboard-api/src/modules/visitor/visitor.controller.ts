@@ -10,13 +10,18 @@ import {
     ParseIntPipe,
 } from '@nestjs/common';
 import { ApiTags, ApiBearerAuth } from '@nestjs/swagger';
-import { Roles, Role, User as CurrentUser, DataScope, Scope } from '@app/shared/auth';
+import { Roles, Role, User as CurrentUser, DataScope, Scope, UserContext } from '@app/shared/auth';
 import { PaginationDto } from '@app/shared/utils';
 import { VisitorService } from './visitor.service';
-import { CreateVisitorDto, UpdateVisitorDto, GenerateCodeDto, ApiResponseDto } from './dto/visitor.dto';
+import {
+    CreateVisitorDto,
+    UpdateVisitorDto,
+    GenerateCodeDto,
+    ApiResponseDto,
+} from './dto/visitor.dto';
 import { ApiCrudOperation } from '../../shared/utils';
-import { UserContext } from '../../shared/interfaces';
 import { Action, OnetimeCode } from '@prisma/client';
+import { QueryDto } from '../../shared/dto';
 
 @ApiTags('Visitors')
 @ApiBearerAuth()
@@ -36,11 +41,11 @@ export class VisitorController {
         },
     })
     async findAll(
-        @Query() paginationDto: PaginationDto,
+        @Query() query: QueryDto,
         @CurrentUser() user: UserContext,
         @Scope() scope: DataScope
     ) {
-        return this.visitorService.findAll(paginationDto, scope, user);
+        return this.visitorService.findAll(query, scope, user);
     }
 
     @Get(':id')
@@ -68,7 +73,6 @@ export class VisitorController {
         @Body() createVisitorDto: CreateVisitorDto,
         @CurrentUser() user: UserContext
     ): Promise<ApiResponseDto> {
-        console.log('Current User:', user);
         const visitor = await this.visitorService.create(createVisitorDto, user);
         return ApiResponseDto.success(visitor, 'Visitor created successfully');
     }

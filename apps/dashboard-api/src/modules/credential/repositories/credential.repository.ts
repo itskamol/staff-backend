@@ -8,7 +8,7 @@ export type CredentialWithRelations = Credential & {
     employee?: {
         id: number;
         name: string;
-    }
+    };
 };
 
 @Injectable()
@@ -22,6 +22,8 @@ export class CredentialRepository extends BaseRepository<
     Prisma.CredentialInclude
 > {
     protected readonly modelName = 'Credential';
+
+    protected cascadeRelations = ['employeeSync'];
 
     constructor(protected readonly prisma: PrismaService) {
         super(prisma);
@@ -37,14 +39,17 @@ export class CredentialRepository extends BaseRepository<
                 select: {
                     id: true,
                     name: true,
-                }
-            }
+                },
+            },
         };
     }
 
-    async findByEmployeeId(employeeId: number, scope?: DataScope): Promise<CredentialWithRelations[]> {
+    async findByEmployeeId(
+        employeeId: number,
+        scope?: DataScope
+    ): Promise<CredentialWithRelations[]> {
         return this.findMany(
-            { employeeId },
+            { employeeId, deletedAt: null },
             { createdAt: 'desc' },
             this.getDefaultInclude(),
             undefined,
@@ -56,11 +61,11 @@ export class CredentialRepository extends BaseRepository<
     async findByCodeAndType(code: string, type: string): Promise<CredentialWithRelations | null> {
         return this.getDelegate().findFirst({
             where: { code, type: type as any, isActive: true },
-            include: this.getDefaultInclude()
+            include: this.getDefaultInclude(),
         });
     }
 
     async deleteCredential(id: number, scope?: DataScope): Promise<Credential> {
-        return this.delete(id, scope);
+        return this.softDelete(id, scope);
     }
 }

@@ -12,10 +12,10 @@ import { QueryDto } from '@app/shared/utils';
 import { Prisma } from '@prisma/client';
 import { PolicyService } from '../../policy/services/policy.service';
 import { EmployeeRepository } from '../repositories/employee.repository';
-import { HikvisionConfig } from '../../hikvision/dto/create-hikvision-user.dto';
-import { PrismaService } from '@app/shared/database';
 import { OrganizationService } from '../../organization/organization.service';
-import { HikvisionAccessService } from '../../hikvision/services/hikvision.access.service';
+import { Queue } from 'bullmq';
+import { InjectQueue } from '@nestjs/bullmq';
+import { JOB } from 'apps/dashboard-api/src/shared/constants';
 
 @Injectable()
 export class EmployeeService {
@@ -25,9 +25,8 @@ export class EmployeeService {
         private readonly policyService: PolicyService,
         @Inject(FILE_STORAGE_SERVICE)
         private readonly fileStorage: IFileStorageService,
-        private readonly hikiService: HikvisionAccessService,
-        private readonly prisma: PrismaService,
-        private readonly organizationService: OrganizationService
+        private readonly organizationService: OrganizationService,
+        @InjectQueue(JOB.DEVICE.NAME) private readonly deviceQueue: Queue
     ) {}
 
     async getEmployees(query: EmployeeQueryDto, scope: DataScope, user: UserContext) {
@@ -35,16 +34,8 @@ export class EmployeeService {
 
         let whereClause: Prisma.EmployeeWhereInput = {};
         if (search) {
-            whereClause.OR = [
-                { name: { contains: search, mode: 'insensitive' } },
-                { email: { contains: search, mode: 'insensitive' } },
-                { phone: { contains: search, mode: 'insensitive' } },
-            ];
+            whereClause.OR = [{ name: { contains: search, mode: 'insensitive' } }];
         }
-
-        // if (scope.organizationId) {
-        //     whereClause.organizationId = scope?.organizationId;
-        // }
 
         if (credentialType) {
             whereClause.credentials = {
@@ -98,9 +89,11 @@ export class EmployeeService {
                 organization: {
                     select: { id: true, fullName: true, shortName: true },
                 },
+                job: { select: { id: true, uz: true, eng: true, ru: true } },
                 plan: true,
                 credentials: true,
-                gates: {include: {devices: true}}
+                gates: { include: { devices: true } },
+                employeeSyncs: true,
             },
             scope,
             user.role
@@ -161,6 +154,9 @@ export class EmployeeService {
                 connect: { id: plan?.employeePlans[0]?.id },
             },
         };
+        if (dto.jobId) {
+            createData.job = { connect: { id: dto.jobId } };
+        }
 
         if (dto.credentials && dto.credentials.length) {
             const credentialsWithOrgId = dto.credentials.map(credential => ({
@@ -192,7 +188,7 @@ export class EmployeeService {
             throw new NotFoundException('Employee not found or access denied');
         }
 
-        const { departmentId, policyId, ...data } = dto;
+        const { departmentId, policyId, jobId, ...data } = dto;
         const updateData: Prisma.EmployeeUpdateInput = { ...data };
 
         if (dto.photo !== undefined) {
@@ -220,6 +216,9 @@ export class EmployeeService {
             };
         }
 
+        if (jobId) {
+            updateData.job = { connect: { id: jobId } };
+        }
         return await this.employeeRepository.updateWithValidation(id, updateData, scope, user.role);
     }
 
@@ -286,50 +285,11 @@ export class EmployeeService {
             throw new NotFoundException('Employee not found or access denied');
         }
 
-        const syncRecords = await this.prisma.employeeSync.findMany({
-            where: {
-                employeeId: id,
-                status: 'DONE',
-            },
-            include: {
-                device: true,
-            },
+        await this.deviceQueue.add(JOB.DEVICE.REMOVE_EMPLOYEES, {
+            employeeIds: [id],
         });
 
-        if (syncRecords.length > 0) {
-            const deletePromises = syncRecords.map((record: any) => {
-                const config: HikvisionConfig = {
-                    host: record.device.ipAddress,
-                    port: 80,
-                    username: record.device.login,
-                    password: record.device.password,
-                    protocol: record.device.protocol ?? 'http',
-                };
-
-                return this.hikiService
-                    .deleteUser(employee.id.toString(), config)
-                    .then(() => ({
-                        deviceId: record.deviceId,
-                        success: true,
-                    }))
-                    .catch(err => ({
-                        deviceId: record.deviceId,
-                        success: false,
-                        error: err.message,
-                    }));
-            });
-
-            await Promise.allSettled(deletePromises);
-        }
-
-        if (employee.photo) {
-            const exists = await this.fileStorage.exists(employee.photo);
-            if (exists) {
-                await this.fileStorage.deleteObject(employee.photo);
-            }
-        }
-
-        return await this.employeeRepository.delete(id);
+        return await this.employeeRepository.softDelete(id, scope);
     }
 
     async getEmployeeEntryLogs(id: number, query: QueryDto, scope: DataScope, user: UserContext) {
@@ -406,56 +366,6 @@ export class EmployeeService {
         return {
             employeeId: id,
             data: computerUsers,
-        };
-    }
-
-    async assignCardToEmployee(id: number, dto: any, scope: DataScope, user: UserContext) {
-        // Verify access to employee
-        const employee = await this.employeeRepository.findByIdWithRoleScope(
-            id,
-            undefined,
-            scope,
-            user.role
-        );
-        if (!employee) {
-            throw new NotFoundException('Employee not found or access denied');
-        }
-
-        const credential = await this.employeeRepository.assignCredential(id, {
-            code: dto.cardId,
-            type: 'CARD',
-            additionalDetails: dto.additionalDetails,
-        });
-
-        return {
-            employeeId: id,
-            credential,
-            message: 'Card assigned successfully',
-        };
-    }
-
-    async assignCarToEmployee(id: number, dto: any, scope: DataScope, user: UserContext) {
-        // Verify access to employee
-        const employee = await this.employeeRepository.findByIdWithRoleScope(
-            id,
-            undefined,
-            scope,
-            user.role
-        );
-        if (!employee) {
-            throw new NotFoundException('Employee not found or access denied');
-        }
-
-        const credential = await this.employeeRepository.assignCredential(id, {
-            code: dto.carId,
-            type: 'CAR',
-            additionalDetails: dto.additionalDetails,
-        });
-
-        return {
-            employeeId: id,
-            credential,
-            message: 'Car assigned successfully',
         };
     }
 

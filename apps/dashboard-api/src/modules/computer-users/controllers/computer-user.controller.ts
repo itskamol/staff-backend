@@ -1,20 +1,24 @@
 import { Controller, Get, Post, Put, Delete, Body, Param, Query } from '@nestjs/common';
 import { ApiTags, ApiBearerAuth } from '@nestjs/swagger';
-import { Roles, Role, User as CurrentUser, DataScope, Scope } from '@app/shared/auth';
-import { QueryDto } from '@app/shared/utils';
+import { Roles, Role, User as CurrentUser, DataScope, Scope, UserContext } from '@app/shared/auth';
 import { ComputerUserService } from '../services/computer-user.service';
-import { UserContext } from 'apps/dashboard-api/src/shared/interfaces';
-import { CreateComputerUserDto, ComputerUserDto, UpdateComputerUserDto, LinkEmployeeDto } from '../dto/computer-user.dto';
+import {
+    CreateComputerUserDto,
+    ComputerUserDto,
+    UpdateComputerUserDto,
+    LinkEmployeeDto,
+} from '../dto/computer-user.dto';
 import { ApiCrudOperation } from 'apps/dashboard-api/src/shared/utils';
+import { QueryDto } from 'apps/dashboard-api/src/shared/dto';
 
 @ApiTags('Computer Users')
 @Controller('computer-users')
 @ApiBearerAuth()
-@Roles(Role.ADMIN, Role.HR)
 export class ComputerUserController {
     constructor(private readonly computerUserService: ComputerUserService) {}
 
     @Get()
+    @Roles(Role.ADMIN, Role.HR, Role.DEPARTMENT_LEAD)
     @ApiCrudOperation(ComputerUserDto, 'list', {
         summary: 'Get all computer users with pagination',
         includeQueries: {
@@ -37,6 +41,7 @@ export class ComputerUserController {
     }
 
     @Get('unlinked')
+    @Roles(Role.ADMIN, Role.HR, Role.DEPARTMENT_LEAD)
     @ApiCrudOperation(ComputerUserDto, 'list', {
         summary: 'Get unlinked computer users',
     })
@@ -45,12 +50,14 @@ export class ComputerUserController {
     }
 
     @Get(':id')
+    @Roles(Role.ADMIN, Role.HR)
     @ApiCrudOperation(ComputerUserDto, 'get', { summary: 'Get computer user by ID' })
     async findOne(@Param('id') id: number, @CurrentUser() user: UserContext) {
         return await this.computerUserService.findOne(id, user);
     }
 
     @Put(':id')
+    @Roles(Role.ADMIN, Role.HR)
     @ApiCrudOperation(ComputerUserDto, 'update', {
         body: UpdateComputerUserDto,
         summary: 'Update existing computer user',
@@ -65,6 +72,7 @@ export class ComputerUserController {
     }
 
     @Delete(':id')
+    @Roles(Role.ADMIN, Role.HR)
     @ApiCrudOperation(null, 'delete', {
         summary: 'Delete computer user by ID',
         errorResponses: { notFound: true, forbidden: true },
@@ -78,6 +86,7 @@ export class ComputerUserController {
     }
 
     @Post(':id/link-employee')
+    @Roles(Role.ADMIN, Role.HR)
     @ApiCrudOperation(ComputerUserDto, 'create', {
         body: LinkEmployeeDto,
         summary: 'Link computer user to employee',
@@ -92,14 +101,12 @@ export class ComputerUserController {
     }
 
     @Delete(':id/unlink-employee')
+    @Roles(Role.ADMIN, Role.HR)
     @ApiCrudOperation(ComputerUserDto, 'delete', {
         summary: 'Unlink computer user from employee',
         errorResponses: { notFound: true, badRequest: true },
     })
-    async unlinkEmployee(
-        @Param('id') id: number,
-        @CurrentUser() user: UserContext
-    ) {
+    async unlinkEmployee(@Param('id') id: number, @CurrentUser() user: UserContext) {
         return await this.computerUserService.unlinkEmployee(id, user);
     }
 }

@@ -2,7 +2,6 @@ import { MiddlewareConsumer, Module, NestModule, RequestMethod } from '@nestjs/c
 import { APP_FILTER, APP_GUARD, APP_INTERCEPTOR } from '@nestjs/core';
 
 import { SharedDatabaseModule } from '@app/shared/database';
-import { DataScopeGuard, JwtAuthGuard, RolesGuard, SharedAuthModule } from '@app/shared/auth';
 import { GlobalExceptionFilter, SharedUtilsModule } from '@app/shared/utils';
 
 import { AuthModule } from '../modules/auth/auth.module';
@@ -25,6 +24,12 @@ import { EmployeePlanModule } from '../modules/employeePlan/employee-plan.module
 import { AttendanceModule } from '../modules/attendance/attendance.module';
 import { ConfigModule } from '../core/config/config.module';
 import { QueueModule } from '../modules/queue/queue.module';
+import { ReasonModule } from '../modules/reasons/reason.module';
+import { SharedAuthModule } from '@app/shared/auth';
+import { DataScopeGuard, JwtAuthGuard, RolesGuard } from '../shared/guards';
+import { JobModule } from '../modules/jobs/job.module';
+import { ReportsModule } from '../modules/reports/reports.module';
+import { DashboardModule } from '../modules/dashboard/dashboard.module';
 
 @Module({
     imports: [
@@ -48,7 +53,11 @@ import { QueueModule } from '../modules/queue/queue.module';
         ActionModule,
         EmployeePlanModule,
         AttendanceModule,
-        QueueModule
+        QueueModule,
+        ReasonModule,
+        JobModule,
+        ReportsModule,
+        DashboardModule,
     ],
     providers: [
         {
@@ -70,7 +79,7 @@ import { QueueModule } from '../modules/queue/queue.module';
         {
             provide: APP_INTERCEPTOR,
             useClass: TenantContextInterceptor,
-        }
+        },
     ],
 })
 export class AppModule implements NestModule {
@@ -79,6 +88,5 @@ export class AppModule implements NestModule {
             .apply(MorganLoggerMiddleware)
             .exclude('health', 'favicon.ico')
             .forRoutes({ path: '*path', method: RequestMethod.ALL });
-
     }
 }

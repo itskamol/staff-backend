@@ -20,6 +20,10 @@ export class ComputerUserRepository extends BaseRepository<
 
     protected readonly modelName = Prisma.ModelName.ComputerUser;
 
+    protected cascadeRelations = ['activeWindow', 'visitedSite', 'screenshot', 'userSession'];
+
+    protected disconnectRelations = ['computers'];
+
     protected getDelegate() {
         return this.prisma.computerUser;
     }
@@ -45,6 +49,6 @@ export class ComputerUserRepository extends BaseRepository<
     }
 
     async unlinkEmployee(id: number) {
-        return // Set employeeId to null to unlink;
+        return; // Set employeeId to null to unlink;
     }
 }

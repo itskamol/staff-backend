@@ -1,5 +1,6 @@
 import { ApiProperty } from '@nestjs/swagger';
 import {
+    IsArray,
     IsBoolean,
     IsEnum,
     IsNotEmpty,
@@ -11,6 +12,7 @@ import {
     ValidateIf,
 } from 'class-validator';
 import { Role } from '../../../shared/enums';
+import { Type } from 'class-transformer';
 
 export class CreateUserDto {
     @ApiProperty({
@@ -53,7 +55,8 @@ export class CreateUserDto {
     role: Role;
 
     @ApiProperty({
-        description: 'The ID of the organization (Required when creating HR users, optional for SUPER_ADMIN)',
+        description:
+            'The ID of the organization (Required when creating HR users, optional for SUPER_ADMIN)',
         example: 1,
         required: false,
     })
@@ -62,6 +65,13 @@ export class CreateUserDto {
     @IsNotEmpty({ message: 'Organization ID is required for HR and ADMIN users' })
     @IsOptional()
     organizationId?: number;
+
+    @ApiProperty({ type: [Number], required: false })
+    @IsArray()
+    @IsOptional()
+    @IsNumber({}, { each: true })
+    @Type(() => Number)
+    departmentIds?: number[];
 
     @ApiProperty({
         description: 'The status of the user account. Defaults to true.',
@@ -175,6 +185,13 @@ export class UpdateUserDto {
     @IsOptional()
     @IsBoolean()
     isActive?: boolean;
+
+    @ApiProperty({ type: [Number], required: false })
+    @IsArray()
+    @IsOptional()
+    @IsNumber({}, { each: true })
+    @Type(() => Number)
+    departmentIds?: number[];
 }
 
 export class AssignUserToDepartmentDto {
