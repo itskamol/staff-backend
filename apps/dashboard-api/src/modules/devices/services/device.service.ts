@@ -302,6 +302,7 @@ export class DeviceService {
 
         return updatedDevice;
     }
+
     async remove(id: number, scope: DataScope, user: UserContext) {
         const device = await this.deviceRepository.findById(
             id,
@@ -319,11 +320,13 @@ export class DeviceService {
             throw new NotFoundException('Device not found');
         }
 
-        await this.deviceRepository.update(id, {
-            gate: {
-                disconnect: { id: device?.gateId },
-            },
-        });
+        if (device.gateId) {
+            await this.deviceRepository.update(id, {
+                gate: {
+                    disconnect: { id: device?.gateId },
+                },
+            });
+        }
 
         const deviceId = device.id;
 
