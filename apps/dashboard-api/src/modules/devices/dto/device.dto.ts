@@ -226,4 +226,15 @@ export class QueryDeviceDto extends QueryDto {
     @IsOptional()
     @Type(() => Number)
     organizationId?: number;
+
+    @ApiProperty({
+        description: 'Filter by connection with gate',
+        type: Boolean,
+        required: false,
+        default: false,
+    })
+    @IsOptional()
+    @IsBoolean()
+    @Transform(({ value }) => (value === 'true' ? true : value === 'false' ? false : value))
+    isConnected?: boolean;
 }

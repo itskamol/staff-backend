@@ -38,6 +38,7 @@ export class DeviceService {
             search,
             deviceTypes,
             gateId,
+            isConnected,
         } = query;
         const where: Prisma.DeviceWhereInput = {};
 
@@ -50,6 +51,14 @@ export class DeviceService {
 
         if (deviceTypes) {
             where.type = { hasSome: deviceTypes };
+        }
+
+        if (isConnected) {
+            where.gateId = { not: null };
+        }
+
+        if (isConnected === false) {
+            where.gateId = null;
         }
 
         if (gateId) {
