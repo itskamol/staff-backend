@@ -469,17 +469,7 @@ export class DeviceProcessor extends WorkerHost {
                 return this.createDevice(job);
 
             case JOB.DEVICE.DELETE:
-                const { device } = job.data;
-                const gate = await this.prisma.gate.findUnique({
-                    where: { id: device.gateId },
-                    select: { employees: true, id: true },
-                });
-                if (gate)
-                    await this.removeGateEmployeesToDevices(
-                        gate.id,
-                        gate.employees.map(e => e.id)
-                    );
-                return;
+                return this.clearDeviceUsersJob(job);
 
             case JOB.DEVICE.ASSIGN_EMPLOYEES_TO_GATES:
                 return this.assignEmployeesToGatesJob(job);

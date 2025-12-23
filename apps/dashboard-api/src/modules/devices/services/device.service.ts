@@ -325,15 +325,9 @@ export class DeviceService {
             },
         });
 
-        const config: HikvisionConfig = {
-            host: device.ipAddress,
-            port: 80,
-            username: device.login,
-            password: device.password,
-            protocol: device.protocol || 'http',
-        };
+        const deviceId = device.id;
 
-        const job = await this.deviceQueue.add(JOB.DEVICE.DELETE, { device, config });
+        const job = await this.deviceQueue.add(JOB.DEVICE.DELETE, { deviceId });
 
         const result = await this.deviceRepository.softDelete(id, scope);
         return { message: 'Device deleted successfully', ...result };
