@@ -11,7 +11,7 @@ import {
     IsNumber,
 } from 'class-validator';
 import { ApiProperty, ApiPropertyOptional, PartialType } from '@nestjs/swagger';
-import { ActionType, DeviceType, EntryType, WelcomePhoto, WelcomeText } from '@prisma/client';
+import { ActionType, EntryType, WelcomePhoto, WelcomeText } from '@prisma/client';
 import { Transform, Type } from 'class-transformer';
 import { QueryDto } from 'apps/dashboard-api/src/shared/dto';
 

@@ -1,6 +1,6 @@
 import { PrismaService } from '@app/shared/database';
 import { Injectable } from '@nestjs/common';
-import { ActionType, Device, DeviceType, Prisma } from '@prisma/client';
+import { ActionType, Device, Prisma } from '@prisma/client';
 import { BaseRepository } from 'apps/dashboard-api/src/shared/repositories/base.repository';
 
 @Injectable()

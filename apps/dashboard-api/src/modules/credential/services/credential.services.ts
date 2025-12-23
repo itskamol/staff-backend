@@ -1,8 +1,4 @@
-import { EmployeeWithRelations } from '../../employee/repositories/employee.repository';
 import { EmployeeService } from '../../employee/services/employee.service';
-import { HikvisionConfig } from '../../hikvision/dto/create-hikvision-user.dto';
-import { HikvisionAccessService } from '../../hikvision/services/hikvision.access.service';
-import { HikvisionAnprService } from '../../hikvision/services/hikvision.anpr.service';
 import {
     CreateCredentialDto,
     CredentialQueryDto,
@@ -12,9 +8,13 @@ import {
     CredentialRepository,
     CredentialWithRelations,
 } from '../repositories/credential.repository';
-import { ActionType, DeviceType, Prisma } from '@prisma/client';
+import { ActionType, Prisma } from '@prisma/client';
 import { BadRequestException, Injectable, NotFoundException } from '@nestjs/common';
 import { DataScope, UserContext } from '@app/shared/auth';
+import { LoggerService } from 'apps/dashboard-api/src/core/logger';
+import { InjectQueue } from '@nestjs/bullmq';
+import { JOB } from 'apps/dashboard-api/src/shared/constants';
+import { Queue } from 'bullmq';
 
 @Injectable()
 export class CredentialService {
@@ -24,10 +24,10 @@ export class CredentialService {
     private readonly QR = ActionType.QR;
     private readonly PERSONAL_CODE = ActionType.PERSONAL_CODE;
     constructor(
+        @InjectQueue(JOB.DEVICE.NAME) private readonly deviceQueue: Queue,
         private readonly credentialRepository: CredentialRepository,
         private readonly employeeService: EmployeeService,
-        private readonly hikvisionAnprService: HikvisionAnprService,
-        private readonly hikvisionAccessService: HikvisionAccessService
+        private readonly logger: LoggerService
     ) {}
 
     async getAllCredentials(query: CredentialQueryDto, scope: DataScope) {
@@ -124,32 +124,35 @@ export class CredentialService {
     ): Promise<CredentialWithRelations> {
         const existing = await this.getCredentialById(id, scope, user);
         const employee = await this.getEmployee(existing.employeeId, scope, user);
-        const additionalDetails = dto.additionalDetails ?? existing.additionalDetails;
-        this.validatePhoto(dto.type ?? existing.type, additionalDetails);
-        await this.validateUniqueCode(dto.type ?? existing.type, dto.code, id);
 
-        await this.syncDevices(employee, existing, dto);
+        const finalType = dto.type ?? existing.type;
+        const finalCode = dto.code ?? existing.code;
+        const finalDetails = dto.additionalDetails ?? existing.additionalDetails;
 
-        if (dto.isActive === false) {
-            await this.syncDevices(employee, existing, dto, 'Delete');
+        this.validatePhoto(finalType, finalDetails);
+        await this.validateUniqueCode(finalCode ? finalType : null, finalCode, id);
+
+        if (dto.isActive === false && existing.isActive === true) {
+            await this.syncDevices(employee.id, existing.id, 'Delete');
+        } else if (dto.isActive === true && existing.isActive === false) {
+            await this.syncDevices(employee.id, existing.id, 'Create');
+        } else if (existing.isActive) {
+            const isCodeChanged = dto.code && dto.code !== existing.code;
+            const isPhotoChanged =
+                dto.additionalDetails && dto.additionalDetails !== existing.additionalDetails;
+
+            if (isCodeChanged || isPhotoChanged) {
+                await this.syncDevices(employee.id, existing.id, 'Edit', existing.code);
+            }
         }
 
-        if (dto.isActive === true) {
-            await this.syncDevices(employee, existing, dto, 'Create');
-        }
-
-        if (dto.isActive && this.shouldDeactivate(dto.type)) {
-            await this.deactivateOld(employee.id, dto.type, id);
+        if (dto.isActive && this.shouldDeactivate(finalType)) {
+            await this.deactivateOld(employee.id, finalType, id);
         }
 
         return this.credentialRepository.update(
             id,
-            {
-                code: dto.code,
-                type: dto.type,
-                additionalDetails: dto.additionalDetails,
-                isActive: dto.isActive,
-            },
+            dto,
             this.credentialRepository.getDefaultInclude(),
             scope
         );
@@ -159,7 +162,7 @@ export class CredentialService {
         const credential = await this.getCredentialById(id, scope, user);
         const employee = await this.getEmployee(credential.employeeId, scope, user);
 
-        await this.syncDevices(employee, credential, undefined, 'Delete');
+        await this.syncDevices(employee.id, credential.id, 'Delete');
         return this.credentialRepository.deleteCredential(id, scope);
     }
 
@@ -208,107 +211,16 @@ export class CredentialService {
     }
 
     private async syncDevices(
-        employee: EmployeeWithRelations,
-        oldCredential: CreateCredentialDto,
-        dto?: UpdateCredentialDto,
-        action: 'Create' | 'Edit' | 'Delete' = 'Edit'
+        employeeId: number,
+        credentialId: number,
+        action: 'Create' | 'Edit' | 'Delete' = 'Edit',
+        oldCode?: string
     ) {
-        const type = dto?.type ?? oldCredential.type;
-        const code = dto?.code ?? oldCredential.code;
-        const faceUrl = dto?.additionalDetails ?? oldCredential.additionalDetails;
-
-        const devices = employee.gates.flatMap(g =>
-            g.devices.filter(d => this.isDeviceCompatible(type, d.type))
-        );
-
-        for (const device of devices) {
-            const config: HikvisionConfig = {
-                host: device.ipAddress,
-                protocol: 'http',
-                port: 80,
-                username: device.login,
-                password: device.password,
-            };
-
-            try {
-                await this.handleDeviceAction(type, action, employee, code, faceUrl, config);
-            } catch (e) {
-                console.error(`[${type}] device sync error:`, e.message);
-            }
-        }
-    }
-
-    private isDeviceCompatible(credType: string, deviceType: string) {
-        const { CAR, ACCESS_CONTROL, FACE } = DeviceType;
-        const map = {
-            CAR: [CAR],
-            PHOTO: [FACE, ACCESS_CONTROL],
-            PERSONAL_CODE: [FACE, ACCESS_CONTROL],
-            CARD: [FACE, ACCESS_CONTROL],
-            QR: [FACE, ACCESS_CONTROL],
-        };
-        return map[credType]?.includes(deviceType);
-    }
-
-    private async handleDeviceAction(
-        type: ActionType,
-        action: string,
-        employee: EmployeeWithRelations,
-        code: string,
-        faceUrl: string,
-        config: HikvisionConfig,
-        oldCredential?: CreateCredentialDto
-    ) {
-        if (type == this.QR) {
-            type = this.CARD;
-        }
-
-        switch (type) {
-            case this.CAR:
-                if (action === 'Delete')
-                    return this.hikvisionAnprService.deleteLicensePlate(code, config);
-                if (action === 'Create')
-                    return this.hikvisionAnprService.addLicensePlate(code, '1', config);
-                return this.hikvisionAnprService.editLicensePlate(code, code, '1', config);
-
-            case this.PHOTO:
-                if (action === 'Delete')
-                    return this.hikvisionAccessService.deleteFaceFromUser(
-                        String(employee.id),
-                        config
-                    );
-                return this.hikvisionAccessService.addFaceToUserViaURL(
-                    String(employee.id),
-                    faceUrl,
-                    config
-                );
-
-            case this.PERSONAL_CODE:
-                return this.hikvisionAccessService.addPasswordToUser(
-                    String(employee.id),
-                    action === 'Delete' ? '' : code,
-                    config
-                );
-
-            case this.CARD:
-                if (action === 'Delete')
-                    return this.hikvisionAccessService.deleteCard({
-                        employeeNo: String(employee.id),
-                        cardNo: code,
-                        config,
-                    });
-                if (action === 'Create')
-                    return this.hikvisionAccessService.addCardToUser({
-                        employeeNo: String(employee.id),
-                        cardNo: code,
-                        config,
-                    });
-                return this.hikvisionAccessService.replaceCard(
-                    oldCredential.code,
-                    code,
-                    String(employee.id),
-                    config
-                );
-        }
+        await this.deviceQueue.add(JOB.DEVICE.SYNC_SINGLE_CREDENTIAL, {
+            employeeId,
+            credentialId,
+            action,
+            oldCode,
+        });
     }
 }

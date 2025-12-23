@@ -6,7 +6,6 @@ import {
     ActionMode,
     ActionStatus,
     ActionType,
-    DeviceType,
     EntryType,
     Prisma,
     VisitorType,
@@ -90,7 +89,7 @@ export class ActionService {
                 employeeId,
                 visitorId: undefined,
                 visitorType:
-                    acEvent.userType === 'normal' || device.type.includes(DeviceType.CAR)
+                    acEvent.userType === 'normal' || device.type.includes(ActionType.CAR)
                         ? VisitorType.EMPLOYEE
                         : VisitorType.VISITOR,
                 entryType: device.entryType,

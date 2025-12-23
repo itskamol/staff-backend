@@ -204,8 +204,9 @@ export class DeviceProcessor extends WorkerHost {
         employee: Pick<Employee, 'id' | 'organizationId'>,
         cred: Credential,
         device: Device,
-        gate: Gate,
-        config: HikvisionConfig
+        gate: { id: number },
+        config: HikvisionConfig,
+        oldCode?: string // Tahrirlash uchun eski kod
     ) {
         let sync = await this.prisma.employeeSync.findFirst({
             where: {
@@ -216,8 +217,6 @@ export class DeviceProcessor extends WorkerHost {
                 deletedAt: null,
             },
         });
-
-        if (sync?.status === StatusEnum.DONE) return;
 
         if (!sync) {
             sync = await this.prisma.employeeSync.create({
@@ -232,12 +231,26 @@ export class DeviceProcessor extends WorkerHost {
             });
         }
 
+        // QR kodni CARD sifatida yuborish logikasi
+        const effectiveType = cred.type === ActionType.QR ? ActionType.CARD : cred.type;
+
         try {
-            switch (cred.type) {
+            switch (effectiveType) {
                 case ActionType.CAR:
                     if (!cred.code) throw new Error('Car plate empty');
-                    await this.syncCarToDevice([cred.code], config);
+                    // Agar oldCode bo'lsa edit, bo'lmasa add
+                    if (oldCode && oldCode !== cred.code) {
+                        await this.hikvisionAnprService.editLicensePlate(
+                            oldCode,
+                            cred.code,
+                            '1',
+                            config
+                        );
+                    } else {
+                        await this.syncCarToDevice([cred.code], config);
+                    }
                     break;
+
                 case ActionType.PHOTO:
                     if (!cred.additionalDetails) throw new Error('Photo URL missing');
                     await this.syncFaceToDevice(
@@ -246,19 +259,31 @@ export class DeviceProcessor extends WorkerHost {
                         config
                     );
                     break;
+
+                case ActionType.CARD:
+                    if (!cred.code) throw new Error('Card code empty');
+                    if (oldCode && oldCode !== cred.code) {
+                        await this.hikvisionService.replaceCard(
+                            oldCode,
+                            cred.code,
+                            String(employee.id),
+                            config
+                        );
+                    } else {
+                        await this.syncCardToDevice(employee.id.toString(), cred.code, config);
+                    }
+                    break;
+
                 case ActionType.PERSONAL_CODE:
                     if (!cred.code) throw new Error('Password empty');
                     await this.syncPasswordToDevice(employee.id.toString(), cred.code, config);
                     break;
-                case ActionType.CARD:
-                case ActionType.QR:
-                    if (!cred.code) throw new Error('Code empty');
-                    await this.syncCardToDevice(employee.id.toString(), cred.code, config);
-                    break;
             }
+
             await this.updateSync(sync.id, StatusEnum.DONE, 'Success');
         } catch (err: any) {
             await this.updateSync(sync.id, StatusEnum.FAILED, err.message);
+            this.logger.error(err.message, '', 'DeviceProcessor'); // Yuqoriga catch qilish uchun
         }
     }
 
@@ -385,6 +410,59 @@ export class DeviceProcessor extends WorkerHost {
         });
     }
 
+    async syncSingleCredentialJob(job: Job) {
+        const { employeeId, credentialId, action, oldCode } = job.data;
+
+        const [employee, credential] = await Promise.all([
+            this.prisma.employee.findUnique({
+                where: { id: employeeId },
+                include: {
+                    gates: { include: { devices: { where: { isActive: true, deletedAt: null } } } },
+                },
+            }),
+            this.prisma.credential.findUnique({ where: { id: credentialId } }),
+        ]);
+
+        if (!employee || !credential) return;
+
+        // Qurilmalarni filtrlaymiz (faqat mos turlari borlarini)
+        const devices = employee.gates.flatMap(gate =>
+            gate.devices.filter(device => device.type.includes(credential.type))
+        );
+
+        for (const device of devices) {
+            const config = this.getDeviceConfig(device);
+            try {
+                if (action === 'Delete') {
+                    await this.processRemovalFromDevice(device, config, employee.id, [credential]);
+
+                    await this.prisma.employeeSync.updateMany({
+                        where: {
+                            deviceId: device.id,
+                            credentialId: credential.id,
+                            deletedAt: null,
+                        },
+                        data: { deletedAt: new Date() },
+                    });
+                } else {
+                    // Create yoki Edit (processCredentialSync ichida handle qilamiz)
+                    await this.processCredentialSync(
+                        employee,
+                        credential,
+                        device,
+                        { id: device.gateId } as any,
+                        config,
+                        oldCode
+                    );
+                }
+            } catch (err) {
+                this.logger.error(
+                    `Sync error [Dev: ${device.id}, Cred: ${credential.id}]: ${err.message}`
+                );
+            }
+        }
+    }
+
     async process(job: Job<any, any, string>) {
         switch (job.name) {
             case JOB.DEVICE.CREATE:
@@ -412,6 +490,9 @@ export class DeviceProcessor extends WorkerHost {
 
             case JOB.DEVICE.CLEAR_ALL_USERS_FROM_DEVICE: // Shared constants-ga qo'shib qo'ying
                 return this.clearDeviceUsersJob(job);
+
+            case JOB.DEVICE.SYNC_SINGLE_CREDENTIAL:
+                return this.syncSingleCredentialJob(job);
 
             case JOB.DEVICE.REMOVE_EMPLOYEES:
                 const { employeeIds: ids } = job.data;

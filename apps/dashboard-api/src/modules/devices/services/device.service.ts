@@ -3,12 +3,11 @@ import { DataScope, UserContext } from '@app/shared/auth';
 import {
     AssignEmployeesToGatesDto,
     CreateDeviceDto,
-    DeviceDto,
     QueryDeviceDto,
     UpdateDeviceDto,
 } from '../dto/device.dto';
 import { DeviceRepository } from '../repositories/device.repository';
-import { ActionType, DeviceType, EntryType, Prisma } from '@prisma/client';
+import { ActionType, EntryType, Prisma } from '@prisma/client';
 import { GateRepository } from '../../gate/repositories/gate.repository';
 import { HikvisionConfig } from '../../hikvision/dto/create-hikvision-user.dto';
 import { ConfigService } from 'apps/dashboard-api/src/core/config/config.service';
