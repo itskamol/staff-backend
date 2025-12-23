@@ -12,9 +12,6 @@ import { ActionType, Prisma } from '@prisma/client';
 import { BadRequestException, Injectable, NotFoundException } from '@nestjs/common';
 import { DataScope, UserContext } from '@app/shared/auth';
 import { LoggerService } from 'apps/dashboard-api/src/core/logger';
-import { InjectQueue } from '@nestjs/bullmq';
-import { JOB } from 'apps/dashboard-api/src/shared/constants';
-import { Queue } from 'bullmq';
 import { EmployeeWithRelations } from '../../employee/repositories/employee.repository';
 import { HikvisionConfig } from '../../hikvision/dto/create-hikvision-user.dto';
 import { HikvisionAnprService } from '../../hikvision/services/hikvision.anpr.service';
@@ -28,7 +25,6 @@ export class CredentialService {
     private readonly QR = ActionType.QR;
     private readonly PERSONAL_CODE = ActionType.PERSONAL_CODE;
     constructor(
-        @InjectQueue(JOB.DEVICE.NAME) private readonly deviceQueue: Queue,
         private readonly credentialRepository: CredentialRepository,
         private readonly employeeService: EmployeeService,
         private readonly hikvisionAnprService: HikvisionAnprService,
