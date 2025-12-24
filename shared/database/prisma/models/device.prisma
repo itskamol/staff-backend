@@ -87,17 +87,25 @@ model Device {
 }
 
 model Attendance {
-  id              Int           @id @default(autoincrement())
-  startTime       DateTime?     @map("start_time")
-  endTime         DateTime?     @map("end_time")
-  arrivalStatus   ActionStatus  @map("arrival_status") // ON_TIME or LATE
-  goneStatus      ActionStatus? @map("gone_status") // ON_TIME or EARLY
-  reason          String?
-  reasonTypeId    Int?          @map("reason_id")
-  employeeId      Int           @map("employee_id")
-  organizationId  Int?          @map("organization_id")
-  lateArrivalTime Int?          @map("late_arrival_time") // in minutes
-  earlyGoneTime   Int?          @map("early_gone_time") // in minutes
+  id Int @id @default(autoincrement())
+
+  startTime DateTime? @map("start_time")
+  endTime   DateTime? @map("end_time")
+
+  arrivalStatus ActionStatus  @map("arrival_status") // ON_TIME, ABSENT or LATE
+  goneStatus    ActionStatus? @map("gone_status") // ON_TIME or EARLY
+
+  reason       String?
+  isWorkingDay Boolean @default(true)
+
+  // in minutes
+  lateArrivalTime Int? @map("late_arrival_time")
+  earlyGoneTime   Int? @map("early_gone_time")
+  plannedMinutes  Int? @map("planned_time")
+
+  employeeId     Int  @map("employee_id")
+  organizationId Int? @map("organization_id")
+  reasonId       Int? @map("reason_id")
 
   //Standart fields
   createdAt DateTime  @default(now()) @map("created_at")
@@ -106,7 +114,7 @@ model Attendance {
 
   employee     Employee      @relation(fields: [employeeId], references: [id], onDelete: Cascade)
   organization Organization? @relation(fields: [organizationId], references: [id], onDelete: Cascade)
-  reasons      Reasons?      @relation(fields: [reasonTypeId], references: [id], onDelete: Cascade)
+  reasons      Reasons?      @relation(fields: [reasonId], references: [id], onDelete: Cascade)
 
   @@index([startTime, endTime])
   @@index([employeeId])
