@@ -2,6 +2,7 @@ import { Injectable, NotFoundException, BadRequestException } from '@nestjs/comm
 import { DataScope, UserContext } from '@app/shared/auth';
 import {
     AssignEmployeesToGatesDto,
+    ConnectionDto,
     CreateDeviceDto,
     QueryDeviceDto,
     UpdateDeviceDto,
@@ -371,6 +372,55 @@ export class DeviceService {
         });
 
         return { success: true };
+    }
+
+    async connectGateToDevices(dto: ConnectionDto, scope: DataScope) {
+        const { gateId, deviceIds } = dto;
+
+        const gate = await this.gateRepository.findById(gateId);
+        if (!gate) {
+            throw new NotFoundException('Gate not found');
+        }
+
+        const devices = await this.deviceRepository.findMany(
+            { id: { in: deviceIds } },
+            undefined,
+            undefined,
+            undefined,
+            undefined,
+            scope
+        );
+
+        for (const device of devices) {
+            let { id } = device;
+            await this.deviceRepository.update(
+                id,
+                {
+                    gate: {
+                        connect: { id: gateId },
+                    },
+                },
+                {},
+                scope
+            );
+
+            const hikvisionConfig: HikvisionConfig = {
+                host: device.ipAddress,
+                port: 80,
+                username: device.login,
+                password: device.password,
+                protocol: 'http',
+            };
+
+            await this.deviceQueue.add(JOB.DEVICE.CREATE, {
+                hikvisionConfig,
+                newDevice: device,
+                gateId,
+                scope,
+            });
+        }
+
+        return { success: true, connectedCount: devices.length };
     }
 
     async unlockDoor(deviceId: number, doorNo: number = 1, scope?: DataScope) {

@@ -155,16 +155,24 @@ export class DeviceDto extends CreateDeviceDto {
     };
 }
 
-export class TestConnectionDto {
+export class ConnectionDto {
     @ApiProperty({
-        example: 5,
-        description: 'Connection timeout in seconds',
-        required: false,
-        default: 5,
+        example: [1, 2, 3],
+        description: 'Device IDlari ro‘yxati',
+        type: [Number],
     })
-    @IsOptional()
+    @IsArray()
+    @ArrayNotEmpty()
+    @IsInt({ each: true })
+    deviceIds: number[];
+
+    @ApiProperty({
+        example: 1,
+        description: 'Gate ID (Bitta darvoza IDsi)',
+        type: Number,
+    })
     @IsInt()
-    timeout?: number = 5;
+    gateId: number; //
 }
 
 export class AssignEmployeesToGatesDto {

@@ -8,6 +8,7 @@ import {
     UpdateDeviceDto,
     AssignEmployeesToGatesDto,
     QueryDeviceDto,
+    ConnectionDto,
 } from '../dto/device.dto';
 import { ApiCrudOperation } from 'apps/dashboard-api/src/shared/utils';
 
@@ -116,5 +117,19 @@ export class DeviceController {
     })
     async openDoor(@Param('id') id: number, @User() user: UserContext, @Scope() scope: DataScope) {
         return await this.deviceService.unlockDoor(id, 1, scope);
+    }
+
+    @Post('connectDevicesToGate')
+    @Roles(Role.ADMIN)
+    @ApiCrudOperation(ConnectionDto, 'create', {
+        body: ConnectionDto,
+        summary: 'Gate connect with devices',
+    })
+    async connectDevicesToGate(
+        @Body() dto: ConnectionDto,
+        @Scope() scope: DataScope,
+        @User() user: UserContext
+    ) {
+        return await this.deviceService.connectGateToDevices(dto, scope);
     }
 }
