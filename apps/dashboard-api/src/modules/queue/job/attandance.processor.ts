@@ -36,10 +36,19 @@ export class AttendanceProcessor extends WorkerHost {
 
                 for (const emp of plan.employees) {
                     try {
+                        // Ish kuni bo'lsa plannedMinutes hisoblash
+                        const planStart = plan.startTime; // "09:00"
+                        const planEnd = plan.endTime; // "18:00"
+                        const [startH, startM] = planStart.split(':').map(Number);
+                        const [endH, endM] = planEnd.split(':').map(Number);
+                        const plannedMinutes = endH * 60 + endM - (startH * 60 + startM);
+
                         await this.attendanceService.create({
                             employeeId: emp.id,
                             organizationId: emp.organizationId,
                             arrivalStatus: ActionStatus.PENDING,
+                            isWorkingDay: true,
+                            plannedMinutes,
                         } as any);
 
                         processedCount++;

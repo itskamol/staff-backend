@@ -72,28 +72,27 @@ export class AttendanceReportByEmployeeDto {
 }
 
 export interface AttendanceMainReportData {
-    fio?: string;
-    position?: string;
-    department?: string;
-    workSchedule?: string;
+    fio?: string; // ism-sharif
+    position?: string; // pozitsiyasi / kasbi
+    department?: string; // departament nomi
+    workSchedule?: string; // ish jadvali hafta kuni va soati
     daysStatistics?: {
-        weekDay?: string;
-        status?: 'ON_TIME' | 'ABSENT' | 'LATE' | 'WEEKEND';
+        status?: 'ON_TIME' | 'ABSENT' | 'LATE' | 'WEEKEND' | 'EARLY' | 'PENDING';
         startTime?: string;
         endTime?: string;
-        totalHours?: string;
-    }[]; // har bir kunlik statistikalar
-    totalHoursPlan?: string;
-    totalHoursLate?: string;
-    totalHoursEarly?: string;
-    totalWorkedHours?: string;
-    ontimeHours?: string;
-    overtimeHours?: string;
-    overtimePlanHours?: string; // plandan tashqari dam olish kunlari ishlagan soatlar
-    resonableAbsentHours?: string;
-    unresaonableAbsentHours?: string;
-    total?: string; // ontimeHours + overtimeHours + overtimePlanHours
-    totalDays?: number;
+        totalMinutes?: number; // ishlagan minutlar
+    }[];
+    totalPlannedMinutes?: number; // reja bo'yicha minutlar
+    totalLateMinutes?: number; // jami kech kelgan minutlar
+    totalEarlyMinutes?: number; // jami erta ketgan minutlar
+    totalWorkedMinutes?: number; // ummumiy ishlagan minutlar
+    onTimeMinutes?: number; // o'z vaqtida ishlagan minutlar
+    overtimeMinutes?: number; // ish grafigidan tashqari minutlar
+    overtimePlanMinutes?: number; // dam olish kunlari ishlagan minutlar
+    reasonableAbsentMinutes?: number; // sababli absent minutlari
+    unreasonableAbsentMinutes?: number; // sababsiz absent minutlari
+    totalMinutes?: number; // onTime + overtime + overtimePlan
+    totalDays?: number; // jami ishlagan kunlar
 }
 
 export interface AttendanceDateData {
@@ -107,17 +106,17 @@ export interface AttendanceReportData {
 }
 
 export interface AttendanceStats {
-    averageArrivalTime: string; 
+    averageArrivalTime: string;
 
-    avgArrivalEarlyMinutes: number; 
-    avgArrivalLateMinutes: number; 
+    avgArrivalEarlyMinutes: number;
+    avgArrivalLateMinutes: number;
 
     averageLeaveTime: string;
 
-    avgLeaveEarlyMinutes: number; 
+    avgLeaveEarlyMinutes: number;
     avgLeaveOvertimeMinutes: number;
 
     totalTrackedHours: number;
     lateArrivalsCount: number;
-    earlyLeavesCount: number; 
+    earlyLeavesCount: number;
 }
