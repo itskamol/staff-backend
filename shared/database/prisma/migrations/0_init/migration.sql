@@ -145,11 +145,13 @@ CREATE TABLE "attendances" (
     "arrival_status" "ActionStatus" NOT NULL,
     "gone_status" "ActionStatus",
     "reason" TEXT,
-    "reason_id" INTEGER,
-    "employee_id" INTEGER NOT NULL,
-    "organization_id" INTEGER,
+    "isWorkingDay" BOOLEAN NOT NULL DEFAULT true,
     "late_arrival_time" INTEGER,
     "early_gone_time" INTEGER,
+    "planned_time" INTEGER,
+    "employee_id" INTEGER NOT NULL,
+    "organization_id" INTEGER,
+    "reason_id" INTEGER,
     "created_at" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
     "updated_at" TIMESTAMP(3),
     "deleted_at" TIMESTAMP(3),
@@ -974,3 +976,4 @@ ALTER TABLE "_DepartmentToUser" ADD CONSTRAINT "_DepartmentToUser_A_fkey" FOREIG
 
 -- AddForeignKey
 ALTER TABLE "_DepartmentToUser" ADD CONSTRAINT "_DepartmentToUser_B_fkey" FOREIGN KEY ("B") REFERENCES "users"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+
