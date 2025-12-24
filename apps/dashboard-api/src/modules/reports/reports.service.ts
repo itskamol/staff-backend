@@ -9,6 +9,7 @@ import {
     AttendanceStats,
 } from './dto/reports.dto';
 import { DataScope, UserContext } from '@app/shared/auth';
+import { Attendance } from '@prisma/client';
 
 @Injectable()
 export class ReportsService {
@@ -43,10 +44,22 @@ export class ReportsService {
         const dateData: AttendanceDateData[] = [];
         const tempCursor = new Date(start);
         while (tempCursor <= end) {
-            dateData.push({
-                date: tempCursor.toISOString().slice(5, 10),
-                weekday: tempCursor.toLocaleDateString('en-EN', { weekday: 'short' }),
+            const dateStr = tempCursor.toLocaleDateString('en-CA', {
+                timeZone: 'Asia/Tashkent',
+                month: '2-digit',
+                day: '2-digit',
             });
+
+            const weekday = tempCursor.toLocaleDateString('en-EN', {
+                weekday: 'short',
+                timeZone: 'Asia/Tashkent',
+            });
+
+            dateData.push({
+                date: dateStr,
+                weekday,
+            });
+
             tempCursor.setDate(tempCursor.getDate() + 1);
         }
 
@@ -71,26 +84,45 @@ export class ReportsService {
             let unreasonableAbsent = 0;
             let totalPlanned = 0;
 
+            const attendanceMap = new Map<string, Attendance>();
+
             for (const att of attendances) {
+                const key = att.createdAt.toLocaleDateString('en-CA', {
+                    timeZone: 'Asia/Tashkent',
+                    month: '2-digit',
+                    day: '2-digit',
+                });
+                attendanceMap.set(key, att);
+            }
+
+            for (const d of dateData) {
+                const att = attendanceMap.get(d.date);
+
+                // 1️⃣ ATTENDANCE YO‘Q → WEEKEND
+                if (!att) {
+                    daysStatistics.push({
+                        status: 'WEEKEND',
+                        totalMinutes: 0,
+                    });
+                    continue;
+                }
+
                 totalDays++;
 
-                const todayStr = new Date().toISOString().slice(0, 10);
-                const attDateStr = att.startTime?.toISOString().slice(0, 10) || todayStr;
-
-                // Ishlagan minutlarni hisoblash
+                // 2️⃣ ISHLAGAN MINUTLAR
                 let worked = 0;
                 if (att.startTime && att.endTime) {
                     worked = Math.floor((att.endTime.getTime() - att.startTime.getTime()) / 60000);
-                } else if (att.startTime && attDateStr === todayStr) {
-                    worked = Math.floor((new Date().getTime() - att.startTime.getTime()) / 60000);
+                } else if (att.startTime) {
+                    worked = Math.floor((Date.now() - att.startTime.getTime()) / 60000);
                 }
 
                 const planned = att.plannedMinutes ?? 0;
-                totalPlanned += planned;
 
                 totalWorked += worked;
                 totalLate += att.lateArrivalTime || 0;
                 totalEarly += att.earlyGoneTime || 0;
+                totalPlanned += planned;
 
                 if (att.isWorkingDay) {
                     const absentMinutes = Math.max(planned - worked, 0);
@@ -100,12 +132,11 @@ export class ReportsService {
                     onTime += Math.min(worked, planned);
                     if (worked > planned) overtime += worked - planned;
                 } else {
-                    // Dam olish kuni ishlagan minutlar → overtimePlan
                     overtimePlan += worked;
                 }
 
                 daysStatistics.push({
-                    status: att.arrivalStatus || (att.isWorkingDay ? 'ABSENT' : 'WEEKEND'),
+                    status: att.arrivalStatus || 'ABSENT',
                     startTime: att.startTime?.toISOString().slice(11, 16),
                     endTime: att.endTime?.toISOString().slice(11, 16),
                     totalMinutes: worked,
