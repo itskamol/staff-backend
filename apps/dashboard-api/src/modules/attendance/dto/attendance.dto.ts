@@ -75,7 +75,7 @@ export class UpdateAttendanceDto {
     @IsOptional()
     @IsInt()
     @Type(() => Number)
-    reasonTypeId?: number;
+    reasonId?: number;
 
     @IsOptional()
     @IsDateString()
