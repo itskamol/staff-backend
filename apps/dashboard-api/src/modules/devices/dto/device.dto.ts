@@ -162,6 +162,7 @@ export class ConnectionDto {
         type: [Number],
     })
     @IsArray()
+    @ArrayNotEmpty()
     @IsInt({ each: true })
     deviceIds: number[];
 
@@ -200,7 +201,6 @@ export class AssignEmployeesToGatesDto {
         isArray: true,
     })
     @IsArray()
-    @ArrayNotEmpty()
     @IsEnum(ActionType, { each: true })
     credentialTypes: ActionType[];
 }
