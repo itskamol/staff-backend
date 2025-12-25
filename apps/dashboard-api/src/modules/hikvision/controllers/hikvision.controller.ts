@@ -62,10 +62,10 @@ export class HikvisionController {
             console.error('Event parse error:', err.message);
         }
 
-        const employeeID = eventData?.AccessControllerEvent?.employeeNoString;
-        if (employeeID) {
-            await this.actionService.create(eventData, +deviceId, +employeeID);
-        }
+        // const employeeID = eventData?.AccessControllerEvent?.employeeNoString;
+        // if (employeeID) {
+        //     await this.actionService.create(eventData, +deviceId, +employeeID);
+        // }
 
         res.setHeader('Content-Type', 'application/json');
         return res.status(200).send({ responseStatusStrg: 'OK' });
