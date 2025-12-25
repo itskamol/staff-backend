@@ -219,6 +219,8 @@ export class DeviceProcessor extends WorkerHost {
             },
         });
 
+        if (sync?.status === StatusEnum.DONE) return;
+
         if (!sync) {
             sync = await this.prisma.employeeSync.create({
                 data: {
