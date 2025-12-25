@@ -80,7 +80,7 @@ export class ActionService {
             const plan = await this.prisma.employeePlan.findFirst({
                 where: { id: employee.employeePlanId },
             });
-            console.log({ plan, employee });
+
             if (!plan) throw new Error(`Employee plan ${employee.employeePlanId} not found`);
 
             const dto: CreateActionDto = {
