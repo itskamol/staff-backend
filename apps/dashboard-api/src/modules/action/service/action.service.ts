@@ -145,8 +145,8 @@ export class ActionService {
                 if (existing) {
                     await this.attendanceService.update(existing.id, {
                         endTime: actionTime,
-                        goneStatus: existing.isWorkingDay ? exitStatus : 'ON_TIME',
-                        earlyGoneTime: existing.isWorkingDay ? diffMinutes : 0,
+                        goneStatus: existing?.isWorkingDay ? exitStatus : 'ON_TIME',
+                        earlyGoneTime: existing?.isWorkingDay ? diffMinutes : 0,
                     });
                 } else {
                     this.logger.warn(`⚠️ Attendance NOT FOUND (EXIT): employee ${employeeId}`);
@@ -180,10 +180,10 @@ export class ActionService {
 
                 const data: CreateAttendanceDto = {
                     startTime: actionTime,
-                    arrivalStatus: existing.isWorkingDay ? status : 'ON_TIME',
+                    arrivalStatus: existing?.isWorkingDay ? status : 'ON_TIME',
                     employeeId,
                     organizationId,
-                    lateArrivalTime: existing.isWorkingDay ? diffMinutes : 0,
+                    lateArrivalTime: existing?.isWorkingDay ? diffMinutes : 0,
                 };
 
                 if (existing) {
