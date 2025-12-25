@@ -228,8 +228,6 @@ export class ReportsService {
         attendances.forEach(att => {
             if (!att.startTime) return;
 
-            let dayOfWeek = att.startTime.getDay();
-            if (dayOfWeek === 0) dayOfWeek = 7;
             if (!att.isWorkingDay) return;
 
             const arrival = new Date(att.startTime);

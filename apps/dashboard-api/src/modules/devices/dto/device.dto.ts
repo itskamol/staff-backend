@@ -162,7 +162,6 @@ export class ConnectionDto {
         type: [Number],
     })
     @IsArray()
-    @ArrayNotEmpty()
     @IsInt({ each: true })
     deviceIds: number[];
 

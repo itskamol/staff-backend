@@ -117,6 +117,7 @@ export class DeviceProcessor extends WorkerHost {
         }
 
         if (!gate.devices?.length) return;
+        if (!credentialTypes.length) return;
 
         // Har bir qurilma uchun sinxronizatsiya
         for (const device of gate.devices) {
