@@ -44,7 +44,7 @@ export class AttendanceService {
 
     async create(dto: CreateAttendanceDto) {
         try {
-            const { employeeId, organizationId, ...dtoData } = dto;
+            const { employeeId, organizationId, arrivalStatus, lateArrivalTime, ...dtoData } = dto;
             const todayStart = new Date();
             todayStart.setHours(0, 0, 0, 0);
 
@@ -83,6 +83,8 @@ export class AttendanceService {
                 ...dtoData,
                 plannedMinutes,
                 isWorkingDay,
+                arrivalStatus: isWorkingDay ? arrivalStatus : 'ON_TIME',
+                lateArrivalTime: isWorkingDay ? lateArrivalTime : 0,
                 employee: { connect: { id: employeeId } },
                 organization: { connect: { id: organizationId } },
             };
