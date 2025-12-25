@@ -90,6 +90,10 @@ export class UpdateAttendanceDto {
     goneStatus?: ActionStatus;
 
     @IsOptional()
+    @IsEnum(ActionStatus)
+    arrivalStatus?: ActionStatus;
+
+    @IsOptional()
     @IsInt()
     earlyGoneTime?: number;
 
