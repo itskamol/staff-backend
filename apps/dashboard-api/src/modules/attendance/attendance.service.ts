@@ -70,6 +70,7 @@ export class AttendanceService {
 
             // 3️⃣ isWorkingDay aniqlaymiz
             const isWorkingDay = this.isWorkingDay(employeePlan.weekdays, new Date());
+            console.log({ isWorkingDay });
 
             // 4️⃣ plannedMinutes hisoblaymiz
             let plannedMinutes = 0;

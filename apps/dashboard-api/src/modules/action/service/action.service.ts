@@ -181,16 +181,17 @@ export class ActionService {
 
                 const data: CreateAttendanceDto = {
                     startTime: actionTime,
-                    arrivalStatus: existing?.isWorkingDay ? status : 'ON_TIME',
+                    arrivalStatus: status,
                     employeeId,
                     organizationId,
-                    lateArrivalTime: existing?.isWorkingDay ? diffMinutes : 0,
+                    lateArrivalTime: diffMinutes,
                 };
 
                 if (existing) {
-                    await this.prisma.attendance.update({
-                        where: { id: existing.id },
-                        data,
+                    await this.attendanceService.update(existing.id, {
+                        ...data,
+                        arrivalStatus: existing?.isWorkingDay ? status : 'ON_TIME',
+                        lateArrivalTime: existing?.isWorkingDay ? diffMinutes : 0,
                     });
                     await this.attendanceService.update(existing.id, data);
                 } else {
