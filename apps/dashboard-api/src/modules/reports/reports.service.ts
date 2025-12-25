@@ -136,7 +136,7 @@ export class ReportsService {
                 }
 
                 daysStatistics.push({
-                    status: att.arrivalStatus || 'ABSENT',
+                    status: att.isWorkingDay ? att.arrivalStatus : 'ON_TIME',
                     startTime: att.startTime?.toISOString().slice(11, 16),
                     endTime: att.endTime?.toISOString().slice(11, 16),
                     totalMinutes: worked,
@@ -216,8 +216,6 @@ export class ReportsService {
             },
         });
 
-        const workingDays = this.getWorkingDayNumbers(employee.plan?.weekdays || '');
-
         let totalArrivalMinutes = 0;
         let totalLeaveMinutes = 0;
         let totalWorkedMinutes = 0;
@@ -232,7 +230,7 @@ export class ReportsService {
 
             let dayOfWeek = att.startTime.getDay();
             if (dayOfWeek === 0) dayOfWeek = 7;
-            if (!workingDays.includes(dayOfWeek)) return;
+            if (!att.isWorkingDay) return;
 
             const arrival = new Date(att.startTime);
             totalArrivalMinutes += arrival.getHours() * 60 + arrival.getMinutes();
@@ -252,11 +250,11 @@ export class ReportsService {
 
         if (validArrivalCount === 0) {
             return {
-                averageArrivalTime: '--:--',
+                averageArrivalTime: 0,
                 avgArrivalEarlyMinutes: 0,
                 avgArrivalLateMinutes: 0,
 
-                averageLeaveTime: '--:--',
+                averageLeaveTime: 0,
                 avgLeaveEarlyMinutes: 0,
                 avgLeaveOvertimeMinutes: 0,
 
@@ -270,7 +268,12 @@ export class ReportsService {
         const avgLeaveMin =
             validLeaveEntries > 0 ? Math.round(totalLeaveMinutes / validLeaveEntries) : 0;
 
-        const planStartMin = this.toMinutes(employee.plan?.startTime || '09:00');
+        const minutes = this.addExtraTime(
+            employee.plan?.startTime,
+            employee.plan?.extraTime || '00:00'
+        );
+        const planStartMin = this.toMinutes(minutes || '09:00');
+
         const planEndMin = this.toMinutes(employee.plan?.endTime || '18:00');
 
         const arrivalDiff = planStartMin - avgArrivalMin;
@@ -292,11 +295,11 @@ export class ReportsService {
         }
 
         return {
-            averageArrivalTime: this.minutesToAmPm(avgArrivalMin),
+            averageArrivalTime: avgArrivalMin,
             avgArrivalEarlyMinutes,
             avgArrivalLateMinutes,
 
-            averageLeaveTime: validLeaveEntries > 0 ? this.minutesToAmPm(avgLeaveMin) : '--:--',
+            averageLeaveTime: validLeaveEntries > 0 ? avgLeaveMin : 0,
             avgLeaveEarlyMinutes,
             avgLeaveOvertimeMinutes,
 
@@ -306,39 +309,15 @@ export class ReportsService {
         };
     }
 
-    private minutesToAmPm(totalMinutes: number): string {
-        if (totalMinutes < 0) totalMinutes = 0;
+    private addExtraTime(startTime: string, extraTime: string): string {
+        const [sh, sm] = startTime.split(':').map(Number);
+        const [eh, em] = extraTime.split(':').map(Number);
 
-        let hours = Math.floor(totalMinutes / 60);
-        const minutes = totalMinutes % 60;
-        const ampm = hours >= 12 ? 'PM' : 'AM';
+        let minutes = sh * 60 + sm + eh * 60 + em;
 
-        hours = hours % 12;
-        hours = hours ? hours : 12;
+        const h = Math.floor(minutes / 60) % 24;
+        const m = minutes % 60;
 
-        const hStr = hours.toString().padStart(2, '0');
-        const mStr = minutes.toString().padStart(2, '0');
-
-        return `${hStr}:${mStr} ${ampm}`;
-    }
-
-    private getWorkingDayNumbers(weekdaysStr: string): number[] {
-        if (!weekdaysStr) return [];
-
-        const map: Record<string, number> = {
-            Monday: 1,
-            Tuesday: 2,
-            Wednesday: 3,
-            Thursday: 4,
-            Friday: 5,
-            Saturday: 6,
-            Sunday: 7,
-        };
-
-        return weekdaysStr
-            .split(',')
-            .map(day => day.trim())
-            .map(day => map[day])
-            .filter(num => num);
+        return `${h.toString().padStart(2, '0')}:${m.toString().padStart(2, '0')}`;
     }
 }

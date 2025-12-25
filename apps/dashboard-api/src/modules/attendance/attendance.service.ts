@@ -8,12 +8,14 @@ import { JOB } from '../../shared/constants';
 import { Queue } from 'bullmq';
 import { Cron, CronExpression } from '@nestjs/schedule';
 import { LoggerService } from '../../core/logger';
+import { EmployeePlanService } from '../employeePlan/employee-plan.service';
 
 @Injectable()
 export class AttendanceService {
     constructor(
         private readonly repo: AttendanceRepository,
         @InjectQueue(JOB.ATTENDANCE.NAME) private readonly attendanceQueue: Queue,
+        private readonly planService: EmployeePlanService,
         private readonly logger: LoggerService
     ) {}
 
@@ -60,8 +62,27 @@ export class AttendanceService {
                 return existing;
             }
 
+            const employeePlan = await this.planService.findFirst(employeeId);
+
+            if (!employeePlan) {
+                throw new BadRequestException('Employee plan not found');
+            }
+
+            // 3️⃣ isWorkingDay aniqlaymiz
+            const isWorkingDay = this.isWorkingDay(employeePlan.weekdays, new Date());
+
+            // 4️⃣ plannedMinutes hisoblaymiz
+            let plannedMinutes = 0;
+            if (isWorkingDay) {
+                const startMin = this.toMinutes(employeePlan.startTime);
+                const endMin = this.toMinutes(employeePlan.endTime);
+                plannedMinutes = endMin - startMin;
+            }
+
             const data: Prisma.AttendanceCreateInput = {
                 ...dtoData,
+                plannedMinutes,
+                isWorkingDay,
                 employee: { connect: { id: employeeId } },
                 organization: { connect: { id: organizationId } },
             };
@@ -70,6 +91,28 @@ export class AttendanceService {
         } catch (error) {
             throw new BadRequestException({ message: error.message });
         }
+    }
+
+    private toMinutes(time: string): number {
+        const [h, m] = time.split(':').map(Number);
+        return h * 60 + m;
+    }
+
+    private isWorkingDay(planWeekdays: string, date: Date): boolean {
+        const map: Record<string, number> = {
+            Monday: 1,
+            Tuesday: 2,
+            Wednesday: 3,
+            Thursday: 4,
+            Friday: 5,
+            Saturday: 6,
+            Sunday: 7,
+        };
+
+        const plannedDays = planWeekdays.split(',').map(d => map[d.trim()]);
+
+        const day = date.getDay() === 0 ? 7 : date.getDay();
+        return plannedDays.includes(day);
     }
 
     async findAll(query: AttendanceQueryDto, scope: DataScope) {
@@ -190,6 +233,14 @@ export class AttendanceService {
         );
         if (!record) throw new NotFoundException('Attendance record not found');
         return record;
+    }
+
+    async findFirst(
+        where: Prisma.AttendanceWhereInput,
+        orderBy?: Prisma.AttendanceOrderByWithRelationInput,
+        include?: Prisma.AttendanceInclude
+    ) {
+        return this.repo.findFirst(where, orderBy, include);
     }
 
     async update(id: number, dto: UpdateAttendanceDto, scope?: DataScope) {
