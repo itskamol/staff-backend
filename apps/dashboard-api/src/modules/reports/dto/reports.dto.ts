@@ -106,12 +106,12 @@ export interface AttendanceReportData {
 }
 
 export interface AttendanceStats {
-    averageArrivalTime: string;
+    averageArrivalTime: number;
 
     avgArrivalEarlyMinutes: number;
     avgArrivalLateMinutes: number;
 
-    averageLeaveTime: string;
+    averageLeaveTime: number;
 
     avgLeaveEarlyMinutes: number;
     avgLeaveOvertimeMinutes: number;

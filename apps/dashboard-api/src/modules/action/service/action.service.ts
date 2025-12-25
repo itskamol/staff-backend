@@ -18,7 +18,7 @@ import { CreateAttendanceDto } from '../../attendance/dto/attendance.dto';
 @Injectable()
 export class ActionService {
     constructor(
-        private readonly repo: ActionRepository,
+        private readonly actionRepo: ActionRepository,
         private readonly attendanceService: AttendanceService,
         private prisma: PrismaService,
         private readonly logger: LoggerService
@@ -130,8 +130,8 @@ export class ActionService {
                     plan.endTime
                 );
 
-                const existingAttendance = await this.prisma.attendance.findFirst({
-                    where: {
+                const existing = await this.attendanceService.findFirst(
+                    {
                         employeeId,
                         organizationId,
                         startTime: {
@@ -139,17 +139,14 @@ export class ActionService {
                             lte: todayEnd,
                         },
                     },
-                    orderBy: { startTime: 'desc' },
-                });
+                    { startTime: 'desc' }
+                );
 
-                if (existingAttendance) {
-                    await this.prisma.attendance.update({
-                        where: { id: existingAttendance.id },
-                        data: {
-                            endTime: actionTime,
-                            goneStatus: exitStatus,
-                            earlyGoneTime: diffMinutes,
-                        },
+                if (existing) {
+                    await this.attendanceService.update(existing.id, {
+                        endTime: actionTime,
+                        goneStatus: existing.isWorkingDay ? exitStatus : 'ON_TIME',
+                        earlyGoneTime: existing.isWorkingDay ? diffMinutes : 0,
                     });
                 } else {
                     this.logger.warn(`⚠️ Attendance NOT FOUND (EXIT): employee ${employeeId}`);
@@ -163,8 +160,8 @@ export class ActionService {
                     plan.extraTime
                 );
 
-                const existingAttendance = await this.prisma.attendance.findFirst({
-                    where: {
+                const existing = await this.attendanceService.findFirst(
+                    {
                         employeeId,
                         organizationId,
                         createdAt: {
@@ -178,22 +175,23 @@ export class ActionService {
                             ],
                         },
                     },
-                    orderBy: { startTime: 'desc' },
-                });
+                    { startTime: 'desc' }
+                );
 
                 const data: CreateAttendanceDto = {
                     startTime: actionTime,
-                    arrivalStatus: status,
+                    arrivalStatus: existing.isWorkingDay ? status : 'ON_TIME',
                     employeeId,
                     organizationId,
-                    lateArrivalTime: diffMinutes,
+                    lateArrivalTime: existing.isWorkingDay ? diffMinutes : 0,
                 };
 
-                if (existingAttendance) {
+                if (existing) {
                     await this.prisma.attendance.update({
-                        where: { id: existingAttendance.id },
+                        where: { id: existing.id },
                         data,
                     });
+                    await this.attendanceService.update(existing.id, data);
                 } else {
                     await this.attendanceService.create(data);
                 }
@@ -201,33 +199,31 @@ export class ActionService {
                 await this.updatedGoneStatus(employeeId, organizationId, todayStart, todayEnd);
             }
 
-            return this.prisma.action.create({
-                data: {
-                    actionTime: dto.actionTime,
-                    visitorType: dto.visitorType,
-                    entryType: dto.entryType,
-                    actionType: dto.actionType,
-                    actionResult: dto.actionResult,
-                    actionMode: dto.actionMode,
+            return this.actionRepo.create({
+                actionTime: dto.actionTime,
+                visitorType: dto.visitorType,
+                entryType: dto.entryType,
+                actionType: dto.actionType,
+                actionResult: dto.actionResult,
+                actionMode: dto.actionMode,
 
-                    device: {
-                        connect: { id: deviceId },
-                    },
-                    gate: {
-                        connect: { id: gate.id },
-                    },
-                    employee: {
-                        connect: { id: employeeId },
-                    },
-                    organization: {
-                        connect: { id: organizationId },
-                    },
-                    credential: credentialId
-                        ? {
-                              connect: { id: credentialId },
-                          }
-                        : undefined,
+                device: {
+                    connect: { id: deviceId },
                 },
+                gate: {
+                    connect: { id: gate.id },
+                },
+                employee: {
+                    connect: { id: employeeId },
+                },
+                organization: {
+                    connect: { id: organizationId },
+                },
+                credential: credentialId
+                    ? {
+                          connect: { id: credentialId },
+                      }
+                    : undefined,
             });
         } catch (error) {
             this.logger.error(error);
@@ -236,7 +232,11 @@ export class ActionService {
     }
 
     async findOne(id: number, scope: DataScope) {
-        const action = await this.repo.findById(id, this.repo.getDefaultInclude(), scope);
+        const action = await this.actionRepo.findById(
+            id,
+            this.actionRepo.getDefaultInclude(),
+            scope
+        );
         if (!action) throw new NotFoundException(`Action ${id} not found`);
         return action;
     }
@@ -280,10 +280,10 @@ export class ActionService {
             lte: end,
         };
 
-        const actions = await this.repo.findMany(
+        const actions = await this.actionRepo.findMany(
             where,
             { [sort || 'actionTime']: order || 'asc' },
-            this.repo.getDefaultInclude(),
+            this.actionRepo.getDefaultInclude(),
             undefined,
             undefined,
             scope,
@@ -326,8 +326,8 @@ export class ActionService {
         gte: Date,
         lte: Date
     ) {
-        const existingAttendance = await this.prisma.attendance.findFirst({
-            where: {
+        const existing = await this.attendanceService.findFirst(
+            {
                 employeeId,
                 organizationId,
                 createdAt: {
@@ -335,17 +335,14 @@ export class ActionService {
                     lte,
                 },
             },
-            orderBy: { startTime: 'desc' },
-        });
+            { startTime: 'desc' }
+        );
 
-        if (existingAttendance) {
-            await this.prisma.attendance.update({
-                where: { id: existingAttendance.id },
-                data: {
-                    goneStatus: null,
-                    endTime: null,
-                    earlyGoneTime: null,
-                },
+        if (existing) {
+            await this.attendanceService.update(existing.id, {
+                goneStatus: null,
+                endTime: null,
+                earlyGoneTime: null,
             });
         }
         return;
@@ -416,10 +413,10 @@ export class ActionService {
     }
 
     async getLastActionInfo(employeeId: number, organizationId: number, gte: Date, lte: Date) {
-        const lastAction = await this.prisma.action.findFirst({
-            where: { employeeId, organizationId, actionTime: { gte, lte } },
-            orderBy: { actionTime: 'desc' },
-        });
+        const lastAction = await this.actionRepo.findFirst(
+            { employeeId, organizationId, actionTime: { gte, lte } },
+            { actionTime: 'desc' }
+        );
         const { EXIT, ENTER } = EntryType;
 
         if (!lastAction) {

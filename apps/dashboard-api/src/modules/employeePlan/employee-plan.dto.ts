@@ -29,7 +29,7 @@ export class CreateEmployeePlanDto {
     @IsString()
     extraTime: string;
 
-    @ApiProperty({ example: ['Mon', 'Fri'] })
+    @ApiProperty({ example: ['Monday', 'Tuesday'] })
     @IsNotEmpty()
     @IsString({ each: true })
     @Transform(({ value }) => (Array.isArray(value) ? value.join(',') : value))

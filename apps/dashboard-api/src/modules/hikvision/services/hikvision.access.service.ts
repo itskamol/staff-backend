@@ -480,7 +480,6 @@ export class HikvisionAccessService {
             );
             return false;
         } catch (error) {
-            console.log(error);
             this.logger.error(`Failed to add card to user ${data.employeeNo}: ${error.message}`);
             throw new BadRequestException(
                 `Hikvision da karta qo'shishda xatolik: ${error.message}`

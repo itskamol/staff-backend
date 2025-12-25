@@ -117,7 +117,6 @@ export class AttendanceProcessor extends WorkerHost {
                 'MarkedAttendanceJob'
             );
         } catch (err) {
-            console.log(err);
             this.logger.error(`Error marking absent employees:`, err, 'MarkedAttendanceJob');
         }
     }
