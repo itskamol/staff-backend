@@ -458,6 +458,10 @@ export class DeviceService {
             where: { employeeId, isActive: true, deletedAt: null },
         });
 
+        if (!gateId || !employeeId) {
+            throw new BadRequestException('gateId and employeeId required!');
+        }
+
         const activeSyncs = await this.prisma.employeeSync.findMany({
             where: {
                 gateId,

@@ -260,7 +260,6 @@ export class SyncCredentialsDto {
         type: [Number],
     })
     @IsArray()
-    @ArrayNotEmpty()
     @IsInt({ each: true })
     credentialIds: number[];
 }
