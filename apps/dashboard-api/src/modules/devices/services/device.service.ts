@@ -5,10 +5,11 @@ import {
     ConnectionDto,
     CreateDeviceDto,
     QueryDeviceDto,
+    SyncCredentialsDto,
     UpdateDeviceDto,
 } from '../dto/device.dto';
 import { DeviceRepository } from '../repositories/device.repository';
-import { ActionType, EntryType, Prisma } from '@prisma/client';
+import { ActionType, EntryType, Prisma, StatusEnum } from '@prisma/client';
 import { GateRepository } from '../../gate/repositories/gate.repository';
 import { HikvisionConfig } from '../../hikvision/dto/create-hikvision-user.dto';
 import { ConfigService } from 'apps/dashboard-api/src/core/config/config.service';
@@ -18,6 +19,7 @@ import { JOB } from 'apps/dashboard-api/src/shared/constants';
 import { EncryptionService } from 'apps/dashboard-api/src/shared/services/encryption.service';
 import { GateDto } from '../../gate/dto/gate.dto';
 import { HikvisionAccessService } from '../../hikvision/services/hikvision.access.service';
+import { PrismaService } from '@app/shared/database';
 
 @Injectable()
 export class DeviceService {
@@ -27,7 +29,8 @@ export class DeviceService {
         private readonly gateRepository: GateRepository,
         private hikvisionService: HikvisionAccessService,
         private readonly configService: ConfigService,
-        private readonly encryptionService: EncryptionService
+        private readonly encryptionService: EncryptionService,
+        private readonly prisma: PrismaService
     ) {}
 
     async findAll(query: QueryDeviceDto, scope: DataScope, user: UserContext) {
@@ -448,5 +451,65 @@ export class DeviceService {
         } catch (error) {
             throw error;
         }
+    }
+
+    async getEmployeeGateCredentials(gateId: number, employeeId: number, scope: DataScope) {
+        const allCredentials = await this.prisma.credential.findMany({
+            where: { employeeId, isActive: true, deletedAt: null },
+        });
+
+        const activeSyncs = await this.prisma.employeeSync.findMany({
+            where: {
+                gateId,
+                employeeId,
+                deletedAt: null,
+                status: StatusEnum.DONE,
+            },
+            select: { credentialId: true },
+        });
+
+        const syncedIds = activeSyncs.map(s => s.credentialId);
+
+        return allCredentials.map(cred => ({
+            ...cred,
+            isAssignedToGate: syncedIds.includes(cred.id),
+        }));
+    }
+
+    async updateEmployeeGateAccessByIds(dto: {
+        gateId: number;
+        employeeId: number;
+        credentialIds: number[];
+    }) {
+        const { gateId, employeeId, credentialIds } = dto;
+
+        const currentSyncs = await this.prisma.employeeSync.findMany({
+            where: { gateId, employeeId, deletedAt: null },
+        });
+        const currentSyncedCredIds = currentSyncs.map(s => s.credentialId);
+
+        const toRemoveIds = currentSyncedCredIds.filter(id => !credentialIds.includes(id));
+        const toAddIds = credentialIds.filter(id => !currentSyncedCredIds.includes(id));
+
+        // 1. O'CHIRISH - Avvalgi removeSpecificCredentialsJob'ni ishlataveramiz
+        if (toRemoveIds.length > 0) {
+            await this.deviceQueue.add(JOB.DEVICE.REMOVE_SPECIFIC_CREDENTIALS, {
+                gateId,
+                employeeId,
+                credentialIds: toRemoveIds,
+            });
+        }
+
+        // 2. QO'SHISH - Yangi, xavfsiz job
+        if (toAddIds.length > 0) {
+            await this.deviceQueue.add(JOB.DEVICE.SYNC_CREDENTIALS_TO_DEVICES, {
+                // <-- Yangi job nomi
+                gateId,
+                employeeId,
+                credentialIds: toAddIds,
+            });
+        }
+
+        return { success: true };
     }
 }
