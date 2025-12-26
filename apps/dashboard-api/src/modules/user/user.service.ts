@@ -69,7 +69,9 @@ export class UserService {
      * Find user by ID
      */
     async findById(id: number): Promise<Omit<User, 'password'>> {
-        const { password, ...user } = await this.userRepository.findById(id);
+        const { password, ...user } = await this.userRepository.findById(id, {
+            departments: { select: { id: true, fullName: true, shortName: true } },
+        });
         return user;
     }
 
