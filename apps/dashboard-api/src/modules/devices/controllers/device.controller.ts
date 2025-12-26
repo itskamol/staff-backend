@@ -9,6 +9,7 @@ import {
     AssignEmployeesToGatesDto,
     QueryDeviceDto,
     ConnectionDto,
+    SyncCredentialsDto,
 } from '../dto/device.dto';
 import { ApiCrudOperation } from 'apps/dashboard-api/src/shared/utils';
 
@@ -131,5 +132,21 @@ export class DeviceController {
         @User() user: UserContext
     ) {
         return await this.deviceService.connectGateToDevices(dto, scope);
+    }
+
+    @Get('gate/:gateId/employee/:employeeId/credentials')
+    @Roles(Role.ADMIN)
+    async getEmployeeCredentialsStatus(
+        @Param('gateId') gateId: number,
+        @Param('employeeId') employeeId: number,
+        @Scope() scope: DataScope
+    ) {
+        return await this.deviceService.getEmployeeGateCredentials(gateId, employeeId, scope);
+    }
+
+    @Post('gate/sync-credentials')
+    @Roles(Role.ADMIN)
+    async syncCredentials(@Body() dto: SyncCredentialsDto, @Scope() scope: DataScope) {
+        return await this.deviceService.updateEmployeeGateAccessByIds(dto);
     }
 }

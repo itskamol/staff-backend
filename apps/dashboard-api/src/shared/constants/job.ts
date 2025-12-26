@@ -8,6 +8,8 @@ export const JOB = {
         REMOVE_EMPLOYEES: 'device:removeEmployeesFromDevices',
         CLEAR_ALL_USERS_FROM_DEVICE: 'device:clearAllUsersFromDevice',
         SYNC_SINGLE_CREDENTIAL: 'device:syncSingleCredential',
+        REMOVE_SPECIFIC_CREDENTIALS: 'device:removeSpecificCredentials',
+        SYNC_CREDENTIALS_TO_DEVICES: 'device:syncCredentialsToDevices',
     },
     ATTENDANCE: {
         NAME: 'attandance',

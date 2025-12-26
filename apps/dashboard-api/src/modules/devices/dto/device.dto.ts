@@ -219,7 +219,6 @@ export class QueryDeviceDto extends QueryDto {
     })
     @IsArray() // Endi har doim massiv kelishini tekshirish mumkin
     @IsEnum(ActionType, { each: true })
-    @IsEnum(ActionType, { each: true })
     deviceTypes?: ActionType[];
 
     @ApiPropertyOptional()
@@ -244,4 +243,24 @@ export class QueryDeviceDto extends QueryDto {
     @IsBoolean()
     @Transform(({ value }) => (value === 'true' ? true : value === 'false' ? false : value))
     isConnected?: boolean;
+}
+
+export class SyncCredentialsDto {
+    @ApiProperty()
+    @IsNumber()
+    gateId: number;
+
+    @ApiProperty()
+    @IsNumber()
+    employeeId: number;
+
+    @ApiProperty({
+        example: [5, 6, 7],
+        description: 'credentialIds ro‘yxati',
+        type: [Number],
+    })
+    @IsArray()
+    @ArrayNotEmpty()
+    @IsInt({ each: true })
+    credentialIds: number[];
 }
