@@ -25,13 +25,13 @@ import { ApiCrudOperation } from '@app/shared/utils';
 
 @ApiTags('Users')
 @ApiBearerAuth()
-@Roles(Role.ADMIN)
 @Controller('users')
 @ApiExtraModels(ApiSuccessResponse, UserResponseDto)
 export class UserController {
     constructor(private readonly userService: UserService) {}
 
     @Post()
+    @Roles(Role.ADMIN)
     @NoScoping()
     @ApiCrudOperation(UserResponseDto, 'create', {
         body: CreateUserDto,
@@ -46,6 +46,7 @@ export class UserController {
     }
 
     @Get('roles')
+    @Roles(Role.ADMIN)
     @ApiCrudOperation(String as any, 'list', {
         summary: 'Get all user roles',
         arrayItemType: 'string',
@@ -56,6 +57,7 @@ export class UserController {
     }
 
     @Get()
+    @Roles(Role.ADMIN)
     @ApiCrudOperation(UserResponseDto, 'list', {
         summary: 'Get all users',
         includeQueries: {
@@ -69,6 +71,7 @@ export class UserController {
     }
 
     @Get('me')
+    @Roles(Role.ADMIN, Role.HR, Role.DEPARTMENT_LEAD, Role.GUARD)
     @ApiCrudOperation(UserResponseDto, 'get', {
         summary: 'Get current user',
     })
@@ -81,6 +84,7 @@ export class UserController {
     }
 
     @Get(':id')
+    @Roles(Role.ADMIN)
     @ApiParam({ name: 'id', description: 'ID of the user' })
     @ApiCrudOperation(UserResponseDto, 'get', {
         summary: 'Get a specific user by ID',
@@ -94,6 +98,7 @@ export class UserController {
     }
 
     @Put('me')
+    @Roles(Role.ADMIN, Role.HR, Role.DEPARTMENT_LEAD, Role.GUARD)
     @ApiCrudOperation(UserResponseDto, 'update', {
         body: UpdateCurrentUserDto,
         summary: 'Update current user',
@@ -106,6 +111,7 @@ export class UserController {
     }
 
     @Put(':id')
+    @Roles(Role.ADMIN)
     @ApiParam({ name: 'id', description: 'ID of the user to update' })
     @ApiCrudOperation(UserResponseDto, 'update', {
         body: UpdateUserDto,
@@ -120,6 +126,7 @@ export class UserController {
     }
 
     @Delete(':id')
+    @Roles(Role.ADMIN)
     @ApiParam({ name: 'id', description: 'ID of the user to delete' })
     @ApiCrudOperation(UserResponseDto, 'delete', {
         summary: 'Delete a user',
@@ -130,6 +137,7 @@ export class UserController {
     }
 
     @Post(':id/assign-department')
+    @Roles(Role.ADMIN)
     @ApiParam({ name: 'id', description: 'ID of the user to assign department' })
     @ApiCrudOperation(UserResponseDto, 'update', {
         body: AssignUserToDepartmentDto,
