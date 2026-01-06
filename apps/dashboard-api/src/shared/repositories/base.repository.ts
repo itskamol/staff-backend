@@ -48,7 +48,7 @@ export abstract class BaseRepository<
         }
 
         if (scope?.departmentIds?.length) {
-            scopedWhere.id = {
+            scopedWhere.departmentId = {
                 in: scope.departmentIds,
             };
         }
