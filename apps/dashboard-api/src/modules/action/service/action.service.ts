@@ -283,12 +283,19 @@ export class ActionService {
         };
 
         const actions = await this.actionRepo.findMany(
-            where,
+            {
+                ...where,
+                employee: {
+                    department: scope?.departmentIds.length
+                        ? { id: { in: scope?.departmentIds } }
+                        : {},
+                },
+            },
             { [sort || 'actionTime']: order || 'asc' },
             this.actionRepo.getDefaultInclude(),
             undefined,
             undefined,
-            scope,
+            { organizationId: scope?.organizationId },
             true
         );
 

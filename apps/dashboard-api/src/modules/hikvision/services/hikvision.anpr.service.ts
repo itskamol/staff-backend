@@ -110,7 +110,14 @@ export class HikvisionAnprService {
         if (!id) throw new BadRequestException(`Raqam topilmadi: ${oldPlateNo}`);
 
         const body = this.createRecordBody(newPlateNo, listType, id);
-        return this.sendRecordRequest(body);
+        const result = await this.sendRecordRequest(body);
+        if (result) {
+            this.logger.log(`Edited license plate: ${oldPlateNo} to ${newPlateNo}`);
+        } else {
+            this.logger.error(`Failed to edit license plate: ${oldPlateNo}`);
+        }
+
+        return result;
     }
 
     // DELETE
@@ -125,6 +132,14 @@ export class HikvisionAnprService {
             '/ISAPI/Traffic/channels/1/DelLicensePlateAuditData?format=json',
             body
         );
+        if (response.status !== 200) {
+            this.logger.error(
+                `Failed to delete license plate: ${plateNo}, Status: ${response.status}`
+            );
+            return false;
+        }
+
+        this.logger.log(`Deleted license plate: ${plateNo}`);
         return response.status === 200;
     }
 
