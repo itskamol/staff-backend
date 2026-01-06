@@ -76,7 +76,7 @@ export class AuthService {
         //     throw new UnauthorizedException('Refresh token has been revoked');
         // }
 
-        const user = await this.userRepository.findById(+payload.sub);
+        const user = await this.userRepository.findById(+payload.sub, { departments: true });
         if (!user || !user.isActive) {
             throw new UnauthorizedException('Invalid refresh token');
         }
