@@ -14,7 +14,7 @@ import { DataScope, Scope, User, UserContext } from '@app/shared/auth';
 @ApiTags('Credentials')
 @ApiBearerAuth()
 @Controller('credentials')
-@Roles(Role.ADMIN, Role.HR, Role.DEPARTMENT_LEAD, Role.GUARD)
+@Roles(Role.ADMIN, Role.HR)
 export class CredentialController {
     constructor(private readonly credentialService: CredentialService) {}
 
