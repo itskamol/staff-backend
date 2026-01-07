@@ -9,7 +9,7 @@ import { UserModule } from '../modules/user/user.module';
 import { OrganizationModule } from '../modules/organization/organization.module';
 import { DepartmentModule } from '../modules/department/department.module';
 import { EmployeeModule } from '../modules/employee/employee.module';
-import { VisitorModule } from '../modules/visitor/visitor.module';
+import { VisitorModule } from '../modules/visitors/visitor.module';
 import { PolicyModule } from '../modules/policy/policy.module';
 import { LoggerModule } from '../core/logger';
 import { MorganLoggerMiddleware } from '../shared/middleware';
