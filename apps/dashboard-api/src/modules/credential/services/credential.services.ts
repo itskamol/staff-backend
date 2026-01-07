@@ -50,6 +50,7 @@ export class CredentialService {
             ...(employeeId && { employeeId }),
             ...(departmentId && { employee: { departmentId } }),
             ...(organizationId && { employee: { organizationId } }),
+            ...{ employee: { departmentId: { in: scope.departmentIds } } },
             ...(search && {
                 OR: [
                     { code: { contains: search, mode: 'insensitive' } },
@@ -63,7 +64,7 @@ export class CredentialService {
             { [sort]: order },
             this.credentialRepository.getDefaultInclude(),
             { page, limit },
-            scope
+            { organizationId: scope.organizationId }
         );
 
         return items;
@@ -73,7 +74,7 @@ export class CredentialService {
         const credential = await this.credentialRepository.findById(
             id,
             this.credentialRepository.getDefaultInclude(),
-            scope
+            { organizationId: scope.organizationId }
         );
 
         if (!credential || credential.deletedAt)
@@ -83,7 +84,9 @@ export class CredentialService {
     }
 
     async getCredentialByEmployeeId(id: number, scope: DataScope, user: UserContext) {
-        const credential = await this.credentialRepository.findByEmployeeId(id, scope);
+        const credential = await this.credentialRepository.findByEmployeeId(id, {
+            organizationId: scope.organizationId,
+        });
 
         return credential;
     }
@@ -93,7 +96,11 @@ export class CredentialService {
         scope: DataScope,
         user: UserContext
     ): Promise<CredentialWithRelations> {
-        const employee = await this.getEmployee(dto.employeeId, scope, user);
+        const employee = await this.getEmployee(
+            dto.employeeId,
+            { organizationId: scope.organizationId },
+            user
+        );
 
         this.validatePhoto(dto.type, dto.additionalDetails);
         await this.validateUniqueCode(dto.type, dto.code);
@@ -114,7 +121,7 @@ export class CredentialService {
                 },
             },
             this.credentialRepository.getDefaultInclude(),
-            scope
+            { organizationId: scope.organizationId }
         );
     }
 
@@ -124,8 +131,16 @@ export class CredentialService {
         scope: DataScope,
         user: UserContext
     ): Promise<CredentialWithRelations> {
-        const existing = await this.getCredentialById(id, scope, user);
-        const employee = await this.getEmployee(existing.employeeId, scope, user);
+        const existing = await this.getCredentialById(
+            id,
+            { organizationId: scope.organizationId },
+            user
+        );
+        const employee = await this.getEmployee(
+            existing.employeeId,
+            { organizationId: scope.organizationId },
+            user
+        );
 
         const finalType = dto.type ?? existing.type;
         const finalCode = dto.code ?? existing.code;
@@ -156,20 +171,34 @@ export class CredentialService {
             id,
             dto,
             this.credentialRepository.getDefaultInclude(),
-            scope
+            { organizationId: scope.organizationId }
         );
     }
 
     async deleteCredential(id: number, scope: DataScope, user: UserContext) {
-        const credential = await this.getCredentialById(id, scope, user);
-        const employee = await this.getEmployee(credential.employeeId, scope, user);
+        const credential = await this.getCredentialById(
+            id,
+            { organizationId: scope.organizationId },
+            user
+        );
+        const employee = await this.getEmployee(
+            credential.employeeId,
+            { organizationId: scope.organizationId },
+            user
+        );
 
         await this.syncDevices(employee, credential, undefined, 'Delete');
-        return this.credentialRepository.deleteCredential(id, scope);
+        return this.credentialRepository.deleteCredential(id, {
+            organizationId: scope.organizationId,
+        });
     }
 
     private async getEmployee(id: number, scope: DataScope, user: UserContext) {
-        const employee = await this.employeeService.getEmployeeById(id, scope, user);
+        const employee = await this.employeeService.getEmployeeById(
+            id,
+            { organizationId: scope.organizationId },
+            user
+        );
         if (!employee) throw new NotFoundException('Employee not found or access denied.');
         return employee;
     }
