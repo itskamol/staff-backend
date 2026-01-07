@@ -25,7 +25,7 @@ export class OnetimeCodeRepository extends BaseRepository<
     }
 
     async findByCode(code: string) {
-        return this.findFirst({ code });
+        return this.findFirst({ code, deletedAt: null });
     }
 
     async findByVisitorId(visitorId: number, include?: Prisma.OnetimeCodeInclude) {
@@ -34,21 +34,26 @@ export class OnetimeCodeRepository extends BaseRepository<
 
     async findActiveCodes(include?: Prisma.OnetimeCodeInclude) {
         const now = new Date();
-        return this.findMany({
-            isActive: true,
-            startDate: { lte: now },
-            endDate: { gte: now }
-        }, { createdAt: 'desc' }, include);
+        return this.findMany(
+            {
+                isActive: true,
+                startDate: { lte: now },
+                endDate: { gte: now },
+            },
+            { createdAt: 'desc' },
+            include
+        );
     }
 
     async findExpiredCodes(include?: Prisma.OnetimeCodeInclude) {
         const now = new Date();
-        return this.findMany({
-            OR: [
-                { endDate: { lt: now } },
-                { isActive: false }
-            ]
-        }, { createdAt: 'desc' }, include);
+        return this.findMany(
+            {
+                OR: [{ endDate: { lt: now } }, { isActive: false }],
+            },
+            { createdAt: 'desc' },
+            include
+        );
     }
 
     async findByCodeType(codeType: VisitorCodeType, include?: Prisma.OnetimeCodeInclude) {
@@ -69,7 +74,7 @@ export class OnetimeCodeRepository extends BaseRepository<
             code,
             isActive: true,
             startDate: { lte: now },
-            endDate: { gte: now }
+            endDate: { gte: now },
         });
 
         return !!codeRecord;
@@ -83,7 +88,9 @@ export class OnetimeCodeRepository extends BaseRepository<
         const maxAttempts = 100;
 
         while (attempts < maxAttempts) {
-            const randomNum = Math.floor(Math.random() * 10000).toString().padStart(4, '0');
+            const randomNum = Math.floor(Math.random() * 10000)
+                .toString()
+                .padStart(4, '0');
             const code = `VIS${dateStr}${randomNum}`;
 
             const existing = await this.findByCode(code);

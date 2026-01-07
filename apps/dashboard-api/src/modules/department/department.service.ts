@@ -54,6 +54,10 @@ export class DepartmentService {
             filters.organizationId = organizationId;
         }
 
+        if (scope?.departmentIds.length) {
+            filters.id = { in: scope.departmentIds };
+        }
+
         const result = await this.departmentRepository.findManyWithPagination(
             filters,
             { [sort]: order },
@@ -67,7 +71,7 @@ export class DepartmentService {
                 },
             },
             { page, limit },
-            scope
+            { organizationId: scope?.organizationId }
         );
 
         return result;
@@ -75,7 +79,7 @@ export class DepartmentService {
 
     async getDepartmentsWithScope(scope?: DataScope) {
         return this.departmentRepository.findMany(
-            {},
+            { id: scope?.departmentIds ? { in: scope?.departmentIds } : undefined },
             {},
             {
                 employees: { where: { deletedAt: null } },
@@ -89,11 +93,15 @@ export class DepartmentService {
             },
             undefined,
             undefined,
-            scope
+            { organizationId: scope?.organizationId }
         );
     }
 
     async getDepartmentById(id: number, scope?: DataScope) {
+        if (scope?.departmentIds.length && !scope.departmentIds.includes(id)) {
+            return null;
+        }
+
         return this.departmentRepository.findById(
             id,
             {
@@ -102,7 +110,7 @@ export class DepartmentService {
                 childrens: { where: { deletedAt: null } },
                 employees: { where: { deletedAt: null } },
             },
-            scope
+            { organizationId: scope?.organizationId }
         );
     }
 

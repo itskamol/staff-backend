@@ -16,8 +16,7 @@ import { QueryDto } from 'apps/dashboard-api/src/shared/dto';
 export class VisitorService {
     constructor(
         private readonly prisma: PrismaService,
-        private readonly visitorRepository: VisitorRepository,
-        private readonly codeRepository: OnetimeCodeRepository
+        private readonly visitorRepository: VisitorRepository
     ) {}
 
     async findAll(query: QueryDto & { creatorId?: string }, scope: DataScope, user: UserContext) {
@@ -232,7 +231,7 @@ export class VisitorService {
         const visitor = await this.findOne(id, user);
 
         // Generate new code
-        const code = await this.visitorRepository.generateOnetimeCode();
+        const code = await this.visitorRepository.generateUniqueCode();
 
         const startDate = new Date();
         const endDate = new Date();
@@ -342,7 +341,9 @@ export class VisitorService {
             throw new NotFoundException('Invalid or expired code');
         }
 
-        const activeCode = await this.codeRepository.findFirst({ code, isActive: true });
+        const activeCode = await this.prisma.onetimeCode.findFirst({
+            where: { code, isActive: true },
+        });
 
         if (!activeCode) {
             throw new BadRequestException('Code is not active or expired');

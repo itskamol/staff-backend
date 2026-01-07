@@ -39,7 +39,7 @@ export class DepartmentController {
     }
 
     @Get()
-    @Roles(Role.ADMIN, Role.HR)
+    @Roles(Role.ADMIN, Role.HR, Role.DEPARTMENT_LEAD)
     @ApiCrudOperation(DepartmentResponseDto, 'list', {
         summary: 'Get all departments with pagination',
         includeQueries: {
@@ -63,7 +63,7 @@ export class DepartmentController {
     }
 
     @Get(':id')
-    @Roles(Role.ADMIN, Role.HR)
+    @Roles(Role.ADMIN, Role.HR, Role.DEPARTMENT_LEAD)
     @ApiCrudOperation(DepartmentResponseDto, 'get', {
         summary: 'Get a department by ID',
     })
