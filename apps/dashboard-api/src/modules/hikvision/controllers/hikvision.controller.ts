@@ -41,7 +41,8 @@ export class HikvisionController {
 
         const employeeID = eventData?.AccessControllerEvent?.employeeNoString;
         if (employeeID) {
-            await this.actionService.create(eventData, +deviceId, +employeeID);
+            const newAction = await this.actionService.create(eventData, +deviceId, +employeeID);
+            console.log('New action created:', newAction);
         }
 
         res.setHeader('Content-Type', 'application/json');
