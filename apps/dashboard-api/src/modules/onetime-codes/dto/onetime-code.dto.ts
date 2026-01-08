@@ -29,14 +29,14 @@ export class CreateOnetimeCodeDto {
     codeType: VisitorCodeType;
 
     @ApiProperty({
-        example: '2024-08-25T09:00:00Z',
+        example: '2026-01-08T16:31:46+05:00',
         description: 'Code start date',
     })
     @IsDateString()
     startDate: string;
 
     @ApiProperty({
-        example: '2024-08-25T18:00:00Z',
+        example: '2026-01-18T16:31:46+05:00',
         description: 'Code end date',
     })
     @IsDateString()

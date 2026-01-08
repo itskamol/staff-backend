@@ -33,7 +33,6 @@ export class ActionService {
             const { CAR, CARD, PERSONAL_CODE, PHOTO } = ActionType;
 
             const actionTime = eventData.dateTime || acEvent.dateTime;
-            console.log('actionTime', actionTime);
             const originalLicensePlate = acEvent?.ANPR?.originalLicensePlate || null;
 
             let actionType = originalLicensePlate
