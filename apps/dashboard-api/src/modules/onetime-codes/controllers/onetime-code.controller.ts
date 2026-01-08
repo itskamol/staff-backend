@@ -1,18 +1,22 @@
 import { Controller, Get, Post, Put, Delete, Body, Param, Query } from '@nestjs/common';
-import { ApiTags, ApiBearerAuth } from '@nestjs/swagger';
+import { ApiTags, ApiBearerAuth, ApiExtraModels } from '@nestjs/swagger';
 import { Roles, Role, User as CurrentUser, DataScope, Scope, UserContext } from '@app/shared/auth';
 import { OnetimeCodeService } from '../services/onetime-code.service';
 import {
     CreateOnetimeCodeDto,
     OnetimeCodeWithRelationsDto,
+    QueryOnetimeCodeDto,
     UpdateOnetimeCodeDto,
 } from '../dto/onetime-code.dto';
 import { ApiCrudOperation } from 'apps/dashboard-api/src/shared/utils';
 import { QueryDto } from 'apps/dashboard-api/src/shared/dto';
+import { ApiSuccessResponse } from '@app/shared/utils';
+import { VisitorCodeType } from '@prisma/client';
 
 @ApiTags('Onetime Codes')
 @Controller('onetime-codes')
 @ApiBearerAuth()
+@ApiExtraModels(ApiSuccessResponse, OnetimeCodeWithRelationsDto)
 @Roles(Role.ADMIN, Role.HR, Role.GUARD)
 export class OnetimeCodeController {
     constructor(private readonly onetimeCodeService: OnetimeCodeService) {}
@@ -24,15 +28,10 @@ export class OnetimeCodeController {
             pagination: true,
             search: true,
             sort: true,
-            filters: {
-                visitorId: Number,
-                codeType: String,
-                isActive: Boolean,
-            },
         },
     })
     async findAll(
-        @Query() query: QueryDto,
+        @Query() query: QueryOnetimeCodeDto,
         @CurrentUser() user: UserContext,
         @Scope() scope: DataScope
     ) {
@@ -56,7 +55,7 @@ export class OnetimeCodeController {
     }
 
     @Get('validate/:code')
-    @ApiCrudOperation(null, 'get', {
+    @ApiCrudOperation(OnetimeCodeWithRelationsDto, 'get', {
         summary: 'Validate onetime code',
         errorResponses: { badRequest: true },
     })

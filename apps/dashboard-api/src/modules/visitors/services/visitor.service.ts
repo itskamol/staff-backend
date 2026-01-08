@@ -1,15 +1,9 @@
 import { Injectable, NotFoundException, BadRequestException } from '@nestjs/common';
 import { PrismaService } from '@app/shared/database';
 import { DataScope, UserContext } from '@app/shared/auth';
-import {
-    CreateVisitorDto,
-    UpdateVisitorDto,
-    CreateOnetimeCodeDto,
-    GenerateCodeDto,
-} from '../dto/visitor.dto';
+import { CreateVisitorDto, QueryVisitorDto, UpdateVisitorDto } from '../dto/visitor.dto';
 import { VisitorRepository } from '../repositories/visitor.repository';
-import { OnetimeCode, Prisma, Visitor, VisitorCodeType } from '@prisma/client';
-import { OnetimeCodeRepository } from '../../onetime-codes/repositories/onetime-code.repository';
+import { Prisma } from '@prisma/client';
 import { QueryDto } from 'apps/dashboard-api/src/shared/dto';
 
 @Injectable()
@@ -19,8 +13,16 @@ export class VisitorService {
         private readonly visitorRepository: VisitorRepository
     ) {}
 
-    async findAll(query: QueryDto & { creatorId?: string }, scope: DataScope, user: UserContext) {
-        const { page, limit, sort = 'createdAt', order = 'desc', search, creatorId } = query;
+    async findAll(query: QueryVisitorDto, scope: DataScope, user: UserContext) {
+        const {
+            page,
+            limit,
+            sort = 'createdAt',
+            order = 'desc',
+            search,
+            creatorId,
+            attachedId,
+        } = query;
         const where: Prisma.VisitorWhereInput = {};
 
         if (search) {
@@ -34,7 +36,11 @@ export class VisitorService {
         }
 
         if (creatorId) {
-            where.creatorId = parseInt(creatorId);
+            where.creatorId = creatorId;
+        }
+
+        if (attachedId) {
+            where.attachedId = attachedId;
         }
 
         return this.visitorRepository.findManyWithPagination(
@@ -59,6 +65,13 @@ export class VisitorService {
                         isActive: true,
                     },
                 },
+                attached: {
+                    select: {
+                        id: true,
+                        name: true,
+                        username: true,
+                    },
+                },
                 _count: {
                     select: {
                         actions: true,
@@ -71,7 +84,7 @@ export class VisitorService {
         );
     }
 
-    async findOne(id: number, user: UserContext) {
+    async findOne(id: number, scope: DataScope) {
         const visitor = await this.visitorRepository.findById(id, {
             creator: {
                 select: {
@@ -91,6 +104,13 @@ export class VisitorService {
                     additionalDetails: true,
                     isActive: true,
                     createdAt: true,
+                },
+            },
+            attached: {
+                select: {
+                    id: true,
+                    name: true,
+                    username: true,
                 },
             },
             actions: {
@@ -125,10 +145,10 @@ export class VisitorService {
         return visitor;
     }
 
-    async create(createVisitorDto: CreateVisitorDto, scope: DataScope) {
+    async create(createVisitorDto: CreateVisitorDto, scope: DataScope, user: UserContext) {
         // Verify creator exists
         const creator = await this.prisma.user.findUnique({
-            where: { id: createVisitorDto.creatorId },
+            where: { id: +user.sub },
         });
 
         if (!creator) {
@@ -167,11 +187,16 @@ export class VisitorService {
                 additionalDetails: createVisitorDto.additionalDetails,
                 isActive: createVisitorDto.isActive,
                 creator: {
-                    connect: { id: createVisitorDto.creatorId },
+                    connect: { id: +user.sub },
                 },
                 organization: {
-                    connect: { id: scope?.organizationId },
+                    connect: { id: scope?.organizationId || createVisitorDto?.organizationId },
                 },
+                attached: createVisitorDto.attachedId
+                    ? {
+                          connect: { id: createVisitorDto.attachedId },
+                      }
+                    : undefined,
             },
             undefined,
             scope
@@ -227,72 +252,23 @@ export class VisitorService {
         return this.visitorRepository.softDelete(id, scope);
     }
 
-    async generateCode(id: number, generateCodeDto: GenerateCodeDto, user: UserContext) {
-        const visitor = await this.findOne(id, user);
-
-        // Generate new code
-        const code = await this.visitorRepository.generateUniqueCode();
-
-        const startDate = new Date();
-        const endDate = new Date();
-        endDate.setHours(endDate.getHours() + generateCodeDto.validityHours);
-
-        // Create onetime code
-        const onetimeCode = await this.prisma.onetimeCode.create({
-            data: {
-                visitorId: id,
-                organizationId: user.organizationId,
-                codeType: generateCodeDto.codeType,
-                code,
-                startDate,
-                endDate,
-                additionalDetails: generateCodeDto.additionalDetails,
-                isActive: true,
-            },
-        });
-
-        return {
-            visitor: {
-                id: visitor.id,
-                firstName: visitor.firstName,
-                lastName: visitor.lastName,
-            },
-            onetimeCode: {
-                id: onetimeCode.id,
-                code: onetimeCode.code,
-                codeType: onetimeCode.codeType,
-                startDate: onetimeCode.startDate,
-                endDate: onetimeCode.endDate,
-                validityHours: generateCodeDto.validityHours,
-            },
-        };
-    }
-
     async findTodayVisitors() {
         return this.visitorRepository.findTodayVisitors();
     }
 
-    async findWithActiveCodes() {
-        return this.visitorRepository.findWithActiveCodes({
-            creator: {
+    async findByCreator(creatorId: number) {
+        return this.visitorRepository.findByCreator(creatorId, {
+            _count: {
                 select: {
-                    id: true,
-                    name: true,
-                    username: true,
-                },
-            },
-            onetimeCodes: {
-                where: {
-                    isActive: true,
-                    startDate: { lte: new Date() },
-                    endDate: { gte: new Date() },
+                    actions: true,
+                    onetimeCodes: true,
                 },
             },
         });
     }
 
-    async findByCreator(creatorId: number) {
-        return this.visitorRepository.findByCreator(creatorId, {
+    async findByAttachedUser(attachedId: number) {
+        return this.visitorRepository.findFirst({ attachedId }, undefined, {
             _count: {
                 select: {
                     actions: true,
@@ -331,37 +307,6 @@ export class VisitorService {
                 lastName: visitor.lastName,
             },
             actions,
-        };
-    }
-
-    async validateCode(code: string) {
-        const visitor = await this.visitorRepository.findByCode(code);
-
-        if (!visitor) {
-            throw new NotFoundException('Invalid or expired code');
-        }
-
-        const activeCode = await this.prisma.onetimeCode.findFirst({
-            where: { code, isActive: true },
-        });
-
-        if (!activeCode) {
-            throw new BadRequestException('Code is not active or expired');
-        }
-
-        return {
-            visitor: {
-                id: visitor.id,
-                firstName: visitor.firstName,
-                lastName: visitor.lastName,
-                workPlace: visitor.workPlace,
-            },
-            code: {
-                id: activeCode.id,
-                code: activeCode.code,
-                codeType: activeCode.codeType,
-                validUntil: activeCode.endDate,
-            },
         };
     }
 }

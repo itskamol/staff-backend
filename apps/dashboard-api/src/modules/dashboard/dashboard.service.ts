@@ -7,7 +7,7 @@ import {
     ChartStatsQueryDto,
     DashboardStats,
 } from './dto/dashboard.dto';
-import { DataScope, UserContext } from '@app/shared/auth';
+import { DataScope, Role, UserContext } from '@app/shared/auth';
 
 @Injectable()
 export class DashboardService {
@@ -31,7 +31,7 @@ export class DashboardService {
             ...(depId.length ? { departmentId: { in: depId } } : {}),
         };
 
-        if (user.role === 'DEPARTMENT_LEAD') {
+        if (user.role === Role.DEPARTMENT_LEAD) {
             const [totalEmployees, newEmployeesCount] = await Promise.all([
                 this.prisma.employee.count({ where: baseWhere }),
                 this.prisma.employee.count({

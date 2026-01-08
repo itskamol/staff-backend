@@ -1,11 +1,14 @@
 import { Injectable, NotFoundException, BadRequestException } from '@nestjs/common';
 import { PrismaService } from '@app/shared/database';
 import { DataScope } from '@app/shared/auth';
-import { CreateOnetimeCodeDto, UpdateOnetimeCodeDto } from '../dto/onetime-code.dto';
+import {
+    CreateOnetimeCodeDto,
+    QueryOnetimeCodeDto,
+    UpdateOnetimeCodeDto,
+} from '../dto/onetime-code.dto';
 import { UserContext } from '../../../shared/interfaces';
 import { OnetimeCodeRepository } from '../repositories/onetime-code.repository';
-import { Prisma, VisitorCodeType } from '@prisma/client';
-import { QueryDto } from 'apps/dashboard-api/src/shared/dto';
+import { Prisma } from '@prisma/client';
 
 @Injectable()
 export class OnetimeCodeService {
@@ -14,11 +17,7 @@ export class OnetimeCodeService {
         private readonly onetimeCodeRepository: OnetimeCodeRepository
     ) {}
 
-    async findAll(
-        query: QueryDto & { visitorId?: string; codeType?: VisitorCodeType },
-        scope: DataScope,
-        user: UserContext
-    ) {
+    async findAll(query: QueryOnetimeCodeDto, scope: DataScope, user: UserContext) {
         const {
             page,
             limit,
@@ -40,7 +39,7 @@ export class OnetimeCodeService {
         }
 
         if (visitorId) {
-            where.visitorId = parseInt(visitorId);
+            where.visitorId = visitorId;
         }
 
         if (codeType) {
@@ -106,22 +105,18 @@ export class OnetimeCodeService {
             throw new NotFoundException('Visitor not found');
         }
 
-        // Check if code already exists
-        const existingCode = await this.onetimeCodeRepository.findByCode(createOnetimeCodeDto.code);
-        if (existingCode) {
-            throw new BadRequestException('Code already exists');
-        }
+        const code = await this.onetimeCodeRepository.generateUniqueCode();
 
         return this.onetimeCodeRepository.create(
             {
-                code: createOnetimeCodeDto.code,
+                code,
                 codeType: createOnetimeCodeDto.codeType,
                 startDate: new Date(createOnetimeCodeDto.startDate),
                 endDate: new Date(createOnetimeCodeDto.endDate),
                 additionalDetails: createOnetimeCodeDto.additionalDetails,
                 isActive: createOnetimeCodeDto.isActive,
                 organization: {
-                    connect: { id: scope.organizationId },
+                    connect: { id: scope?.organizationId || visitor.organizationId },
                 },
                 visitor: {
                     connect: { id: createOnetimeCodeDto.visitorId },
@@ -134,14 +129,6 @@ export class OnetimeCodeService {
 
     async update(id: number, updateOnetimeCodeDto: UpdateOnetimeCodeDto, user: UserContext) {
         await this.findOne(id, user);
-
-        // Check if updating to existing code
-        if (updateOnetimeCodeDto.code) {
-            const existing = await this.onetimeCodeRepository.findByCode(updateOnetimeCodeDto.code);
-            if (existing && existing.id !== id) {
-                throw new BadRequestException('Code already exists');
-            }
-        }
 
         const updateData: any = { ...updateOnetimeCodeDto };
 
@@ -236,43 +223,5 @@ export class OnetimeCodeService {
                 id: codeRecord.visitorId,
             },
         };
-    }
-
-    async generateCode(
-        visitorId: number,
-        codeType: VisitorCodeType,
-        validityHours: number = 24,
-        additionalDetails?: string
-    ) {
-        // Verify visitor exists
-        const visitor = await this.prisma.visitor.findUnique({
-            where: { id: visitorId },
-        });
-
-        if (!visitor) {
-            throw new NotFoundException('Visitor not found');
-        }
-
-        // Generate unique code
-        const code = await this.onetimeCodeRepository.generateUniqueCode();
-
-        const startDate = new Date();
-        const endDate = new Date();
-        endDate.setHours(endDate.getHours() + validityHours);
-
-        return this.onetimeCodeRepository.create({
-            code,
-            codeType,
-            startDate,
-            endDate,
-            additionalDetails,
-            isActive: true,
-            organization: {
-                connect: { id: visitor.organizationId },
-            },
-            visitor: {
-                connect: { id: visitorId },
-            },
-        });
     }
 }

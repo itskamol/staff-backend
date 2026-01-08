@@ -69,22 +69,6 @@ export class VisitorRepository extends BaseRepository<
         });
     }
 
-    async findWithActiveCodes(include?: Prisma.VisitorInclude) {
-        return this.findMany(
-            {
-                onetimeCodes: {
-                    some: {
-                        isActive: true,
-                        startDate: { lte: new Date() },
-                        endDate: { gte: new Date() },
-                    },
-                },
-            },
-            undefined,
-            include
-        );
-    }
-
     async findWithActionCount(where?: Prisma.VisitorWhereInput) {
         return this.findMany(where, undefined, {
             _count: {
@@ -92,41 +76,6 @@ export class VisitorRepository extends BaseRepository<
                     actions: true,
                     onetimeCodes: true,
                 },
-            },
-        });
-    }
-
-    async generateUniqueCode(): Promise<string> {
-        const today = new Date();
-        const dateStr = today.toISOString().slice(0, 10).replace(/-/g, '');
-
-        let attempts = 0;
-        const maxAttempts = 100;
-
-        while (attempts < maxAttempts) {
-            const randomNum = Math.floor(Math.random() * 10000)
-                .toString()
-                .padStart(4, '0');
-            const code = `VIS${dateStr}${randomNum}`;
-
-            const existing = await this.findByOnetimeCode(code);
-            if (!existing) {
-                return code;
-            }
-
-            attempts++;
-        }
-
-        // Fallback with timestamp
-        const timestamp = Date.now().toString().slice(-4);
-        return `VIS${dateStr}${timestamp}`;
-    }
-
-    private async findByOnetimeCode(code: string) {
-        return this.prisma.onetimeCode.findFirst({
-            where: { code, deletedAt: null, isActive: true },
-            select: {
-                visitor: true,
             },
         });
     }

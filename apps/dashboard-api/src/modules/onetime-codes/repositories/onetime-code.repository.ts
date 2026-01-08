@@ -73,6 +73,7 @@ export class OnetimeCodeRepository extends BaseRepository<
         const codeRecord = await this.findFirst({
             code,
             isActive: true,
+            deletedAt: null,
             startDate: { lte: now },
             endDate: { gte: now },
         });
@@ -81,17 +82,14 @@ export class OnetimeCodeRepository extends BaseRepository<
     }
 
     async generateUniqueCode(): Promise<string> {
-        const today = new Date();
-        const dateStr = today.toISOString().slice(0, 10).replace(/-/g, '');
-
         let attempts = 0;
         const maxAttempts = 100;
 
         while (attempts < maxAttempts) {
             const randomNum = Math.floor(Math.random() * 10000)
                 .toString()
-                .padStart(4, '0');
-            const code = `VIS${dateStr}${randomNum}`;
+                .padStart(5, '0');
+            const code = `VIS${randomNum}`;
 
             const existing = await this.findByCode(code);
             if (!existing) {
@@ -102,7 +100,7 @@ export class OnetimeCodeRepository extends BaseRepository<
         }
 
         // Fallback with timestamp
-        const timestamp = Date.now().toString().slice(-4);
-        return `VIS${dateStr}${timestamp}`;
+        const timestamp = Date.now().toString().slice(-5);
+        return `VIS${timestamp}`;
     }
 }
