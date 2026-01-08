@@ -14,7 +14,7 @@ export class CreateActionDto {
     gateId?: number;
 
     @IsDateString()
-    actionTime: string;
+    actionTime: Date;
 
     @IsOptional()
     @IsInt()
