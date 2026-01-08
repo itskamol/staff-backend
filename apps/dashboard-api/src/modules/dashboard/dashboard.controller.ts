@@ -13,7 +13,7 @@ export class DashboardController {
     constructor(private readonly dashboardService: DashboardService) {}
 
     @Get()
-    @Roles(Role.ADMIN, Role.HR)
+    @Roles(Role.ADMIN, Role.HR, Role.DEPARTMENT_LEAD)
     @ApiOperation({ summary: 'Get dashboard stats' })
     @ApiResponse({
         status: 200,
@@ -24,7 +24,7 @@ export class DashboardController {
     }
 
     @Get('chart')
-    @Roles(Role.ADMIN, Role.HR)
+    @Roles(Role.ADMIN, Role.HR, Role.DEPARTMENT_LEAD)
     @ApiOperation({ summary: 'Get dashboard chart stats' })
     @ApiResponse({
         status: 200,
