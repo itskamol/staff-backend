@@ -1,11 +1,21 @@
-import { IsString, IsNotEmpty, IsOptional, IsBoolean, IsInt, IsDateString, IsEnum } from 'class-validator';
+import {
+    IsString,
+    IsNotEmpty,
+    IsOptional,
+    IsBoolean,
+    IsInt,
+    IsDateString,
+    IsEnum,
+} from 'class-validator';
 import { ApiProperty, PartialType } from '@nestjs/swagger';
 import { VisitorCodeType } from '@prisma/client';
+import { QueryDto } from 'apps/dashboard-api/src/shared/dto/query.dto';
+import { OnetimeCodeDto } from '../../onetime-codes/dto/onetime-code.dto';
 
 export class CreateVisitorDto {
     @ApiProperty({
         example: 'John',
-        description: 'Visitor first name'
+        description: 'Visitor first name',
     })
     @IsString()
     @IsNotEmpty()
@@ -13,7 +23,7 @@ export class CreateVisitorDto {
 
     @ApiProperty({
         example: 'Smith',
-        description: 'Visitor last name'
+        description: 'Visitor last name',
     })
     @IsString()
     @IsNotEmpty()
@@ -22,7 +32,7 @@ export class CreateVisitorDto {
     @ApiProperty({
         example: 'William',
         description: 'Visitor middle name',
-        required: false
+        required: false,
     })
     @IsOptional()
     @IsString()
@@ -31,7 +41,7 @@ export class CreateVisitorDto {
     @ApiProperty({
         example: '1990-05-15',
         description: 'Visitor birthday',
-        required: false
+        required: false,
     })
     @IsOptional()
     @IsString()
@@ -40,7 +50,7 @@ export class CreateVisitorDto {
     @ApiProperty({
         example: '+998901234567',
         description: 'Visitor phone number',
-        required: false
+        required: false,
     })
     @IsOptional()
     @IsString()
@@ -49,7 +59,7 @@ export class CreateVisitorDto {
     @ApiProperty({
         example: 'AB1234567',
         description: 'Passport number',
-        required: false
+        required: false,
     })
     @IsOptional()
     @IsString()
@@ -58,7 +68,7 @@ export class CreateVisitorDto {
     @ApiProperty({
         example: '12345678901234',
         description: 'PINFL (Personal Identification Number)',
-        required: false
+        required: false,
     })
     @IsOptional()
     @IsString()
@@ -67,7 +77,7 @@ export class CreateVisitorDto {
     @ApiProperty({
         example: 'ABC Company LLC',
         description: 'Visitor workplace',
-        required: false
+        required: false,
     })
     @IsOptional()
     @IsString()
@@ -76,7 +86,7 @@ export class CreateVisitorDto {
     @ApiProperty({
         example: 'VIP guest, requires special attention',
         description: 'Additional details',
-        required: false
+        required: false,
     })
     @IsOptional()
     @IsString()
@@ -84,98 +94,36 @@ export class CreateVisitorDto {
 
     @ApiProperty({
         example: 1,
-        description: 'Creator user ID'
+        description: 'Creator user ID',
     })
     @IsInt()
     @IsNotEmpty()
-    creatorId: number;
+    organizationId: number;
+
+    @ApiProperty({
+        example: 2,
+        description: 'Attached user ID',
+        required: false,
+    })
+    @IsOptional()
+    @IsInt()
+    attachedId?: number;
 
     @ApiProperty({
         example: true,
         description: 'Visitor active status',
         required: false,
-        default: true
+        default: true,
     })
     @IsOptional()
     @IsBoolean()
     isActive?: boolean = true;
 }
 
-export class UpdateVisitorDto extends PartialType(CreateVisitorDto) { }
+export class UpdateVisitorDto extends PartialType(CreateVisitorDto) {}
 
 export class VisitorDto extends CreateVisitorDto {
     @ApiProperty({ example: 1, description: 'Visitor ID' })
-    @IsInt()
-    id: number;
-
-    @ApiProperty({ example: '2023-10-01T12:00:00Z', description: 'Creation timestamp' })
-    @IsString()
-    createdAt: string;
-}
-
-export class CreateOnetimeCodeDto {
-    @ApiProperty({
-        example: 1,
-        description: 'Visitor ID'
-    })
-    @IsInt()
-    @IsNotEmpty()
-    visitorId: number;
-
-    @ApiProperty({
-        example: 'ONETIME',
-        description: 'Code type',
-        enum: VisitorCodeType
-    })
-    @IsEnum(VisitorCodeType)
-    codeType: VisitorCodeType;
-
-    @ApiProperty({
-        example: 'VIS123456',
-        description: 'Generated code'
-    })
-    @IsString()
-    @IsNotEmpty()
-    code: string;
-
-    @ApiProperty({
-        example: '2024-08-25T09:00:00Z',
-        description: 'Code start date'
-    })
-    @IsDateString()
-    startDate: string;
-
-    @ApiProperty({
-        example: '2024-08-25T18:00:00Z',
-        description: 'Code end date'
-    })
-    @IsDateString()
-    endDate: string;
-
-    @ApiProperty({
-        example: 'Single day access',
-        description: 'Additional details',
-        required: false
-    })
-    @IsOptional()
-    @IsString()
-    additionalDetails?: string;
-
-    @ApiProperty({
-        example: true,
-        description: 'Code active status',
-        required: false,
-        default: true
-    })
-    @IsOptional()
-    @IsBoolean()
-    isActive?: boolean = true;
-}
-
-export class UpdateOnetimeCodeDto extends PartialType(CreateOnetimeCodeDto) { }
-
-export class OnetimeCodeDto extends CreateOnetimeCodeDto {
-    @ApiProperty({ example: 1, description: 'Code ID' })
     @IsInt()
     id: number;
 
@@ -199,31 +147,22 @@ export class VisitorWithRelationsDto extends VisitorDto {
     actionsCount?: number;
 }
 
-export class GenerateCodeDto {
+export class QueryVisitorDto extends QueryDto {
     @ApiProperty({
-        example: 'ONETIME',
-        description: 'Code type',
-        enum: VisitorCodeType
-    })
-    @IsEnum(VisitorCodeType)
-    codeType: VisitorCodeType;
-
-    @ApiProperty({
-        example: 24,
-        description: 'Code validity in hours',
+        example: 1,
+        description: 'Filter by Creator User ID',
         required: false,
-        default: 24
     })
     @IsOptional()
     @IsInt()
-    validityHours?: number = 24;
+    creatorId?: number;
 
     @ApiProperty({
-        example: 'Meeting access code',
-        description: 'Additional details',
-        required: false
+        example: 1,
+        description: 'Filter by attached ID',
+        required: false,
     })
     @IsOptional()
-    @IsString()
-    additionalDetails?: string;
+    @IsInt()
+    attachedId?: number;
 }

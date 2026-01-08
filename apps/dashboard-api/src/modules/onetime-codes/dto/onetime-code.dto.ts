@@ -1,60 +1,61 @@
-import { IsString, IsNotEmpty, IsOptional, IsBoolean, IsInt, IsDateString, IsEnum } from 'class-validator';
+import {
+    IsString,
+    IsNotEmpty,
+    IsOptional,
+    IsBoolean,
+    IsInt,
+    IsDateString,
+    IsEnum,
+} from 'class-validator';
 import { ApiProperty, PartialType } from '@nestjs/swagger';
 import { VisitorCodeType } from '@prisma/client';
+import { QueryDto } from 'apps/dashboard-api/src/shared/dto';
 
 export class CreateOnetimeCodeDto {
-    @ApiProperty({ 
+    @ApiProperty({
         example: 1,
-        description: 'Visitor ID'
+        description: 'Visitor ID',
     })
     @IsInt()
     @IsNotEmpty()
     visitorId: number;
 
-    @ApiProperty({ 
+    @ApiProperty({
         example: 'ONETIME',
         description: 'Code type',
-        enum: VisitorCodeType
+        enum: VisitorCodeType,
     })
     @IsEnum(VisitorCodeType)
     codeType: VisitorCodeType;
 
-    @ApiProperty({ 
-        example: 'VIS123456',
-        description: 'Generated code'
-    })
-    @IsString()
-    @IsNotEmpty()
-    code: string;
-
-    @ApiProperty({ 
+    @ApiProperty({
         example: '2024-08-25T09:00:00Z',
-        description: 'Code start date'
+        description: 'Code start date',
     })
     @IsDateString()
     startDate: string;
 
-    @ApiProperty({ 
+    @ApiProperty({
         example: '2024-08-25T18:00:00Z',
-        description: 'Code end date'
+        description: 'Code end date',
     })
     @IsDateString()
     endDate: string;
 
-    @ApiProperty({ 
+    @ApiProperty({
         example: 'Single day access',
         description: 'Additional details',
-        required: false
+        required: false,
     })
     @IsOptional()
     @IsString()
     additionalDetails?: string;
 
-    @ApiProperty({ 
+    @ApiProperty({
         example: true,
         description: 'Code active status',
         required: false,
-        default: true
+        default: true,
     })
     @IsOptional()
     @IsBoolean()
@@ -62,6 +63,27 @@ export class CreateOnetimeCodeDto {
 }
 
 export class UpdateOnetimeCodeDto extends PartialType(CreateOnetimeCodeDto) {}
+
+export class QueryOnetimeCodeDto extends QueryDto {
+    @ApiProperty({
+        example: 1,
+        description: 'Filter by Visitor ID',
+        required: false,
+    })
+    @IsOptional()
+    @IsInt()
+    visitorId?: number;
+
+    @ApiProperty({
+        example: 'ONETIME',
+        description: 'Filter by Code Type',
+        enum: VisitorCodeType,
+        required: false,
+    })
+    @IsOptional()
+    @IsEnum(VisitorCodeType)
+    codeType?: VisitorCodeType;
+}
 
 export class OnetimeCodeDto extends CreateOnetimeCodeDto {
     @ApiProperty({ example: 1, description: 'Code ID' })
@@ -84,9 +106,9 @@ export class OnetimeCodeWithRelationsDto extends OnetimeCodeDto {
 }
 
 export class ActivateCodeDto {
-    @ApiProperty({ 
+    @ApiProperty({
         example: true,
-        description: 'Activate or deactivate code'
+        description: 'Activate or deactivate code',
     })
     @IsBoolean()
     isActive: boolean;

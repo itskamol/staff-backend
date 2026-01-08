@@ -63,6 +63,7 @@ async function bootstrap() {
             'Jobs',
             'Reports',
             'Dashboard',
+            'Onetime Codes',
         ],
         extraModels: [ApiSuccessResponse, ApiErrorResponse, ApiPaginatedResponse],
     });

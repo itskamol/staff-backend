@@ -50,7 +50,6 @@ export class CredentialService {
             ...(employeeId && { employeeId }),
             ...(departmentId && { employee: { departmentId } }),
             ...(organizationId && { employee: { organizationId } }),
-            ...{ employee: { departmentId: { in: scope.departmentIds } } },
             ...(search && {
                 OR: [
                     { code: { contains: search, mode: 'insensitive' } },
@@ -58,6 +57,10 @@ export class CredentialService {
                 ],
             }),
         };
+
+        if (scope.departmentIds.length) {
+            where.employee = { departmentId: { in: scope.departmentIds } };
+        }
 
         const items = await this.credentialRepository.findManyWithPagination(
             where,
@@ -315,7 +318,6 @@ export class CredentialService {
                         config
                     );
 
-                // Yuz qo'shishdan oldin foydalanuvchi borligini tekshirish/yaratish HikvisionAccessService ichida bo'lishi kerak
                 return this.hikvisionAccessService.addFaceToUserViaURL(
                     String(employee.id),
                     faceUrl,
