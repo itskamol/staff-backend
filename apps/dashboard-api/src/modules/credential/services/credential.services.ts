@@ -12,10 +12,9 @@ import { ActionType, Prisma } from '@prisma/client';
 import { BadRequestException, Injectable, NotFoundException } from '@nestjs/common';
 import { DataScope, UserContext } from '@app/shared/auth';
 import { LoggerService } from 'apps/dashboard-api/src/core/logger';
-import { EmployeeWithRelations } from '../../employee/repositories/employee.repository';
-import { HikvisionConfig } from '../../hikvision/dto/create-hikvision-user.dto';
-import { HikvisionAnprService } from '../../hikvision/services/hikvision.anpr.service';
-import { HikvisionAccessService } from '../../hikvision/services/hikvision.access.service';
+import { Queue } from 'bullmq';
+import { InjectQueue } from '@nestjs/bullmq';
+import { JOB } from 'apps/dashboard-api/src/shared/constants';
 
 @Injectable()
 export class CredentialService {
@@ -27,12 +26,11 @@ export class CredentialService {
     constructor(
         private readonly credentialRepository: CredentialRepository,
         private readonly employeeService: EmployeeService,
-        private readonly hikvisionAnprService: HikvisionAnprService,
-        private readonly hikvisionAccessService: HikvisionAccessService,
+        @InjectQueue(JOB.DEVICE.NAME) private readonly deviceQueue: Queue,
         private readonly logger: LoggerService
     ) {}
 
-    async getAllCredentials(query: CredentialQueryDto, scope: DataScope) {
+    async getAllCredentials(query: CredentialQueryDto, scope: DataScope, user: UserContext) {
         const {
             page = 1,
             limit = 10,
@@ -70,6 +68,8 @@ export class CredentialService {
             { organizationId: scope.organizationId }
         );
 
+        this.logger.log(`Fetched credentials list for User ID ${user.sub}`, 'CredentialService');
+
         return items;
     }
 
@@ -82,6 +82,8 @@ export class CredentialService {
 
         if (!credential || credential.deletedAt)
             throw new NotFoundException(`Credential with ID ${id} not found.`);
+
+        this.logger.log(`Fetched credential ID ${id} for User ID ${user.sub}`, 'CredentialService');
 
         return credential;
     }
@@ -99,33 +101,31 @@ export class CredentialService {
         scope: DataScope,
         user: UserContext
     ): Promise<CredentialWithRelations> {
-        const employee = await this.getEmployee(
-            dto.employeeId,
-            { organizationId: scope.organizationId },
-            user
-        );
-
+        const employee = await this.getEmployee(dto.employeeId);
         this.validatePhoto(dto.type, dto.additionalDetails);
         await this.validateUniqueCode(dto.type, dto.code);
 
         if (this.shouldDeactivate(dto.type, dto.isActive)) {
             await this.deactivateOld(employee.id, dto.type);
         }
-
-        return this.credentialRepository.create(
+        const credential = await this.credentialRepository.create(
             {
                 code: dto.code,
                 type: dto.type,
                 additionalDetails: dto.additionalDetails,
                 isActive: dto.isActive,
                 employee: { connect: { id: employee.id } },
-                organization: {
-                    connect: { id: scope?.organizationId || dto.organizationId },
-                },
+                organization: { connect: { id: scope?.organizationId || dto.organizationId } },
             },
-            this.credentialRepository.getDefaultInclude(),
-            { organizationId: scope.organizationId }
+            this.credentialRepository.getDefaultInclude()
         );
+
+        this.logger.log(
+            `Credential created: ID ${credential.id} for Employee ID ${employee.id} by User ID ${user.sub}`,
+            'CredentialService'
+        );
+
+        return credential;
     }
 
     async updateCredential(
@@ -134,74 +134,97 @@ export class CredentialService {
         scope: DataScope,
         user: UserContext
     ): Promise<CredentialWithRelations> {
-        const existing = await this.getCredentialById(
-            id,
-            { organizationId: scope.organizationId },
-            user
-        );
-        const employee = await this.getEmployee(
-            existing.employeeId,
-            { organizationId: scope.organizationId },
-            user
-        );
+        const existing = await this.getCredentialById(id, scope, user);
 
-        const finalType = dto.type ?? existing.type;
-        const finalCode = dto.code ?? existing.code;
-        const finalDetails = dto.additionalDetails ?? existing.additionalDetails;
+        // Ma'lumot haqiqatda o'zgarganini tekshirish (Smart Sync flag uchun)
+        const isDataChanged =
+            (dto.code !== undefined && dto.code !== existing.code) ||
+            (dto.additionalDetails !== undefined &&
+                dto.additionalDetails !== existing.additionalDetails);
 
-        // Validatsiyalar
-        this.validatePhoto(finalType, finalDetails);
-        await this.validateUniqueCode(finalCode ? finalType : null, finalCode, id);
-
-        // Sinxronizatsiya logikasi
-        if (dto.isActive === false && existing.isActive === true) {
-            // Bloklandi -> Qurilmadan o'chiramiz
-            await this.syncDevices(employee, existing, dto, 'Delete');
-        } else if (dto.isActive === true && existing.isActive === false) {
-            // Faollashdi -> Qurilmaga yuboramiz
-            await this.syncDevices(employee, existing, dto, 'Create');
-        } else if (existing.isActive) {
-            // Shunchaki ma'lumot o'zgardi (Masalan, moshina raqami o'zgardi)
-            await this.syncDevices(employee, existing, dto, 'Edit');
-        }
-
-        // "Faqat bitta faol foto/parol" qoidasi
-        if (dto.isActive && this.shouldDeactivate(finalType)) {
-            await this.deactivateOld(employee.id, finalType, id);
-        }
-
-        return this.credentialRepository.update(
+        const updated = await this.credentialRepository.update(
             id,
             dto,
-            this.credentialRepository.getDefaultInclude(),
-            { organizationId: scope.organizationId }
+            this.credentialRepository.getDefaultInclude()
         );
+
+        // Mantiqiy holatlar bo'yicha job yuborish
+        if (existing.isActive && updated.isActive === false) {
+            // 1. O'chirildi yoki bloklandi
+            await this.triggerDeviceSync(updated.employeeId, updated.id, 'Delete');
+        } else if (updated.isActive && existing.isActive === false) {
+            // 2. Qayta yoqildi
+            await this.triggerDeviceSync(updated.employeeId, updated.id, 'Create');
+        } else if (updated.isActive && isDataChanged) {
+            // 3. Faol holatda ma'lumot o'zgardi (Edit)
+            await this.triggerDeviceSync(updated.employeeId, updated.id, 'Edit', existing.code);
+        }
+
+        // Foto/Parol qoidasi
+        if (dto.isActive && this.shouldDeactivate(updated.type)) {
+            await this.deactivateOld(updated.employeeId, updated.type, id);
+        }
+
+        this.logger.log(
+            `Credential updated: ID ${updated.id} for Employee ID ${updated.employeeId} by User ID ${user.sub}`,
+            'CredentialService'
+        );
+
+        return updated;
     }
 
     async deleteCredential(id: number, scope: DataScope, user: UserContext) {
-        const credential = await this.getCredentialById(
-            id,
-            { organizationId: scope.organizationId },
-            user
-        );
-        const employee = await this.getEmployee(
-            credential.employeeId,
-            { organizationId: scope.organizationId },
-            user
-        );
+        const credential = await this.getCredentialById(id, scope, user);
 
-        await this.syncDevices(employee, credential, undefined, 'Delete');
-        return this.credentialRepository.deleteCredential(id, {
+        // Avval qurilmalardan o'chirishni buyuramiz
+        await this.triggerDeviceSync(credential.employeeId, credential.id, 'Delete');
+
+        const deleted = await this.credentialRepository.deleteCredential(id, {
             organizationId: scope.organizationId,
         });
+
+        this.logger.log(
+            `Credential deleted: ID ${deleted.id} for Employee ID ${deleted.employeeId} by User ID ${user.sub}`,
+            'CredentialService'
+        );
+
+        return deleted;
     }
 
-    private async getEmployee(id: number, scope: DataScope, user: UserContext) {
-        const employee = await this.employeeService.getEmployeeById(
-            id,
-            { organizationId: scope.organizationId },
-            user
-        );
+    private async triggerDeviceSync(
+        employeeId: number,
+        credentialId: number,
+        action: 'Create' | 'Edit' | 'Delete',
+        oldCode?: string
+    ) {
+        // Xodim qaysi darvozalarga biriktirilganini aniqlaymiz
+        const employee = await this.getEmployee(employeeId);
+
+        if (!employee || !employee.gates.length) return;
+
+        for (const gate of employee.gates) {
+            if (action === 'Delete') {
+                // Granular o'chirish jobi
+                await this.deviceQueue.add(JOB.DEVICE.REMOVE_SPECIFIC_CREDENTIALS, {
+                    gateId: gate.id,
+                    employeeId: employee.id,
+                    credentialIds: [credentialId],
+                });
+            } else {
+                // Qo'shish yoki Yangilash jobi
+                await this.deviceQueue.add(JOB.DEVICE.SYNC_CREDENTIALS_TO_DEVICES, {
+                    gateId: gate.id,
+                    employeeId: employee.id,
+                    credentialIds: [credentialId],
+                    oldCode: oldCode,
+                    isUpdate: action === 'Edit',
+                });
+            }
+        }
+    }
+
+    private async getEmployee(id: number) {
+        const employee = await this.employeeService.getEmployeeById(id);
         if (!employee) throw new NotFoundException('Employee not found or access denied.');
         return employee;
     }
@@ -242,115 +265,5 @@ export class CredentialService {
             { isActive: false },
             {}
         );
-    }
-
-    private async syncDevices(
-        employee: EmployeeWithRelations,
-        oldCredential: CreateCredentialDto, // Faqat kerakli maydonlar
-        dto?: UpdateCredentialDto,
-        action: 'Create' | 'Edit' | 'Delete' = 'Edit'
-    ) {
-        const type = dto?.type ?? oldCredential.type;
-        const code = dto?.code ?? oldCredential.code;
-        const faceUrl = dto?.additionalDetails ?? oldCredential.additionalDetails;
-
-        // Qurilmalarni filtrlaymiz
-        const devices = employee.gates.flatMap(
-            g => g.devices.filter(d => d.type.includes(type)) // To'g'ridan-to'g'ri massivni tekshiramiz
-        );
-
-        for (const device of devices) {
-            const config: HikvisionConfig = {
-                host: device.ipAddress,
-                protocol: 'http',
-                port: 80,
-                username: device.login,
-                password: device.password,
-            };
-
-            try {
-                await this.handleDeviceAction(
-                    type,
-                    action,
-                    employee,
-                    code,
-                    faceUrl,
-                    config,
-                    oldCredential
-                );
-            } catch (e) {
-                this.logger.error(
-                    `[${type}] device sync error on Device ${device.id}: ${e.message}`
-                );
-            }
-        }
-    }
-
-    private async handleDeviceAction(
-        type: ActionType,
-        action: string,
-        employee: EmployeeWithRelations,
-        code: string,
-        faceUrl: string,
-        config: HikvisionConfig,
-        oldCredential?: CreateCredentialDto
-    ) {
-        // Agar QR bo'lsa, Hikvision ISAPI interfeysida u Card ID sifatida yuboriladi
-        const effectiveType = type === ActionType.QR ? ActionType.CARD : type;
-
-        switch (effectiveType) {
-            case ActionType.CAR:
-                if (action === 'Delete')
-                    return this.hikvisionAnprService.deleteLicensePlate(code, config);
-                if (action === 'Create')
-                    return this.hikvisionAnprService.addLicensePlate(code, '1', config);
-                return this.hikvisionAnprService.editLicensePlate(
-                    oldCredential?.code || code,
-                    code,
-                    '1',
-                    config
-                );
-
-            case ActionType.PHOTO:
-                if (action === 'Delete')
-                    return this.hikvisionAccessService.deleteFaceFromUser(
-                        String(employee.id),
-                        config
-                    );
-
-                return this.hikvisionAccessService.addFaceToUserViaURL(
-                    String(employee.id),
-                    faceUrl,
-                    config
-                );
-
-            case ActionType.PERSONAL_CODE:
-                return this.hikvisionAccessService.addPasswordToUser(
-                    String(employee.id),
-                    action === 'Delete' ? '' : code,
-                    config
-                );
-
-            case ActionType.CARD:
-                if (action === 'Delete')
-                    return this.hikvisionAccessService.deleteCard({
-                        employeeNo: String(employee.id),
-                        cardNo: code,
-                        config,
-                    });
-                if (action === 'Create')
-                    return this.hikvisionAccessService.addCardToUser({
-                        employeeNo: String(employee.id),
-                        cardNo: code,
-                        config,
-                    });
-
-                return this.hikvisionAccessService.replaceCard(
-                    oldCredential?.code || code,
-                    code,
-                    String(employee.id),
-                    config
-                );
-        }
     }
 }
