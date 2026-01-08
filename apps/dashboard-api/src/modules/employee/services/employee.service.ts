@@ -76,7 +76,7 @@ export class EmployeeService {
         );
     }
 
-    async getEmployeeById(id: number, scope: DataScope, user: UserContext) {
+    async getEmployeeById(id: number, scope?: DataScope, user?: UserContext) {
         const employee = await this.employeeRepository.findByIdWithRoleScope(
             id,
             {
@@ -96,7 +96,7 @@ export class EmployeeService {
                 employeeSyncs: true,
             },
             scope,
-            user.role
+            user?.role
         );
 
         return employee;

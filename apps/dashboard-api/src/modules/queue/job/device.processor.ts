@@ -220,7 +220,8 @@ export class DeviceProcessor extends WorkerHost {
         device: Device,
         gate: { id: number },
         config: HikvisionConfig,
-        oldCode?: string // Tahrirlash uchun eski kod
+        oldCode?: string,
+        isUpdate: boolean = false
     ) {
         let sync = await this.prisma.employeeSync.findFirst({
             where: {
@@ -232,7 +233,7 @@ export class DeviceProcessor extends WorkerHost {
             },
         });
 
-        if (sync?.status === StatusEnum.DONE) return;
+        if (sync?.status === StatusEnum.DONE && !isUpdate) return;
 
         if (!sync) {
             sync = await this.prisma.employeeSync.create({
@@ -247,14 +248,11 @@ export class DeviceProcessor extends WorkerHost {
             });
         }
 
-        // QR kodni CARD sifatida yuborish logikasi
-        const effectiveType = cred.type === ActionType.QR ? ActionType.CARD : cred.type;
-
         try {
-            switch (effectiveType) {
+            switch (cred.type) {
                 case ActionType.CAR:
                     if (!cred.code) throw new Error('Car plate empty');
-                    // Agar oldCode bo'lsa edit, bo'lmasa add
+                    // Agar eski kod bo'lsa va u yangisidan farq qilsa -> EDIT
                     if (oldCode && oldCode !== cred.code) {
                         await this.hikvisionAnprService.editLicensePlate(
                             oldCode,
@@ -276,8 +274,10 @@ export class DeviceProcessor extends WorkerHost {
                     );
                     break;
 
+                case ActionType.QR:
                 case ActionType.CARD:
                     if (!cred.code) throw new Error('Card code empty');
+                    // Agar eski karta bo'lsa -> REPLACE
                     if (oldCode && oldCode !== cred.code) {
                         await this.hikvisionService.replaceCard(
                             oldCode,
@@ -296,7 +296,11 @@ export class DeviceProcessor extends WorkerHost {
                     break;
             }
 
-            await this.updateSync(sync.id, StatusEnum.DONE, 'Success');
+            await this.updateSync(
+                sync.id,
+                StatusEnum.DONE,
+                isUpdate ? 'Successfully updated' : 'Successfully synced'
+            );
         } catch (err: any) {
             await this.updateSync(sync.id, StatusEnum.FAILED, err.message);
             this.logger.error(err.message, '', 'DeviceProcessor'); // Yuqoriga catch qilish uchun
@@ -512,7 +516,7 @@ export class DeviceProcessor extends WorkerHost {
     }
 
     async syncCredentialsToDevicesJob(job: Job) {
-        const { gateId, employeeId, credentialIds } = job.data;
+        const { gateId, employeeId, credentialIds, oldCode } = job.data;
 
         // 1. Gate va qurilmalarni olamiz
         const gate = await this.prisma.gate.findUnique({
@@ -542,7 +546,14 @@ export class DeviceProcessor extends WorkerHost {
                     try {
                         // Mavjud processCredentialSync funksiyasini ishlatamiz
                         // U EmployeeSync jadvalini o'zi tekshiradi va yaratadi
-                        await this.processCredentialSync(employee, cred, device, gate, config);
+                        await this.processCredentialSync(
+                            employee,
+                            cred,
+                            device,
+                            gate,
+                            config,
+                            oldCode
+                        );
                     } catch (err) {
                         this.logger.error(
                             `Sync failed [Dev: ${device.id}, Cred: ${cred.id}]: ${err.message}`

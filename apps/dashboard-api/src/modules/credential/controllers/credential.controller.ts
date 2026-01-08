@@ -9,7 +9,7 @@ import {
 import { ActionType, Role } from '@prisma/client';
 import { CredentialService } from '../services/credential.services';
 import { Roles } from 'apps/dashboard-api/src/shared/guards';
-import { DataScope, Scope, User, UserContext } from '@app/shared/auth';
+import { DataScope, Scope, User as CurrentUser, UserContext } from '@app/shared/auth';
 
 @ApiTags('Credentials')
 @ApiBearerAuth()
@@ -23,7 +23,7 @@ export class CredentialController {
     @ApiResponse({ status: 201, type: CredentialResponseDto })
     async create(
         @Body() dto: CreateCredentialDto,
-        @User() user: UserContext,
+        @CurrentUser() user: UserContext,
         @Scope() scope: DataScope
     ) {
         return this.credentialService.createCredential(dto, scope, user);
@@ -34,10 +34,10 @@ export class CredentialController {
     @ApiResponse({ status: 200, type: [CredentialResponseDto] })
     async getAll(
         @Query() query: CredentialQueryDto,
-        @User() user: UserContext,
+        @CurrentUser() user: UserContext,
         @Scope() scope: DataScope
     ) {
-        return this.credentialService.getAllCredentials(query, scope);
+        return this.credentialService.getAllCredentials(query, scope, user);
     }
 
     @Get('/by-employee/:employeeId')
@@ -46,7 +46,7 @@ export class CredentialController {
     @ApiResponse({ status: 200, type: [CredentialResponseDto] })
     async getByEmployeeId(
         @Param('employeeId') employeeId: number,
-        @User() user: UserContext,
+        @CurrentUser() user: UserContext,
         @Scope() scope: DataScope
     ) {
         return this.credentialService.getCredentialByEmployeeId(employeeId, scope, user);
@@ -63,7 +63,11 @@ export class CredentialController {
     @ApiParam({ name: 'id', type: Number })
     @ApiOperation({ summary: 'Get a credential by its ID' })
     @ApiResponse({ status: 200, type: CredentialResponseDto })
-    async getById(@Param('id') id: number, @User() user: UserContext, @Scope() scope: DataScope) {
+    async getById(
+        @Param('id') id: number,
+        @CurrentUser() user: UserContext,
+        @Scope() scope: DataScope
+    ) {
         return this.credentialService.getCredentialById(id, scope, user);
     }
 
@@ -74,7 +78,7 @@ export class CredentialController {
     async update(
         @Param('id') id: number,
         @Body() dto: UpdateCredentialDto,
-        @User() user: UserContext,
+        @CurrentUser() user: UserContext,
         @Scope() scope: DataScope
     ) {
         return this.credentialService.updateCredential(id, dto, scope, user);
@@ -84,7 +88,11 @@ export class CredentialController {
     @ApiParam({ name: 'id', type: Number })
     @ApiOperation({ summary: 'Delete a credential by ID' })
     @ApiResponse({ status: 200, description: 'Credential successfully deleted' })
-    async delete(@Param('id') id: number, @User() user: UserContext, @Scope() scope: DataScope) {
+    async delete(
+        @Param('id') id: number,
+        @CurrentUser() user: UserContext,
+        @Scope() scope: DataScope
+    ) {
         return this.credentialService.deleteCredential(id, scope, user);
     }
 }
