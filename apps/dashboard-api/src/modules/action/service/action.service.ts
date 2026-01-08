@@ -87,7 +87,7 @@ export class ActionService {
             const dto: CreateActionDto = {
                 deviceId,
                 gateId: gate.id,
-                actionTime,
+                actionTime: new Date(actionTime),
                 employeeId,
                 visitorId: undefined,
                 visitorType:
