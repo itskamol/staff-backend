@@ -18,7 +18,7 @@ model Visitor {
 
   organization Organization   @relation(fields: [organizationId], references: [id], onDelete: Cascade)
   creator      User           @relation("CreatedVisitors", fields: [creatorId], references: [id], onDelete: Restrict)
-  attached     User?          @relation("AttachedVisitors", fields: [attachedId], references: [id], onDelete: Restrict)
+  attached     Employee?      @relation("AttachedEmployee", fields: [attachedId], references: [id], onDelete: Restrict)
   onetimeCodes OnetimeCode[]
   actions      Action[]
   gates        Gate[]
