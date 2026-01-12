@@ -10,11 +10,10 @@ model User {
   updatedAt      DateTime  @updatedAt @map("updated_at")
   deletedAt      DateTime? @map("deleted_at")
 
-  organization     Organization?   @relation(fields: [organizationId], references: [id], onDelete: SetNull)
-  createdVisitors  Visitor[]       @relation("CreatedVisitors")
-  changeHistories  ChangeHistory[]
-  departments      Department[]
-  attachedVisitors Visitor[]       @relation("AttachedVisitors")
+  organization    Organization?   @relation(fields: [organizationId], references: [id], onDelete: SetNull)
+  createdVisitors Visitor[]       @relation("CreatedVisitors")
+  changeHistories ChangeHistory[]
+  departments     Department[]
 
   @@index([organizationId])
   @@map("users")

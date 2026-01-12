@@ -27,6 +27,7 @@ model Employee {
   attendances   Attendance[]
   gates         Gate[]
   job           Job?           @relation(fields: [jobId], references: [id])
+  visitors      Visitor[]      @relation("AttachedEmployee")
 
   @@index([organizationId])
   @@index([organizationId, departmentId])

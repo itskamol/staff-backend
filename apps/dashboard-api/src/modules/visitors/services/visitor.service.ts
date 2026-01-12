@@ -78,7 +78,6 @@ export class VisitorService {
                     select: {
                         id: true,
                         name: true,
-                        username: true,
                     },
                 },
                 _count: {
@@ -119,7 +118,6 @@ export class VisitorService {
                 select: {
                     id: true,
                     name: true,
-                    username: true,
                 },
             },
             actions: {
