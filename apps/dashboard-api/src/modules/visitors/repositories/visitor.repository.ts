@@ -20,6 +20,10 @@ export class VisitorRepository extends BaseRepository<
 
     protected readonly modelName = Prisma.ModelName.Visitor;
 
+    protected cascadeRelations = ['onetimeCodes', 'actions'];
+
+    protected disconnectRelations = ['gates'];
+
     protected getDelegate() {
         return this.prisma.visitor;
     }

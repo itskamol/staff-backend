@@ -1,4 +1,4 @@
-import { IsString, IsInt, IsOptional, IsNotEmpty, IsIn } from 'class-validator';
+import { IsString, IsInt, IsOptional, IsNotEmpty, IsIn, IsDateString } from 'class-validator';
 import { ApiProperty } from '@nestjs/swagger';
 
 export class CreateHikvisionUserDto {
@@ -136,4 +136,17 @@ export class CardDto {
     @ApiProperty()
     @IsOptional()
     config: HikvisionConfig;
+
+    @ApiProperty({
+        example: '2025-11-03T00:00:00',
+        description: 'Karta amal qilish boshlanish vaqti',
+    })
+    @IsDateString()
+    @IsOptional()
+    beginTime?: Date;
+
+    @ApiProperty({ example: '2035-12-31T23:59:59', description: 'Karta amal qilish tugash vaqti' })
+    @IsDateString()
+    @IsOptional()
+    endTime?: Date;
 }

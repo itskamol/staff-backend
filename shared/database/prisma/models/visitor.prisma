@@ -16,11 +16,13 @@ model Visitor {
   deletedAt         DateTime? @map("deleted_at")
   organizationId    Int       @map("organization_id")
 
-  organization Organization  @relation(fields: [organizationId], references: [id], onDelete: Cascade)
-  creator      User          @relation("CreatedVisitors", fields: [creatorId], references: [id], onDelete: Restrict)
-  attached     User?         @relation("AttachedVisitors", fields: [attachedId], references: [id], onDelete: Restrict)
+  organization Organization   @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  creator      User           @relation("CreatedVisitors", fields: [creatorId], references: [id], onDelete: Restrict)
+  attached     User?          @relation("AttachedVisitors", fields: [attachedId], references: [id], onDelete: Restrict)
   onetimeCodes OnetimeCode[]
   actions      Action[]
+  gates        Gate[]
+  visitorSync  EmployeeSync[]
 
   @@index([organizationId])
   @@map("visitors")
@@ -39,8 +41,10 @@ model OnetimeCode {
   deletedAt         DateTime?       @map("deleted_at")
   organizationId    Int             @map("organization_id")
 
-  organization Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
-  visitor      Visitor      @relation(fields: [visitorId], references: [id], onDelete: Cascade)
+  organization Organization   @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  visitor      Visitor        @relation(fields: [visitorId], references: [id], onDelete: Cascade)
+  visitorSync  EmployeeSync[]
+  Action       Action[]
 
   @@index([organizationId])
   @@map("onetime_codes")

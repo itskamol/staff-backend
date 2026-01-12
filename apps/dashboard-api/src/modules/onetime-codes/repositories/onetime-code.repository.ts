@@ -89,7 +89,7 @@ export class OnetimeCodeRepository extends BaseRepository<
             const randomNum = Math.floor(Math.random() * 10000)
                 .toString()
                 .padStart(5, '0');
-            const code = `VIS${randomNum}`;
+            const code = `vis${randomNum}`;
 
             const existing = await this.findByCode(code);
             if (!existing) {
@@ -101,6 +101,6 @@ export class OnetimeCodeRepository extends BaseRepository<
 
         // Fallback with timestamp
         const timestamp = Date.now().toString().slice(-5);
-        return `VIS${timestamp}`;
+        return `vis${timestamp}`;
     }
 }

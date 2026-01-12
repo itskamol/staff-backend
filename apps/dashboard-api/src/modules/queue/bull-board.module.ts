@@ -15,6 +15,10 @@ import { EmployeePlanModule } from '../employeePlan/employee-plan.module';
             name: JOB.ATTENDANCE.NAME,
             adapter: BullMQAdapter,
         }),
+        BullBoardModule.forFeature({
+            name: JOB.VISITOR.NAME,
+            adapter: BullMQAdapter,
+        }),
     ],
 })
 export class QueueMonitorModule {}

@@ -1,6 +1,6 @@
 import { Controller, Get, Post, Put, Delete, Body, Param, Query } from '@nestjs/common';
-import { ApiTags, ApiBearerAuth, ApiExtraModels } from '@nestjs/swagger';
-import { Roles, Role, User as CurrentUser, DataScope, Scope } from '@app/shared/auth';
+import { ApiTags, ApiBearerAuth, ApiExtraModels, ApiResponse } from '@nestjs/swagger';
+import { Roles, Role, User as CurrentUser, DataScope, Scope, User } from '@app/shared/auth';
 import { VisitorService } from '../services/visitor.service';
 import { UserContext } from 'apps/dashboard-api/src/shared/interfaces';
 import {
@@ -8,6 +8,8 @@ import {
     VisitorWithRelationsDto,
     UpdateVisitorDto,
     QueryVisitorDto,
+    VisitorDto,
+    AssignVisitorToGatesDto,
 } from '../dto/visitor.dto';
 import { ApiCrudOperation } from 'apps/dashboard-api/src/shared/utils';
 import { QueryDto } from 'apps/dashboard-api/src/shared/dto';
@@ -104,5 +106,18 @@ export class VisitorController {
     })
     async getActions(@Param('id') id: number, @CurrentUser() user: UserContext) {
         return await this.visitorService.getActions(id, user);
+    }
+
+    @Post('assign-visitors-to-gates')
+    @Roles(Role.ADMIN)
+    @ApiCrudOperation(VisitorWithRelationsDto, 'create', {
+        summary: 'Assign visitors to gate devices for facial access',
+    })
+    async assignEmployeesToGates(
+        @Body() dto: AssignVisitorToGatesDto,
+        @User() user: UserContext,
+        @Scope() scope: DataScope
+    ) {
+        return await this.visitorService.assignVisitorToGates(dto, scope, user);
     }
 }

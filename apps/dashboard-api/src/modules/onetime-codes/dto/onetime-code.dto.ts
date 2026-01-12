@@ -10,6 +10,7 @@ import {
 import { ApiProperty, PartialType } from '@nestjs/swagger';
 import { VisitorCodeType } from '@prisma/client';
 import { QueryDto } from 'apps/dashboard-api/src/shared/dto';
+import { Transform } from 'class-transformer';
 
 export class CreateOnetimeCodeDto {
     @ApiProperty({
@@ -72,6 +73,7 @@ export class QueryOnetimeCodeDto extends QueryDto {
     })
     @IsOptional()
     @IsInt()
+    @Transform(({ value }) => parseInt(value, 10))
     visitorId?: number;
 
     @ApiProperty({

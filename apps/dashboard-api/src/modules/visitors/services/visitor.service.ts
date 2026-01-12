@@ -1,14 +1,23 @@
 import { Injectable, NotFoundException, BadRequestException } from '@nestjs/common';
 import { PrismaService } from '@app/shared/database';
 import { DataScope, UserContext } from '@app/shared/auth';
-import { CreateVisitorDto, QueryVisitorDto, UpdateVisitorDto } from '../dto/visitor.dto';
+import {
+    AssignVisitorToGatesDto,
+    CreateVisitorDto,
+    QueryVisitorDto,
+    UpdateVisitorDto,
+} from '../dto/visitor.dto';
 import { VisitorRepository } from '../repositories/visitor.repository';
 import { Prisma } from '@prisma/client';
 import { QueryDto } from 'apps/dashboard-api/src/shared/dto';
+import { InjectQueue } from '@nestjs/bullmq';
+import { JOB } from 'apps/dashboard-api/src/shared/constants';
+import { Queue } from 'bullmq';
 
 @Injectable()
 export class VisitorService {
     constructor(
+        @InjectQueue(JOB.VISITOR.NAME) private readonly visitorQueue: Queue,
         private readonly prisma: PrismaService,
         private readonly visitorRepository: VisitorRepository
     ) {}
@@ -128,6 +137,12 @@ export class VisitorService {
                             name: true,
                         },
                     },
+                },
+            },
+            gates: {
+                select: {
+                    id: true,
+                    name: true,
                 },
             },
             _count: {
@@ -308,5 +323,13 @@ export class VisitorService {
             },
             actions,
         };
+    }
+
+    async assignVisitorToGates(dto: AssignVisitorToGatesDto, scope: DataScope, user?: UserContext) {
+        const job = await this.visitorQueue.add(JOB.VISITOR.ASSIGN_TO_GATES, {
+            dto,
+            scope,
+        });
+        return { success: true };
     }
 }

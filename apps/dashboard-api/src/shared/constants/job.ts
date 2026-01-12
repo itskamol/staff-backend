@@ -17,4 +17,10 @@ export const JOB = {
         MARK_ABSENT: 'attandance:markAbsent',
         MARK_GONE: 'markGone',
     },
+    VISITOR: {
+        NAME: 'visitor',
+        ASSIGN_TO_GATES: 'visitor:assignToGates',
+        UPDATE: 'visitor:update',
+        DELETE: 'visitor:delete',
+    },
 };

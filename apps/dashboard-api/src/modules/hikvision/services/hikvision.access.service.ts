@@ -6,6 +6,8 @@ import { EmployeeRepository } from '../../employee/repositories/employee.reposit
 import { XmlJsonService } from 'apps/dashboard-api/src/shared/services/xtml-json.service';
 import { CardDto, HikvisionConfig, HikvisionUser } from '../dto/create-hikvision-user.dto';
 import { XMLParser } from 'fast-xml-parser';
+import { VisitorService } from '../../visitors/services/visitor.service';
+import { PrismaService } from '@app/shared/database';
 
 @Injectable()
 export class HikvisionAccessService {
@@ -14,6 +16,7 @@ export class HikvisionAccessService {
     constructor(
         private readonly coreService: HikvisionCoreService,
         private configService: ConfigService,
+        private readonly prisma: PrismaService,
         private readonly employeeRepo: EmployeeRepository,
         private readonly xmlJsonService: XmlJsonService
     ) {}
@@ -74,32 +77,44 @@ export class HikvisionAccessService {
         return json;
     }
 
-    async createUser(employeeId: number, config: HikvisionConfig): Promise<boolean> {
+    async createUser(
+        employeeId: number,
+        config: HikvisionConfig,
+        isVisitor: boolean = false
+    ): Promise<boolean> {
         try {
             this.coreService.setConfig(config);
 
-            const userId = employeeId;
+            const userId = isVisitor ? `v${employeeId}` : employeeId.toString();
             const checkExisting = await this.getUser(userId.toString(), config);
             if (checkExisting) {
                 this.logger.log(`User ${userId} already exists in Hikvision`);
                 return true;
             }
 
-            const user = await this.employeeRepo.findById(+userId);
+            let user: any;
+            if (!isVisitor) {
+                user = await this.employeeRepo.findById(+userId);
+                if (!user) {
+                    throw new BadRequestException(`Employee with ID ${userId} not found`);
+                }
+            }
 
-            if (!user) {
-                throw new BadRequestException(`Employee with ID ${userId} not found`);
+            if (isVisitor) {
+                user = await this.prisma.visitor.findFirst({ where: { id: employeeId } });
+                if (!user) {
+                    throw new BadRequestException(`Visitor with ID ${employeeId} not found`);
+                }
             }
 
             const now = new Date(); // hozirgi vaqt
             const tenYearsLater = new Date();
             tenYearsLater.setFullYear(now.getFullYear() + 10);
-
             const resBody = {
                 UserInfo: {
-                    employeeNo: user.id.toString(),
-                    name: user.name,
-                    userType: 'normal',
+                    employeeNo: isVisitor ? `v${user.id}` : user.id.toString(),
+                    name: user.name || user.firstName + ' ' + (user.lastName || ''),
+                    userType: isVisitor ? 'visitor' : 'normal',
                     doorRight: '1',
                     RightPlan: [{ doorNo: 1, planTemplateNo: '1' }],
                     Valid: {
@@ -110,13 +125,18 @@ export class HikvisionAccessService {
                     },
                 },
             };
+
             const response = await this.coreService.request(
                 'POST',
                 `/ISAPI/AccessControl/UserInfo/Record?format=json`,
                 resBody
             );
             if (response.status === 200) {
-                this.logger.log(`User ${employeeId} successfully created in Hikvision`);
+                this.logger.log(
+                    `User ${
+                        isVisitor ? `v${employeeId}` : employeeId
+                    } successfully created in Hikvision`
+                );
                 return response.data;
             }
             return false;
@@ -171,7 +191,7 @@ export class HikvisionAccessService {
             UserInfoDelCond: {
                 EmployeeNoList: [
                     {
-                        employeeNo: employeeNo,
+                        employeeNo,
                     },
                 ],
             },
@@ -204,16 +224,27 @@ export class HikvisionAccessService {
 
     async addPasswordToUser(
         employeeNo: string,
-        password: string,
-        config: HikvisionConfig
+        passWord: string,
+        config: HikvisionConfig,
+        startDate: Date = new Date(),
+        endDate: Date = new Date(new Date().setFullYear(new Date().getFullYear() + 10))
     ): Promise<boolean> {
         try {
             this.coreService.setConfig(config);
 
+            const beginTimeFormatted = await this.formatDate(startDate);
+            const endTimeFormatted = await this.formatDate(endDate);
+
             const reqBody = {
                 UserInfo: {
                     employeeNo,
-                    passWord: password,
+                    passWord,
+                    Valid: {
+                        enable: true,
+                        beginTime: beginTimeFormatted, // Karta amal qilishni boshlash vaqti
+                        endTime: endTimeFormatted, // Karta amal qilishni tugatish vaqti
+                        timeType: 'local',
+                    },
                 },
             };
 
@@ -236,6 +267,14 @@ export class HikvisionAccessService {
             this.logger.error(`Error adding password to user ${employeeNo}: ${error.message}`);
             throw new BadRequestException(`Hikvision parol o'rnatishda xatolik: ${error.message}`);
         }
+    }
+
+    async formatDate(date: Date): Promise<string> {
+        // 5 soat = 5 * 60 * 60 * 1000 millisekund
+        const uzbekistanTime = new Date(date.getTime() + 5 * 60 * 60 * 1000);
+
+        // ISO formatga o'tkazamiz va Hikvision tushunadigan ko'rinishga keltiramiz
+        return uzbekistanTime.toISOString().slice(0, 19);
     }
 
     async addFaceToUserViaURL(
@@ -441,23 +480,28 @@ export class HikvisionAccessService {
 
     async addCardToUser(data: CardDto): Promise<boolean> {
         try {
-            const { employeeNo, cardNo, config } = data;
+            const {
+                employeeNo,
+                cardNo,
+                config,
+                beginTime = new Date(),
+                endTime = new Date(new Date().setFullYear(new Date().getFullYear() + 10)),
+            } = data;
             this.coreService.setConfig(config);
 
-            const now = new Date(); // hozirgi vaqt
-            const tenYearsLater = new Date();
-            tenYearsLater.setFullYear(now.getFullYear() + 10);
+            const beginTimeFormatted = await this.formatDate(beginTime);
+            const endTimeFormatted = await this.formatDate(endTime);
 
             const reqBody = {
                 CardInfo: {
                     employeeNo,
-                    cardNo,
+                    cardNo: cardNo,
                     cardType: 'normalCard',
                     Valid: {
                         enable: true,
                         timeType: 'local',
-                        beginTime: now.toISOString().slice(0, 19),
-                        endTime: tenYearsLater.toISOString().slice(0, 19),
+                        beginTime: beginTimeFormatted,
+                        endTime: endTimeFormatted,
                     },
                 },
             };
@@ -543,5 +587,41 @@ export class HikvisionAccessService {
             cardNo: newCardNo,
             config,
         });
+    }
+
+    async createUserForVisitor(data: {
+        employeeNo: string;
+        name: string;
+        beginTime: Date;
+        endTime: Date;
+        config: HikvisionConfig;
+    }) {
+        this.coreService.setConfig(data.config);
+
+        const formatDate = (date: Date) => {
+            return date.toISOString().slice(0, 19).replace('T', ' ');
+        };
+
+        const body = {
+            UserInfo: {
+                employeeNo: data.employeeNo,
+                name: data.name,
+                userType: 'visitor',
+                Valid: {
+                    enable: true,
+                    beginTime: formatDate(data.beginTime),
+                    endTime: formatDate(data.endTime),
+                    timeType: 'local',
+                },
+                doorRight: '1',
+                RightPlan: [{ doorNo: 1, planTemplateNo: '1' }],
+            },
+        };
+
+        return await this.coreService.request(
+            'POST',
+            '/ISAPI/AccessControl/UserInfo/Record?format=json',
+            body
+        );
     }
 }
