@@ -160,7 +160,7 @@ export class HikvisionAccessService {
                 UserInfoSearchCond: {
                     searchID: '1',
                     searchResultPosition: 0,
-                    maxResults: parseInt(process.env.MAX_GET_USERS) || 5000,
+                    maxResults: 5000,
                 },
             };
             const response = await this.coreService.request(
@@ -316,10 +316,6 @@ export class HikvisionAccessService {
             this.logger.warn(`Unexpected status from Hikvision: ${response.status}`);
             return false;
         } catch (error) {
-            if (error.response?.data) {
-                console.error('Hikvision response error:', error.response.data);
-            }
-
             this.logger.error(`Failed to add face via URL for ${employeeNo}:`, error.message);
             throw new BadRequestException(
                 `Hikvision da yuz ma'lumotini yuklashda xatolik: ${error.message}`
@@ -587,41 +583,5 @@ export class HikvisionAccessService {
             cardNo: newCardNo,
             config,
         });
-    }
-
-    async createUserForVisitor(data: {
-        employeeNo: string;
-        name: string;
-        beginTime: Date;
-        endTime: Date;
-        config: HikvisionConfig;
-    }) {
-        this.coreService.setConfig(data.config);
-
-        const formatDate = (date: Date) => {
-            return date.toISOString().slice(0, 19).replace('T', ' ');
-        };
-
-        const body = {
-            UserInfo: {
-                employeeNo: data.employeeNo,
-                name: data.name,
-                userType: 'visitor',
-                Valid: {
-                    enable: true,
-                    beginTime: formatDate(data.beginTime),
-                    endTime: formatDate(data.endTime),
-                    timeType: 'local',
-                },
-                doorRight: '1',
-                RightPlan: [{ doorNo: 1, planTemplateNo: '1' }],
-            },
-        };
-
-        return await this.coreService.request(
-            'POST',
-            '/ISAPI/AccessControl/UserInfo/Record?format=json',
-            body
-        );
     }
 }

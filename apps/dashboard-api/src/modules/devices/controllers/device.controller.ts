@@ -6,10 +6,10 @@ import {
     CreateDeviceDto,
     DeviceDto,
     UpdateDeviceDto,
-    AssignEmployeesToGatesDto,
     QueryDeviceDto,
     ConnectionDto,
     SyncCredentialsDto,
+    AssignEmployeesToDevicesDto,
 } from '../dto/device.dto';
 import { ApiCrudOperation } from 'apps/dashboard-api/src/shared/utils';
 
@@ -82,7 +82,7 @@ export class DeviceController {
     @Post('assign-employees')
     @Roles(Role.ADMIN)
     @ApiCrudOperation(DeviceDto, 'create', {
-        summary: 'Assign employees to gate devices for facial access',
+        summary: 'Assign employees from devices for facial access',
     })
     @ApiResponse({
         status: 200,
@@ -103,21 +103,53 @@ export class DeviceController {
             },
         },
     })
-    async assignEmployeesToGates(
-        @Body() dto: AssignEmployeesToGatesDto,
+    async assignEmployeesToDevices(
+        @Body() dto: AssignEmployeesToDevicesDto,
         @User() user: UserContext,
         @Scope() scope: DataScope
     ) {
-        return await this.deviceService.assignEmployeesToGates(dto, scope, user);
+        return await this.deviceService.assignEmployeesToDevices(dto, scope, user);
+    }
+
+    @Post('remove-employees')
+    @Roles(Role.ADMIN)
+    @ApiCrudOperation(DeviceDto, 'create', {
+        summary: 'Remove employees from devices for facial access',
+    })
+    @ApiResponse({
+        status: 200,
+        description: 'Biriktirish natijasi',
+        schema: {
+            example: {
+                total: 10,
+                success: 8,
+                errors: ['Gate 2, Device 5: Credential topilmadi'],
+                details: [
+                    {
+                        gateId: 1,
+                        deviceId: 3,
+                        employeeId: 5,
+                        status: 'ok',
+                    },
+                ],
+            },
+        },
+    })
+    async removeEmployeesToDevices(
+        @Body() dto: AssignEmployeesToDevicesDto,
+        @User() user: UserContext,
+        @Scope() scope: DataScope
+    ) {
+        return await this.deviceService.removeEmployeesToDevices(dto, scope, user);
     }
 
     @Post('openDoor/:id')
     @Roles(Role.ADMIN, Role.GUARD)
     @ApiCrudOperation(DeviceDto, 'create', {
-        summary: 'Open door for device by ID',
+        summary: 'Open device by ID',
     })
     async openDoor(@Param('id') id: number, @User() user: UserContext, @Scope() scope: DataScope) {
-        return await this.deviceService.unlockDoor(id, 1, scope);
+        return await this.deviceService.unlockDevice(id, 1, scope);
     }
 
     @Post('connectDevicesToGate')

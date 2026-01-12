@@ -1,11 +1,10 @@
 import { Injectable, NotFoundException, BadRequestException } from '@nestjs/common';
 import { DataScope, UserContext } from '@app/shared/auth';
 import {
-    AssignEmployeesToGatesDto,
+    AssignEmployeesToDevicesDto,
     ConnectionDto,
     CreateDeviceDto,
     QueryDeviceDto,
-    SyncCredentialsDto,
     UpdateDeviceDto,
 } from '../dto/device.dto';
 import { DeviceRepository } from '../repositories/device.repository';
@@ -273,37 +272,6 @@ export class DeviceService {
             scope
         );
 
-        if (gateId !== undefined && gateId !== currentDevice.gateId) {
-            if (currentDevice.gateId) {
-                const oldGate = await this.gateRepository.findById(currentDevice.gateId, {
-                    employees: true,
-                });
-
-                if (oldGate?.employees?.length) {
-                    await this.deviceQueue.add(JOB.DEVICE.CLEAR_ALL_USERS_FROM_DEVICE, {
-                        deviceId: id,
-                    });
-                }
-            }
-
-            if (gateId) {
-                const hikvisionConfig: HikvisionConfig = {
-                    host: updatedDevice.ipAddress,
-                    port: 80,
-                    username: updatedDevice.login,
-                    password: updatedDevice.password,
-                    protocol: 'http',
-                };
-
-                await this.deviceQueue.add(JOB.DEVICE.CREATE, {
-                    hikvisionConfig,
-                    newDevice: updatedDevice,
-                    gateId,
-                    scope,
-                });
-            }
-        }
-
         return updatedDevice;
     }
 
@@ -364,12 +332,25 @@ export class DeviceService {
         );
     }
 
-    async assignEmployeesToGates(
-        dto: AssignEmployeesToGatesDto,
+    async assignEmployeesToDevices(
+        dto: AssignEmployeesToDevicesDto,
         scope: DataScope,
         user?: UserContext
     ) {
-        const job = await this.deviceQueue.add(JOB.DEVICE.ASSIGN_EMPLOYEES_TO_GATES, {
+        const job = await this.deviceQueue.add(JOB.DEVICE.DEVICE_SYNC_EMPLOYEES, {
+            dto,
+            scope,
+        });
+
+        return { success: true };
+    }
+
+    async removeEmployeesToDevices(
+        dto: AssignEmployeesToDevicesDto,
+        scope: DataScope,
+        user?: UserContext
+    ) {
+        await this.deviceQueue.add(JOB.DEVICE.DEVICE_REMOVE_EMPLOYEES, {
             dto,
             scope,
         });
@@ -426,7 +407,7 @@ export class DeviceService {
         return { success: true, connectedCount: devices.length };
     }
 
-    async unlockDoor(deviceId: number, doorNo: number = 1, scope?: DataScope) {
+    async unlockDevice(deviceId: number, doorNo: number = 1, scope?: DataScope) {
         try {
             const device = await this.deviceRepository.findById(deviceId, {}, scope);
 

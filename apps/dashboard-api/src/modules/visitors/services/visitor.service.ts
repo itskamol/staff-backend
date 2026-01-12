@@ -137,12 +137,6 @@ export class VisitorService {
                     },
                 },
             },
-            gates: {
-                select: {
-                    id: true,
-                    name: true,
-                },
-            },
             _count: {
                 select: {
                     actions: true,

@@ -21,7 +21,7 @@ model Visitor {
   attached     Employee?      @relation("AttachedEmployee", fields: [attachedId], references: [id], onDelete: Restrict)
   onetimeCodes OnetimeCode[]
   actions      Action[]
-  gates        Gate[]
+  devices      Device[]
   visitorSync  EmployeeSync[]
 
   @@index([organizationId])

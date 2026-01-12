@@ -39,7 +39,6 @@ export class GateRepository extends BaseRepository<
             _count: {
                 select: {
                     devices: true,
-                    employees: true,
                 },
             },
         });
@@ -66,7 +65,6 @@ export class GateRepository extends BaseRepository<
                 _count: {
                     select: {
                         devices: true,
-                        employees: true,
                     },
                 },
             },
@@ -88,21 +86,11 @@ export class GateRepository extends BaseRepository<
             },
         });
 
-        const totalEmployee = await this.prisma.gate
-            .findFirst({
-                where: { id },
-                select: {
-                    employees: true,
-                },
-            })
-            .then(g => g?.employees || []);
-
         return {
             totalDevices: (gate as any)._count.devices,
             activeDevices,
             totalActions: (gate as any)._count.actions,
             todayActions,
-            totalEmployee: totalEmployee.length,
         };
     }
 }

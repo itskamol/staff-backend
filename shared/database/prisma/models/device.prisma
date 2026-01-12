@@ -51,8 +51,6 @@ model Gate {
   devices       Device[]
   actions       Action[]
   employeeSyncs EmployeeSync[]
-  employees     Employee[]
-  visitors      Visitor[]
 
   @@index([name])
   @@map("gates")
@@ -83,7 +81,9 @@ model Device {
 
   gate         Gate?          @relation(fields: [gateId], references: [id], onDelete: SetNull)
   actions      Action[]
-  EmployeeSync EmployeeSync[]
+  employeeSync EmployeeSync[]
+  employees    Employee[]
+  visitors     Visitor[]
 
   @@index([gateId])
   @@index([ipAddress])
