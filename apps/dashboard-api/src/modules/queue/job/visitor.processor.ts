@@ -228,7 +228,7 @@ export class VisitorProcessor extends WorkerHost {
     }
 
     private async updateGateVisitors(gateId: number, newVisitorIds: number[]) {
-        const gate = await this.prisma.gate.findUnique({
+        const gate = await this.prisma.device.findUnique({
             where: { id: gateId },
             select: { visitors: { select: { id: true } } },
         });
@@ -236,7 +236,7 @@ export class VisitorProcessor extends WorkerHost {
         const toConnect = newVisitorIds.filter(id => !oldIds.includes(id));
         const toDisconnect = oldIds.filter(id => !newVisitorIds.includes(id));
 
-        await this.prisma.gate.update({
+        await this.prisma.device.update({
             where: { id: gateId },
             data: {
                 visitors: {

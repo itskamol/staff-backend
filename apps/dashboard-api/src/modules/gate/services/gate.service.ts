@@ -49,7 +49,6 @@ export class GateService {
                 _count: {
                     select: {
                         devices: { where: { deletedAt: null } },
-                        employees: { where: { deletedAt: null } },
                         organizations: { where: { deletedAt: null } },
                     },
                 },
@@ -80,17 +79,9 @@ export class GateService {
                     },
                     where: { deletedAt: null },
                 },
-                employees: {
-                    select: {
-                        id: true,
-                        name: true,
-                    },
-                    where: { deletedAt: null },
-                },
                 _count: {
                     select: {
                         devices: { where: { deletedAt: null } },
-                        employees: { where: { deletedAt: null } },
                         organizations: { where: { deletedAt: null } },
                     },
                 },
@@ -136,7 +127,6 @@ export class GateService {
                 _count: {
                     select: {
                         devices: true,
-                        employees: true,
                     },
                 },
             },
@@ -151,7 +141,6 @@ export class GateService {
                 _count: {
                     select: {
                         devices: { where: { deletedAt: null } },
-                        employees: { where: { deletedAt: null } },
                     },
                 },
             },
@@ -227,28 +216,6 @@ export class GateService {
                 },
             },
         });
-
-        const employees = gate.organizations
-            .filter(org => toDisconnect.includes(org.id))
-            .flatMap(org => org.employees);
-
-        const employeeIds = employees.filter(e => e.deletedAt === null).map(e => e.id);
-
-        if (employeeIds.length !== 0) {
-            await this.prisma.gate.update({
-                where: { id: gateId },
-                data: {
-                    employees: {
-                        disconnect: employeeIds.map(id => ({ id })),
-                    },
-                },
-            });
-
-            await this.deviceQueue.add(JOB.DEVICE.REMOVE_GATE_EMPLOYEE_DATA, {
-                gateId,
-                employeeIds,
-            });
-        }
 
         return { connected: toConnect, disconnected: toDisconnect };
     }

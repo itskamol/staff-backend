@@ -25,9 +25,9 @@ model Employee {
   actions       Action[]
   employeeSyncs EmployeeSync[]
   attendances   Attendance[]
-  gates         Gate[]
   job           Job?           @relation(fields: [jobId], references: [id])
   visitors      Visitor[]      @relation("AttachedEmployee")
+  devices       Device[]
 
   @@index([organizationId])
   @@index([organizationId, departmentId])
