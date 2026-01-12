@@ -47,8 +47,13 @@ export class CreateActionDto {
     @IsInt()
     organizationId: number;
 
+    @IsOptional()
     @IsInt()
     credentialId?: number;
+
+    @IsOptional()
+    @IsInt()
+    onetimeCodeId?: number;
 }
 
 export class UpdateActionDto extends PartialType(CreateActionDto) {}

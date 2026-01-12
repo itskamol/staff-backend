@@ -6,6 +6,8 @@ import {
     IsInt,
     IsDateString,
     IsEnum,
+    IsArray,
+    ArrayNotEmpty,
 } from 'class-validator';
 import { ApiProperty, PartialType } from '@nestjs/swagger';
 import { VisitorCodeType } from '@prisma/client';
@@ -165,4 +167,23 @@ export class QueryVisitorDto extends QueryDto {
     @IsOptional()
     @IsInt()
     attachedId?: number;
+}
+
+export class AssignVisitorToGatesDto {
+    @ApiProperty({
+        example: 1,
+        description: 'Gate ID (Bitta darvoza IDsi)',
+        type: Number,
+    })
+    @IsInt()
+    gateId: number; // Nomini gateIds dan gateId ga o'zgartirdik (chunki u bitta son)
+
+    @ApiProperty({
+        example: [5, 6, 7],
+        description: 'Visitor IDlari ro‘yxati',
+        type: [Number],
+    })
+    @IsArray()
+    @IsInt({ each: true })
+    visitorIds: number[];
 }

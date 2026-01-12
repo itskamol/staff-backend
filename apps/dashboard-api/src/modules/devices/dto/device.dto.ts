@@ -190,7 +190,6 @@ export class AssignEmployeesToGatesDto {
         type: [Number],
     })
     @IsArray()
-    @ArrayNotEmpty()
     @IsInt({ each: true })
     employeeIds: number[];
 

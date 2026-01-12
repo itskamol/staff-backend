@@ -101,8 +101,7 @@ export class DeviceProcessor extends WorkerHost {
     async assignEmployeesToGatesJob(job: Job) {
         const { dto } = job.data;
         const { gateId, employeeIds, credentialTypes } = dto;
-
-        if (!gateId || !employeeIds?.length) return;
+        if (!gateId) return;
 
         const gate = await this.prisma.gate.findUnique({
             where: { id: gateId },

@@ -82,9 +82,11 @@ model EmployeeSync {
   id             Int        @id @default(autoincrement())
   gateId         Int        @map("gate_id")
   deviceId       Int        @map("device_id")
-  employeeId     Int        @map("employee_id")
+  employeeId     Int?       @map("employee_id")
+  visitorId      Int?       @map("visitor_id")
   organizationId Int?       @map("organization_id")
   credentialId   Int?       @map("credential_id")
+  onetimeCodeId  Int?       @map("onetime_code_id")
   status         StatusEnum @default(WAITING)
   message        String?
   createdAt      DateTime   @default(now())
@@ -95,7 +97,9 @@ model EmployeeSync {
   organization Organization? @relation(fields: [organizationId], references: [id], onDelete: Cascade)
   gate         Gate          @relation(fields: [gateId], references: [id], onDelete: Cascade)
   device       Device        @relation(fields: [deviceId], references: [id], onDelete: Cascade)
-  employee     Employee      @relation(fields: [employeeId], references: [id], onDelete: Cascade)
+  employee     Employee?     @relation(fields: [employeeId], references: [id], onDelete: Cascade)
+  visitor      Visitor?      @relation(fields: [visitorId], references: [id], onDelete: Cascade)
+  onetimeCode  OnetimeCode?  @relation(fields: [onetimeCodeId], references: [id], onDelete: Cascade)
 
   @@index([organizationId])
   @@index([gateId])

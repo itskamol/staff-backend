@@ -17,6 +17,7 @@ import { CreateAttendanceDto } from '../../attendance/dto/attendance.dto';
 
 @Injectable()
 export class ActionService {
+    s;
     constructor(
         private readonly actionRepo: ActionRepository,
         private readonly attendanceService: AttendanceService,
@@ -24,17 +25,18 @@ export class ActionService {
         private readonly logger: LoggerService
     ) {}
 
-    async create(eventData: any, deviceId: number, employeeId: number) {
+    async create(eventData: any, deviceId: number, id: string) {
+        // employeeId ni entityId deb nomladim (u xodim yoki visitor ID bo'lishi mumkin)
         try {
             const acEvent =
                 eventData.AccessControllerEvent || eventData.EventNotificationAlert || {};
-
-            // subeventType: 75 - photo, 181 - personal code, 1 - card+
             const { CAR, CARD, PERSONAL_CODE, PHOTO } = ActionType;
 
             const actionTime = eventData.dateTime || acEvent.dateTime;
             const originalLicensePlate = acEvent?.ANPR?.originalLicensePlate || null;
+            // return true;
 
+            // 1. Action Type aniqlash
             let actionType = originalLicensePlate
                 ? CAR
                 : acEvent.subEventType == 181
@@ -45,54 +47,82 @@ export class ActionService {
                 ? CARD
                 : null;
 
-            let credentialId = null;
+            // 2. Visitor yoki Employee ekanligini aniqlash
+            const visitorType =
+                acEvent.userType === 'visitor' ? VisitorType.VISITOR : VisitorType.EMPLOYEE;
 
-            if (actionType == CAR || actionType == CARD) {
-                const credential = await this.prisma.credential.findFirst({
-                    where: { code: originalLicensePlate || acEvent?.cardNo, isActive: true },
-                });
-                credentialId = credential ? credential.id : null;
+            const entityId =
+                visitorType === VisitorType.VISITOR ? parseInt(id.replace('v', '')) : parseInt(id);
+
+            // 8 - Card not exist, 9 - Password error, 11 - Card expired, 12 - Password expired
+            const isAccessDenied = [8, 9, 11, 12].includes(acEvent.subEventType);
+
+            if (isAccessDenied) {
+                this.logger.warn(
+                    `Access Denied: SubEventType ${acEvent.subEventType} for entity ${entityId}`
+                );
+                return true;
             }
 
-            if (actionType == PHOTO || actionType == PERSONAL_CODE) {
-                const credential = await this.prisma.credential.findFirst({
-                    where: { employeeId, type: actionType, isActive: true },
-                });
+            let credentialId: number | null = null;
+            let onetimeCodeId: number | null = null;
 
-                credentialId = credential ? credential.id : null;
+            // 3. Credential yoki OnetimeCode ni aniqlash
+            if (visitorType === VisitorType.EMPLOYEE) {
+                // Xodimlar uchun credential qidirish (eski logika)
+                if (actionType === CAR || actionType === CARD) {
+                    const credential = await this.prisma.credential.findFirst({
+                        where: { code: originalLicensePlate || acEvent?.cardNo, isActive: true },
+                    });
+                    credentialId = credential ? credential.id : null;
+                } else if (actionType === PHOTO || actionType === PERSONAL_CODE) {
+                    const credential = await this.prisma.credential.findFirst({
+                        where: { employeeId: entityId, type: actionType, isActive: true },
+                    });
+                    credentialId = credential ? credential.id : null;
+                }
+            } else {
+                // Visitorlar uchun OnetimeCode qidirish
+                const visitorCode = await this.prisma.onetimeCode.findFirst({
+                    where: {
+                        visitorId: entityId,
+                        code: acEvent?.cardNo || acEvent?.passWord || String(acEvent.employeeNo), // Ba'zi qurilmalarda employeeNo da kelishi mumkin
+                        isActive: true,
+                    },
+                });
+                onetimeCodeId = visitorCode ? visitorCode.id : null;
             }
 
+            // 4. Qurilmani tekshirish
             const device = await this.prisma.device.findFirst({ where: { id: deviceId } });
             if (!device) throw new Error(`Device ${deviceId} not found!`);
 
-            const gate = await this.prisma.gate.findFirst({ where: { id: device.gateId } });
-            if (!gate) throw new Error(`Gate ${device.gateId} not found!`);
-
-            const employee = await this.prisma.employee.findFirst({ where: { id: employeeId } });
-            if (!employee) throw new Error(`Employee ${employeeId} not found`);
-
-            if (!employee.employeePlanId) {
-                throw new Error(`EmployeePlan is not found for Employee`);
+            // 5. Entity (Xodim yoki Visitor) ma'lumotlarini olish
+            let person = null;
+            if (visitorType === VisitorType.EMPLOYEE) {
+                person = await this.prisma.employee.findFirst({
+                    where: { id: entityId },
+                    include: { plan: true },
+                });
+            } else {
+                person = await this.prisma.visitor.findFirst({
+                    where: { id: entityId },
+                });
             }
 
-            const organizationId = employee.organizationId;
+            if (!person) throw new Error(`${visitorType} ${entityId} not found`);
 
-            const plan = await this.prisma.employeePlan.findFirst({
-                where: { id: employee.employeePlanId },
-            });
+            const organizationId = person.organizationId;
+            const plan = visitorType === VisitorType.EMPLOYEE ? (person as any).plan : null;
 
-            if (!plan) throw new Error(`Employee plan ${employee.employeePlanId} not found`);
-
+            // 6. DTO tayyorlash
             const dto: CreateActionDto = {
                 deviceId,
-                gateId: gate.id,
+                gateId: device?.gateId || null,
                 actionTime: new Date(actionTime),
-                employeeId,
-                visitorId: undefined,
-                visitorType:
-                    acEvent.userType === 'normal' || device.type.includes(ActionType.CAR)
-                        ? VisitorType.EMPLOYEE
-                        : VisitorType.VISITOR,
+                employeeId: visitorType === VisitorType.EMPLOYEE ? entityId : null,
+                visitorId: visitorType === VisitorType.VISITOR ? entityId : null,
+                visitorType,
                 entryType: device.entryType,
                 actionType,
                 actionResult: null,
@@ -102,105 +132,96 @@ export class ActionService {
                         : ActionMode.OFFLINE,
                 organizationId,
                 credentialId,
+                onetimeCodeId,
             };
 
             const todayStart = new Date(actionTime);
             todayStart.setHours(0, 0, 0, 0);
-
             const todayEnd = new Date(actionTime);
             todayEnd.setHours(23, 59, 59, 999);
 
+            // 7. EntryType: BOTH bo'lgan qurilmalar uchun (Visitorlar uchun ham ishlaydi)
             if (device.entryType === EntryType.BOTH) {
                 const lastInfo = await this.getLastActionInfo(
-                    employeeId,
+                    entityId,
                     organizationId,
                     todayStart,
-                    todayEnd
+                    todayEnd,
+                    visitorType // Metodga visitorType parametrini qo'shish kerak (pastga qarang)
                 );
 
-                if (!lastInfo.canCreate) {
-                    return;
-                }
-
+                if (!lastInfo.canCreate) return;
                 dto.entryType = lastInfo.nextEntryType as any;
             }
 
-            if (dto.entryType === EntryType.EXIT) {
-                const { status: exitStatus, diffMinutes } = await this.getExitStatus(
-                    actionTime,
-                    plan.endTime
-                );
-
-                const existing = await this.attendanceService.findFirst(
-                    {
-                        employeeId,
-                        organizationId,
-                        startTime: {
-                            gte: todayStart,
-                            lte: todayEnd,
+            // 8. FAQAT EMPLOYEE UCHUN DAVOMAT (ATTENDANCE) LOGIKASI
+            // Visitorlarda PLAN yo'q, shuning uchun bu qism ishlamaydi
+            if (visitorType === VisitorType.EMPLOYEE && plan) {
+                if (dto.entryType === EntryType.EXIT) {
+                    const { status: exitStatus, diffMinutes } = await this.getExitStatus(
+                        actionTime,
+                        plan.endTime
+                    );
+                    const existing = await this.attendanceService.findFirst(
+                        {
+                            employeeId: entityId,
+                            organizationId,
+                            startTime: { gte: todayStart, lte: todayEnd },
                         },
-                    },
-                    { startTime: 'desc' }
-                );
+                        { startTime: 'desc' }
+                    );
+                    if (existing) {
+                        await this.attendanceService.update(existing.id, {
+                            endTime: actionTime,
+                            goneStatus: existing?.isWorkingDay ? exitStatus : 'ON_TIME',
+                            earlyGoneTime: existing?.isWorkingDay ? diffMinutes : 0,
+                        });
+                    }
+                }
 
-                if (existing) {
-                    await this.attendanceService.update(existing.id, {
-                        endTime: actionTime,
-                        goneStatus: existing?.isWorkingDay ? exitStatus : 'ON_TIME',
-                        earlyGoneTime: existing?.isWorkingDay ? diffMinutes : 0,
-                    });
-                } else {
-                    this.logger.warn(`⚠️ Attendance NOT FOUND (EXIT): employee ${employeeId}`);
+                if (dto.entryType === EntryType.ENTER) {
+                    const { status, diffMinutes } = await this.getEnterStatus(
+                        actionTime,
+                        plan.startTime,
+                        plan.extraTime
+                    );
+                    const existing = await this.attendanceService.findFirst(
+                        {
+                            employeeId: entityId,
+                            organizationId,
+                            createdAt: { gte: todayStart, lte: todayEnd },
+                            AND: {
+                                OR: [
+                                    { arrivalStatus: ActionStatus.PENDING },
+                                    { arrivalStatus: ActionStatus.ABSENT },
+                                ],
+                            },
+                        },
+                        { startTime: 'desc' }
+                    );
+
+                    const attData: CreateAttendanceDto = {
+                        startTime: actionTime,
+                        arrivalStatus: status,
+                        employeeId: entityId,
+                        organizationId,
+                        lateArrivalTime: diffMinutes,
+                    };
+
+                    if (existing) {
+                        await this.attendanceService.update(existing.id, {
+                            ...attData,
+                            arrivalStatus: existing?.isWorkingDay ? status : 'ON_TIME',
+                            lateArrivalTime: existing?.isWorkingDay ? diffMinutes : 0,
+                        });
+                    } else {
+                        await this.attendanceService.create(attData);
+                    }
+                    await this.updatedGoneStatus(entityId, organizationId, todayStart, todayEnd);
                 }
             }
 
-            if (dto.entryType === EntryType.ENTER) {
-                const { status, diffMinutes } = await this.getEnterStatus(
-                    actionTime,
-                    plan.startTime,
-                    plan.extraTime
-                );
-
-                const existing = await this.attendanceService.findFirst(
-                    {
-                        employeeId,
-                        organizationId,
-                        createdAt: {
-                            gte: todayStart,
-                            lte: todayEnd,
-                        },
-                        AND: {
-                            OR: [
-                                { arrivalStatus: ActionStatus.PENDING },
-                                { arrivalStatus: ActionStatus.ABSENT },
-                            ],
-                        },
-                    },
-                    { startTime: 'desc' }
-                );
-
-                const data: CreateAttendanceDto = {
-                    startTime: actionTime,
-                    arrivalStatus: status,
-                    employeeId,
-                    organizationId,
-                    lateArrivalTime: diffMinutes,
-                };
-
-                if (existing) {
-                    await this.attendanceService.update(existing.id, {
-                        ...data,
-                        arrivalStatus: existing?.isWorkingDay ? status : 'ON_TIME',
-                        lateArrivalTime: existing?.isWorkingDay ? diffMinutes : 0,
-                    });
-                    await this.attendanceService.update(existing.id, data);
-                } else {
-                    await this.attendanceService.create(data);
-                }
-
-                await this.updatedGoneStatus(employeeId, organizationId, todayStart, todayEnd);
-            }
-
+            // 9. Actionni saqlash
             return this.actionRepo.create({
                 actionTime: dto.actionTime,
                 visitorType: dto.visitorType,
@@ -208,24 +229,16 @@ export class ActionService {
                 actionType: dto.actionType,
                 actionResult: dto.actionResult,
                 actionMode: dto.actionMode,
-
-                device: {
-                    connect: { id: deviceId },
-                },
-                gate: {
-                    connect: { id: gate.id },
-                },
-                employee: {
-                    connect: { id: employeeId },
-                },
-                organization: {
-                    connect: { id: organizationId },
-                },
-                credential: credentialId
-                    ? {
-                          connect: { id: credentialId },
-                      }
-                    : undefined,
+                device: { connect: { id: deviceId } },
+                gate: { connect: { id: device?.gateId || null } },
+                organization: { connect: { id: organizationId } },
+                // Kimligiga qarab bog'lash
+                ...(visitorType === VisitorType.EMPLOYEE
+                    ? { employee: { connect: { id: entityId } } }
+                    : { visitor: { connect: { id: entityId } } }),
+                // Credential turi
+                ...(credentialId && { credential: { connect: { id: credentialId } } }),
+                ...(onetimeCodeId && { onetimeCode: { connect: { id: onetimeCodeId } } }),
             });
         } catch (error) {
             this.logger.error(error);
@@ -421,11 +434,23 @@ export class ActionService {
         return d;
     }
 
-    async getLastActionInfo(employeeId: number, organizationId: number, gte: Date, lte: Date) {
-        const lastAction = await this.actionRepo.findFirst(
-            { employeeId, organizationId, actionTime: { gte, lte } },
-            { actionTime: 'desc' }
-        );
+    async getLastActionInfo(
+        entityId: number,
+        organizationId: number,
+        gte: Date,
+        lte: Date,
+        visitorType: VisitorType
+    ) {
+        const where: any = { organizationId, actionTime: { gte, lte } };
+
+        // Kimligiga qarab filtrlash
+        if (visitorType === VisitorType.EMPLOYEE) {
+            where.employeeId = entityId;
+        } else {
+            where.visitorId = entityId;
+        }
+
+        const lastAction = await this.actionRepo.findFirst(where, { actionTime: 'desc' });
         const { EXIT, ENTER } = EntryType;
 
         if (!lastAction) {

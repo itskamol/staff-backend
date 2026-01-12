@@ -13,9 +13,14 @@ model Action {
   actionMode     ActionMode
   status         ActionStatus?
   credentialId   Int?          @map("credential_id")
-  deletedAt      DateTime?     @map("deleted_at")
+  onetimeCodeId  Int?          @map("onetime_code_id")
+
+  createdAt DateTime? @default(now()) @map("created_at")
+  updatedAt DateTime? @updatedAt @map("updated_at")
+  deletedAt DateTime? @map("deleted_at")
 
   credential   Credential?   @relation(fields: [credentialId], references: [id], onDelete: SetNull)
+  onetimeCode  OnetimeCode?  @relation(fields: [onetimeCodeId], references: [id], onDelete: SetNull)
   organization Organization? @relation(fields: [organizationId], references: [id], onDelete: Cascade)
   device       Device?       @relation(fields: [deviceId], references: [id], onDelete: SetNull)
   gate         Gate?         @relation(fields: [gateId], references: [id], onDelete: SetNull)
@@ -47,6 +52,7 @@ model Gate {
   actions       Action[]
   employeeSyncs EmployeeSync[]
   employees     Employee[]
+  visitors      Visitor[]
 
   @@index([name])
   @@map("gates")
