@@ -7,7 +7,10 @@ import { BullModule } from '@nestjs/bullmq';
 import { JOB } from '../../shared/constants';
 
 @Module({
-    imports: [SharedDatabaseModule, BullModule.registerQueue({ name: JOB.DEVICE.NAME })],
+    imports: [
+        SharedDatabaseModule,
+        BullModule.registerQueue({ name: JOB.DEVICE.NAME }, { name: JOB.VISITOR.NAME }),
+    ],
     controllers: [OrganizationController],
     providers: [OrganizationService, OrganizationRepository],
     exports: [OrganizationService],

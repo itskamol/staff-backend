@@ -179,7 +179,7 @@ export class OnetimeCodeService {
         return this.onetimeCodeRepository.activateCode(id, oneTimeCode?.visitorId);
     }
 
-    async deactivate(id: number, user: UserContext) {
+    async deactivate(id: number, user?: UserContext) {
         const oneTimeCode = await this.findOne(id, user);
         await this.triggerDeviceSync(oneTimeCode.id, 'Delete');
         return this.onetimeCodeRepository.deactivateCode(id);
@@ -277,8 +277,8 @@ export class OnetimeCodeService {
         if (!visitor || !visitor.gate) return;
         if (action === 'Delete') {
             // Granular o'chirish jobi
-            await this.visitorQueue.add(JOB.VISITOR.REMOVE_VISITOR_FROM_ALL_DEVICES, {
-                visitorId: onetimeCode?.visitorId,
+            await this.visitorQueue.add(JOB.VISITOR.REMOVE_VISITORS_FROM_ALL_DEVICES, {
+                visitorIds: [onetimeCode?.visitorId],
             });
         } else {
             // Qo'shish yoki Yangilash jobi

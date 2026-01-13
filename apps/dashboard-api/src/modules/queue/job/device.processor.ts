@@ -169,6 +169,21 @@ export class DeviceProcessor extends WorkerHost {
                         },
                         data: { deletedAt: new Date() },
                     });
+
+                    if (!device.type.includes(ActionType.CAR)) {
+                        const syncDevices = await this.prisma.employeeSync.count({
+                            where: {
+                                employeeId: employee.id,
+                                deviceId: device.id,
+                                status: StatusEnum.DONE,
+                                deletedAt: null,
+                            },
+                        });
+
+                        if (syncDevices === 0) {
+                            await this.hikvisionService.deleteUser(employee.id.toString(), config);
+                        }
+                    }
                 } catch (err) {
                     this.logger.error(
                         `Remove error [Dev: ${device.id}, Emp: ${employee.id}]: ${err.message}`
@@ -493,7 +508,6 @@ export class DeviceProcessor extends WorkerHost {
                         break;
 
                     case ActionType.PHOTO:
-                        // HikvisionService'dagi deleteFaceFromUser foydalanuvchini o'chirmaydi, faqat rasmini o'chiradi
                         if (device.type.includes(ActionType.PHOTO)) {
                             await this.hikvisionService.deleteFaceFromUser(
                                 String(employeeId),
@@ -570,12 +584,20 @@ export class DeviceProcessor extends WorkerHost {
         }
     }
 
-    async removeEmployeeFromAllDevicesJob(job: Job) {
-        const { employeeId } = job.data;
+    async removeEmployeesFromAllDevicesJob(job: Job) {
+        const { employeeIds } = job.data;
 
-        // 1. Employee va credentiallarni olamiz
-        const employee = await this.prisma.employee.findUnique({
-            where: { id: employeeId },
+        if (!employeeIds.length) {
+            this.logger.warn('No employeeIds provided', 'DeviceJob');
+            return;
+        }
+
+        const employees = await this.prisma.employee.findMany({
+            where: {
+                id: { in: employeeIds },
+                deletedAt: null,
+                isActive: true,
+            },
             include: {
                 credentials: {
                     where: { deletedAt: null, isActive: true },
@@ -586,84 +608,82 @@ export class DeviceProcessor extends WorkerHost {
             },
         });
 
-        if (!employee) {
-            this.logger.warn(`Employee ${employeeId} not found`, 'DeviceJob');
+        if (!employees.length) {
+            this.logger.warn(`No employees found for ids: ${employeeIds.join(', ')}`, 'DeviceJob');
             return;
         }
 
-        if (!employee.devices.length) {
-            this.logger.log(`Employee ${employeeId} has no devices`, 'DeviceJob');
-            return;
-        }
+        for (const employee of employees) {
+            if (!employee.devices.length) continue;
 
-        // 2. Har bir device bo‘yicha tozalaymiz
-        for (const device of employee.devices) {
-            const config = this.getDeviceConfig(device);
+            for (const device of employee.devices) {
+                const config = this.getDeviceConfig(device);
 
-            try {
-                // 🔹 ACCESS qurilmalar
-                const accessTypes: ActionType[] = [
-                    ActionType.PHOTO,
-                    ActionType.CARD,
-                    ActionType.PERSONAL_CODE,
-                    ActionType.QR,
-                ];
+                try {
+                    // 🔹 ACCESS
+                    const accessTypes: ActionType[] = [
+                        ActionType.PHOTO,
+                        ActionType.CARD,
+                        ActionType.PERSONAL_CODE,
+                        ActionType.QR,
+                    ];
 
-                if (device.type.some(t => accessTypes.includes(t))) {
-                    await this.hikvisionService.deleteUser(String(employeeId), config);
-                }
-
-                if (device.type.includes(ActionType.CAR)) {
-                    const carCreds = employee.credentials.filter(
-                        c => c.type === ActionType.CAR && c.code
-                    );
-
-                    for (const cred of carCreds) {
-                        await this.hikvisionAnprService.deleteLicensePlate(cred.code!, config);
+                    if (device.type.some(t => accessTypes.includes(t))) {
+                        await this.hikvisionService.deleteUser(String(employee.id), config);
                     }
-                }
 
-                // 🔹 DB RELATION UZISH
-                await this.prisma.device.update({
-                    where: { id: device.id },
-                    data: {
-                        employees: {
-                            disconnect: { id: employeeId },
+                    // 🔹 ANPR
+                    if (device.type.includes(ActionType.CAR)) {
+                        const carCreds = employee.credentials.filter(
+                            c => c.type === ActionType.CAR && c.code
+                        );
+
+                        for (const cred of carCreds) {
+                            await this.hikvisionAnprService.deleteLicensePlate(cred.code!, config);
+                        }
+                    }
+
+                    // 🔹 DB disconnect
+                    await this.prisma.device.update({
+                        where: { id: device.id },
+                        data: {
+                            employees: {
+                                disconnect: { id: employee.id },
+                            },
                         },
-                    },
-                });
+                    });
 
-                // 🔹 employeeSync yopiladi
-                await this.prisma.employeeSync.updateMany({
-                    where: {
-                        deviceId: device.id,
-                        employeeId,
-                        deletedAt: null,
-                    },
-                    data: { deletedAt: new Date() },
-                });
-            } catch (err) {
-                this.logger.error(
-                    `Failed removing employee ${employeeId} from device ${device.id}: ${err.message}`,
-                    'DeviceJob'
-                );
+                    // 🔹 Sync close
+                    await this.prisma.employeeSync.updateMany({
+                        where: {
+                            deviceId: device.id,
+                            employeeId: employee.id,
+                            deletedAt: null,
+                        },
+                        data: { deletedAt: new Date() },
+                    });
+                } catch (err) {
+                    this.logger.error(
+                        `Failed removing employee ${employee.id} from device ${device.id}: ${err.message}`,
+                        'DeviceJob'
+                    );
+                }
             }
-        }
 
-        this.logger.log(
-            `Employee ${employeeId} removed from all devices (${employee.devices.length})`,
-            'DeviceJob'
-        );
+            this.logger.log(
+                `Employee ${employee.id} removed from all devices (${employee.devices.length})`,
+                'DeviceJob'
+            );
+        }
 
         return { success: true };
     }
-
     async process(job: Job<any, any, string>) {
         switch (job.name) {
-            case JOB.DEVICE.DEVICE_SYNC_EMPLOYEES: // Constants-ga qo'shing
+            case JOB.DEVICE.DEVICE_SYNC_EMPLOYEES:
                 return this.assignEmployeesToDevicesJob(job);
 
-            case JOB.DEVICE.DEVICE_REMOVE_EMPLOYEES: // Constants-ga qo'shing
+            case JOB.DEVICE.DEVICE_REMOVE_EMPLOYEES:
                 return this.removeEmployeesFromDevicesJob(job);
 
             case JOB.DEVICE.CREATE:
@@ -675,11 +695,11 @@ export class DeviceProcessor extends WorkerHost {
             case JOB.DEVICE.REMOVE_SPECIFIC_CREDENTIALS:
                 return this.removeSpecificCredentialsJob(job);
 
-            case JOB.DEVICE.SYNC_CREDENTIALS_TO_DEVICES: // <-- YANGI CASE
+            case JOB.DEVICE.SYNC_CREDENTIALS_TO_DEVICES:
                 return this.syncCredentialsToDevicesJob(job);
 
-            case JOB.DEVICE.REMOVE_EMPLOYEE_FROM_ALL_DEVICES: // ✅ YANGI
-                return this.removeEmployeeFromAllDevicesJob(job);
+            case JOB.DEVICE.REMOVE_EMPLOYEES_FROM_ALL_DEVICES:
+                return this.removeEmployeesFromAllDevicesJob(job);
         }
     }
 }

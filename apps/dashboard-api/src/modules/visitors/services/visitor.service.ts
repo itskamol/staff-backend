@@ -253,14 +253,9 @@ export class VisitorService {
             throw new NotFoundException('Visitor not found');
         }
 
-        await this.visitorQueue.add(JOB.VISITOR.REMOVE_VISITOR_FROM_ALL_DEVICES, {
-            visitorId: id,
+        await this.visitorQueue.add(JOB.VISITOR.REMOVE_VISITORS_FROM_ALL_DEVICES, {
+            visitorIds: [id],
         });
-
-        if ((visitor as any)._count?.actions > 0) {
-            // Soft delete if has actions
-            return this.visitorRepository.update(id, { isActive: false });
-        }
 
         return this.visitorRepository.softDelete(id, scope);
     }

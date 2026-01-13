@@ -12,7 +12,8 @@ import { Queue } from 'bullmq';
 export class OrganizationService {
     constructor(
         private readonly organizationRepository: OrganizationRepository,
-        @InjectQueue(JOB.DEVICE.NAME) private readonly deviceQueue: Queue
+        @InjectQueue(JOB.DEVICE.NAME) private readonly deviceQueue: Queue,
+        @InjectQueue(JOB.VISITOR.NAME) private readonly visitorQueue: Queue
     ) {}
 
     async getOrganizations(
@@ -63,9 +64,10 @@ export class OrganizationService {
         return this.organizationRepository.findById(
             id,
             {
-                departments: { where: { deletedAt: null } },
-                employees: { where: { deletedAt: null } },
-                gates: { where: { deletedAt: null } },
+                departments: { where: { deletedAt: null, isActive: true } },
+                employees: { where: { deletedAt: null, isActive: true } },
+                visitors: { where: { deletedAt: null, isActive: true } },
+                gates: { where: { deletedAt: null, isActive: true } },
             },
             scope
         );
@@ -155,10 +157,16 @@ export class OrganizationService {
         const data = await this.getOrganizationById(id, scope);
 
         const employeeIds = data.employees.map(e => e.id);
+        const visitorIds = data.visitors.map(e => e.id);
 
-        // await this.deviceQueue.add(JOB.DEVICE.DELETE, {
-        //     employeeIds,
-        // });
+        await this.deviceQueue.add(JOB.DEVICE.DELETE, {
+            employeeIds,
+        });
+
+        await this.visitorQueue.add(JOB.VISITOR.REMOVE_VISITORS_FROM_ALL_DEVICES, {
+            visitorIds,
+        });
+
         return this.organizationRepository.softDelete(id, scope);
     }
 }

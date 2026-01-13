@@ -235,70 +235,87 @@ export class VisitorProcessor extends WorkerHost {
         }
     }
 
-    async removeVisitorFromAllDevicesJob(job: Job) {
-        const { visitorId } = job.data;
+    async removeVisitorsFromAllDevicesJob(job: Job) {
+        const { visitorIds } = job.data;
 
-        // 1. Employee va credentiallarni olamiz
-        const visitor = await this.prisma.visitor.findUnique({
-            where: { id: visitorId },
+        if (!visitorIds.length) {
+            this.logger.warn('No visitor provided', 'VisitorJob');
+            return;
+        }
+
+        const visitors = await this.prisma.visitor.findMany({
+            where: {
+                id: { in: visitorIds },
+                deletedAt: null,
+                isActive: true,
+            },
             include: {
                 onetimeCodes: {
                     where: { deletedAt: null, isActive: true },
                 },
                 gate: {
                     where: { deletedAt: null, isActive: true },
-                    include: { devices: true },
+                    include: { devices: { where: { deletedAt: null, isActive: true } } },
                 },
             },
         });
 
-        if (!visitor) {
-            this.logger.warn(`Employee ${visitorId} not found`, 'DeviceJob');
+        if (!visitors.length) {
+            this.logger.warn(`No visitor found for ids: ${visitorIds.join(', ')}`, 'VisitorJob');
             return;
         }
 
-        if (!visitor.gate.devices.length) {
-            this.logger.log(`Employee ${visitor} has no devices`, 'DeviceJob');
-            return;
-        }
+        for (const visitor of visitors) {
+            if (!visitor.gate.devices.length) continue;
 
-        // 2. Har bir device bo‘yicha tozalaymiz
-        for (const device of visitor.gate.devices) {
-            const config = this.getDeviceConfig(device);
+            for (const device of visitor.gate.devices) {
+                const config = this.getDeviceConfig(device);
 
-            try {
-                // 🔹 ACCESS qurilmalar
-                const accessTypes: ActionType[] = [
-                    ActionType.CARD,
-                    ActionType.PERSONAL_CODE,
-                    ActionType.QR,
-                ];
+                try {
+                    // 🔹 ACCESS
+                    const accessTypes: ActionType[] = [
+                        ActionType.PHOTO,
+                        ActionType.CARD,
+                        ActionType.PERSONAL_CODE,
+                        ActionType.QR,
+                    ];
 
-                if (device.type.some(t => accessTypes.includes(t))) {
-                    await this.hikvisionService.deleteUser(`v${visitorId}`, config);
+                    if (device.type.some(t => accessTypes.includes(t))) {
+                        await this.hikvisionService.deleteUser(`v${visitor.id}`, config);
+                    }
+
+                    // 🔹 DB disconnect
+                    await this.prisma.gate.update({
+                        where: { id: visitor.gateId },
+                        data: {
+                            visitors: {
+                                disconnect: { id: visitor.id },
+                            },
+                        },
+                    });
+
+                    // 🔹 Sync close
+                    await this.prisma.employeeSync.updateMany({
+                        where: {
+                            deviceId: device.id,
+                            visitorId: visitor.id,
+                            deletedAt: null,
+                        },
+                        data: { deletedAt: new Date() },
+                    });
+                } catch (err) {
+                    this.logger.error(
+                        `Failed removing visitor ${visitor.id} from device ${device.id}: ${err.message}`,
+                        'VisitorJob'
+                    );
                 }
-
-                // 🔹 employeeSync yopiladi
-                await this.prisma.employeeSync.updateMany({
-                    where: {
-                        deviceId: device.id,
-                        visitorId,
-                        deletedAt: null,
-                    },
-                    data: { deletedAt: new Date() },
-                });
-            } catch (err) {
-                this.logger.error(
-                    `Failed removing employee ${visitor} from device ${device.id}: ${err.message}`,
-                    'DeviceJob'
-                );
             }
-        }
 
-        this.logger.log(
-            `Employee ${visitorId} removed from all devices (${visitor.gate.devices.length})`,
-            'DeviceJob'
-        );
+            this.logger.log(
+                `Employee ${visitor.id} removed from all devices (${visitor.gate.devices.length})`,
+                'DeviceJob'
+            );
+        }
     }
 
     async process(job: Job<any, any, string>) {
@@ -309,8 +326,8 @@ export class VisitorProcessor extends WorkerHost {
             case JOB.VISITOR.SYNC_CREDENTIALS_TO_DEVICES_VISITOR: // <-- YANGI CASE
                 return this.syncCredentialsToDevicesJob(job);
 
-            case JOB.VISITOR.REMOVE_VISITOR_FROM_ALL_DEVICES: // ✅ YANGI
-                return this.removeVisitorFromAllDevicesJob(job);
+            case JOB.VISITOR.REMOVE_VISITORS_FROM_ALL_DEVICES: // ✅ YANGI
+                return this.removeVisitorsFromAllDevicesJob(job);
         }
     }
 }

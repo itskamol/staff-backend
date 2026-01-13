@@ -90,10 +90,13 @@ export class EmployeeService {
                     select: { id: true, fullName: true, shortName: true },
                 },
                 job: { select: { id: true, uz: true, eng: true, ru: true } },
-                plan: true,
-                credentials: true,
-                devices: true,
-                employeeSyncs: true,
+                plan: { where: { deletedAt: null, isActive: true } },
+                credentials: { where: { deletedAt: null } },
+                devices: {
+                    where: { deletedAt: null, isActive: true },
+                    select: { id: true, name: true, ipAddress: true, entryType: true, type: true },
+                },
+                employeeSyncs: { where: { deletedAt: null } },
             },
             scope,
             user?.role
@@ -285,8 +288,8 @@ export class EmployeeService {
             throw new NotFoundException('Employee not found or access denied');
         }
 
-        await this.deviceQueue.add(JOB.DEVICE.REMOVE_EMPLOYEE_FROM_ALL_DEVICES, {
-            employeeId: employee.id,
+        await this.deviceQueue.add(JOB.DEVICE.REMOVE_EMPLOYEES_FROM_ALL_DEVICES, {
+            employeeIds: [employee.id],
         });
 
         return await this.employeeRepository.softDelete(id, scope);

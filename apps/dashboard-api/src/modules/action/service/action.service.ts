@@ -7,13 +7,16 @@ import {
     ActionStatus,
     ActionType,
     EntryType,
+    OnetimeCode,
     Prisma,
+    VisitorCodeType,
     VisitorType,
 } from '@prisma/client';
 import { AttendanceService } from '../../attendance/attendance.service';
 import { LoggerService } from 'apps/dashboard-api/src/core/logger';
 import { DataScope } from '@app/shared/auth';
 import { CreateAttendanceDto } from '../../attendance/dto/attendance.dto';
+import { OnetimeCodeService } from '../../onetime-codes/services/onetime-code.service';
 
 @Injectable()
 export class ActionService {
@@ -22,11 +25,11 @@ export class ActionService {
         private readonly actionRepo: ActionRepository,
         private readonly attendanceService: AttendanceService,
         private prisma: PrismaService,
-        private readonly logger: LoggerService
+        private readonly logger: LoggerService,
+        private readonly onetimeCodeService: OnetimeCodeService
     ) {}
 
     async create(eventData: any, deviceId: number, id: string) {
-        // employeeId ni entityId deb nomladim (u xodim yoki visitor ID bo'lishi mumkin)
         try {
             const acEvent =
                 eventData.AccessControllerEvent || eventData.EventNotificationAlert || {};
@@ -34,9 +37,7 @@ export class ActionService {
 
             const actionTime = eventData.dateTime || acEvent.dateTime;
             const originalLicensePlate = acEvent?.ANPR?.originalLicensePlate || null;
-            // return true;
 
-            // 1. Action Type aniqlash
             let actionType = originalLicensePlate
                 ? CAR
                 : acEvent.subEventType == 181
@@ -47,14 +48,12 @@ export class ActionService {
                 ? CARD
                 : null;
 
-            // 2. Visitor yoki Employee ekanligini aniqlash
             const visitorType =
                 acEvent.userType === 'visitor' ? VisitorType.VISITOR : VisitorType.EMPLOYEE;
 
             const entityId =
                 visitorType === VisitorType.VISITOR ? parseInt(id.replace('v', '')) : parseInt(id);
 
-            // 8 - Card not exist, 9 - Password error, 11 - Card expired, 12 - Password expired
             const isAccessDenied = [8, 9, 11, 12].includes(acEvent.subEventType);
 
             if (isAccessDenied) {
@@ -67,7 +66,6 @@ export class ActionService {
             let credentialId: number | null = null;
             let onetimeCodeId: number | null = null;
 
-            // 3. Credential yoki OnetimeCode ni aniqlash
             if (visitorType === VisitorType.EMPLOYEE) {
                 // Xodimlar uchun credential qidirish (eski logika)
                 if (actionType === CAR || actionType === CARD) {
@@ -82,22 +80,19 @@ export class ActionService {
                     credentialId = credential ? credential.id : null;
                 }
             } else {
-                // Visitorlar uchun OnetimeCode qidirish
                 const visitorCode = await this.prisma.onetimeCode.findFirst({
                     where: {
                         visitorId: entityId,
-                        code: acEvent?.cardNo || acEvent?.passWord || String(acEvent.employeeNo), // Ba'zi qurilmalarda employeeNo da kelishi mumkin
+                        code: acEvent?.cardNo || acEvent?.passWord || String(acEvent.employeeNo),
                         isActive: true,
                     },
                 });
                 onetimeCodeId = visitorCode ? visitorCode.id : null;
             }
 
-            // 4. Qurilmani tekshirish
             const device = await this.prisma.device.findFirst({ where: { id: deviceId } });
             if (!device) throw new Error(`Device ${deviceId} not found!`);
 
-            // 5. Entity (Xodim yoki Visitor) ma'lumotlarini olish
             let person = null;
             if (visitorType === VisitorType.EMPLOYEE) {
                 person = await this.prisma.employee.findFirst({
@@ -115,7 +110,6 @@ export class ActionService {
             const organizationId = person.organizationId;
             const plan = visitorType === VisitorType.EMPLOYEE ? (person as any).plan : null;
 
-            // 6. DTO tayyorlash
             const dto: CreateActionDto = {
                 deviceId,
                 gateId: device?.gateId || null,
@@ -140,22 +134,27 @@ export class ActionService {
             const todayEnd = new Date(actionTime);
             todayEnd.setHours(23, 59, 59, 999);
 
-            // 7. EntryType: BOTH bo'lgan qurilmalar uchun (Visitorlar uchun ham ishlaydi)
             if (device.entryType === EntryType.BOTH) {
                 const lastInfo = await this.getLastActionInfo(
                     entityId,
                     organizationId,
                     todayStart,
                     todayEnd,
-                    visitorType // Metodga visitorType parametrini qo'shish kerak (pastga qarang)
+                    visitorType,
+                    onetimeCodeId
                 );
 
                 if (!lastInfo.canCreate) return;
                 dto.entryType = lastInfo.nextEntryType as any;
             }
 
-            // 8. FAQAT EMPLOYEE UCHUN DAVOMAT (ATTENDANCE) LOGIKASI
-            // Visitorlarda PLAN yo'q, shuning uchun bu qism ishlamaydi
+            const oneTimeCode = await this.prisma.onetimeCode.findFirst({
+                where: { id: onetimeCodeId },
+            });
+
+            if (oneTimeCode.codeType === VisitorCodeType.ONETIME)
+                await this.checkOneTimeCode(onetimeCodeId, dto.entryType);
+
             if (visitorType === VisitorType.EMPLOYEE && plan) {
                 if (dto.entryType === EntryType.EXIT) {
                     const { status: exitStatus, diffMinutes } = await this.getExitStatus(
@@ -221,7 +220,6 @@ export class ActionService {
                 }
             }
 
-            // 9. Actionni saqlash
             return this.actionRepo.create({
                 actionTime: dto.actionTime,
                 visitorType: dto.visitorType,
@@ -232,11 +230,9 @@ export class ActionService {
                 device: { connect: { id: deviceId } },
                 gate: { connect: { id: device?.gateId || null } },
                 organization: { connect: { id: organizationId } },
-                // Kimligiga qarab bog'lash
                 ...(visitorType === VisitorType.EMPLOYEE
                     ? { employee: { connect: { id: entityId } } }
                     : { visitor: { connect: { id: entityId } } }),
-                // Credential turi
                 ...(credentialId && { credential: { connect: { id: credentialId } } }),
                 ...(onetimeCodeId && { onetimeCode: { connect: { id: onetimeCodeId } } }),
             });
@@ -439,7 +435,8 @@ export class ActionService {
         organizationId: number,
         gte: Date,
         lte: Date,
-        visitorType: VisitorType
+        visitorType: VisitorType,
+        onetimeCodeId?: number
     ) {
         const where: any = { organizationId, actionTime: { gte, lte } };
 
@@ -448,6 +445,7 @@ export class ActionService {
             where.employeeId = entityId;
         } else {
             where.visitorId = entityId;
+            where.onetimeCodeId = onetimeCodeId;
         }
 
         const lastAction = await this.actionRepo.findFirst(where, { actionTime: 'desc' });
@@ -484,5 +482,21 @@ export class ActionService {
             nextEntryType,
             minutesSinceLast: diffMinutes,
         };
+    }
+
+    private async checkOneTimeCode(id: number, entryType: EntryType) {
+        if (entryType === EntryType.EXIT) {
+            await this.onetimeCodeService.deactivate(id);
+            return;
+        }
+
+        const actions = await this.prisma.action.count({
+            where: { onetimeCodeId: id, entryType: 'ENTER' },
+        });
+
+        if (actions > 0) {
+            await this.onetimeCodeService.deactivate(id);
+        }
+        return;
     }
 }

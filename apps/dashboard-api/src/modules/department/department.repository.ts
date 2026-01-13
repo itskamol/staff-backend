@@ -17,7 +17,7 @@ export class DepartmentRepository extends BaseRepository<
         super(prisma);
     }
 
-    protected cascadeRelations = ['employee', 'credentials'];
+    protected cascadeRelations = ['employee'];
 
     protected disconnectRelations = ['users'];
 
