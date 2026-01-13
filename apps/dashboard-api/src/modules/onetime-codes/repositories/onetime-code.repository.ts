@@ -60,7 +60,8 @@ export class OnetimeCodeRepository extends BaseRepository<
         return this.findMany({ codeType }, { createdAt: 'desc' }, include);
     }
 
-    async activateCode(id: number) {
+    async activateCode(id: number, visitorId: number) {
+        await this.updateMany({ visitorId, isActive: true, deletedAt: null }, { isActive: false });
         return this.update(id, { isActive: true });
     }
 

@@ -570,6 +570,94 @@ export class DeviceProcessor extends WorkerHost {
         }
     }
 
+    async removeEmployeeFromAllDevicesJob(job: Job) {
+        const { employeeId } = job.data;
+
+        // 1. Employee va credentiallarni olamiz
+        const employee = await this.prisma.employee.findUnique({
+            where: { id: employeeId },
+            include: {
+                credentials: {
+                    where: { deletedAt: null, isActive: true },
+                },
+                devices: {
+                    where: { deletedAt: null, isActive: true },
+                },
+            },
+        });
+
+        if (!employee) {
+            this.logger.warn(`Employee ${employeeId} not found`, 'DeviceJob');
+            return;
+        }
+
+        if (!employee.devices.length) {
+            this.logger.log(`Employee ${employeeId} has no devices`, 'DeviceJob');
+            return;
+        }
+
+        // 2. Har bir device bo‘yicha tozalaymiz
+        for (const device of employee.devices) {
+            const config = this.getDeviceConfig(device);
+
+            try {
+                // 🔹 ACCESS qurilmalar
+                const accessTypes: ActionType[] = [
+                    ActionType.PHOTO,
+                    ActionType.CARD,
+                    ActionType.PERSONAL_CODE,
+                    ActionType.QR,
+                ];
+
+                if (device.type.some(t => accessTypes.includes(t))) {
+                    await this.hikvisionService.deleteUser(String(employeeId), config);
+                }
+
+                if (device.type.includes(ActionType.CAR)) {
+                    const carCreds = employee.credentials.filter(
+                        c => c.type === ActionType.CAR && c.code
+                    );
+
+                    for (const cred of carCreds) {
+                        await this.hikvisionAnprService.deleteLicensePlate(cred.code!, config);
+                    }
+                }
+
+                // 🔹 DB RELATION UZISH
+                await this.prisma.device.update({
+                    where: { id: device.id },
+                    data: {
+                        employees: {
+                            disconnect: { id: employeeId },
+                        },
+                    },
+                });
+
+                // 🔹 employeeSync yopiladi
+                await this.prisma.employeeSync.updateMany({
+                    where: {
+                        deviceId: device.id,
+                        employeeId,
+                        deletedAt: null,
+                    },
+                    data: { deletedAt: new Date() },
+                });
+            } catch (err) {
+                this.logger.error(
+                    `Failed removing employee ${employeeId} from device ${device.id}: ${err.message}`,
+                    'DeviceJob'
+                );
+            }
+        }
+
+        this.logger.log(
+            `Employee ${employeeId} removed from all devices (${employee.devices.length})`,
+            'DeviceJob'
+        );
+
+        return { success: true };
+    }
+
     async process(job: Job<any, any, string>) {
         switch (job.name) {
             case JOB.DEVICE.DEVICE_SYNC_EMPLOYEES: // Constants-ga qo'shing
@@ -590,30 +678,8 @@ export class DeviceProcessor extends WorkerHost {
             case JOB.DEVICE.SYNC_CREDENTIALS_TO_DEVICES: // <-- YANGI CASE
                 return this.syncCredentialsToDevicesJob(job);
 
-            // case JOB.DEVICE.CLEAR_ALL_USERS_FROM_DEVICE: // Shared constants-ga qo'shib qo'ying
-            //     return this.clearDeviceUsersJob(job);
-
-            // case JOB.DEVICE.REMOVE_EMPLOYEES:
-            //     const { employeeIds: ids } = job.data;
-            //     const syncRecords = await this.prisma.employeeSync.findMany({
-            //         where: { employeeId: { in: ids }, deletedAt: null },
-            //         include: { device: true, employee: { include: { credentials: true } } },
-            //     });
-            //     for (const record of syncRecords) {
-            //         try {
-            //             await this.processRemovalFromDevice(
-            //                 record.device,
-            //                 this.getDeviceConfig(record.device),
-            //                 record.employeeId,
-            //                 record.employee.credentials
-            //             );
-            //             await this.prisma.employeeSync.update({
-            //                 where: { id: record.id },
-            //                 data: { deletedAt: new Date() },
-            //             });
-            //         } catch (err) {}
-            //     }
-            //     return;
+            case JOB.DEVICE.REMOVE_EMPLOYEE_FROM_ALL_DEVICES: // ✅ YANGI
+                return this.removeEmployeeFromAllDevicesJob(job);
         }
     }
 }

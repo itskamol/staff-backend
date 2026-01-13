@@ -285,8 +285,8 @@ export class EmployeeService {
             throw new NotFoundException('Employee not found or access denied');
         }
 
-        await this.deviceQueue.add(JOB.DEVICE.REMOVE_EMPLOYEES, {
-            employeeIds: [id],
+        await this.deviceQueue.add(JOB.DEVICE.REMOVE_EMPLOYEE_FROM_ALL_DEVICES, {
+            employeeId: employee.id,
         });
 
         return await this.employeeRepository.softDelete(id, scope);

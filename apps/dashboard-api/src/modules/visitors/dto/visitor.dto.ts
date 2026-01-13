@@ -112,6 +112,15 @@ export class CreateVisitorDto {
     attachedId?: number;
 
     @ApiProperty({
+        example: 2,
+        description: 'Gate ID',
+        required: false,
+    })
+    @IsOptional()
+    @IsInt()
+    gateId?: number;
+
+    @ApiProperty({
         example: true,
         description: 'Visitor active status',
         required: false,

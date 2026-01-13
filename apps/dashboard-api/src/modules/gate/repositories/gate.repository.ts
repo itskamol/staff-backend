@@ -24,7 +24,7 @@ export class GateRepository extends BaseRepository<
 
     protected cascadeRelations = [];
 
-    protected disconnectRelations = ['organizations', 'employees'];
+    protected disconnectRelations = ['organizations', 'visitors', 'devices'];
 
     protected getDelegate() {
         return this.prisma.gate;

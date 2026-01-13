@@ -254,9 +254,12 @@ export class HikvisionAccessService {
                 reqBody
             );
 
+            if (response.status === 200 && passWord === '') {
+                this.logger.log(`Password successfully deleted to user ${employeeNo}`);
+                return true;
+            }
             if (response.status === 200) {
                 this.logger.log(`Password successfully added to user ${employeeNo}`);
-                return true;
             }
 
             this.logger.warn(
