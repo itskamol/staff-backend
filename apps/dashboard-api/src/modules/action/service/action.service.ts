@@ -148,12 +148,14 @@ export class ActionService {
                 dto.entryType = lastInfo.nextEntryType as any;
             }
 
-            const oneTimeCode = await this.prisma.onetimeCode.findFirst({
-                where: { id: onetimeCodeId },
-            });
+            if (onetimeCodeId) {
+                const oneTimeCode = await this.prisma.onetimeCode.findFirst({
+                    where: { id: onetimeCodeId },
+                });
 
-            if (oneTimeCode.codeType === VisitorCodeType.ONETIME)
-                await this.checkOneTimeCode(onetimeCodeId, dto.entryType);
+                if (oneTimeCode.codeType === VisitorCodeType.ONETIME)
+                    await this.checkOneTimeCode(onetimeCodeId, dto.entryType);
+            }
 
             if (visitorType === VisitorType.EMPLOYEE && plan) {
                 if (dto.entryType === EntryType.EXIT) {
