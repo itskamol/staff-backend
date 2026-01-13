@@ -81,6 +81,7 @@ export class DeviceService {
                 _count: {
                     select: {
                         actions: true,
+                        employees: true,
                     },
                 },
             },
@@ -106,7 +107,7 @@ export class DeviceService {
                         employee: { select: { id: true, name: true } },
                     },
                 },
-                _count: { select: { actions: true } },
+                _count: { select: { actions: true, employees: true } },
             },
             scope
         );

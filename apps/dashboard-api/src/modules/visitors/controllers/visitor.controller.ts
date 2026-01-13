@@ -8,11 +8,8 @@ import {
     VisitorWithRelationsDto,
     UpdateVisitorDto,
     QueryVisitorDto,
-    VisitorDto,
-    AssignVisitorToGatesDto,
 } from '../dto/visitor.dto';
 import { ApiCrudOperation } from 'apps/dashboard-api/src/shared/utils';
-import { QueryDto } from 'apps/dashboard-api/src/shared/dto';
 import { ApiSuccessResponse } from '@app/shared/utils';
 
 @ApiTags('Visitors')
@@ -106,18 +103,5 @@ export class VisitorController {
     })
     async getActions(@Param('id') id: number, @CurrentUser() user: UserContext) {
         return await this.visitorService.getActions(id, user);
-    }
-
-    @Post('assign-visitors-to-gates')
-    @Roles(Role.ADMIN)
-    @ApiCrudOperation(VisitorWithRelationsDto, 'create', {
-        summary: 'Assign visitors to gate devices for facial access',
-    })
-    async assignEmployeesToGates(
-        @Body() dto: AssignVisitorToGatesDto,
-        @User() user: UserContext,
-        @Scope() scope: DataScope
-    ) {
-        return await this.visitorService.assignVisitorToGates(dto, scope, user);
     }
 }

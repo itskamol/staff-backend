@@ -9,10 +9,14 @@ import {
 import { UserContext } from '../../../shared/interfaces';
 import { OnetimeCodeRepository } from '../repositories/onetime-code.repository';
 import { Prisma } from '@prisma/client';
+import { JOB } from 'apps/dashboard-api/src/shared/constants/job';
+import { InjectQueue } from '@nestjs/bullmq';
+import { Queue } from 'bullmq';
 
 @Injectable()
 export class OnetimeCodeService {
     constructor(
+        @InjectQueue(JOB.VISITOR.NAME) private readonly visitorQueue: Queue,
         private readonly prisma: PrismaService,
         private readonly onetimeCodeRepository: OnetimeCodeRepository
     ) {}
@@ -98,7 +102,7 @@ export class OnetimeCodeService {
 
     async create(createOnetimeCodeDto: CreateOnetimeCodeDto, scope: DataScope) {
         const visitor = await this.prisma.visitor.findUnique({
-            where: { id: createOnetimeCodeDto.visitorId },
+            where: { id: createOnetimeCodeDto.visitorId, isActive: true, deletedAt: null },
         });
 
         if (!visitor) {
@@ -107,7 +111,7 @@ export class OnetimeCodeService {
 
         const code = await this.onetimeCodeRepository.generateUniqueCode();
 
-        return this.onetimeCodeRepository.create(
+        const onetimeCode = await this.onetimeCodeRepository.create(
             {
                 code,
                 codeType: createOnetimeCodeDto.codeType,
@@ -125,6 +129,18 @@ export class OnetimeCodeService {
             undefined,
             scope
         );
+
+        const result = await this.validateCode(onetimeCode.code);
+
+        if (!result.valid) {
+            throw new BadRequestException('OneTimeCode has expired!');
+        }
+
+        if (onetimeCode.isActive) {
+            await this.activate(onetimeCode.id);
+        }
+
+        return onetimeCode;
     }
 
     async update(id: number, updateOnetimeCodeDto: UpdateOnetimeCodeDto, user: UserContext) {
@@ -149,17 +165,23 @@ export class OnetimeCodeService {
         if (!onetimeCode) {
             throw new NotFoundException('Onetime code not found');
         }
+        await this.triggerDeviceSync(onetimeCode.id, 'Delete');
 
         return this.onetimeCodeRepository.softDelete(id, scope);
     }
 
-    async activate(id: number, user: UserContext) {
-        await this.findOne(id, user);
-        return this.onetimeCodeRepository.activateCode(id);
+    async activate(id: number, user?: UserContext) {
+        const oneTimeCode = await this.findOne(id, user);
+
+        await this.triggerDeviceSync(oneTimeCode.id, 'Delete');
+        await this.triggerDeviceSync(oneTimeCode.id, 'Create');
+
+        return this.onetimeCodeRepository.activateCode(id, oneTimeCode?.visitorId);
     }
 
     async deactivate(id: number, user: UserContext) {
-        await this.findOne(id, user);
+        const oneTimeCode = await this.findOne(id, user);
+        await this.triggerDeviceSync(oneTimeCode.id, 'Delete');
         return this.onetimeCodeRepository.deactivateCode(id);
     }
 
@@ -203,12 +225,23 @@ export class OnetimeCodeService {
 
     async validateCode(code: string) {
         const isValid = await this.onetimeCodeRepository.isCodeValid(code);
+        const codeRecord = await this.onetimeCodeRepository.findByCode(code);
 
         if (!isValid) {
-            throw new BadRequestException('Invalid or expired code');
+            return {
+                valid: false,
+                code: {
+                    id: codeRecord.id,
+                    code: codeRecord.code,
+                    codeType: codeRecord.codeType,
+                    startDate: codeRecord.startDate,
+                    endDate: codeRecord.endDate,
+                },
+                visitor: {
+                    id: codeRecord.visitorId,
+                },
+            };
         }
-
-        const codeRecord = await this.onetimeCodeRepository.findByCode(code);
 
         return {
             valid: true,
@@ -223,5 +256,36 @@ export class OnetimeCodeService {
                 id: codeRecord.visitorId,
             },
         };
+    }
+
+    private async triggerDeviceSync(onetimeCodeId: number, action: 'Create' | 'Delete') {
+        // Xodim qaysi darvozalarga biriktirilganini aniqlaymiz
+        const onetimeCode = await this.onetimeCodeRepository.findById(onetimeCodeId, {
+            visitor: {
+                select: {
+                    id: true,
+                    gate: {
+                        select: {
+                            id: true,
+                        },
+                    },
+                },
+            },
+        });
+
+        const visitor = onetimeCode?.visitor;
+        if (!visitor || !visitor.gate) return;
+        if (action === 'Delete') {
+            // Granular o'chirish jobi
+            await this.visitorQueue.add(JOB.VISITOR.REMOVE_VISITOR_FROM_ALL_DEVICES, {
+                visitorId: onetimeCode?.visitorId,
+            });
+        } else {
+            // Qo'shish yoki Yangilash jobi
+            await this.visitorQueue.add(JOB.VISITOR.SYNC_CREDENTIALS_TO_DEVICES_VISITOR, {
+                gateId: visitor?.gate?.id,
+                onetimeCodeId,
+            });
+        }
     }
 }

@@ -1,27 +1,29 @@
 model Visitor {
-  id                Int       @id @default(autoincrement())
-  firstName         String    @map("first_name")
-  lastName          String    @map("last_name")
-  middleName        String?   @map("middle_name")
+  id                Int     @id @default(autoincrement())
+  firstName         String  @map("first_name")
+  lastName          String  @map("last_name")
+  middleName        String? @map("middle_name")
   birthday          String?
   phone             String?
-  passportNumber    String?   @map("passport_number")
+  passportNumber    String? @map("passport_number")
   pinfl             String?
-  workPlace         String?   @map("work_place")
-  additionalDetails String?   @map("additional_details")
-  creatorId         Int       @map("creator_id")
-  attachedId        Int?      @map("attached_id")
-  isActive          Boolean   @default(true) @map("is_active")
-  createdAt         DateTime  @default(now()) @map("created_at")
-  deletedAt         DateTime? @map("deleted_at")
-  organizationId    Int       @map("organization_id")
+  workPlace         String? @map("work_place")
+  additionalDetails String? @map("additional_details")
+  creatorId         Int     @map("creator_id")
+  attachedId        Int?    @map("attached_id")
+  gateId            Int?    @map("gate_id")
+
+  isActive       Boolean   @default(true) @map("is_active")
+  createdAt      DateTime  @default(now()) @map("created_at")
+  deletedAt      DateTime? @map("deleted_at")
+  organizationId Int       @map("organization_id")
 
   organization Organization   @relation(fields: [organizationId], references: [id], onDelete: Cascade)
   creator      User           @relation("CreatedVisitors", fields: [creatorId], references: [id], onDelete: Restrict)
   attached     Employee?      @relation("AttachedEmployee", fields: [attachedId], references: [id], onDelete: Restrict)
   onetimeCodes OnetimeCode[]
   actions      Action[]
-  devices      Device[]
+  gate         Gate?          @relation(fields: [gateId], references: [id])
   visitorSync  EmployeeSync[]
 
   @@index([organizationId])

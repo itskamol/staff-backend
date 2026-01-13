@@ -1,7 +1,7 @@
 import { IsOptional, IsString, IsNumber, IsIn, IsEnum } from 'class-validator';
 import { Type } from 'class-transformer';
 import { ApiPropertyOptional } from '@nestjs/swagger';
-import { StatusEnum } from '@prisma/client';
+import { StatusEnum, VisitorType } from '@prisma/client';
 import { QueryDto } from '../../shared/dto';
 
 export class GetEmployeeSyncDto extends QueryDto {
@@ -16,6 +16,20 @@ export class GetEmployeeSyncDto extends QueryDto {
     @Type(() => Number)
     @IsNumber()
     employeeId?: number;
+
+    @ApiPropertyOptional()
+    @IsOptional()
+    @Type(() => Number)
+    @IsNumber()
+    deviceId?: number;
+
+    @ApiPropertyOptional({
+        enum: VisitorType,
+        description: 'EMPLOYEE yoki VISITOR',
+    })
+    @IsOptional()
+    @IsEnum(VisitorType)
+    userType?: VisitorType;
 
     @ApiPropertyOptional()
     @IsOptional()

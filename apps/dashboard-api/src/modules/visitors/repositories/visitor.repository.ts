@@ -22,8 +22,6 @@ export class VisitorRepository extends BaseRepository<
 
     protected cascadeRelations = ['onetimeCodes', 'actions'];
 
-    protected disconnectRelations = ['gates'];
-
     protected getDelegate() {
         return this.prisma.visitor;
     }

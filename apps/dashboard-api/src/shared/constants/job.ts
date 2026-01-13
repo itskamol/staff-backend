@@ -3,7 +3,7 @@ export const JOB = {
         NAME: 'device',
         CREATE: 'device:create',
         DELETE: 'device:delete',
-        REMOVE_EMPLOYEES: 'device:removeEmployeesFromDevices',
+        REMOVE_EMPLOYEE_FROM_ALL_DEVICES: 'device:removeEmployeesFromDevices',
         CLEAR_ALL_USERS_FROM_DEVICE: 'device:clearAllUsersFromDevice',
         SYNC_SINGLE_CREDENTIAL: 'device:syncSingleCredential',
         REMOVE_SPECIFIC_CREDENTIALS: 'device:removeSpecificCredentials',
@@ -22,5 +22,8 @@ export const JOB = {
         ASSIGN_TO_GATES: 'visitor:assignToGates',
         UPDATE: 'visitor:update',
         DELETE: 'visitor:delete',
+        REMOVE_SPECIFIC_CREDENTIALS_VISITOR: 'visitor:removeSpecificCredentials',
+        SYNC_CREDENTIALS_TO_DEVICES_VISITOR: 'visitor:syncCredentialsToDevices',
+        REMOVE_VISITOR_FROM_ALL_DEVICES: 'visitor:removeVisitorsAllDevices',
     },
 };

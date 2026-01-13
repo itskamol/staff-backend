@@ -156,9 +156,9 @@ export class OrganizationService {
 
         const employeeIds = data.employees.map(e => e.id);
 
-        await this.deviceQueue.add(JOB.DEVICE.REMOVE_EMPLOYEES, {
-            employeeIds,
-        });
+        // await this.deviceQueue.add(JOB.DEVICE.DELETE, {
+        //     employeeIds,
+        // });
         return this.organizationRepository.softDelete(id, scope);
     }
 }
