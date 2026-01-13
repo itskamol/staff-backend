@@ -56,15 +56,9 @@ export class EmployeeRepository extends BaseRepository<
 > {
     protected readonly modelName = 'Employee';
 
-    protected cascadeRelations = [
-        'credential',
-        'computerUser',
-        'action',
-        'employeeSync',
-        'attendance',
-    ];
+    protected cascadeRelations = ['credential', 'computerUser', 'action', 'employeeSync'];
 
-    protected disconnectRelations = ['gates'];
+    protected disconnectRelations = ['devices'];
 
     constructor(prisma: PrismaService) {
         super(prisma);

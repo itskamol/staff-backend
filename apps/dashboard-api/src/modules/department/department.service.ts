@@ -107,8 +107,8 @@ export class DepartmentService {
             {
                 organization: true,
                 parent: { where: { deletedAt: null } },
-                childrens: { where: { deletedAt: null } },
-                employees: { where: { deletedAt: null } },
+                childrens: { where: { deletedAt: null, isActive: true } },
+                employees: { where: { deletedAt: null, isActive: true } },
             },
             { organizationId: scope?.organizationId }
         );
@@ -146,9 +146,9 @@ export class DepartmentService {
 
         const employeeIds = data.employees.map(e => e.id);
 
-        // await this.deviceQueue.add(JOB.DEVICE.REMOVE_EMPLOYEES, {
-        //     employeeIds,
-        // });
+        await this.deviceQueue.add(JOB.DEVICE.REMOVE_EMPLOYEES_FROM_ALL_DEVICES, {
+            employeeIds,
+        });
         return this.departmentRepository.softDelete(id, scope);
     }
 }
