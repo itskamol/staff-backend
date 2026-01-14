@@ -106,6 +106,16 @@ export class EmployeePlanService {
         if(plan.isDefault){
             throw new BadRequestException("Default Schedule is not deleted!")
         }
+
+        if (plan.employees?.length) {
+            const defaultPlan = await this.repo.findFirst({ isDefault: true }, {}, {}, scope);
+            const ids = plan.employees.map(e => e.id);
+            await this.employeeService.updateManyEmployees(
+                ids,
+                { employeePlanId: defaultPlan?.id ?? null },
+                scope
+            );
+        }
         return this.repo.softDelete(id, scope);
     }
 
@@ -128,7 +138,7 @@ export class EmployeePlanService {
         const invalidIds = dto.employeeIds.filter(id => !validIds.includes(id));
 
         await this.repo.assignEmployees(dto.employeePlanId, validIds);
-        
+
         return {
             message: `Assigned ${validIds.length} employees`,
             successfullyAssigned: employees,
