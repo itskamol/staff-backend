@@ -205,7 +205,7 @@ export class DeviceProcessor extends WorkerHost {
     ) {
         let sync = await this.prisma.employeeSync.findFirst({
             where: {
-                gateId: gate.id,
+                gateId: gate.id || null,
                 deviceId: device.id,
                 employeeId: employee.id,
                 credentialId: cred.id,
@@ -218,7 +218,7 @@ export class DeviceProcessor extends WorkerHost {
         if (!sync) {
             sync = await this.prisma.employeeSync.create({
                 data: {
-                    gateId: gate.id,
+                    gateId: gate.id || null,
                     deviceId: device.id,
                     employeeId: employee.id,
                     credentialId: cred.id,
