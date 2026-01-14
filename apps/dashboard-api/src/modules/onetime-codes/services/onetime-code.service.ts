@@ -131,7 +131,8 @@ export class OnetimeCodeService {
         );
 
         const result = await this.validateCode(onetimeCode.code);
-
+        console.log('oneTimeCode', onetimeCode);
+        console.log('result', result);
         if (!result.valid) {
             throw new BadRequestException('OneTimeCode has expired!');
         }

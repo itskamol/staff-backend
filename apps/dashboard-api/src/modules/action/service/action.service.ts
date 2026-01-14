@@ -226,7 +226,7 @@ export class ActionService {
                 actionTime: dto.actionTime,
                 visitorType: dto.visitorType,
                 entryType: dto.entryType,
-                actionType: dto.actionType,
+                actionType: dto.actionType || null,
                 actionResult: dto.actionResult,
                 actionMode: dto.actionMode,
                 device: { connect: { id: deviceId } },
