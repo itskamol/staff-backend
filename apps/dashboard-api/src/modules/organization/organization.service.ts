@@ -121,16 +121,19 @@ export class OrganizationService {
                         uz: 'Boshqa',
                         eng: 'Other',
                         ru: 'Другой',
+                        isDefault: true
                     },
                     {
                         uz: "Sog'ligidagi muammo sabab ishga kelolmadi yoki kech keldi.",
                         eng: 'Late or absent due to health issues or medical appointment.',
                         ru: 'Не смог прийти на работу или опоздал из-за проблем со здоровьем',
+                        isDefault: true
                     },
                     {
                         uz: "Yo'l tirbandligi tufayli kech qoldi.",
                         eng: 'Delayed due to heavy traffic or road congestion.',
                         ru: 'Задержка из-за интенсивного движения или дорожных заторов.',
+                        isDefault: true
                     },
                 ],
             },

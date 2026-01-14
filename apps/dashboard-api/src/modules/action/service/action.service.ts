@@ -256,12 +256,14 @@ export class ActionService {
 
     async findAll(query: ActionQueryDto, scope: DataScope) {
         const where: Prisma.ActionWhereInput = {};
-        const { startDate, endDate, search, deviceId, employeeId, status, sort, order } = query;
+        const { startDate, endDate, search, deviceId, employeeId, status, sort, order, visitorId } = query;
 
-        if (deviceId) where.deviceId = Number(deviceId);
-        if (employeeId) where.employeeId = Number(employeeId);
+        if (deviceId) where.deviceId = deviceId;
+        if (employeeId) where.employeeId = employeeId;
         if (status) where.status = status;
+        if (visitorId) where.visitorId = visitorId;
 
+        
         if (search) {
             where.employee = {
                 name: {
@@ -270,37 +272,32 @@ export class ActionService {
                 },
             };
         }
-
+        
         let start: Date;
         let end: Date;
-
+        
         if (startDate && endDate) {
             start = new Date(startDate);
             start.setHours(0, 0, 0, 0);
-
+            
             end = new Date(endDate);
             end.setHours(23, 59, 59, 999);
         } else {
             start = new Date();
             start.setHours(0, 0, 0, 0);
-
+            
             end = new Date();
             end.setHours(23, 59, 59, 999);
         }
-
+        
         where.actionTime = {
             gte: start,
             lte: end,
         };
-
+        
         const actions = await this.actionRepo.findMany(
             {
-                ...where,
-                employee: {
-                    department: scope?.departmentIds.length
-                        ? { id: { in: scope?.departmentIds } }
-                        : {},
-                },
+                ...where
             },
             { [sort || 'actionTime']: order || 'asc' },
             this.actionRepo.getDefaultInclude(),
@@ -309,7 +306,7 @@ export class ActionService {
             { organizationId: scope?.organizationId },
             true
         );
-
+        
         const dates = this.getDateRange(start, end);
 
         return dates.map(date => {

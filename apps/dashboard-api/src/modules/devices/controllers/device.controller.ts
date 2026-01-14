@@ -173,7 +173,7 @@ export class DeviceController {
         @Param('employeeId') employeeId: number,
         @Scope() scope: DataScope
     ) {
-        return await this.deviceService.getEmployeeGateCredentials(gateId, employeeId, scope);
+        return await this.deviceService.getEmployeeGateCredentials(gateId, employeeId);
     }
 
     @Post('gate/sync-credentials')
