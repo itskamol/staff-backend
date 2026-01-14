@@ -75,7 +75,6 @@ export class OnetimeCodeRepository extends BaseRepository<
             code,
             isActive: true,
             deletedAt: null,
-            startDate: { lte: now },
             endDate: { gte: now },
         });
 
