@@ -229,7 +229,7 @@ export class EmployeeService {
         ids: number[],
         dto: UpdateEmployeeDto,
         scope: DataScope,
-        user: UserContext
+        user?: UserContext
     ) {
         if (!ids || ids.length === 0) {
             throw new Error('No employee IDs provided');
