@@ -102,7 +102,10 @@ export class EmployeePlanService {
     }
 
     async delete(id: number, scope: DataScope) {
-        await this.findById(id, scope);
+        const plan = await this.findById(id, scope);
+        if(plan.isDefault){
+            throw new BadRequestException("Default Schedule is not deleted!")
+        }
         return this.repo.softDelete(id, scope);
     }
 
@@ -125,7 +128,7 @@ export class EmployeePlanService {
         const invalidIds = dto.employeeIds.filter(id => !validIds.includes(id));
 
         await this.repo.assignEmployees(dto.employeePlanId, validIds);
-
+        
         return {
             message: `Assigned ${validIds.length} employees`,
             successfullyAssigned: employees,

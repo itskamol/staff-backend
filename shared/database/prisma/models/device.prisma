@@ -136,6 +136,7 @@ model Reasons {
   description    String?
   organizationId Int       @map("organization_id")
   isActive       Boolean   @default(true) @map("is_active")
+  isDefault      Boolean   @default(false)
   createdAt      DateTime  @default(now()) @map("created_at")
   deletedAt      DateTime? @map("deleted_at")
 

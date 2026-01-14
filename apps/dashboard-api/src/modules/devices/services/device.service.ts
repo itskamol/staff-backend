@@ -409,7 +409,6 @@ export class DeviceService {
     }
 
     async unlockDevice(deviceId: number, doorNo: number = 1, scope?: DataScope) {
-        try {
             const device = await this.deviceRepository.findById(deviceId, {}, scope);
 
             if (!device) {
@@ -430,12 +429,9 @@ export class DeviceService {
             }
 
             return { success: true };
-        } catch (error) {
-            throw error;
-        }
     }
 
-    async getEmployeeGateCredentials(gateId: number, employeeId: number, scope: DataScope) {
+    async getEmployeeGateCredentials(gateId: number, employeeId: number) {
         const allCredentials = await this.prisma.credential.findMany({
             where: { employeeId, isActive: true, deletedAt: null },
         });

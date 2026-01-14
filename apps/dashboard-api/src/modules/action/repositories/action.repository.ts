@@ -40,6 +40,13 @@ export class ActionRepository extends BaseRepository<
                     type: true,
                 },
             },
+            onetimeCode: {
+                select: {
+                    id: true,
+                    codeType: true,
+                    code: true
+                }
+            }
         };
     }
 }

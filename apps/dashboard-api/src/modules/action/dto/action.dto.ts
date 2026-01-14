@@ -62,6 +62,7 @@ export class ActionQueryDto extends QueryDto {
     @ApiPropertyOptional()
     @IsOptional()
     @IsInt()
+    @Type(() => Number)
     deviceId?: number;
 
     @ApiPropertyOptional()
@@ -75,6 +76,12 @@ export class ActionQueryDto extends QueryDto {
     @IsInt()
     @Type(() => Number)
     employeeId?: number;
+
+    @ApiPropertyOptional()
+    @IsOptional()
+    @IsInt()
+    @Type(() => Number)
+    visitorId?: number;
 
     @ApiPropertyOptional({ enum: ActionStatus })
     @IsOptional()

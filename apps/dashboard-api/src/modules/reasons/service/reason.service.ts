@@ -89,7 +89,10 @@ export class ReasonService {
     }
 
     async deleteReason(id: number, scope: DataScope, user: UserContext): Promise<Reasons> {
-        await this.getReasonById(id, scope, user);
+        const reason = await this.getReasonById(id, scope, user);
+        if(reason.isDefault){
+            throw new BadRequestException("Default Reason is not deleted!")
+        }
         return this.reasonRepository.softDelete(id, scope);
     }
 }
