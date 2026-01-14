@@ -1,18 +1,8 @@
-import {
-    IsString,
-    IsNotEmpty,
-    IsOptional,
-    IsBoolean,
-    IsInt,
-    IsDateString,
-    IsEnum,
-    IsArray,
-    ArrayNotEmpty,
-} from 'class-validator';
+import { IsString, IsNotEmpty, IsOptional, IsBoolean, IsInt, IsArray } from 'class-validator';
 import { ApiProperty, PartialType } from '@nestjs/swagger';
-import { VisitorCodeType } from '@prisma/client';
 import { QueryDto } from 'apps/dashboard-api/src/shared/dto/query.dto';
 import { OnetimeCodeDto } from '../../onetime-codes/dto/onetime-code.dto';
+import { Type } from 'class-transformer';
 
 export class CreateVisitorDto {
     @ApiProperty({
@@ -100,6 +90,7 @@ export class CreateVisitorDto {
     })
     @IsInt()
     @IsNotEmpty()
+    @Type(() => Number)
     organizationId: number;
 
     @ApiProperty({
@@ -109,6 +100,7 @@ export class CreateVisitorDto {
     })
     @IsOptional()
     @IsInt()
+    @Type(() => Number)
     attachedId?: number;
 
     @ApiProperty({
@@ -118,6 +110,7 @@ export class CreateVisitorDto {
     })
     @IsOptional()
     @IsInt()
+    @Type(() => Number)
     gateId?: number;
 
     @ApiProperty({
@@ -166,6 +159,7 @@ export class QueryVisitorDto extends QueryDto {
     })
     @IsOptional()
     @IsInt()
+    @Type(() => Number)
     creatorId?: number;
 
     @ApiProperty({
@@ -175,6 +169,7 @@ export class QueryVisitorDto extends QueryDto {
     })
     @IsOptional()
     @IsInt()
+    @Type(() => Number)
     attachedId?: number;
 }
 
@@ -185,7 +180,8 @@ export class AssignVisitorToGatesDto {
         type: Number,
     })
     @IsInt()
-    gateId: number; // Nomini gateIds dan gateId ga o'zgartirdik (chunki u bitta son)
+    @Type(() => Number)
+    gateId: number;
 
     @ApiProperty({
         example: [5, 6, 7],
