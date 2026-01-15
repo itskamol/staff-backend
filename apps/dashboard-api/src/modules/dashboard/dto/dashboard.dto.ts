@@ -1,5 +1,6 @@
 import { ApiProperty } from '@nestjs/swagger';
-import { IsString } from 'class-validator';
+import { Transform, Type } from 'class-transformer';
+import { IsInt, IsNumber, IsOptional, IsString } from 'class-validator';
 
 export interface DashboardStats {
     totalEmployees: number;
@@ -35,4 +36,10 @@ export class ChartStatsQueryDto {
     @ApiProperty({ example: '2025-12-10', required: false })
     @IsString()
     endDate: string;
+
+    @ApiProperty({ example: 1 })
+    @IsOptional()
+    @IsInt()
+    @Type(() => Number)
+    departmentId?: number;
 }

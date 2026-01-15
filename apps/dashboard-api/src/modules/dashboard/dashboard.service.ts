@@ -13,7 +13,7 @@ import { DataScope, Role, UserContext } from '@app/shared/auth';
 export class DashboardService {
     constructor(private readonly prisma: PrismaService) {}
 
-    async generateAttendanceReport(user: UserContext, scope: DataScope): Promise<DashboardStats> {
+    async generateDashboardReport(user: UserContext, scope: DataScope): Promise<DashboardStats> {
         const orgId = scope?.organizationId;
         const depId = scope?.departmentIds ?? [];
 
@@ -141,14 +141,28 @@ export class DashboardService {
         user: UserContext,
         scope: DataScope
     ): Promise<AttendanceChartStatsDto> {
-        const { startDate = new Date(), endDate = new Date() } = query;
-        const { orgId, depIds } = {
-            orgId: scope?.organizationId,
-            depIds: scope?.departmentIds ?? [],
-        };
+        const {
+            startDate = new Date().toISOString(),
+            endDate = new Date().toISOString(),
+            departmentId,
+        } = query;
+
+        const orgId = scope?.organizationId;
+        const depIds = scope?.departmentIds ?? [];
+
+        // query departmentId -> scope bilan tekshiramiz (xavfsizlik)
+        let effectiveDepIds: number[] = depIds;
+
+        if (departmentId) {
+            if (depIds.length && !depIds.includes(departmentId)) {
+                throw new BadRequestException('You do not have access to this department');
+            }
+            effectiveDepIds = [departmentId];
+        }
 
         const start = new Date(startDate);
         start.setHours(0, 0, 0, 0);
+
         const end = new Date(endDate);
         end.setHours(23, 59, 59, 999);
 
@@ -156,7 +170,7 @@ export class DashboardService {
             this.prisma.employee.findMany({
                 where: {
                     ...(orgId ? { organizationId: orgId } : {}),
-                    ...(depIds.length && { departmentId: { in: depIds } }),
+                    ...(effectiveDepIds.length ? { departmentId: { in: effectiveDepIds } } : {}),
                     deletedAt: null,
                 },
                 select: { id: true },
@@ -167,7 +181,9 @@ export class DashboardService {
                     ...(orgId ? { organizationId: orgId } : {}),
                     createdAt: { gte: start, lte: end },
                     employee: {
-                        ...(depIds.length && { departmentId: { in: depIds } }),
+                        ...(effectiveDepIds.length
+                            ? { departmentId: { in: effectiveDepIds } }
+                            : {}),
                         deletedAt: null,
                     },
                 },
