@@ -62,16 +62,16 @@ export class DeviceController {
     @Put('device-time/:id')
     @Roles(Role.ADMIN)
     @ApiCrudOperation(DeviceDto, 'update', {
-        body: UpdateDeviceAuthDto,
+        body: UpdateDeviceTimeDto,
         summary: 'Update device auth',
         errorResponses: { notFound: true, forbidden: true },
     })
     async updateTime(
         @Param('id') id: number,
-        @Body() updateDeviceDto: UpdateDeviceAuthDto,
+        @Body() updateDeviceDto: UpdateDeviceTimeDto,
         @Scope() scope: UserContext
     ) {
-        return await this.deviceService.updateDeviceAuth(id, updateDeviceDto, scope);
+        return await this.deviceService.updateDeviceTime(id, updateDeviceDto, scope);
     }
 
     @Put('display/:id')
@@ -92,16 +92,36 @@ export class DeviceController {
     @Put('credential-auth/:id')
     @Roles(Role.ADMIN)
     @ApiCrudOperation(DeviceDto, 'update', {
-        body: UpdateResultDeviceDisplayDto,
+        body: UpdateDeviceAuthDto,
         summary: 'Update device auth display result',
         errorResponses: { notFound: true, forbidden: true },
     })
     async updateDeviceAuth(
         @Param('id') id: number,
-        @Body() updateDeviceDto: UpdateResultDeviceDisplayDto,
+        @Body() updateDeviceDto: UpdateDeviceAuthDto,
         @Scope() scope: UserContext
     ) {
-        return await this.deviceService.updateDisplayResult(id, updateDeviceDto, scope);
+        return await this.deviceService.updateDeviceAuth(id, updateDeviceDto, scope);
+    }
+
+    @Get('get-capabilities/:id')
+    @Roles(Role.ADMIN)
+    @ApiCrudOperation(DeviceDto, 'update', {
+        summary: 'Get Device Time',
+        errorResponses: { notFound: true, forbidden: true },
+    })
+    async getDeviceCapabilities(@Param('id') id: number, @Scope() scope: UserContext) {
+        return await this.deviceService.getDeviceCapabilities(id, scope);
+    }
+
+    @Get('get-device-time/:id')
+    @Roles(Role.ADMIN)
+    @ApiCrudOperation(DeviceDto, 'update', {
+        summary: 'Get Device Time',
+        errorResponses: { notFound: true, forbidden: true },
+    })
+    async getDeviceTime(@Param('id') id: number, @Scope() scope: UserContext) {
+        return await this.deviceService.getDeviceTime(id, scope);
     }
 
     @Put(':id')

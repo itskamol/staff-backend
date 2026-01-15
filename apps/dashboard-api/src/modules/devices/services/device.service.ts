@@ -158,16 +158,8 @@ export class DeviceService {
             throw new BadRequestException('Qurilma capabilities ni olishda xatolik');
         }
 
-        const rawCap = capResponse;
-        const isSupportFace = Boolean(
-            rawCap?.DeviceCap?.isSupportFace ||
-                rawCap?.CapAccessControl?.isSupportFace ||
-                rawCap?.FaceLibCap?.maxFDNum > 0 ||
-                rawCap?.DeviceCap?.isSupportAlgorithmsInfo === true
-        );
-
         const capabilities = {
-            isSupportFace,
+            ...capResponse,
         };
 
         const deviceInfo = deviceInfoResult.data;
@@ -192,10 +184,6 @@ export class DeviceService {
             password: dtoData.password,
             type: dtoData.deviceTypes,
             entryType: dtoData.entryType || EntryType.BOTH,
-            welcomeText: dtoData.welcomeText || null,
-            welcomeTextType: dtoData.welcomeTextType || null,
-            welcomePhoto: dtoData.welcomePhoto || null,
-            welcomePhotoType: dtoData.welcomePhotoType || null,
             isActive: dtoData.isActive !== undefined ? dtoData.isActive : true,
             capabilities,
         };
@@ -528,6 +516,17 @@ export class DeviceService {
             ...data,
         });
 
+        if (result) {
+            const device = await this.deviceRepository.findById(deviceId);
+
+            await this.deviceRepository.update(deviceId, {
+                capabilities: {
+                    ...(device?.capabilities ?? {}),
+                    ...(data ?? {}),
+                },
+            });
+        }
+
         return result;
     }
 
@@ -538,6 +537,33 @@ export class DeviceService {
             config,
             ...data,
         });
+
+        if (result) {
+            const device = await this.deviceRepository.findById(deviceId);
+
+            await this.deviceRepository.update(deviceId, {
+                capabilities: {
+                    ...(device?.capabilities ?? {}),
+                    ...(data ?? {}),
+                },
+            });
+        }
+
+        return result;
+    }
+
+    async getDeviceTime(deviceId: number, scope: DataScope) {
+        const config = await this.getConfig(deviceId, scope);
+
+        const result = await this.hikvisionService.getDeviceTime(config);
+
+        return result;
+    }
+
+    async getDeviceCapabilities(deviceId: number, scope: DataScope) {
+        const config = await this.getConfig(deviceId, scope);
+
+        const result = await this.hikvisionService.getDeviceCapabilities(config);
 
         return result;
     }

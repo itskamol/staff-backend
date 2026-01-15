@@ -11,8 +11,8 @@ import {
     IsBoolean,
 } from 'class-validator';
 import { ApiProperty } from '@nestjs/swagger';
-import { AuthMode } from './auth-mode.enum';
 import { Type } from 'class-transformer';
+import { AuthMode } from '@prisma/client';
 
 export class CreateHikvisionUserDto {
     @ApiProperty({

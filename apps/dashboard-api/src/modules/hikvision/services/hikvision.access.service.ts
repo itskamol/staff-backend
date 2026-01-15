@@ -14,7 +14,11 @@ import {
 } from '../dto/create-hikvision-user.dto';
 import { XMLParser } from 'fast-xml-parser';
 import { PrismaService } from '@app/shared/database';
-import { mapAuthModeToHikvision } from '../dto/hikvision-auth.mapper';
+import {
+    mapAuthModeToHikvision,
+    mapHikvisionVerifyModeToAuthMode,
+} from '../dto/hikvision-auth.mapper';
+import { AuthMode } from '@prisma/client';
 
 @Injectable()
 export class HikvisionAccessService {
@@ -69,19 +73,77 @@ export class HikvisionAccessService {
     }
 
     async getDeviceCapabilities(config: HikvisionConfig): Promise<any> {
+        const [acsCfg, weekPlan, time] = await Promise.all([
+            this.getAcsCfg(config),
+            this.getVerifyWeekPlanCfg(config),
+            this.getSystemTime(config),
+        ]);
+
+        // authMode chiqarish (Monday verifyMode)
+        let authMode: AuthMode | null = null;
+        try {
+            const list = weekPlan?.WeekPlanCfg ?? [];
+            const monday = Array.isArray(list) ? list.find(x => x.week === 'Monday') : null;
+            authMode = mapHikvisionVerifyModeToAuthMode(monday?.verifyMode);
+        } catch {}
+
+        // display settings
+        const display = acsCfg
+            ? {
+                  showName: Boolean(acsCfg.showName),
+                  showPicture: Boolean(acsCfg.showPicture),
+                  showEmployeeNo: Boolean(acsCfg.showEmployeeNo),
+                  voicePrompt: Boolean(acsCfg.voicePrompt),
+                  desensitiseName: Boolean(acsCfg.desensitiseName),
+                  desensitiseEmployeeNo: Boolean(acsCfg.desensitiseEmployeeNo),
+              }
+            : {};
+
+        // time info (edit uchun)
+        const timeInfo = time
+            ? {
+                  timeMode: time.timeMode,
+                  localTime: time.localTime,
+                  timeZone: time.timeZone,
+              }
+            : {};
+
+        // yakuniy capabilities
+        return {
+            ...(authMode ? { authMode } : {}),
+            ...display,
+            ...timeInfo,
+        };
+    }
+
+    private async getAcsCfg(config: HikvisionConfig): Promise<any | null> {
         this.coreService.setConfig(config);
+        const res = await this.coreService.request(
+            'GET',
+            '/ISAPI/AccessControl/AcsCfg?format=json'
+        );
+        if (res.status !== 200) return null;
+        return res.data?.AcsCfg ?? res.data;
+    }
 
-        const response = await this.coreService.request('GET', '/ISAPI/System/capabilities');
+    private async getVerifyWeekPlanCfg(config: HikvisionConfig): Promise<any | null> {
+        this.coreService.setConfig(config);
+        const res = await this.coreService.request(
+            'GET',
+            '/ISAPI/AccessControl/VerifyWeekPlanCfg/1?format=json'
+        );
+        if (res.status !== 200) return null;
+        return res.data?.VerifyWeekPlanCfg ?? res.data;
+    }
 
-        if (response.status !== 200) {
-            this.logger.error(`Capabilities olishda xato: ${response.status}`);
-            return null;
-        }
+    private async getSystemTime(config: HikvisionConfig): Promise<any | null> {
+        this.coreService.setConfig(config);
+        const res = await this.coreService.request('GET', '/ISAPI/System/time');
+        if (res.status !== 200) return null;
 
-        // XML → JSON
-        const parser = new XMLParser();
-        const json = parser.parse(response.data);
-        return json;
+        const parser = new XMLParser({ ignoreAttributes: false });
+        const parsed = parser.parse(res.data);
+        return parsed?.Time ?? null;
     }
 
     async createUser(
@@ -596,60 +658,55 @@ export class HikvisionAccessService {
     }
 
     async setDeviceAuthMode(data: DeviceAuthDto): Promise<boolean> {
-        try {
-            const { config, authMode } = data;
-            this.coreService.setConfig(config);
+        const { config, authMode } = data;
+        this.coreService.setConfig(config);
 
-            const hikvisionMode = mapAuthModeToHikvision(authMode);
+        const hikvisionMode = mapAuthModeToHikvision(authMode);
 
-            const weekPlan = [
-                'Monday',
-                'Tuesday',
-                'Wednesday',
-                'Thursday',
-                'Friday',
-                'Saturday',
-                'Sunday',
-            ].map((day, index) => ({
-                id: index + 1,
-                week: day,
+        const weekPlan = [
+            'Monday',
+            'Tuesday',
+            'Wednesday',
+            'Thursday',
+            'Friday',
+            'Saturday',
+            'Sunday',
+        ].map((day, index) => ({
+            id: index + 1,
+            week: day,
+            enable: true,
+            verifyMode: hikvisionMode,
+            TimeSegment: {
+                beginTime: '00:00:00',
+                endTime: '24:00:00',
+            },
+        }));
+
+        const body = {
+            VerifyWeekPlanCfg: {
                 enable: true,
-                verifyMode: hikvisionMode,
-                TimeSegment: {
-                    beginTime: '00:00:00',
-                    endTime: '29:59:00',
-                },
-            }));
+                WeekPlanCfg: weekPlan,
+            },
+        };
 
-            const body = {
-                VerifyWeekPlanCfg: {
-                    enable: true,
-                    WeekPlanCfg: weekPlan,
-                },
-            };
+        const response = await this.coreService.request(
+            'PUT',
+            '/ISAPI/AccessControl/VerifyWeekPlanCfg/1?format=json',
+            body
+        );
 
-            const response = await this.coreService.request(
-                'PUT',
-                '/ISAPI/AccessControl/VerifyWeekPlanCfg/1?format=json',
-                body
-            );
-
-            if (response.status === 200) {
-                this.logger.log(`✅ Device auth mode set to ${hikvisionMode}`);
-                return true;
-            }
-
-            this.logger.warn(`⚠️ Failed to set auth mode: ${response.status}`);
-            return false;
-        } catch (error) {
-            console.log(error);
+        if (response.status === 200) {
+            this.logger.log(`✅ Device auth mode set to ${hikvisionMode}`);
+            return true;
         }
+
+        this.logger.warn(`⚠️ Failed to set auth mode: ${response.status}`);
+        return false;
     }
 
     async setDisplayAuthResult(data: ResultDeviceDisplayDto) {
         const { config } = data;
         this.coreService.setConfig(config);
-        console.log(data);
         const body = {
             AcsCfg: {
                 showPicture: data.showPicture,
@@ -702,5 +759,33 @@ export class HikvisionAccessService {
             return true;
         }
         return response.status === 200;
+    }
+
+    async getDeviceTime(config: HikvisionConfig): Promise<{
+        timeMode: 'manual' | 'ntp';
+        localTime: string;
+        timeZone: string;
+    }> {
+        this.coreService.setConfig(config);
+
+        const response = await this.coreService.request('GET', '/ISAPI/System/time');
+
+        if (response.status !== 200) {
+            throw new BadRequestException('Failed to get device time');
+        }
+
+        const parser = new XMLParser({ ignoreAttributes: false });
+        const parsed = parser.parse(response.data);
+
+        const time = parsed?.Time;
+        if (!time) {
+            throw new BadRequestException('Invalid time response from device');
+        }
+
+        return {
+            timeMode: time.timeMode,
+            localTime: time.localTime,
+            timeZone: time.timeZone,
+        };
     }
 }

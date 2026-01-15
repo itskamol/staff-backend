@@ -71,10 +71,6 @@ model Device {
   login            String?
   password         String?
   capabilities     Json?
-  welcomeText      String?       @map("welcome_text")
-  welcomeTextType  WelcomeText?  @map("welcome_text_type")
-  welcomePhoto     String?       @map("welcome_photo")
-  welcomePhotoType WelcomePhoto? @map("welcome_photo_type")
   isActive         Boolean       @default(true) @map("is_active")
   createdAt        DateTime      @default(now()) @map("created_at")
   updatedAt        DateTime      @updatedAt @map("updated_at")
