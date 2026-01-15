@@ -1,4 +1,4 @@
-import { Controller, Post, Param, Req, Res } from '@nestjs/common';
+import { Controller, Post, Param, Req, Res, Put, Body } from '@nestjs/common';
 import { ApiTags, ApiBearerAuth } from '@nestjs/swagger';
 import { Public } from '@app/shared/auth';
 import { Request, Response } from 'express';
@@ -6,6 +6,13 @@ import { ActionService } from '../../action/service/action.service';
 import { LoggerService } from '../../../core/logger';
 import { XmlJsonService } from '../../../shared/services/xtml-json.service';
 import { CredentialRepository } from '../../credential/repositories/credential.repository';
+import { ApiCrudOperation } from '@app/shared/utils';
+import {
+    DeviceAuthDto,
+    DeviceTimeDto,
+    ResultDeviceDisplayDto,
+} from '../dto/create-hikvision-user.dto';
+import { HikvisionAccessService } from '../services/hikvision.access.service';
 
 @ApiTags('Hikvisions')
 @ApiBearerAuth()
@@ -15,7 +22,8 @@ export class HikvisionController {
         private readonly actionService: ActionService,
         private readonly logger: LoggerService,
         private readonly xmlJsonService: XmlJsonService,
-        private readonly credentailsService: CredentialRepository
+        private readonly credentailsService: CredentialRepository,
+        private readonly hikvisionAccessService: HikvisionAccessService
     ) {}
 
     @Post('event/:id')
@@ -107,5 +115,35 @@ export class HikvisionController {
         }
 
         return res.status(200).json({ responseStatusStrg: 'OK', data: eventData });
+    }
+
+    @Put()
+    @ApiCrudOperation(DeviceAuthDto, 'update', {
+        body: DeviceAuthDto,
+        summary: 'Update device auth',
+        errorResponses: { notFound: true, forbidden: true },
+    })
+    async update(@Body() data: DeviceAuthDto) {
+        return this.hikvisionAccessService.setDeviceAuthMode(data);
+    }
+
+    @Put('display-settings')
+    @ApiCrudOperation(ResultDeviceDisplayDto, 'update', {
+        body: ResultDeviceDisplayDto,
+        summary: 'Update display result',
+        errorResponses: { notFound: true, forbidden: true },
+    })
+    async updateDisplay(@Body() data: ResultDeviceDisplayDto) {
+        return this.hikvisionAccessService.setDisplayAuthResult(data);
+    }
+
+    @Put('device-time')
+    @ApiCrudOperation(DeviceTimeDto, 'update', {
+        body: DeviceTimeDto,
+        summary: 'Update device time',
+        errorResponses: { notFound: true, forbidden: true },
+    })
+    async updateDeviceTime(@Body() data: DeviceTimeDto) {
+        return this.hikvisionAccessService.setDeviceTime(data);
     }
 }
