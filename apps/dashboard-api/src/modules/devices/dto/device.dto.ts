@@ -11,7 +11,7 @@ import {
     IsNumber,
 } from 'class-validator';
 import { ApiProperty, ApiPropertyOptional, PartialType } from '@nestjs/swagger';
-import { ActionType, EntryType, WelcomePhoto, WelcomeText } from '@prisma/client';
+import { ActionType, EntryType } from '@prisma/client';
 import { Transform, Type } from 'class-transformer';
 import { QueryDto } from 'apps/dashboard-api/src/shared/dto';
 
@@ -57,7 +57,12 @@ export class CreateDeviceDto {
     @IsEnum(EntryType)
     entryType?: EntryType;
 
-    // @ApiProperty({ example: true, description: 'Device active status', required: false, default: true })
+    @ApiProperty({
+        example: true,
+        description: 'Device active status',
+        required: false,
+        default: true,
+    })
     @IsOptional()
     @IsBoolean()
     isActive?: boolean = true;
@@ -86,40 +91,6 @@ export class CreateDeviceDto {
     @IsOptional()
     @IsString()
     login?: string;
-
-    @ApiProperty({ example: 'Welcome!', description: 'Welcome text', required: false })
-    @IsOptional()
-    @IsString()
-    welcomeText?: string;
-
-    @ApiProperty({
-        example: WelcomeText.CUSTOM_TEXT,
-        description: 'Welcome text type',
-        enum: WelcomeText,
-        required: false,
-    })
-    @IsOptional()
-    @IsEnum(WelcomeText)
-    welcomeTextType?: WelcomeText;
-
-    @ApiProperty({
-        example: '/images/welcome.png',
-        description: 'Welcome photo URL',
-        required: false,
-    })
-    @IsOptional()
-    @IsString()
-    welcomePhoto?: string;
-
-    @ApiProperty({
-        example: WelcomePhoto.CUSTOM_PHOTO,
-        description: 'Welcome photo type',
-        enum: WelcomePhoto,
-        required: false,
-    })
-    @IsOptional()
-    @IsEnum(WelcomePhoto)
-    welcomePhotoType?: WelcomePhoto;
 }
 
 export class UpdateDeviceDto extends PartialType(CreateDeviceDto) {}

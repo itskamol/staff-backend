@@ -21,18 +21,6 @@ enum ActionType {
   USER
 }
 
-enum WelcomeText {
-  NO_TEXT
-  CUSTOM_TEXT
-  EMPLOYEE_NAME
-}
-
-enum WelcomePhoto {
-  NO_PHOTO
-  CUSTOM_PHOTO
-  EMPLOYEE_PHOTO
-}
-
 enum VisitorType {
   EMPLOYEE
   VISITOR
@@ -55,15 +43,6 @@ enum VisitorCodeType {
   MULTIPLE
 }
 
-enum DeviceType {
-  FACE
-  CARD
-  CAR
-  QR
-  ACCESS_CONTROL
-  BIOMETRIC
-  OTHER
-}
 
 enum StatusEnum {
   WAITING
@@ -93,4 +72,19 @@ enum ResourceType {
 enum OptionType {
   WEBSITE
   ACTIVE_WINDOW
+}
+
+enum AuthMode {
+    FACE
+    CARD
+    PASSWORD
+    CARD_OR_FACE_OR_PASSWORD
+    FACE_AND_CARD
+    FACE_AND_PASSWORD
+    CARD_AND_PASSWORD 
+    FINGERPRINT
+    FINGERPRINT_OR_CARD
+    FINGERPRINT_AND_CARD 
+    CARD_OR_FACE 
+    CARD_OR_FINGERPRINT_OR_PASSWORD 
 }

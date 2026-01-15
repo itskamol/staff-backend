@@ -1,5 +1,5 @@
 import { ApiProperty } from '@nestjs/swagger';
-import { AuthMode } from '../../hikvision/dto/auth-mode.enum';
+import { AuthMode } from '@prisma/client';
 import { IsBoolean, IsEnum, IsOptional, IsString } from 'class-validator';
 
 export class UpdateDeviceAuthDto {
