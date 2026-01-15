@@ -4,10 +4,17 @@ import { HikvisionCoreService } from '../core/hikvision.core.service';
 import { ConfigService } from 'apps/dashboard-api/src/core/config/config.service';
 import { EmployeeRepository } from '../../employee/repositories/employee.repository';
 import { XmlJsonService } from 'apps/dashboard-api/src/shared/services/xtml-json.service';
-import { CardDto, HikvisionConfig, HikvisionUser } from '../dto/create-hikvision-user.dto';
+import {
+    CardDto,
+    DeviceAuthDto,
+    DeviceTimeDto,
+    HikvisionConfig,
+    HikvisionUser,
+    ResultDeviceDisplayDto,
+} from '../dto/create-hikvision-user.dto';
 import { XMLParser } from 'fast-xml-parser';
-import { VisitorService } from '../../visitors/services/visitor.service';
 import { PrismaService } from '@app/shared/database';
+import { mapAuthModeToHikvision } from '../dto/hikvision-auth.mapper';
 
 @Injectable()
 export class HikvisionAccessService {
@@ -586,5 +593,114 @@ export class HikvisionAccessService {
             cardNo: newCardNo,
             config,
         });
+    }
+
+    async setDeviceAuthMode(data: DeviceAuthDto): Promise<boolean> {
+        try {
+            const { config, authMode } = data;
+            this.coreService.setConfig(config);
+
+            const hikvisionMode = mapAuthModeToHikvision(authMode);
+
+            const weekPlan = [
+                'Monday',
+                'Tuesday',
+                'Wednesday',
+                'Thursday',
+                'Friday',
+                'Saturday',
+                'Sunday',
+            ].map((day, index) => ({
+                id: index + 1,
+                week: day,
+                enable: true,
+                verifyMode: hikvisionMode,
+                TimeSegment: {
+                    beginTime: '00:00:00',
+                    endTime: '29:59:00',
+                },
+            }));
+
+            const body = {
+                VerifyWeekPlanCfg: {
+                    enable: true,
+                    WeekPlanCfg: weekPlan,
+                },
+            };
+
+            const response = await this.coreService.request(
+                'PUT',
+                '/ISAPI/AccessControl/VerifyWeekPlanCfg/1?format=json',
+                body
+            );
+
+            if (response.status === 200) {
+                this.logger.log(`✅ Device auth mode set to ${hikvisionMode}`);
+                return true;
+            }
+
+            this.logger.warn(`⚠️ Failed to set auth mode: ${response.status}`);
+            return false;
+        } catch (error) {
+            console.log(error);
+        }
+    }
+
+    async setDisplayAuthResult(data: ResultDeviceDisplayDto) {
+        const { config } = data;
+        this.coreService.setConfig(config);
+        console.log(data);
+        const body = {
+            AcsCfg: {
+                showPicture: data.showPicture,
+                showName: data.showName,
+                showEmployeeNo: data.showEmployeeNo,
+                voicePrompt: data.voicePrompt,
+                desensitiseName: data.desensitiseName,
+                desensitiseEmployeeNo: data.desensitiseEmployeeNo,
+                saveCapPic: true,
+                saveFacePic: true,
+                saveVerificationPic: true,
+                uploadCapPic: true,
+                uploadVerificationPic: true,
+            },
+        };
+
+        const response = await this.coreService.request(
+            'PUT',
+            '/ISAPI/AccessControl/AcsCfg?format=json',
+            body
+        );
+
+        if (response.status === 200) {
+            this.logger.log(`✅ Device display result settings changes`);
+            return true;
+        }
+
+        return response.status === 200;
+    }
+
+    async setDeviceTime(data: DeviceTimeDto): Promise<boolean> {
+        const { config, localTime } = data;
+        this.coreService.setConfig(config);
+
+        const jsonBody: any = {
+            '@': { xmlns: 'http://www.isapi.org/ver20/XMLSchema', version: '2.0' },
+            timeMode: 'manual',
+            timeZone: 'CST-5:00:00',
+            localTime: localTime,
+        };
+
+        const xmlBody = this.xmlJsonService.jsonToXml(jsonBody, 'Time', {
+            declaration: { include: true, encoding: 'UTF-8', version: '1.0' },
+            format: { pretty: true, indent: '  ', newline: '\n', doubleQuotes: true },
+        });
+
+        const response = await this.coreService.request('PUT', '/ISAPI/System/time', xmlBody);
+        if (response.status === 200) {
+            this.logger.log(`✅ Device auth mode set to  ${localTime}`);
+            return true;
+        }
+        return response.status === 200;
     }
 }

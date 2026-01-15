@@ -12,6 +12,11 @@ import {
     AssignEmployeesToDevicesDto,
 } from '../dto/device.dto';
 import { ApiCrudOperation } from 'apps/dashboard-api/src/shared/utils';
+import {
+    UpdateDeviceAuthDto,
+    UpdateDeviceTimeDto,
+    UpdateResultDeviceDisplayDto,
+} from '../dto/device.edit.dto';
 
 @ApiTags('Devices')
 @Controller('devices')
@@ -52,6 +57,51 @@ export class DeviceController {
         @User() user: UserContext
     ) {
         return await this.deviceService.create(createDeviceDto, scope);
+    }
+
+    @Put('device-time/:id')
+    @Roles(Role.ADMIN)
+    @ApiCrudOperation(DeviceDto, 'update', {
+        body: UpdateDeviceAuthDto,
+        summary: 'Update device auth',
+        errorResponses: { notFound: true, forbidden: true },
+    })
+    async updateTime(
+        @Param('id') id: number,
+        @Body() updateDeviceDto: UpdateDeviceAuthDto,
+        @Scope() scope: UserContext
+    ) {
+        return await this.deviceService.updateDeviceAuth(id, updateDeviceDto, scope);
+    }
+
+    @Put('display/:id')
+    @Roles(Role.ADMIN)
+    @ApiCrudOperation(DeviceDto, 'update', {
+        body: UpdateResultDeviceDisplayDto,
+        summary: 'Update device auth display result',
+        errorResponses: { notFound: true, forbidden: true },
+    })
+    async updateDisplayResult(
+        @Param('id') id: number,
+        @Body() updateDeviceDto: UpdateResultDeviceDisplayDto,
+        @Scope() scope: UserContext
+    ) {
+        return await this.deviceService.updateDisplayResult(id, updateDeviceDto, scope);
+    }
+
+    @Put('credential-auth/:id')
+    @Roles(Role.ADMIN)
+    @ApiCrudOperation(DeviceDto, 'update', {
+        body: UpdateResultDeviceDisplayDto,
+        summary: 'Update device auth display result',
+        errorResponses: { notFound: true, forbidden: true },
+    })
+    async updateDeviceAuth(
+        @Param('id') id: number,
+        @Body() updateDeviceDto: UpdateResultDeviceDisplayDto,
+        @Scope() scope: UserContext
+    ) {
+        return await this.deviceService.updateDisplayResult(id, updateDeviceDto, scope);
     }
 
     @Put(':id')

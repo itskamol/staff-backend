@@ -19,6 +19,11 @@ import { EncryptionService } from 'apps/dashboard-api/src/shared/services/encryp
 import { GateDto } from '../../gate/dto/gate.dto';
 import { HikvisionAccessService } from '../../hikvision/services/hikvision.access.service';
 import { PrismaService } from '@app/shared/database';
+import {
+    UpdateDeviceAuthDto,
+    UpdateDeviceTimeDto,
+    UpdateResultDeviceDisplayDto,
+} from '../dto/device.edit.dto';
 
 @Injectable()
 export class DeviceService {
@@ -409,26 +414,13 @@ export class DeviceService {
     }
 
     async unlockDevice(deviceId: number, doorNo: number = 1, scope?: DataScope) {
-            const device = await this.deviceRepository.findById(deviceId, {}, scope);
+        const config = await this.getConfig(deviceId, scope);
+        const result = await this.hikvisionService.openDoor(doorNo, config);
+        if (!result) {
+            throw new BadRequestException('Failed to unlock the door on the device');
+        }
 
-            if (!device) {
-                throw new NotFoundException('Device not found');
-            }
-
-            const hikvisionConfig: HikvisionConfig = {
-                host: device.ipAddress,
-                port: 80,
-                username: device.login,
-                password: device.password,
-                protocol: device.protocol || 'http',
-            };
-
-            const result = await this.hikvisionService.openDoor(doorNo, hikvisionConfig);
-            if (!result) {
-                throw new BadRequestException('Failed to unlock the door on the device');
-            }
-
-            return { success: true };
+        return { success: true };
     }
 
     async getEmployeeGateCredentials(gateId: number, employeeId: number) {
@@ -493,5 +485,60 @@ export class DeviceService {
         }
 
         return { success: true };
+    }
+
+    async getConfig(deviceId: number, scope: DataScope) {
+        const device = await this.deviceRepository.findById(deviceId, {}, scope);
+
+        if (!device) {
+            throw new NotFoundException('Device not found');
+        }
+
+        const hikvisionConfig: HikvisionConfig = {
+            host: device.ipAddress,
+            port: 80,
+            username: device.login,
+            password: device.password,
+            protocol: device.protocol || 'http',
+        };
+
+        return hikvisionConfig;
+    }
+
+    async updateDeviceTime(deviceId: number, data: UpdateDeviceTimeDto, scope: DataScope) {
+        const config = await this.getConfig(deviceId, scope);
+
+        const result = await this.hikvisionService.setDeviceTime({
+            config,
+            localTime: data.localTime,
+        });
+
+        return result;
+    }
+
+    async updateDisplayResult(
+        deviceId: number,
+        data: UpdateResultDeviceDisplayDto,
+        scope: DataScope
+    ) {
+        const config = await this.getConfig(deviceId, scope);
+
+        const result = await this.hikvisionService.setDisplayAuthResult({
+            config,
+            ...data,
+        });
+
+        return result;
+    }
+
+    async updateDeviceAuth(deviceId: number, data: UpdateDeviceAuthDto, scope: DataScope) {
+        const config = await this.getConfig(deviceId, scope);
+
+        const result = await this.hikvisionService.setDeviceAuthMode({
+            config,
+            ...data,
+        });
+
+        return result;
     }
 }
