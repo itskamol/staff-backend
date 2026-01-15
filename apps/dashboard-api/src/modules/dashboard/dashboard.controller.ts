@@ -20,7 +20,7 @@ export class DashboardController {
         description: 'Dashbaord stats retrieved successfully',
     })
     async getAttendanceReport(@User() user: UserContext, @Scope() scope: DataScope) {
-        return this.dashboardService.generateAttendanceReport(user, scope);
+        return this.dashboardService.generateDashboardReport(user, scope);
     }
 
     @Get('chart')
