@@ -6,13 +6,6 @@ import { ActionService } from '../../action/service/action.service';
 import { LoggerService } from '../../../core/logger';
 import { XmlJsonService } from '../../../shared/services/xtml-json.service';
 import { CredentialRepository } from '../../credential/repositories/credential.repository';
-import { ApiCrudOperation } from '@app/shared/utils';
-import {
-    DeviceAuthDto,
-    DeviceTimeDto,
-    ResultDeviceDisplayDto,
-} from '../dto/create-hikvision-user.dto';
-import { HikvisionAccessService } from '../services/hikvision.access.service';
 
 @ApiTags('Hikvisions')
 @ApiBearerAuth()
