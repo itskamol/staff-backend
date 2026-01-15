@@ -29,15 +29,17 @@ export interface AttendanceChartStatsDto {
 }
 
 export class ChartStatsQueryDto {
-    @ApiProperty({ example: '2025-12-10', required: false })
+    @ApiProperty({ example: '2026-01-10', required: false })
     @IsString()
-    startDate: string;
+    @IsOptional()
+    startDate?: string;
 
-    @ApiProperty({ example: '2025-12-10', required: false })
+    @ApiProperty({ example: '2026-01-30', required: false })
     @IsString()
-    endDate: string;
+    @IsOptional()
+    endDate?: string;
 
-    @ApiProperty({ example: 1 })
+    @ApiProperty({ example: 1, required: false })
     @IsOptional()
     @IsInt()
     @Type(() => Number)
