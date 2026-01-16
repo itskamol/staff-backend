@@ -6,8 +6,6 @@ import { LoggerService } from 'apps/dashboard-api/src/core/logger';
 import { HikvisionConfig } from '../../hikvision/dto/create-hikvision-user.dto';
 import { ActionType, StatusEnum, Credential, Device, Visitor, OnetimeCode } from '@prisma/client';
 import { HikvisionAccessService } from '../../hikvision/services/hikvision.access.service';
-import { HikvisionAnprService } from '../../hikvision/services/hikvision.anpr.service';
-import { on } from 'events';
 
 @Processor(JOB.VISITOR.NAME, { concurrency: 5 })
 export class VisitorProcessor extends WorkerHost {
