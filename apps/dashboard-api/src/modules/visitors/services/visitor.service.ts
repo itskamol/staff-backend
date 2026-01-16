@@ -7,6 +7,7 @@ import { Prisma } from '@prisma/client';
 import { Queue } from 'bullmq';
 import { JOB } from 'apps/dashboard-api/src/shared/constants';
 import { InjectQueue } from '@nestjs/bullmq';
+import { windowWhen } from 'rxjs';
 
 @Injectable()
 export class VisitorService {
@@ -44,6 +45,18 @@ export class VisitorService {
 
         if (attachedId) {
             where.attachedId = attachedId;
+        }
+
+        if (scope.departmentIds.length) {
+            where.organization = {
+                departments: {
+                    some: {
+                        id: {
+                            in: scope.departmentIds,
+                        },
+                    },
+                },
+            };
         }
 
         return this.visitorRepository.findManyWithPagination(
@@ -89,70 +102,74 @@ export class VisitorService {
                 },
             },
             { page, limit },
-            scope
+            { organizationId: scope.organizationId }
         );
     }
 
     async findOne(id: number, scope: DataScope) {
-        const visitor = await this.visitorRepository.findById(id, {
-            creator: {
-                select: {
-                    id: true,
-                    name: true,
-                    username: true,
-                },
-            },
-            onetimeCodes: {
-                where: { isActive: true, deletedAt: null },
-                orderBy: { createdAt: 'desc' },
-                select: {
-                    id: true,
-                    code: true,
-                    codeType: true,
-                    startDate: true,
-                    endDate: true,
-                    additionalDetails: true,
-                    isActive: true,
-                    createdAt: true,
-                },
-            },
-            attached: {
-                select: {
-                    id: true,
-                    name: true,
-                },
-            },
-            organization: {
-                select: {
-                    id: true,
-                    fullName: true,
-                    shortName: true,
-                },
-            },
-            actions: {
-                take: 10,
-                orderBy: { actionTime: 'desc' },
-                include: {
-                    device: {
-                        select: {
-                            name: true,
-                            ipAddress: true,
-                        },
-                    },
-                    gate: {
-                        select: {
-                            name: true,
-                        },
+        const visitor = await this.visitorRepository.findById(
+            id,
+            {
+                creator: {
+                    select: {
+                        id: true,
+                        name: true,
+                        username: true,
                     },
                 },
-            },
-            _count: {
-                select: {
-                    actions: true,
-                    onetimeCodes: { where: { isActive: true, deletedAt: null } },
+                onetimeCodes: {
+                    where: { isActive: true, deletedAt: null },
+                    orderBy: { createdAt: 'desc' },
+                    select: {
+                        id: true,
+                        code: true,
+                        codeType: true,
+                        startDate: true,
+                        endDate: true,
+                        additionalDetails: true,
+                        isActive: true,
+                        createdAt: true,
+                    },
+                },
+                attached: {
+                    select: {
+                        id: true,
+                        name: true,
+                    },
+                },
+                organization: {
+                    select: {
+                        id: true,
+                        fullName: true,
+                        shortName: true,
+                    },
+                },
+                actions: {
+                    take: 10,
+                    orderBy: { actionTime: 'desc' },
+                    include: {
+                        device: {
+                            select: {
+                                name: true,
+                                ipAddress: true,
+                            },
+                        },
+                        gate: {
+                            select: {
+                                name: true,
+                            },
+                        },
+                    },
+                },
+                _count: {
+                    select: {
+                        actions: true,
+                        onetimeCodes: { where: { isActive: true, deletedAt: null } },
+                    },
                 },
             },
-        });
+            { organizationId: scope.organizationId }
+        );
 
         if (!visitor) {
             throw new NotFoundException('Visitor not found');
@@ -222,7 +239,7 @@ export class VisitorService {
                     : undefined,
             },
             undefined,
-            scope
+            { organizationId: scope.organizationId }
         );
 
         return visitor;
@@ -262,7 +279,7 @@ export class VisitorService {
                     },
                 },
             },
-            scope
+            { organizationId: scope.organizationId }
         );
 
         if (!visitor) {
@@ -273,7 +290,7 @@ export class VisitorService {
             visitorIds: [id],
         });
 
-        return this.visitorRepository.softDelete(id, scope);
+        return this.visitorRepository.softDelete(id, { organizationId: scope.organizationId });
     }
 
     async findTodayVisitors() {
