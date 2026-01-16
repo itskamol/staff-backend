@@ -72,7 +72,7 @@ export class OnetimeCodeService {
         );
     }
 
-    async findOne(id: number, user: UserContext) {
+    async findOne(id: number, user?: UserContext) {
         const onetimeCode = await this.onetimeCodeRepository.findById(id, {
             visitor: {
                 select: {
@@ -87,6 +87,12 @@ export class OnetimeCodeService {
                             id: true,
                             name: true,
                             username: true,
+                        },
+                    },
+                    attached: {
+                        select: {
+                            id: true,
+                            name: true,
                         },
                     },
                 },
@@ -140,7 +146,9 @@ export class OnetimeCodeService {
             await this.activate(onetimeCode.id);
         }
 
-        return onetimeCode;
+        const data = await this.findOne(onetimeCode.id);
+
+        return data;
     }
 
     async update(id: number, updateOnetimeCodeDto: UpdateOnetimeCodeDto, user: UserContext) {

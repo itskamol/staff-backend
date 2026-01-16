@@ -57,6 +57,13 @@ export class VisitorService {
                         username: true,
                     },
                 },
+                organization: {
+                    select: {
+                        id: true,
+                        fullName: true,
+                        shortName: true,
+                    },
+                },
                 onetimeCodes: {
                     where: { isActive: true },
                     select: {
@@ -113,6 +120,13 @@ export class VisitorService {
                 select: {
                     id: true,
                     name: true,
+                },
+            },
+            organization: {
+                select: {
+                    id: true,
+                    fullName: true,
+                    shortName: true,
                 },
             },
             actions: {
@@ -178,7 +192,7 @@ export class VisitorService {
             }
         }
 
-        return this.visitorRepository.create(
+        const visitor = await this.visitorRepository.create(
             {
                 firstName: createVisitorDto.firstName,
                 lastName: createVisitorDto.lastName,
@@ -210,6 +224,8 @@ export class VisitorService {
             undefined,
             scope
         );
+
+        return visitor;
     }
 
     async update(id: number, updateVisitorDto: UpdateVisitorDto, user: UserContext) {
