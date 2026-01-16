@@ -14,7 +14,6 @@ export class VisitorProcessor extends WorkerHost {
     constructor(
         private readonly prisma: PrismaService,
         private readonly hikvisionService: HikvisionAccessService,
-        private readonly hikvisionAnprService: HikvisionAnprService,
         private readonly logger: LoggerService
     ) {
         super();
@@ -54,8 +53,11 @@ export class VisitorProcessor extends WorkerHost {
         try {
             if (!oneTimeCode.code) throw new Error('Card code empty');
             // Agar eski karta bo'lsa -> REPLACE
+
+            await this.hikvisionService.createUser(visitor.id, config, true);
+
             await this.syncCardToDevice(
-                visitor.id.toString(),
+                visitor.id,
                 oneTimeCode.code,
                 config,
                 oneTimeCode.startDate,
@@ -63,7 +65,7 @@ export class VisitorProcessor extends WorkerHost {
             );
 
             await this.syncPasswordToDevice(
-                visitor.id.toString(),
+                visitor.id,
                 oneTimeCode.code,
                 config,
                 oneTimeCode.startDate,
@@ -73,18 +75,18 @@ export class VisitorProcessor extends WorkerHost {
             await this.updateSync(sync.id, StatusEnum.DONE, 'Successfully synced');
         } catch (err: any) {
             await this.updateSync(sync.id, StatusEnum.FAILED, err.message);
-            this.logger.error(err.message, '', 'VisitorProcessor'); // Yuqoriga catch qilish uchun
+            this.logger.error(err.message, '', 'VisitorProcessor');
         }
     }
 
     private async syncPasswordToDevice(
-        employeeId: string,
+        employeeId: number,
         code: string,
         config: HikvisionConfig,
         beginTime?: Date,
         endTime?: Date
     ) {
-        await this.hikvisionService.createUser(+employeeId, config, true);
+        // await this.hikvisionService.createUser(+employeeId, config, true);
 
         code = code.replace('vis', '');
         await this.hikvisionService.addPasswordToUser(
@@ -97,13 +99,12 @@ export class VisitorProcessor extends WorkerHost {
     }
 
     private async syncCardToDevice(
-        employeeId: string,
+        employeeId: number,
         cardNo: string,
         config: HikvisionConfig,
         beginTime?: Date,
         endTime?: Date
     ) {
-        await this.hikvisionService.createUser(+employeeId, config, true);
         await this.hikvisionService.addCardToUser({
             employeeNo: `v${employeeId}`,
             cardNo,
@@ -128,71 +129,6 @@ export class VisitorProcessor extends WorkerHost {
             where: { id },
             data: { status, message, updatedAt: new Date() },
         });
-    }
-
-    async removeSpecificCredentialsJob(job: Job) {
-        const { gateId, onetimeCodeId } = job.data;
-
-        const gate = await this.prisma.gate.findUnique({
-            where: { id: gateId },
-            include: { devices: true },
-        });
-
-        const onetimeCode = await this.prisma.onetimeCode.findUnique({
-            where: { id: onetimeCodeId, isActive: true, deletedAt: null },
-        });
-
-        if (!gate?.devices?.length || !onetimeCode) return;
-
-        for (const device of gate.devices) {
-            const config = this.getDeviceConfig(device);
-
-            // Yangi granular metodni chaqiramiz
-            await this.processSpecificCredentialRemoval(
-                device,
-                config,
-                onetimeCode.visitorId,
-                onetimeCode
-            );
-
-            // Faqat o'chirilgan credentiallar uchun Sync statusini yangilaymiz
-            await this.prisma.employeeSync.updateMany({
-                where: {
-                    gateId,
-                    deviceId: device.id,
-                    visitorId: onetimeCode.visitorId,
-                    onetimeCodeId: onetimeCodeId,
-                    deletedAt: null,
-                },
-                data: { deletedAt: new Date() },
-            });
-        }
-    }
-
-    /**
-     * Qurilmadan FAQAT ma'lum bir credentiallarni o'chirish (User o'chmaydi)
-     */
-    private async processSpecificCredentialRemoval(
-        device: Device,
-        config: HikvisionConfig,
-        visitorId: number,
-        onetimeCode: OnetimeCode
-    ) {
-        try {
-            if (onetimeCode.code) {
-                await this.hikvisionService.deleteCard({
-                    employeeNo: `v${visitorId}`,
-                    cardNo: onetimeCode.code,
-                    config,
-                });
-
-                await this.hikvisionService.addPasswordToUser(`v${visitorId}`, '', config);
-            }
-        } catch (err) {
-            this.logger.error(
-                `Granular removal failed [Type: ${onetimeCode.codeType}, ID: ${onetimeCode.id}] from Device ${device.id}: ${err.message}`
-            );
-        }
     }
 
     async syncCredentialsToDevicesJob(job: Job) {
@@ -246,7 +182,6 @@ export class VisitorProcessor extends WorkerHost {
         const visitors = await this.prisma.visitor.findMany({
             where: {
                 id: { in: visitorIds },
-                deletedAt: null,
                 isActive: true,
             },
             include: {
@@ -284,16 +219,6 @@ export class VisitorProcessor extends WorkerHost {
                         await this.hikvisionService.deleteUser(`v${visitor.id}`, config);
                     }
 
-                    // 🔹 DB disconnect
-                    await this.prisma.gate.update({
-                        where: { id: visitor.gateId },
-                        data: {
-                            visitors: {
-                                disconnect: { id: visitor.id },
-                            },
-                        },
-                    });
-
                     // 🔹 Sync close
                     await this.prisma.employeeSync.updateMany({
                         where: {
@@ -320,13 +245,10 @@ export class VisitorProcessor extends WorkerHost {
 
     async process(job: Job<any, any, string>) {
         switch (job.name) {
-            case JOB.VISITOR.REMOVE_SPECIFIC_CREDENTIALS_VISITOR:
-                return this.removeSpecificCredentialsJob(job);
-
-            case JOB.VISITOR.SYNC_CREDENTIALS_TO_DEVICES_VISITOR: // <-- YANGI CASE
+            case JOB.VISITOR.SYNC_CREDENTIALS_TO_DEVICES_VISITOR:
                 return this.syncCredentialsToDevicesJob(job);
 
-            case JOB.VISITOR.REMOVE_VISITORS_FROM_ALL_DEVICES: // ✅ YANGI
+            case JOB.VISITOR.REMOVE_VISITORS_FROM_ALL_DEVICES:
                 return this.removeVisitorsFromAllDevicesJob(job);
         }
     }
