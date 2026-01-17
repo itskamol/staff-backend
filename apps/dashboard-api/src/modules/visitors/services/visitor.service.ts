@@ -7,7 +7,6 @@ import { Prisma } from '@prisma/client';
 import { Queue } from 'bullmq';
 import { JOB } from 'apps/dashboard-api/src/shared/constants';
 import { InjectQueue } from '@nestjs/bullmq';
-import { windowWhen } from 'rxjs';
 
 @Injectable()
 export class VisitorService {
